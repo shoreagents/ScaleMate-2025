@@ -5,7 +5,7 @@ import AuthTester from '@/components/test/AuthTester';
 import QuoteTester from '@/components/test/QuoteTester';
 import QuizTester from '@/components/test/QuizTester';
 import RoleBuilderTester from '@/components/test/RoleBuilderTester';
-import AiPromptTester from '@/components/test/AiPromptTester';
+import PromptTestingComponent from '@/components/test/PromptTestingComponent';
 import EventTester from '@/components/test/EventTester';
 import PageTester from '@/components/test/PageTester';
 import StyleTester from '@/components/test/StyleTester';
@@ -27,7 +27,7 @@ const TestDashboard = () => {
     { name: 'Quick Quote', component: QuoteTester },
     { name: 'Readiness Quiz', component: QuizTester },
     { name: 'Role Builder', component: RoleBuilderTester },
-    { name: 'AI Prompts', component: AiPromptTester },
+    { name: 'AI Prompts', component: PromptTestingComponent },
     { name: 'Event Tracking', component: EventTester },
     { name: 'Page Testing', component: PageTester },
     { name: 'Style Guide', component: StyleTester },

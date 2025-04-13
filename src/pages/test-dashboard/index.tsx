@@ -4,14 +4,14 @@ import { TestConfig, TestResult, TestComponentProps } from '@/types';
 
 // Import all components statically
 import ServiceChecker from '@/components/test/ServiceChecker';
-import AuthTester from '@/components/test/AuthTester';
+import AuthTestingComponent from '@/components/test/AuthTestingComponent';
 import QuoteTester from '@/components/test/QuoteTester';
 import StyleTester from '@/components/test/StyleTester';
 import RoleBuilderTester from '@/components/test/RoleBuilderTester';
 import QuizTester from '@/components/test/QuizTester';
 import ToolStackTester from '@/components/test/ToolStackTester';
 import GamificationTester from '@/components/test/GamificationTester';
-import AiPromptTester from '@/components/test/AiPromptTester';
+import PromptTestingComponent from '@/components/test/PromptTestingComponent';
 import PageCreatorPanel from '@/components/test/PageCreatorPanel';
 import AnonUserTester from '@/components/test/AnonUserTester';
 import EventTracker from '@/components/test/EventTracker';
@@ -148,14 +148,14 @@ export default function TestDashboard() {
   const renderActiveTabContent = () => {
     switch (activeTab) {
       case 'services': return <ServiceChecker />;
-      case 'auth': return <AuthTester onTest={handleTest} />;
+      case 'auth': return <AuthTestingComponent onTest={handleTest} />;
       case 'quote': return <QuoteTester onTest={handleTest} />;
       case 'style': return <StyleTester onTest={handleTest} />;
       case 'roleBuilder': return <RoleBuilderTester onTest={handleTest} />;
       case 'quiz': return <QuizTester onTest={handleTest} />;
       case 'tools': return <ToolStackTester onTest={handleTest} />;
       case 'gamification': return <GamificationTester onTest={handleTest} />;
-      case 'ai': return <AiPromptTester onTest={handleTest} />;
+      case 'ai': return <PromptTestingComponent onTest={handleTest} />;
       case 'pageCreator': return <PageCreatorPanel onTest={handleTest} />;
       case 'anonUser': return <AnonUserTester onTest={handleTest} />;
       case 'events': return <EventTracker onTest={handleTest} />;
