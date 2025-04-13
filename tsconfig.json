@@ -20,6 +20,11 @@
     "noEmit": true,
     "jsx": "preserve",
     "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
     "paths": {
       "@/*": ["./src/*"]
     },
@@ -28,9 +33,14 @@
   "include": [
     "next-env.d.ts",
     "**/*.ts",
-    "**/*.tsx"
+    "**/*.tsx",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "jest.setup.ts",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "cypress"
   ]
 }

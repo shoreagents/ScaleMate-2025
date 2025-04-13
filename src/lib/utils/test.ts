@@ -1,20 +1,7 @@
 import { ApiResponse } from './api';
-
-export type TestResult = {
-  success: boolean;
-  message: string;
-  details?: unknown;
-};
+import { TestResult, TestConfig } from '@/types';
 
 export type TestFunction = () => Promise<TestResult>;
-
-export type TestConfig = {
-  name: string;
-  description?: string;
-  timeout?: number;
-  retries?: number;
-  metadata?: Record<string, unknown>;
-};
 
 export const runTest = async (testFn: TestFunction): Promise<TestResult> => {
   try {
@@ -55,5 +42,7 @@ export const validateApiResponse = <T>(response: ApiResponse<T>): TestResult => 
 export const formatTestResult = (result: TestResult): string => {
   const status = result.success ? '✅ PASS' : '❌ FAIL';
   const details = result.details ? `\nDetails: ${JSON.stringify(result.details, null, 2)}` : '';
-  return `${status}: ${result.message}${details}`;
-}; 
+  return `${status}: ${result.message || ''}${details}`;
+};
+
+export type { TestResult, TestConfig }; 

@@ -6,7 +6,7 @@ export { default as RoleBuilderTester } from './RoleBuilderTester';
 export { default as QuizTester } from './QuizTester';
 export { default as ToolStackTester } from './ToolStackTester';
 export { default as GamificationTester } from './GamificationTester';
-export { default as AiPromptTester } from './AiPromptTester';
+export { default as PromptTestingComponent } from './PromptTestingComponent';
 export { default as PageCreatorPanel } from './PageCreatorPanel';
 export { default as AnonUserTester } from './AnonUserTester';
 export { default as EventTracker } from './EventTracker';

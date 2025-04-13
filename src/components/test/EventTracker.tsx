@@ -1,9 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-
-interface EventTrackerProps {
-  onTest: (config: any) => Promise<{ success: boolean; message: string }>;
-}
+import { TestComponentProps } from '@/types';
 
 const Container = styled.div`
   padding: 1rem;
@@ -26,11 +23,11 @@ const Button = styled.button`
   }
 `;
 
-const EventTracker: React.FC<EventTrackerProps> = ({ onTest }) => {
+const EventTracker: React.FC<TestComponentProps> = ({ onTest }) => {
   const handleTest = async () => {
     const result = await onTest({
       type: 'event_tracking',
-      params: {
+      data: {
         testType: 'basic_tracking'
       }
     });

@@ -1,13 +1,9 @@
 import React, { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { TestResult, TestConfig } from '@/lib/utils/test';
+import type { TestResult, TestComponentProps } from '@/types';
 import { formatTestResult } from '@/lib/utils/test';
 
-interface DbMigrationTesterProps {
-  onTest: (config: TestConfig) => Promise<TestResult>;
-}
-
-export const DbMigrationTester: React.FC<DbMigrationTesterProps> = ({ onTest }) => {
+const DbMigrationTester: React.FC<TestComponentProps> = ({ onTest }) => {
   const [result, setResult] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -117,4 +113,6 @@ export const DbMigrationTester: React.FC<DbMigrationTesterProps> = ({ onTest }) 
       )}
     </div>
   );
-}; 
+};
+
+export default DbMigrationTester; 

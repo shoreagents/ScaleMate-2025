@@ -1,5 +1,7 @@
 import { supabase } from '../supabase';
 import { ApiResponse } from './api';
+import { AuthError } from '@supabase/supabase-js';
+import { PostgrestError } from '@supabase/postgrest-js';
 
 export interface AdminUser {
   email: string;
@@ -27,7 +29,12 @@ export const createAdminAccount = async (admin: AdminUser): Promise<ApiResponse<
     if (authError) {
       return {
         data: null,
-        error: authError,
+        error: {
+          ...authError,
+          details: authError.message,
+          hint: '',
+          code: 'AUTH_ERROR'
+        } as PostgrestError,
         status: 400,
         message: 'Failed to create admin account'
       };
@@ -61,9 +68,15 @@ export const createAdminAccount = async (admin: AdminUser): Promise<ApiResponse<
       message: 'Admin account created successfully'
     };
   } catch (error) {
+    const err = error as Error;
     return {
       data: null,
-      error: error as Error,
+      error: {
+        message: err.message,
+        details: err.stack || '',
+        hint: '',
+        code: 'INTERNAL_ERROR'
+      } as PostgrestError,
       status: 500,
       message: 'An unexpected error occurred'
     };
@@ -93,9 +106,15 @@ export const verifyAdminRole = async (userId: string): Promise<ApiResponse<boole
       status: 200
     };
   } catch (error) {
+    const err = error as Error;
     return {
       data: null,
-      error: error as Error,
+      error: {
+        message: err.message,
+        details: err.stack || '',
+        hint: '',
+        code: 'INTERNAL_ERROR'
+      } as PostgrestError,
       status: 500,
       message: 'An unexpected error occurred'
     };

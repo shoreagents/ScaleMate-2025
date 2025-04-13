@@ -1,9 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-
-interface PageCreatorPanelProps {
-  onTest: (config: any) => Promise<{ success: boolean; message: string }>;
-}
+import { TestComponentProps } from '@/types';
 
 const Container = styled.div`
   padding: 1rem;
@@ -26,11 +23,11 @@ const Button = styled.button`
   }
 `;
 
-const PageCreatorPanel: React.FC<PageCreatorPanelProps> = ({ onTest }) => {
+const PageCreatorPanel: React.FC<TestComponentProps> = ({ onTest }) => {
   const handleTest = async () => {
     const result = await onTest({
       type: 'page_creator',
-      params: {
+      data: {
         testType: 'basic_creation'
       }
     });

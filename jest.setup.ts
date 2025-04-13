@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { expect, jest } from '@jest/globals';
 
 // Mock next/router
 jest.mock('next/router', () => ({
@@ -6,13 +7,29 @@ jest.mock('next/router', () => ({
     return {
       route: '/',
       pathname: '',
-      query: '',
+      query: {},
       asPath: '',
       push: jest.fn(),
       replace: jest.fn(),
     };
   },
 }));
+
+// Mock next/image
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: (props: any) => {
+    // eslint-disable-next-line jsx-a11y/alt-text
+    return <img {...props} />;
+  },
+}));
+
+// Mock next/link
+jest.mock('next/link', () => {
+  return ({ children, href }: { children: React.ReactNode; href: string }) => {
+    return <a href={href}>{children}</a>;
+  };
+});
 
 // Mock styled-components
 jest.mock('styled-components', () => {
