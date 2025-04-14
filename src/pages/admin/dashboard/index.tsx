@@ -2,11 +2,28 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
+import DashboardTab from '@/components/admin/DashboardTab';
+import UserManagementTab from '@/components/admin/UserManagementTab';
+import GenericTab from '@/components/admin/GenericTab';
+import { 
+  FiHome, 
+  FiUsers, 
+  FiPieChart, 
+  FiFileText, 
+  FiBook, 
+  FiFolder, 
+  FiFile, 
+  FiTool, 
+  FiHelpCircle, 
+  FiGrid, 
+  FiSettings 
+} from 'react-icons/fi';
 
 const DashboardContainer = styled.div`
-  padding: ${({ theme }) => theme.spacing.xl};
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  min-height: 100vh;
+  background-color: #F9FAFB;
 `;
 
 const Header = styled.header`
@@ -277,8 +294,131 @@ const RequirementItem = styled.li<{ $met: boolean }>`
   }
 `;
 
+const Sidebar = styled.div`
+  width: 250px;
+  background-color: white;
+  padding: ${({ theme }) => theme.spacing.lg};
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+  border-right: 1px solid #E5E7EB;
+  display: flex;
+  flex-direction: column;
+`;
+
+const SidebarContent = styled.div`
+  flex: 1;
+`;
+
+const SidebarFooter = styled.div`
+  margin-top: auto;
+  padding-top: ${({ theme }) => theme.spacing.lg};
+`;
+
+const MainContent = styled.div`
+  flex: 1;
+  padding: ${({ theme }) => theme.spacing.xl};
+  margin-left: 250px;
+  background-color: #F9FAFB;
+`;
+
+const ContentHeader = styled.div`
+  margin-bottom: ${({ theme }) => theme.spacing.xl};
+  padding: ${({ theme }) => theme.spacing.lg};
+  background-color: white;
+  border-bottom: 1px solid #E5E7EB;
+  margin-left: -${({ theme }) => theme.spacing.xl};
+  margin-right: -${({ theme }) => theme.spacing.xl};
+  margin-top: -${({ theme }) => theme.spacing.xl};
+`;
+
+const ContentTitle = styled.h1`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin: 0;
+`;
+
+const ContentDescription = styled.p`
+  font-size: 1rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+`;
+
+const NavItem = styled.div<{ $active?: boolean }>`
+  padding: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  background-color: ${({ theme, $active }) => 
+    $active ? theme.colors.primary + '15' : 'transparent'};
+  color: ${({ theme, $active }) => 
+    $active ? theme.colors.primary : theme.colors.text.primary};
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primary + '15'};
+  }
+`;
+
+const NavIcon = styled.span`
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+`;
+
+const NavTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const TabContent = styled.div<{ $active: boolean }>`
+  display: ${props => props.$active ? 'block' : 'none'};
+`;
+
+const ActionButton = styled.button`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
+const Logo = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: ${({ theme }) => theme.spacing.lg};
+  padding: ${({ theme }) => theme.spacing.sm};
+`;
+
+const LogoText = styled.span`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+`;
+
+const LogoIcon = styled.span`
+  font-size: 2rem;
+  color: ${({ theme }) => theme.colors.primary};
+`;
+
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [hasAdminPermissions, setHasAdminPermissions] = useState<boolean>(false);
@@ -367,83 +507,74 @@ const AdminDashboard: React.FC = () => {
     ]);
   }, []);
 
+  const navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: <FiHome /> },
+    { id: 'lead-management', label: 'Lead Management', icon: <FiUsers /> },
+    { id: 'user-management', label: 'User Management', icon: <FiUsers /> },
+    { id: 'quote-analytics', label: 'Quote Analytics', icon: <FiPieChart /> },
+    { id: 'role-blueprints', label: 'Role Blueprints', icon: <FiFileText /> },
+    { id: 'course-manager', label: 'Course Manager', icon: <FiBook /> },
+    { id: 'resource-library', label: 'Resource Library', icon: <FiFolder /> },
+    { id: 'blog-management', label: 'Blog Management', icon: <FiFile /> },
+    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FiTool /> },
+    { id: 'quiz-management', label: 'Quiz Management', icon: <FiHelpCircle /> },
+    { id: 'content-blocks', label: 'Content Blocks', icon: <FiGrid /> },
+    { id: 'system-settings', label: 'System Settings', icon: <FiSettings /> }
+  ];
+
+  const renderTabContent = () => {
+    const currentTab = navItems.find(item => item.id === activeTab);
+    if (!currentTab) return null;
+
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <DashboardTab
+            metrics={metrics}
+            recentUsers={recentUsers}
+            services={services}
+          />
+        );
+      case 'user-management':
+        return <UserManagementTab users={recentUsers} />;
+      default:
+        return <GenericTab title={currentTab.label} />;
+    }
+  };
+
   if (!user) {
     return null;
   }
 
   return (
     <DashboardContainer>
-      <Header>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <Title>Admin Dashboard</Title>
-            <Description>Welcome back, {user.email}</Description>
-          </div>
-          <HeaderActions>
-            {debugInfo && (
-              <div style={{ marginRight: '1rem', fontSize: '0.8rem', color: '#666' }}>
-                <div>User: {debugInfo.email}</div>
-                <div>Role: {debugInfo.role}</div>
-                <div>Permissions: {JSON.stringify(debugInfo.permissions)}</div>
-              </div>
-            )}
-            <LogoutButton onClick={handleLogout}>
-              Logout
-            </LogoutButton>
-          </HeaderActions>
-        </div>
-      </Header>
-
-      <Grid>
-        <Card>
-          <CardTitle>Key Metrics</CardTitle>
-          <Grid>
-            <Metric>
-              <MetricValue>{metrics.totalUsers}</MetricValue>
-              <MetricLabel>Total Users</MetricLabel>
-            </Metric>
-            <Metric>
-              <MetricValue>{metrics.activeUsers}</MetricValue>
-              <MetricLabel>Active Users</MetricLabel>
-            </Metric>
-            <Metric>
-              <MetricValue>{metrics.conversionRate}%</MetricValue>
-              <MetricLabel>Conversion Rate</MetricLabel>
-            </Metric>
-          </Grid>
-        </Card>
-
-        <Card>
-          <CardTitle>Recent Users</CardTitle>
-          <UserList>
-            {recentUsers.map((user, index) => (
-              <UserItem key={index}>
-                <UserInfo>
-                  <UserEmail>{user.email}</UserEmail>
-                  <UserRole>{user.role}</UserRole>
-                </UserInfo>
-              </UserItem>
-            ))}
-          </UserList>
-        </Card>
-
-        <Card>
-          <CardTitle>System Status</CardTitle>
-          <UserList>
-            {services.map((service, index) => (
-              <ServiceStatus key={index}>
-                <ServiceName>{service.name}</ServiceName>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <StatusIndicator $status={service.status} />
-                  <LastChecked>
-                    Last checked: {service.lastChecked.toLocaleTimeString()}
-                  </LastChecked>
-                </div>
-              </ServiceStatus>
-            ))}
-          </UserList>
-        </Card>
-      </Grid>
+      <Sidebar>
+        <SidebarContent>
+          <Logo>
+            <LogoText>ScaleMate</LogoText>
+          </Logo>
+          {navItems.map((item) => (
+            <NavItem
+              key={item.id}
+              $active={activeTab === item.id}
+              onClick={() => setActiveTab(item.id)}
+            >
+              <NavIcon>{item.icon}</NavIcon>
+              {item.label}
+            </NavItem>
+          ))}
+        </SidebarContent>
+        <SidebarFooter>
+          <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
+        </SidebarFooter>
+      </Sidebar>
+      <MainContent>
+        <ContentHeader>
+          <ContentTitle>{navItems.find(item => item.id === activeTab)?.label}</ContentTitle>
+          <ContentDescription>Manage and monitor your {navItems.find(item => item.id === activeTab)?.label.toLowerCase()}</ContentDescription>
+        </ContentHeader>
+        {renderTabContent()}
+      </MainContent>
     </DashboardContainer>
   );
 };
