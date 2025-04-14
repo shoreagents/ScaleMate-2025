@@ -3,93 +3,100 @@ import styled from 'styled-components';
 import Link from 'next/link';
 
 const HeaderContainer = styled.header`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
+  position: fixed;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(4px);
+  z-index: 50;
   border-bottom: 1px solid #E5E7EB;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background-color: white;
 `;
 
-const Logo = styled.div`
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: ${props => props.theme.colors.primary};
-  flex: 1;
+const Container = styled.div`
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1rem;
 `;
 
-const NavLinks = styled.nav`
+const HeaderContent = styled.div`
   display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-  flex: 2;
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
 `;
 
-const NavLink = styled(Link)`
-  color: ${props => props.theme.colors.text.primary};
+const Logo = styled(Link)`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0F172A;
   text-decoration: none;
-  font-size: 1rem;
+`;
+
+const Nav = styled.nav`
+  display: none;
+  gap: 2rem;
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
+`;
+
+const NavItem = styled.span`
+  color: #0F172A;
+  cursor: pointer;
   transition: color 0.2s;
 
   &:hover {
-    color: ${props => props.theme.colors.primary};
+    color: #3B82F6;
   }
 `;
 
-const AuthButtons = styled.div`
+const AuthSection = styled.div`
   display: flex;
-  gap: 0;
-  flex: 1;
-  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
 `;
 
-const AuthButton = styled(Link)`
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s;
-`;
+const LoginButton = styled.span`
+  color: #0F172A;
+  cursor: pointer;
+  transition: color 0.2s;
 
-const LoginButton = styled(AuthButton)`
-  color: #000000;
-  border: none;
-  padding: 0.5rem 1rem;
-  
   &:hover {
-    color: ${props => props.theme.colors.primary};
+    color: #3B82F6;
   }
 `;
 
-const SignupButton = styled(AuthButton)`
-  background-color: ${props => props.theme.colors.primary};
+const SignUpButton = styled.span`
+  background-color: #3B82F6;
   color: white;
-  border-radius: 10px;
-  
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
   &:hover {
-    background-color: ${props => props.theme.colors.primaryDark};
+    background-color: #2563EB;
   }
 `;
 
 const Header = () => {
   return (
     <HeaderContainer>
-      <Logo>ScaleMate</Logo>
-      <NavLinks>
-        <NavLink href="/">Home</NavLink>
-        <NavLink href="/about">About</NavLink>
-        <NavLink href="/pricing">Pricing</NavLink>
-        <NavLink href="/blog">Blog</NavLink>
-        <NavLink href="/contact">Contact</NavLink>
-      </NavLinks>
-      <AuthButtons>
-        <LoginButton href="/login">Login</LoginButton>
-        <SignupButton href="/signup">Sign Up</SignupButton>
-      </AuthButtons>
+      <Container>
+        <HeaderContent>
+          <Logo href="/">ScaleMate</Logo>
+          <Nav>
+            <NavItem>Solutions</NavItem>
+            <NavItem>Tools</NavItem>
+            <NavItem>Pricing</NavItem>
+            <NavItem>Resources</NavItem>
+          </Nav>
+          <AuthSection>
+            <LoginButton>Login</LoginButton>
+            <SignUpButton>Sign Up Free</SignUpButton>
+          </AuthSection>
+        </HeaderContent>
+      </Container>
     </HeaderContainer>
   );
 };
