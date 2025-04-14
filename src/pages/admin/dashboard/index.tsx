@@ -17,13 +17,27 @@ import {
   FiTool, 
   FiHelpCircle, 
   FiGrid, 
-  FiSettings 
+  FiSettings,
+  FiUserPlus,
+  FiTrendingUp,
+  FiBriefcase,
+  FiBookOpen,
+  FiArchive,
+  FiEdit,
+  FiCpu,
+  FiCheckCircle,
+  FiLayers,
+  FiServer,
+  FiBarChart2,
+  FiActivity,
+  FiAward,
+  FiStar
 } from 'react-icons/fi';
 
 const DashboardContainer = styled.div`
   display: flex;
   min-height: 100vh;
-  background-color: #F9FAFB;
+  background-color: white;
 `;
 
 const Header = styled.header`
@@ -44,47 +58,57 @@ const Description = styled.p`
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: ${({ theme }) => theme.spacing.lg};
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  width: 100%;
 `;
 
 const Card = styled.div`
-  background-color: ${({ theme }) => theme.colors.background.secondary};
-  border-radius: 1rem;
-  padding: ${({ theme }) => theme.spacing.lg};
-  box-shadow: ${({ theme }) => theme.shadows.md};
+  background-color: white;
+  border-radius: 12px;
+  padding: 10px 24px 24px 24px ;
+  border: 1px solid #E5E7EB;
+  width: 100%;
 `;
 
 const CardTitle = styled.h2`
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: #111827;
+  margin-bottom: 16px;
 `;
 
-const Metric = styled.div`
+const CardContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
 `;
 
-const MetricValue = styled.span`
+const MetricValue = styled.div`
   font-size: 2rem;
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.primary};
+  color: #111827;
 `;
 
-const MetricLabel = styled.span`
+const MetricLabel = styled.div`
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: #6B7280;
+  margin-bottom: 8px;
+`;
+
+const MetricTrend = styled.div<{ $isPositive?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+  color: ${props => props.$isPositive ? '#10B981' : '#EF4444'};
+  font-weight: 500;
+`;
+
+const MetricCard = styled(Card)`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
 `;
 
 const UserList = styled.div`
@@ -341,12 +365,6 @@ const ContentTitle = styled.h1`
   margin: 0;
 `;
 
-const ContentDescription = styled.p`
-  font-size: 1rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: ${({ theme }) => theme.spacing.xs} 0 0;
-`;
-
 const NavItem = styled.div<{ $active?: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
@@ -416,6 +434,125 @@ const LogoIcon = styled.span`
   color: ${({ theme }) => theme.colors.primary};
 `;
 
+const MetricIcon = styled.div<{ $color: string }>`
+  font-size: 1.75rem;
+  color: ${props => props.$color};
+  margin-bottom: 16px;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: ${props => `${props.$color}1A`};
+`;
+
+const ActivityItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #E5E7EB;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ActivityIcon = styled.div<{ $color: string }>`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${props => props.$color};
+  background-color: ${props => `${props.$color}1A`};
+  font-size: 1.25rem;
+`;
+
+const ActivityContent = styled.div`
+  flex: 1;
+`;
+
+const ActivityTitle = styled.div`
+  font-weight: 500;
+  color: #111827;
+`;
+
+const ActivityTime = styled.div`
+  font-size: 0.875rem;
+  color: #6B7280;
+`;
+
+const QuickAction = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #F3F4F6;
+  }
+`;
+
+const ActionIcon = styled.div`
+  color: #6B7280;
+`;
+
+const ActionText = styled.div`
+  font-weight: 500;
+  color: #111827;
+  text-align: left;
+`;
+
+const SystemStatusCard = styled(Card)`
+  .status-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #E5E7EB;
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+  }
+`;
+
+const StatusDot = styled.div<{ $status: 'up' | 'down' | 'warning' }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: ${props => {
+    switch (props.$status) {
+      case 'up': return '#00E915';
+      case 'warning': return '#FFA500';
+      case 'down': return '#EF4444';
+      default: return '#6B7280';
+    }
+  }};
+`;
+
+const StatusText = styled.div<{ $status: 'up' | 'down' | 'warning' }>`
+  font-size: 0.875rem;
+  color: ${props => {
+    switch (props.$status) {
+      case 'up': return '#00E915';
+      case 'warning': return '#FFA500';
+      case 'down': return '#EF4444';
+      default: return '#6B7280';
+    }
+  }};
+`;
+
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -480,24 +617,21 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Mock data for now - replace with actual API calls
+  // Update metrics state to include new fields
   const [metrics, setMetrics] = useState({
-    totalUsers: 0,
+    totalLeads: 0,
     activeUsers: 0,
-    conversionRate: 0,
+    newRolesGenerated: 0,
+    topRoles: 0
   });
-  const [recentUsers, setRecentUsers] = useState<any[]>([]);
-  const [services, setServices] = useState([
-    { name: 'API', status: 'up' as const, lastChecked: new Date() },
-    { name: 'Database', status: 'up' as const, lastChecked: new Date() },
-    { name: 'Auth Service', status: 'up' as const, lastChecked: new Date() }
-  ]);
 
   useEffect(() => {
+    // Update mock data with new metrics
     setMetrics({
-      totalUsers: 1250,
+      totalLeads: 1250,
       activeUsers: 850,
-      conversionRate: 68,
+      newRolesGenerated: 45,
+      topRoles: 12
     });
 
     setRecentUsers([
@@ -507,19 +641,26 @@ const AdminDashboard: React.FC = () => {
     ]);
   }, []);
 
+  const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [services, setServices] = useState([
+    { name: 'API', status: 'up' as const, lastChecked: new Date() },
+    { name: 'Database', status: 'up' as const, lastChecked: new Date() },
+    { name: 'Auth Service', status: 'up' as const, lastChecked: new Date() }
+  ]);
+
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <FiHome /> },
-    { id: 'lead-management', label: 'Lead Management', icon: <FiUsers /> },
+    { id: 'lead-management', label: 'Lead Management', icon: <FiUserPlus /> },
     { id: 'user-management', label: 'User Management', icon: <FiUsers /> },
-    { id: 'quote-analytics', label: 'Quote Analytics', icon: <FiPieChart /> },
-    { id: 'role-blueprints', label: 'Role Blueprints', icon: <FiFileText /> },
-    { id: 'course-manager', label: 'Course Manager', icon: <FiBook /> },
-    { id: 'resource-library', label: 'Resource Library', icon: <FiFolder /> },
-    { id: 'blog-management', label: 'Blog Management', icon: <FiFile /> },
-    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FiTool /> },
-    { id: 'quiz-management', label: 'Quiz Management', icon: <FiHelpCircle /> },
-    { id: 'content-blocks', label: 'Content Blocks', icon: <FiGrid /> },
-    { id: 'system-settings', label: 'System Settings', icon: <FiSettings /> }
+    { id: 'quote-analytics', label: 'Quote Analytics', icon: <FiTrendingUp /> },
+    { id: 'role-blueprints', label: 'Role Blueprints', icon: <FiBriefcase /> },
+    { id: 'course-manager', label: 'Course Manager', icon: <FiBookOpen /> },
+    { id: 'resource-library', label: 'Resource Library', icon: <FiArchive /> },
+    { id: 'blog-management', label: 'Blog Management', icon: <FiEdit /> },
+    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FiCpu /> },
+    { id: 'quiz-management', label: 'Quiz Management', icon: <FiCheckCircle /> },
+    { id: 'content-blocks', label: 'Content Blocks', icon: <FiLayers /> },
+    { id: 'system-settings', label: 'System Settings', icon: <FiServer /> }
   ];
 
   const renderTabContent = () => {
@@ -529,16 +670,317 @@ const AdminDashboard: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <DashboardTab
-            metrics={metrics}
-            recentUsers={recentUsers}
-            services={services}
-          />
+          <>
+            <Grid>
+              <MetricCard>
+                <MetricIcon $color="#3B82F6">
+                  <FiBarChart2 />
+                </MetricIcon>
+                <MetricValue>{metrics.totalLeads}</MetricValue>
+                <MetricLabel>Total Leads</MetricLabel>
+                <MetricTrend $isPositive={true}>
+                  ↑ 12% vs last week
+                </MetricTrend>
+              </MetricCard>
+              <MetricCard>
+                <MetricIcon $color="#EC297B">
+                  <FiUsers />
+                </MetricIcon>
+                <MetricValue>{metrics.activeUsers}</MetricValue>
+                <MetricLabel>Active Users</MetricLabel>
+                <MetricTrend $isPositive={true}>
+                  ↑ 8% vs last week
+                </MetricTrend>
+              </MetricCard>
+              <MetricCard>
+                <MetricIcon $color="#00E915">
+                  <FiActivity />
+                </MetricIcon>
+                <MetricValue>{metrics.newRolesGenerated}</MetricValue>
+                <MetricLabel>New Roles Generated</MetricLabel>
+                <MetricTrend $isPositive={true}>
+                  ↑ 15% vs last week
+                </MetricTrend>
+              </MetricCard>
+              <MetricCard>
+                <MetricIcon $color="#8B5CF6">
+                  <FiStar />
+                </MetricIcon>
+                <MetricValue>{metrics.topRoles}</MetricValue>
+                <MetricLabel>Top Roles</MetricLabel>
+                <MetricTrend $isPositive={true}>
+                  ↑ 5% vs last week
+                </MetricTrend>
+              </MetricCard>
+            </Grid>
+            <Grid style={{ marginTop: '24px', gridTemplateColumns: '2fr 1fr' }}>
+              <Card>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardContent>
+                  <ActivityItem>
+                    <ActivityIcon $color="#3B82F6">
+                      <FiUserPlus />
+                    </ActivityIcon>
+                    <ActivityContent>
+                      <ActivityTitle>New Lead Created</ActivityTitle>
+                      <ActivityTime>2 minutes ago</ActivityTime>
+                    </ActivityContent>
+                  </ActivityItem>
+                  <ActivityItem>
+                    <ActivityIcon $color="#00E915">
+                      <FiBriefcase />
+                    </ActivityIcon>
+                    <ActivityContent>
+                      <ActivityTitle>Role Template Generated</ActivityTitle>
+                      <ActivityTime>1 hour ago</ActivityTime>
+                    </ActivityContent>
+                  </ActivityItem>
+                  <ActivityItem>
+                    <ActivityIcon $color="#EC297B">
+                      <FiUsers />
+                    </ActivityIcon>
+                    <ActivityContent>
+                      <ActivityTitle>New User Registration</ActivityTitle>
+                      <ActivityTime>3 hours ago</ActivityTime>
+                    </ActivityContent>
+                  </ActivityItem>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardContent>
+                  <QuickAction>
+                    <ActionIcon>
+                      <FiUserPlus />
+                    </ActionIcon>
+                    <ActionText>Add New Lead</ActionText>
+                  </QuickAction>
+                  <QuickAction style={{ marginTop: '12px' }}>
+                    <ActionIcon>
+                      <FiBriefcase />
+                    </ActionIcon>
+                    <ActionText>Create Role Template</ActionText>
+                  </QuickAction>
+                  <QuickAction style={{ marginTop: '12px' }}>
+                    <ActionIcon>
+                      <FiEdit />
+                    </ActionIcon>
+                    <ActionText>Write Blog Post</ActionText>
+                  </QuickAction>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid style={{ marginTop: '24px', gridTemplateColumns: '1fr' }}>
+              <SystemStatusCard>
+                <CardTitle>System Health</CardTitle>
+                <CardContent>
+                  <div className="status-row">
+                    <StatusDot $status="up" />
+                    <div style={{ flex: 1 }}>API Service</div>
+                    <StatusText $status="up">Operational</StatusText>
+                  </div>
+                  <div className="status-row">
+                    <StatusDot $status="up" />
+                    <div style={{ flex: 1 }}>Database</div>
+                    <StatusText $status="up">Operational</StatusText>
+                  </div>
+                  <div className="status-row">
+                    <StatusDot $status="warning" />
+                    <div style={{ flex: 1 }}>Authentication Service</div>
+                    <StatusText $status="warning">Minor Issues</StatusText>
+                  </div>
+                  <div className="status-row">
+                    <StatusDot $status="up" />
+                    <div style={{ flex: 1 }}>Storage Service</div>
+                    <StatusText $status="up">Operational</StatusText>
+                  </div>
+                </CardContent>
+              </SystemStatusCard>
+            </Grid>
+          </>
         );
       case 'user-management':
-        return <UserManagementTab users={recentUsers} />;
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>User List</CardTitle>
+              <CardContent>
+                {recentUsers.map((user, index) => (
+                  <UserItem key={index}>
+                    <UserInfo>
+                      <UserEmail>{user.email}</UserEmail>
+                      <UserRole>{user.role}</UserRole>
+                    </UserInfo>
+                  </UserItem>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'lead-management':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>Lead Overview</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Total Leads</MetricLabel>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardTitle>Lead Sources</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Active Sources</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'quote-analytics':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>Quote Statistics</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Total Quotes</MetricLabel>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardTitle>Average Quote Value</CardTitle>
+              <CardContent>
+                <MetricValue>$0</MetricValue>
+                <MetricLabel>Per Quote</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'role-blueprints':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>Role Templates</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Available Templates</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'course-manager':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>Course Overview</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Total Courses</MetricLabel>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardTitle>Course Progress</CardTitle>
+              <CardContent>
+                <MetricValue>0%</MetricValue>
+                <MetricLabel>Average Completion</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'resource-library':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>Resource Overview</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Total Resources</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'blog-management':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>Blog Statistics</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Total Posts</MetricLabel>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardTitle>Blog Performance</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Average Views</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'ai-tool-library':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>AI Tools</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Available Tools</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'quiz-management':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>Quiz Overview</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Total Quizzes</MetricLabel>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardTitle>Quiz Performance</CardTitle>
+              <CardContent>
+                <MetricValue>0%</MetricValue>
+                <MetricLabel>Average Score</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'content-blocks':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>Content Blocks</CardTitle>
+              <CardContent>
+                <MetricValue>0</MetricValue>
+                <MetricLabel>Available Blocks</MetricLabel>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      case 'system-settings':
+        return (
+          <Grid>
+            <Card>
+              <CardTitle>System Status</CardTitle>
+              <CardContent>
+                {services.map((service, index) => (
+                  <ServiceStatus key={index}>
+                    <ServiceName>{service.name}</ServiceName>
+                    <StatusIndicator $status={service.status} />
+                    <LastChecked>
+                      Last checked: {service.lastChecked.toLocaleTimeString()}
+                    </LastChecked>
+                  </ServiceStatus>
+                ))}
+              </CardContent>
+            </Card>
+          </Grid>
+        );
       default:
-        return <GenericTab title={currentTab.label} />;
+        return null;
     }
   };
 
@@ -571,7 +1013,6 @@ const AdminDashboard: React.FC = () => {
       <MainContent>
         <ContentHeader>
           <ContentTitle>{navItems.find(item => item.id === activeTab)?.label}</ContentTitle>
-          <ContentDescription>Manage and monitor your {navItems.find(item => item.id === activeTab)?.label.toLowerCase()}</ContentDescription>
         </ContentHeader>
         {renderTabContent()}
       </MainContent>
