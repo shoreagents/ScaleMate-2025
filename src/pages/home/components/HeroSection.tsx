@@ -1,10 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import styled from 'styled-components';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowRight, faPlay } from '@fortawesome/free-solid-svg-icons';
 
 const HeroSection = styled.section`
-  padding: ${({ theme }) => theme.spacing.xl} 0;
-  background-color: ${({ theme }) => theme.colors.background.primary};
+  padding: 4rem 0;
+  background-color: #F9FAFB;
 `;
 
 const Container = styled.div`
@@ -15,7 +17,6 @@ const Container = styled.div`
 
 const Content = styled.div`
   text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
 `;
 
 const Title = styled.h1`
@@ -38,62 +39,44 @@ const Description = styled.p`
 
 const ButtonGroup = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 1rem;
   align-items: center;
   justify-content: center;
-
-  @media (min-width: 640px) {
-    flex-direction: row;
-  }
 `;
 
 const PrimaryButton = styled(Link)`
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  background-color: ${({ theme }) => theme.colors.primary};
+  background-color: #3B82F6;
   color: white;
+  padding: 1rem 2rem;
   border-radius: 0.5rem;
-  font-weight: 500;
-  width: 100%;
-  text-align: center;
+  font-weight: 600;
   transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primaryDark};
-  }
-
-  @media (min-width: 640px) {
-    width: auto;
+    background-color: #2563EB;
   }
 `;
 
-const SecondaryButton = styled.button`
-  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+const SecondaryButton = styled(Link)`
+  border: 1px solid #3B82F6;
+  color: #3B82F6;
+  padding: 1rem 2rem;
   border-radius: 0.5rem;
-  font-weight: 500;
-  width: 100%;
-  transition: border-color 0.2s;
+  font-weight: 600;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
 
   &:hover {
-    border-color: ${({ theme }) => theme.colors.text.secondary};
+    background-color: #3B82F6;
+    color: white;
   }
-
-  @media (min-width: 640px) {
-    width: auto;
-  }
-`;
-
-const ImageContainer = styled.div`
-  position: relative;
-  max-width: 56rem;
-  margin: 0 auto;
-`;
-
-const Image = styled.img`
-  width: 100%;
-  border-radius: 1rem;
-  box-shadow: ${({ theme }) => theme.shadows.lg};
 `;
 
 export default function Hero() {
@@ -101,26 +84,21 @@ export default function Hero() {
     <HeroSection>
       <Container>
         <Content>
-          <Title>Scale Your Team Without The Burnout</Title>
+          <Title>Smart Scaling Starts Here</Title>
           <Description>
-            Leverage offshore talent and AI tools to grow your business smarter. Trusted by 500+ companies across USA, Australia, and New Zealand.
+            Design your offshore team, inject AI into operations, and delegate like a pro.
           </Description>
           <ButtonGroup>
-            <PrimaryButton href="/quote">
-              Get Your Quick Quote
+            <PrimaryButton href="#quote-calculator">
+              Try the Quick Quote
+              <FontAwesomeIcon icon={faArrowRight} />
             </PrimaryButton>
-            <SecondaryButton>
+            <SecondaryButton href="#">
               Watch Demo
+              <FontAwesomeIcon icon={faPlay} />
             </SecondaryButton>
           </ButtonGroup>
         </Content>
-        
-        <ImageContainer>
-          <Image 
-            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/3516410965-1302145e2c4037431ea7.png" 
-            alt="modern dashboard interface showing staffing management platform with data visualizations and team management features, clean and minimal design"
-          />
-        </ImageContainer>
       </Container>
     </HeroSection>
   );

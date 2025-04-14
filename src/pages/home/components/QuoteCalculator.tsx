@@ -2,118 +2,130 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
 
-const CalculatorSection = styled.section`
-  padding: ${({ theme }) => theme.spacing.xl} 0;
-  background-color: ${({ theme }) => theme.colors.background.secondary};
+const Section = styled.section`
+  padding: 5rem 0;
+  background-color: white;
+  position: relative;
+  width: 100%;
+  display: block;
+  margin-bottom: 0;
 `;
 
 const Container = styled.div`
   max-width: 72rem;
   margin: 0 auto;
-  padding: 0 ${({ theme }) => theme.spacing.md};
+  padding: 0 1rem;
 `;
 
-const Content = styled.div`
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
+const Calculator = styled.div`
+  max-width: 48rem;
+  margin: 0 auto;
+  background-color: #F9FAFB;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
 `;
 
 const Title = styled.h2`
-  font-size: 2.25rem;
+  font-size: 1.875rem;
   font-weight: 700;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.colors.text.primary};
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #0F172A;
 `;
 
-const Description = styled.p`
-  font-size: 1.125rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  max-width: 32rem;
-  margin: 0 auto ${({ theme }) => theme.spacing.lg};
-`;
-
-const CalculatorCard = styled.div`
-  background-color: ${({ theme }) => theme.colors.background.primary};
-  border-radius: 1rem;
-  padding: ${({ theme }) => theme.spacing.xl};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
-  max-width: 64rem;
-  margin: 0 auto;
-`;
-
-const FormGrid = styled.div`
+const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: ${({ theme }) => theme.spacing.md};
-
-  @media (min-width: 640px) {
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  
+  @media (min-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
   }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
 `;
 
-const FormGroup = styled.div`
-  margin-bottom: ${({ theme }) => theme.spacing.md};
+const FormSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 `;
 
 const Label = styled.label`
   display: block;
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: #0F172A;
   font-weight: 500;
+  margin-bottom: 0.5rem;
 `;
 
 const Select = styled.select`
   width: 100%;
-  padding: ${({ theme }) => theme.spacing.sm};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: 0.75rem;
   border-radius: 0.5rem;
-  background-color: ${({ theme }) => theme.colors.background.primary};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 1rem;
+  border: 1px solid #E5E7EB;
+  background-color: white;
+  color: #0F172A;
+`;
 
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
+const ResultsSection = styled.div`
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+`;
+
+const CostRow = styled.div`
+  margin-bottom: 1rem;
+  
+  &:last-child {
+    margin-bottom: 0;
   }
 `;
 
-const ResultsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: ${({ theme }) => theme.spacing.md};
-  margin-top: ${({ theme }) => theme.spacing.lg};
-
-  @media (min-width: 640px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
+const CostHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
 `;
 
-const ResultCard = styled.div`
-  background-color: ${({ theme }) => theme.colors.background.secondary};
-  border-radius: 0.5rem;
-  padding: ${({ theme }) => theme.spacing.md};
-  text-align: center;
+const CostLabel = styled.span`
+  color: #0F172A;
 `;
 
-const ResultTitle = styled.div`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.875rem;
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-`;
-
-const ResultValue = styled.div`
-  font-size: 1.5rem;
+const CostValue = styled.span<{ color: string }>`
   font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: ${props => props.color};
 `;
 
-const SavingsCard = styled(ResultCard)`
-  background-color: ${({ theme }) => theme.colors.success};
-  color: white;
+const ProgressBar = styled.div`
+  width: 100%;
+  height: 0.5rem;
+  background-color: #E5E7EB;
+  border-radius: 9999px;
+`;
+
+const ProgressFill = styled.div<{ width: string; color: string }>`
+  height: 100%;
+  border-radius: 9999px;
+  background-color: ${props => props.color};
+  width: ${props => props.width};
+`;
+
+const SavingsBox = styled.div`
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 0.5rem;
+`;
+
+const MonthlySavings = styled.p`
+  color: #3B82F6;
+  font-weight: 600;
+`;
+
+const AnnualSavings = styled.p`
+  color: rgba(15, 23, 42, 0.6);
+  font-size: 0.875rem;
 `;
 
 const Button = styled.button`
@@ -144,160 +156,65 @@ const Visualization = styled.div`
 `;
 
 export default function QuoteCalculator() {
-  const [industry, setIndustry] = useState('technology');
-  const [role, setRole] = useState('developer');
-  const [experience, setExperience] = useState('mid');
-  const [location, setLocation] = useState('us');
-  const [teamSize, setTeamSize] = useState('1-5');
+  const [role, setRole] = useState('customer-service');
+  const [experience, setExperience] = useState('entry');
 
-  const calculateCosts = () => {
-    // Base prices for offshore talent
-    const offshoreBasePrices = {
-      '1-5': 2500,
-      '6-10': 2250,
-      '11-20': 2000,
-      '21-50': 1750,
-      '51+': 1500
-    };
-
-    // Role multipliers
-    const roleMultipliers = {
-      developer: 1,
-      designer: 0.9,
-      marketer: 0.8,
-      'customer-support': 0.7
-    };
-
-    // Experience multipliers
-    const experienceMultipliers = {
-      junior: 0.8,
-      mid: 1,
-      senior: 1.2
-    };
-
-    // Location multipliers for local costs
-    const locationMultipliers = {
-      us: 1.5,
-      uk: 1.3,
-      au: 1.4,
-      nz: 1.2
-    };
-
-    const offshoreBasePrice = offshoreBasePrices[teamSize as keyof typeof offshoreBasePrices];
-    const roleMultiplier = roleMultipliers[role as keyof typeof roleMultipliers];
-    const experienceMultiplier = experienceMultipliers[experience as keyof typeof experienceMultipliers];
-    const locationMultiplier = locationMultipliers[location as keyof typeof locationMultipliers];
-
-    const offshoreCost = Math.round(offshoreBasePrice * roleMultiplier * experienceMultiplier);
-    const localCost = Math.round(offshoreCost * locationMultiplier);
-    const savings = localCost - offshoreCost;
-    const roi = Math.round((savings / offshoreCost) * 100);
-
-    return {
-      offshoreCost,
-      localCost,
-      savings,
-      roi
-    };
-  };
-
-  const { offshoreCost, localCost, savings, roi } = calculateCosts();
+  console.log('QuoteCalculator rendering'); // Debug log
 
   return (
-    <CalculatorSection>
+    <Section id="quote-calculator">
       <Container>
-        <Content>
-          <Title>Quick Quote Calculator</Title>
-          <Description>
-            Get an instant estimate of your potential savings with ScaleMate's offshore talent solutions.
-          </Description>
-        </Content>
-
-        <CalculatorCard>
-          <FormGrid>
-            <FormGroup>
-              <Label>Industry</Label>
-              <Select value={industry} onChange={(e) => setIndustry(e.target.value)}>
-                <option value="technology">Technology</option>
-                <option value="finance">Finance</option>
-                <option value="healthcare">Healthcare</option>
-                <option value="retail">Retail</option>
-                <option value="manufacturing">Manufacturing</option>
-              </Select>
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Role Type</Label>
-              <Select value={role} onChange={(e) => setRole(e.target.value)}>
-                <option value="developer">Developer</option>
-                <option value="designer">Designer</option>
-                <option value="marketer">Marketer</option>
-                <option value="customer-support">Customer Support</option>
-              </Select>
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Experience Level</Label>
-              <Select value={experience} onChange={(e) => setExperience(e.target.value)}>
-                <option value="junior">Junior</option>
-                <option value="mid">Mid-level</option>
-                <option value="senior">Senior</option>
-              </Select>
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Location</Label>
-              <Select value={location} onChange={(e) => setLocation(e.target.value)}>
-                <option value="us">United States</option>
-                <option value="uk">United Kingdom</option>
-                <option value="au">Australia</option>
-                <option value="nz">New Zealand</option>
-              </Select>
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Team Size</Label>
-              <Select value={teamSize} onChange={(e) => setTeamSize(e.target.value)}>
-                <option value="1-5">1-5 team members</option>
-                <option value="6-10">6-10 team members</option>
-                <option value="11-20">11-20 team members</option>
-                <option value="21-50">21-50 team members</option>
-                <option value="51+">51+ team members</option>
-              </Select>
-            </FormGroup>
-          </FormGrid>
-
-          <ResultsGrid>
-            <ResultCard>
-              <ResultTitle>Local Cost</ResultTitle>
-              <ResultValue>${localCost}</ResultValue>
-            </ResultCard>
-
-            <ResultCard>
-              <ResultTitle>Offshore Cost</ResultTitle>
-              <ResultValue>${offshoreCost}</ResultValue>
-            </ResultCard>
-
-            <SavingsCard>
-              <ResultTitle>Monthly Savings</ResultTitle>
-              <ResultValue>${savings}</ResultValue>
-            </SavingsCard>
-
-            <ResultCard>
-              <ResultTitle>ROI</ResultTitle>
-              <ResultValue>{roi}%</ResultValue>
-            </ResultCard>
-          </ResultsGrid>
-
-          <Visualization>
-            Cost Comparison Visualization (Coming Soon)
-          </Visualization>
-
-          <Button as={Link} href="/quote">
-            Get Detailed Quote
-          </Button>
-        </CalculatorCard>
+        <Calculator>
+          <Title>Calculate Your Savings</Title>
+          <Grid>
+            <FormSection>
+              <div>
+                <Label>Select Role</Label>
+                <Select value={role} onChange={(e) => setRole(e.target.value)}>
+                  <option value="customer-service">Customer Service Representative</option>
+                  <option value="virtual-assistant">Virtual Assistant</option>
+                  <option value="digital-marketing">Digital Marketing Specialist</option>
+                </Select>
+              </div>
+              <div>
+                <Label>Experience Level</Label>
+                <Select value={experience} onChange={(e) => setExperience(e.target.value)}>
+                  <option value="entry">Entry Level (1-2 years)</option>
+                  <option value="mid">Mid Level (3-5 years)</option>
+                  <option value="senior">Senior Level (5+ years)</option>
+                </Select>
+              </div>
+            </FormSection>
+            
+            <ResultsSection>
+              <CostRow>
+                <CostHeader>
+                  <CostLabel>Local Cost</CostLabel>
+                  <CostValue color="#EC297B">$5,500/mo</CostValue>
+                </CostHeader>
+                <ProgressBar>
+                  <ProgressFill width="100%" color="#EC297B" />
+                </ProgressBar>
+              </CostRow>
+              
+              <CostRow>
+                <CostHeader>
+                  <CostLabel>Offshore Cost</CostLabel>
+                  <CostValue color="#00E915">$780/mo</CostValue>
+                </CostHeader>
+                <ProgressBar>
+                  <ProgressFill width="15%" color="#00E915" />
+                </ProgressBar>
+              </CostRow>
+              
+              <SavingsBox>
+                <MonthlySavings>Monthly Savings: $4,720</MonthlySavings>
+                <AnnualSavings>Annual Savings: $56,640</AnnualSavings>
+              </SavingsBox>
+            </ResultsSection>
+          </Grid>
+        </Calculator>
       </Container>
-    </CalculatorSection>
+    </Section>
   );
 } 
