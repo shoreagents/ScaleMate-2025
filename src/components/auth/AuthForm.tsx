@@ -312,7 +312,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                   <Input
                     id="reset-email"
                     type="email"
-                    placeholder="you@company.com"
+                    placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -345,7 +345,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@company.com"
+                    placeholder="your@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
