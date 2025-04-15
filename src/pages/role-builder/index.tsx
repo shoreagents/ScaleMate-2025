@@ -5,16 +5,14 @@ import RoleBuilderHeroSection from './components/HeroSection';
 import StepsBlock from './components/StepsBlock';
 import PreviewBlueprint from './components/PreviewBlueprint';
 import ResourceBlock from './components/ResourceBlock';
+import FinalCTA from './components/FinalCTA';
+import Footer from '@/components/layout/Footer';
 
 const Container = styled.div`
   min-height: 100vh;
   background-color: #F9FAFB;
-`;
-
-const MainContent = styled.main`
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
 `;
 
 export default function RoleBuilderPage() {
@@ -33,9 +31,8 @@ export default function RoleBuilderPage() {
         <StepsBlock />
         <PreviewBlueprint />
         <ResourceBlock />
-        <MainContent>
-          {/* Additional Role Builder components will be added here */}
-        </MainContent>
+        <FinalCTA />
+        <Footer />
       </Container>
     </>
   );
