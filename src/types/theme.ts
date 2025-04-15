@@ -39,5 +39,11 @@ declare module 'styled-components' {
     fonts?: {
       sans: string;
     };
+    breakpoints: {
+      sm: string;
+      md: string;
+      lg: string;
+      xl: string;
+    };
   }
 } 
