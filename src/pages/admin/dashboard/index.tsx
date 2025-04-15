@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 import DashboardTab from '@/components/admin/DashboardTab';
 import UserManagementTab from '@/components/admin/UserManagementTab';
+import AdminManagementTab from '@/components/admin/AdminManagementTab';
 import GenericTab from '@/components/admin/GenericTab';
 import { 
   FiHome, 
@@ -31,8 +32,18 @@ import {
   FiBarChart2,
   FiActivity,
   FiAward,
-  FiStar
+  FiStar,
+  FiBell,
+  FiUser,
+  FiRefreshCw,
+  FiLogOut
 } from 'react-icons/fi';
+import AdminManagement from '@/components/admin/AdminManagementTab';
+
+// Initialize Supabase client properly
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -170,7 +181,7 @@ const LastChecked = styled.span`
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: 16px;
 `;
 
 const LogoutButton = styled.button`
@@ -344,18 +355,24 @@ const SidebarFooter = styled.div`
 const MainContent = styled.div`
   flex: 1;
   padding: ${({ theme }) => theme.spacing.xl};
+  padding-top: calc(${({ theme }) => theme.spacing.xl} + 72px);
   margin-left: 250px;
   background-color: #F9FAFB;
 `;
 
 const ContentHeader = styled.div`
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 250px;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
   padding: ${({ theme }) => theme.spacing.lg};
   background-color: white;
   border-bottom: 1px solid #E5E7EB;
-  margin-left: -${({ theme }) => theme.spacing.xl};
-  margin-right: -${({ theme }) => theme.spacing.xl};
-  margin-top: -${({ theme }) => theme.spacing.xl};
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const ContentTitle = styled.h1`
@@ -435,11 +452,11 @@ const LogoIcon = styled.span`
 `;
 
 const MetricIcon = styled.div<{ $color: string }>`
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   color: ${props => props.$color};
   margin-bottom: 16px;
-  width: 56px;
-  height: 56px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -553,6 +570,83 @@ const StatusText = styled.div<{ $status: 'up' | 'down' | 'warning' }>`
   }};
 `;
 
+const IconButton = styled.button`
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  color: #6B7280;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #F3F4F6;
+    color: #111827;
+  }
+`;
+
+const NotificationBadge = styled.div`
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    background-color: #EF4444;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+`;
+
+const ProfileDropdown = styled.div<{ $isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: ${props => props.$isOpen ? 'block' : 'none'};
+  min-width: 200px;
+  z-index: 1000;
+`;
+
+const DropdownItem = styled.div`
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #F3F4F6;
+    color: #111827;
+  }
+
+  &:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+  }
+
+  &:last-child {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+  }
+`;
+
+const ProfileContainer = styled.div`
+  position: relative;
+`;
+
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -561,6 +655,19 @@ const AdminDashboard: React.FC = () => {
   const [hasAdminPermissions, setHasAdminPermissions] = useState<boolean>(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [databaseStatus, setDatabaseStatus] = useState<'up' | 'down' | 'warning'>('down');
+  const [lastChecked, setLastChecked] = useState<Date>(new Date());
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      router.push('/admin');
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
 
   useEffect(() => {
     const checkPermissions = async () => {
@@ -608,13 +715,85 @@ const AdminDashboard: React.FC = () => {
     checkPermissions();
   }, [router]);
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.push('/admin');
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
+  // Improved database connection check with simpler query
+  useEffect(() => {
+    const checkDatabaseConnection = async () => {
+      try {
+        // First verify Supabase configuration
+        if (!supabaseUrl || !supabaseKey) {
+          console.error('Supabase configuration missing');
+          setDatabaseStatus('down');
+          setConnectionError('Supabase configuration missing');
+          return;
+        }
+
+        // Use a simple health check query that doesn't involve policies
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('count')
+          .single();
+
+        if (error) {
+          console.error('Database connection error:', error.message);
+          // Check specifically for recursion error
+          if (error.message.includes('infinite recursion')) {
+            setDatabaseStatus('warning');
+            setConnectionError('Policy configuration issue - contact administrator');
+          } else {
+            setDatabaseStatus('down');
+            setConnectionError(error.message);
+          }
+        } else {
+          console.log('Database connection successful');
+          setDatabaseStatus('up');
+          setConnectionError(null);
+        }
+      } catch (error) {
+        console.error('Database connection error:', error);
+        setDatabaseStatus('down');
+        setConnectionError(error instanceof Error ? error.message : 'Unknown error');
+      }
+      setLastChecked(new Date());
+    };
+
+    // Check immediately
+    checkDatabaseConnection();
+
+    // Check every 15 seconds
+    const interval = setInterval(checkDatabaseConnection, 15000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Make checkDatabaseConnection available to the component
+  const handleDatabaseCheck = () => {
+    const checkDatabaseConnection = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('count')
+          .single();
+
+        if (error) {
+          if (error.message.includes('infinite recursion')) {
+            setDatabaseStatus('warning');
+            setConnectionError('Policy configuration issue - contact administrator');
+          } else {
+            setDatabaseStatus('down');
+            setConnectionError(error.message);
+          }
+        } else {
+          setDatabaseStatus('up');
+          setConnectionError(null);
+        }
+      } catch (error) {
+        setDatabaseStatus('down');
+        setConnectionError(error instanceof Error ? error.message : 'Unknown error');
+      }
+      setLastChecked(new Date());
+    };
+    
+    checkDatabaseConnection();
   };
 
   // Update metrics state to include new fields
@@ -650,18 +829,32 @@ const AdminDashboard: React.FC = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <FiHome /> },
-    { id: 'lead-management', label: 'Lead Management', icon: <FiUserPlus /> },
+    { id: 'lead-management', label: 'Lead Management', icon: <FiUsers /> },
     { id: 'user-management', label: 'User Management', icon: <FiUsers /> },
-    { id: 'quote-analytics', label: 'Quote Analytics', icon: <FiTrendingUp /> },
-    { id: 'role-blueprints', label: 'Role Blueprints', icon: <FiBriefcase /> },
-    { id: 'course-manager', label: 'Course Manager', icon: <FiBookOpen /> },
-    { id: 'resource-library', label: 'Resource Library', icon: <FiArchive /> },
-    { id: 'blog-management', label: 'Blog Management', icon: <FiEdit /> },
-    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FiCpu /> },
-    { id: 'quiz-management', label: 'Quiz Management', icon: <FiCheckCircle /> },
-    { id: 'content-blocks', label: 'Content Blocks', icon: <FiLayers /> },
-    { id: 'system-settings', label: 'System Settings', icon: <FiServer /> }
+    { id: 'quote-analytics', label: 'Quote Analytics', icon: <FiPieChart /> },
+    { id: 'role-blueprints', label: 'Role Blueprints', icon: <FiFileText /> },
+    { id: 'course-manager', label: 'Course Manager', icon: <FiBook /> },
+    { id: 'resource-library', label: 'Resource Library', icon: <FiFolder /> },
+    { id: 'blog-management', label: 'Blog Management', icon: <FiFile /> },
+    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FiTool /> },
+    { id: 'quiz-management', label: 'Quiz Management', icon: <FiHelpCircle /> },
+    { id: 'content-blocks', label: 'Content Blocks', icon: <FiGrid /> },
+    { id: 'admin-management', label: 'Admin Management', icon: <FiUserPlus /> },
+    { id: 'system-settings', label: 'System Settings', icon: <FiSettings /> }
   ];
+
+  // Add click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('#profile-menu')) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const renderTabContent = () => {
     const currentTab = navItems.find(item => item.id === activeTab);
@@ -775,30 +968,55 @@ const AdminDashboard: React.FC = () => {
                 <CardTitle>System Health</CardTitle>
                 <CardContent>
                   <div className="status-row">
-                    <StatusDot $status="up" />
-                    <div style={{ flex: 1 }}>API Service</div>
-                    <StatusText $status="up">Operational</StatusText>
-                  </div>
-                  <div className="status-row">
-                    <StatusDot $status="up" />
-                    <div style={{ flex: 1 }}>Database</div>
-                    <StatusText $status="up">Operational</StatusText>
-                  </div>
-                  <div className="status-row">
-                    <StatusDot $status="warning" />
-                    <div style={{ flex: 1 }}>Authentication Service</div>
-                    <StatusText $status="warning">Minor Issues</StatusText>
-                  </div>
-                  <div className="status-row">
-                    <StatusDot $status="up" />
-                    <div style={{ flex: 1 }}>Storage Service</div>
-                    <StatusText $status="up">Operational</StatusText>
+                    <StatusDot $status={databaseStatus} />
+                    <div style={{ flex: 1 }}>
+                      Database
+                      {connectionError && (
+                        <div style={{ 
+                          fontSize: '0.75rem', 
+                          color: '#EF4444',
+                          marginTop: '2px' 
+                        }}>
+                          {connectionError}
+                        </div>
+                      )}
+                    </div>
+                    <StatusText $status={databaseStatus}>
+                      {databaseStatus === 'up' ? 'Connected' : 
+                       databaseStatus === 'warning' ? 'Policy Issue' : 'Disconnected'}
+                    </StatusText>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#6B7280', 
+                      marginLeft: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px' 
+                    }}>
+                      {lastChecked.toLocaleTimeString()}
+                      <button 
+                        onClick={handleDatabaseCheck}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: '4px',
+                          cursor: 'pointer',
+                          color: '#6B7280',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <FiRefreshCw size={14} />
+                      </button>
+                    </div>
                   </div>
                 </CardContent>
               </SystemStatusCard>
             </Grid>
           </>
         );
+      case 'admin-management':
+        return <AdminManagementTab />;
       case 'user-management':
         return (
           <Grid>
@@ -1006,13 +1224,32 @@ const AdminDashboard: React.FC = () => {
             </NavItem>
           ))}
         </SidebarContent>
-        <SidebarFooter>
-          <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
-        </SidebarFooter>
       </Sidebar>
       <MainContent>
         <ContentHeader>
           <ContentTitle>{navItems.find(item => item.id === activeTab)?.label}</ContentTitle>
+          <HeaderActions>
+            <NotificationBadge>
+              <IconButton>
+                <FiBell size={20} />
+              </IconButton>
+            </NotificationBadge>
+            <ProfileContainer id="profile-menu">
+              <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
+                <FiUser size={20} />
+              </IconButton>
+              <ProfileDropdown $isOpen={isProfileOpen}>
+                <DropdownItem onClick={() => router.push('/admin/profile')}>
+                  <FiUser size={16} />
+                  View Profile
+                </DropdownItem>
+                <DropdownItem onClick={handleLogout}>
+                  <FiLogOut size={16} />
+                  Logout
+                </DropdownItem>
+              </ProfileDropdown>
+            </ProfileContainer>
+          </HeaderActions>
         </ContentHeader>
         {renderTabContent()}
       </MainContent>
