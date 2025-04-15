@@ -7,7 +7,7 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 const fadeIn = keyframes`
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -27,25 +27,18 @@ const progressAnimation = keyframes`
 const QuizContainer = styled.div`
   max-width: 48rem;
   margin: 0;
-  animation: ${fadeIn} 0.6s ease-out;
   background-color: white;
   border-radius: 1rem;
   padding: 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: 1.5rem;
-    width: 100%;
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    padding: 1rem;
-    border-radius: 0.75rem;
-  }
+  height: 600px;
+  display: flex;
+  flex-direction: column;
 `;
 
 const ProgressContainer = styled.div`
   margin-bottom: 2rem;
+  flex-shrink: 0;
 `;
 
 const ProgressText = styled.div`
@@ -84,23 +77,10 @@ const QuestionCard = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
-  margin-bottom: 1rem;
-  animation: ${fadeIn} 0.6s ease-out;
+  margin-bottom: 1.5rem;
   height: 460px;
   display: flex;
   flex-direction: column;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    height: 420px;
-    padding: 1.25rem;
-    margin-bottom: 0.75rem;
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    height: 380px;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
-  }
 `;
 
 const QuestionTitle = styled.h2`
@@ -233,11 +213,14 @@ const OptionText = styled.span`
 const NavigationContainer = styled.div`
   display: flex;
   justify-content: space-between;
+  margin-top: auto;
   flex-shrink: 0;
-  margin-top: 0.375rem;
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
 
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    margin-top: 0.25rem;
+  &.hidden {
+    opacity: 0;
+    pointer-events: none;
   }
 `;
 
@@ -369,77 +352,64 @@ const questions: Question[] = [
 
 const ScoreOutput = styled.div`
   background-color: white;
-  border-radius: 0.75rem;
+  border-radius: 1rem;
   border: 1px solid #E5E7EB;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  animation: ${fadeIn} 0.6s ease-out;
+  padding: 1rem 2.5rem 2.5rem;
   height: 460px;
   display: flex;
   flex-direction: column;
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    height: 420px;
-    padding: 1.25rem;
-    margin-bottom: 0.75rem;
-  }
-
-  @media (max-width: ${({ theme }) => theme.breakpoints.sm}) {
-    height: 380px;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
-  }
 `;
 
 const ScoreTitle = styled.h2`
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #0F172A;
-  margin-bottom: 1rem;
+  margin: 0 0 1rem 0;
 `;
 
 const ScoreDetails = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  flex-grow: 1;
-`;
-
-const ScoreRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem;
-  background-color: #F9FAFB;
-  border-radius: 0.5rem;
-
-  &:last-child {
-    flex: 1;
-    margin-top: auto;
-    padding: 1.5rem;
-    background-color: #F8FAFC;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
 `;
 
 const ScoreLabel = styled.span`
+  font-size: 1.125rem;
   font-weight: 600;
   color: #0F172A;
-  margin-bottom: 4px;
 `;
 
 const ScoreValue = styled.span`
+  font-size: 1.125rem;
   color: #84CC16;
   font-weight: 600;
 `;
 
 const ScoreDescription = styled.div`
-  color: #4B5563;
+  color: #64748B;
   line-height: 1.6;
   font-size: 1rem;
-  margin: 0;
-  padding: 0;
+`;
+
+const ScoreRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: #F9FAFB;
+  border-radius: 1rem;
+
+  &:last-child {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    padding: 1.5rem;
+    margin-top: 0.5rem;
+
+    ${ScoreLabel} {
+      margin-bottom: 0;
+    }
+  }
 `;
 
 interface ScoringLevel {
@@ -474,7 +444,6 @@ const scoringLevels: ScoringLevel[] = [
 export default function QuizInterface() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [showQuestion, setShowQuestion] = useState(true);
   const [totalScore, setTotalScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
 
@@ -486,37 +455,39 @@ export default function QuizInterface() {
     return scoringLevels[3];
   };
 
-  // Updated timing sequence with scoring
   useEffect(() => {
-    if (showScore) {
-      // Show score for 5 seconds, then restart quiz
-      const restartTimer = setTimeout(() => {
+    let answerTimer: NodeJS.Timeout;
+    let nextQuestionTimer: NodeJS.Timeout;
+
+    if (!showScore) {
+      // Handle question answering
+      answerTimer = setTimeout(() => {
+        const randomOption = Math.floor(Math.random() * questions[currentQuestionIndex].options.length);
+        setSelectedOption(randomOption);
+        const optionScore = 3 - randomOption;
+        setTotalScore(prev => prev + optionScore);
+      }, 1000);
+
+      // Handle question progression
+      nextQuestionTimer = setTimeout(() => {
+        if (currentQuestionIndex === questions.length - 1) {
+          setShowScore(true);
+        } else {
+          setCurrentQuestionIndex(prev => prev + 1);
+          setSelectedOption(null);
+        }
+      }, 2000);
+    } else {
+      // Reset quiz after showing score for 5 seconds
+      const resetTimer = setTimeout(() => {
         setShowScore(false);
         setCurrentQuestionIndex(0);
         setSelectedOption(null);
         setTotalScore(0);
       }, 5000);
-      return () => clearTimeout(restartTimer);
+
+      return () => clearTimeout(resetTimer);
     }
-
-    const answerTimer = setTimeout(() => {
-      // After 1 second, show the answer
-      const randomOption = Math.floor(Math.random() * questions[currentQuestionIndex].options.length);
-      setSelectedOption(randomOption);
-      // Add score based on selected option (3,2,1,0)
-      const optionScore = 3 - randomOption;
-      setTotalScore(prev => prev + optionScore);
-    }, 1000);
-
-    const nextQuestionTimer = setTimeout(() => {
-      // After 2 seconds total, check if we should show score or move to next question
-      if (currentQuestionIndex === questions.length - 1) {
-        setShowScore(true);
-      } else {
-        setCurrentQuestionIndex(prev => prev + 1);
-        setSelectedOption(null);
-      }
-    }, 2000);
 
     return () => {
       clearTimeout(answerTimer);
@@ -542,30 +513,21 @@ export default function QuizInterface() {
           <ScoreTitle>Your Readiness Score</ScoreTitle>
           <ScoreDetails>
             <ScoreRow>
-              <ScoreLabel>Total Score:</ScoreLabel>
+              <ScoreLabel>Total Score</ScoreLabel>
               <ScoreValue>{totalScore} / 21</ScoreValue>
             </ScoreRow>
             <ScoreRow>
-              <ScoreLabel>Readiness Level:</ScoreLabel>
+              <ScoreLabel>Readiness Level</ScoreLabel>
               <ScoreValue>{scoringLevel.level}</ScoreValue>
             </ScoreRow>
             <ScoreRow>
               <ScoreLabel>What This Means:</ScoreLabel>
-              <ScoreDescription>{scoringLevel.description}</ScoreDescription>
+              <ScoreDescription>
+                {scoringLevel.description}
+              </ScoreDescription>
             </ScoreRow>
           </ScoreDetails>
         </ScoreOutput>
-
-        <NavigationContainer>
-          <NavButton variant="secondary" style={{ visibility: 'hidden' }}>
-            <ButtonIcon icon={faArrowLeft} />
-            Previous
-          </NavButton>
-          <NavButton variant="primary" style={{ visibility: 'hidden' }}>
-            Next Question
-            <ButtonIconRight icon={faArrowRight} />
-          </NavButton>
-        </NavigationContainer>
       </QuizContainer>
     );
   }
@@ -575,7 +537,6 @@ export default function QuizInterface() {
 
   return (
     <QuizContainer>
-      {/* Progress Bar */}
       <ProgressContainer>
         <ProgressText>
           <ProgressLabel>Progress</ProgressLabel>
@@ -586,7 +547,6 @@ export default function QuizInterface() {
         </ProgressBar>
       </ProgressContainer>
 
-      {/* Question Card */}
       <QuestionCard>
         <QuestionTitle>{currentQuestion.text}</QuestionTitle>
         <OptionsContainer>
@@ -611,7 +571,6 @@ export default function QuizInterface() {
         </OptionsContainer>
       </QuestionCard>
 
-      {/* Navigation Buttons */}
       <NavigationContainer>
         <NavButton variant="secondary">
           <ButtonIcon icon={faArrowLeft} />
