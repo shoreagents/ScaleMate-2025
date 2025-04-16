@@ -10,8 +10,8 @@ const FormContainer = styled.div`
   height: 500px;
   padding: 2rem;
   background: white;
+  border: 1px solid #E5E7EB;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   animation: fadeIn 0.3s ease-out;
   position: absolute;
   top: 50%;

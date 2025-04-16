@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo } from 'react-icons/fi';
+import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX } from 'react-icons/fi';
+import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 
 const Container = styled.div`
   padding: 24px;
@@ -40,23 +41,23 @@ const Button = styled.button`
 
 const Table = styled.table`
   width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  border-radius: 8px;
+  margin-top: 1rem;
+  background: white;
+  border-radius: 0.5rem;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+border: 1px solid #E5E7EB;
+  tr:last-child td {
+    border-bottom: none;
+  }
 `;
 
 const Th = styled.th<{ $sortable?: boolean }>`
   padding: 12px 16px;
   text-align: left;
-  color: #4B5563;
+  color: rgb(107, 114, 128);
   font-weight: 500;
   border-bottom: 1px solid #E5E7EB;
-  vertical-align: middle;
-  white-space: nowrap;
-  height: 48px;
-  box-sizing: border-box;
+  font-size: 16px;
   cursor: ${props => props.$sortable ? 'pointer' : 'default'};
   user-select: none;
   
@@ -83,23 +84,9 @@ const SortIcon = styled.span<{ $active: boolean; $direction: 'asc' | 'desc' }>`
 
 const Td = styled.td`
   padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
   color: #111827;
-  border-bottom: 1px solid #E5E7EB;
-  vertical-align: middle;
-  text-align: left;
-  white-space: nowrap;
-  height: 48px;
-  box-sizing: border-box;
-  
-  &:first-child {
-    padding-left: 16px;
-    width: 50px;
-  }
-  
-  &:last-child {
-    padding-right: 16px;
-    width: 120px;
-  }
+  font-size: 16px;
 `;
 
 const ActionButton = styled.button<{ $variant?: 'danger' | 'success' }>`
@@ -123,13 +110,35 @@ const ActionGroup = styled.div`
   align-items: center;
 `;
 
-const StatusBadge = styled.span<{ $status: 'active' | 'pending' }>`
+const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed' }>`
   padding: 4px 8px;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
-  background-color: ${props => props.$status === 'active' ? '#D1FAE5' : '#FEF3C7'};
-  color: ${props => props.$status === 'active' ? '#059669' : '#D97706'};
+  background-color: ${props => {
+    switch (props.$status) {
+      case 'active':
+        return '#D1FAE5';
+      case 'pending':
+        return '#FEF3C7';
+      case 'not-confirmed':
+        return '#D1D5DB';
+      default:
+        return '#D1D5DB';
+    }
+  }};
+  color: ${props => {
+    switch (props.$status) {
+      case 'active':
+        return '#059669';
+      case 'pending':
+        return '#D97706';
+      case 'not-confirmed':
+        return '#1F2937';
+      default:
+        return '#1F2937';
+    }
+  }};
   text-transform: capitalize;
   display: inline-block;
   line-height: 1;
@@ -189,20 +198,34 @@ const Form = styled.form`
   gap: 16px;
 `;
 
+const FormRow = styled.div`
+  display: flex;
+  gap: 16px;
+  width: 100%;
+`;
+
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+`;
+
+const RequiredAsterisk = styled.span`
+  color: #EF4444;
+  margin-left: 4px;
 `;
 
 const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
+  display: flex;
+  align-items: center;
 `;
 
 const Input = styled.input`
-      padding: 0.875rem 1rem;
+   padding: 8px 12px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -215,7 +238,7 @@ const Input = styled.input`
 `;
 
 const Select = styled.select`
-      padding: 0.875rem 1rem;
+  padding: 8px 12px;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -235,6 +258,12 @@ const ErrorMessage = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
 `;
 
 const SuccessMessage = styled.div`
@@ -260,10 +289,10 @@ const RoleSelectContainer = styled.div`
 
 const RoleIcon = styled.div`
   position: absolute;
-  right: 1rem;
+  right: .5rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #6B7280;
+  color: #374151;
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -274,8 +303,8 @@ const RoleIcon = styled.div`
 
 const RoleSelect = styled.select`
   width: 100%;
-  padding: 0.875rem 1rem;
-  padding-right: 2.5rem;
+  padding: 8px 12px;
+  padding-right: 12px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -335,6 +364,7 @@ const SaveButton = styled(ModalButton)`
   &:disabled {
     background-color: #93C5FD;
     cursor: not-allowed;
+    opacity: 0.7;
   }
 `;
 
@@ -415,8 +445,15 @@ const InfoMessage = styled.div`
 `;
 
 interface UserData {
+  user_id: string;
   email: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  gender: string;
+  created_at: string;
   last_sign_in_at: string | null;
+  roles: string[];
 }
 
 interface AdminRoleData {
@@ -431,11 +468,19 @@ interface Admin {
   status: 'active' | 'pending';
   created_at: string;
   last_sign_in: string | null;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  gender?: string;
 }
 
 interface AdminFormData {
   email: string;
   password: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  gender: string;
 }
 
 interface UserRole {
@@ -444,16 +489,27 @@ interface UserRole {
   roles: string[];
   created_at: string;
   last_sign_in: string | null | undefined;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  gender?: string;
 }
 
 interface UserEditFormData {
   email: string;
   password: string;
   role: 'admin' | 'moderator' | 'user';
+  first_name: string;
+  last_name: string;
+  phone: string;
+  gender: string;
 }
 
 // Add type for user to delete
 type UserToDelete = UserRole | Admin;
+
+// Update the sort field type
+type SortField = 'email' | 'name' | 'roles' | 'last_sign_in';
 
 const AdminManagementTab: React.FC = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
@@ -463,7 +519,11 @@ const AdminManagementTab: React.FC = () => {
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [formData, setFormData] = useState<AdminFormData>({
     email: '',
-    password: ''
+    password: '',
+    first_name: '',
+    last_name: '',
+    phone: '',
+    gender: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -479,18 +539,32 @@ const AdminManagementTab: React.FC = () => {
   const [editFormData, setEditFormData] = useState<UserEditFormData>({
     email: '',
     password: '',
-    role: 'user'
+    role: 'user',
+    first_name: '',
+    last_name: '',
+    phone: '',
+    gender: ''
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filterEmail, setFilterEmail] = useState('');
-  const [sortField, setSortField] = useState<'email' | 'roles' | 'last_sign_in'>('email');
+  const [sortField, setSortField] = useState<SortField>('email');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserToDelete | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showSortIcon, setShowSortIcon] = useState(false);
-  const [activeSortColumn, setActiveSortColumn] = useState<'email' | 'roles' | 'last_sign_in' | null>(null);
+  const [activeSortColumn, setActiveSortColumn] = useState<SortField | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lastAttemptTime, setLastAttemptTime] = useState<number | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [rateLimitCountdown, setRateLimitCountdown] = useState<number | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const MAX_RETRIES = 2;
+  const INITIAL_RETRY_DELAY = 10000; // 10 seconds
+  const requestQueue = useRef<Array<() => Promise<void>>>([]);
+  const isProcessing = useRef(false);
 
   // Add ref for timeout
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -523,19 +597,33 @@ const AdminManagementTab: React.FC = () => {
   const fetchAllUsers = async () => {
     try {
       const { data: users, error: usersError } = await supabase
-        .from('user_roles_view')
-        .select('*')
+        .from('user_details')
+        .select(`
+          user_id,
+          email,
+          first_name,
+          last_name,
+          phone,
+          gender,
+          created_at,
+          last_sign_in_at,
+          roles
+        `)
         .order('created_at', { ascending: false });
 
       if (usersError) throw usersError;
 
       // Format the data to match UserRole interface
       const formattedUsers: UserRole[] = users.map(user => ({
-        id: user.id,
-        email: user.email || 'No email', // Add fallback for null email
+        id: user.user_id,
+        email: user.email,
         roles: user.roles || [],
         created_at: user.created_at,
-        last_sign_in: user.last_sign_in_at || null
+        last_sign_in: user.last_sign_in_at || null,
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone: user.phone || '',
+        gender: user.gender || ''
       }));
 
       setAllUsers(formattedUsers);
@@ -550,10 +638,19 @@ const AdminManagementTab: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Get all users with their roles from the view
       const { data: users, error: usersError } = await supabase
-        .from('user_roles_view')
-        .select('*')
+        .from('user_details')
+        .select(`
+          user_id,
+          email,
+          first_name,
+          last_name,
+          phone,
+          gender,
+          created_at,
+          last_sign_in_at,
+          roles
+        `)
         .order('created_at', { ascending: false });
 
       if (usersError) {
@@ -565,15 +662,18 @@ const AdminManagementTab: React.FC = () => {
         return;
       }
 
-      // Filter and format admin users
       const formattedAdmins = users
         .filter(user => user.roles.includes('admin'))
         .map(user => ({
-          id: user.id,
-          email: user.email || 'Unknown',
+          id: user.user_id,
+          email: user.email,
           status: 'active' as const,
           created_at: user.created_at,
-          last_sign_in: user.last_sign_in_at || null
+          last_sign_in: user.last_sign_in_at || null,
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
+          phone: user.phone || '',
+          gender: user.gender || ''
         }));
 
       setAdmins(formattedAdmins);
@@ -591,7 +691,7 @@ const AdminManagementTab: React.FC = () => {
       return;
     }
     setEditingAdmin(null);
-    setFormData({ email: '', password: '' });
+    setFormData({ email: '', password: '', first_name: '', last_name: '', phone: '', gender: '' });
     setError(null);
     setSuccess(null);
     setIsModalOpen(true);
@@ -607,12 +707,20 @@ const AdminManagementTab: React.FC = () => {
       email: admin.email,
       roles: ['admin'],
       created_at: admin.created_at,
-      last_sign_in: admin.last_sign_in
+      last_sign_in: admin.last_sign_in,
+      first_name: admin.first_name || '',
+      last_name: admin.last_name || '',
+      phone: admin.phone || '',
+      gender: admin.gender || ''
     });
     setEditFormData({
       email: admin.email,
       password: '',
-      role: 'admin'
+      role: 'admin',
+      first_name: admin.first_name || '',
+      last_name: admin.last_name || '',
+      phone: admin.phone || '',
+      gender: admin.gender || ''
     });
     setIsEditModalOpen(true);
   };
@@ -622,81 +730,190 @@ const AdminManagementTab: React.FC = () => {
     setEditFormData({
       email: user.email,
       password: '',
-      role: user.roles.includes('admin') ? 'admin' : user.roles.includes('moderator') ? 'moderator' : 'user'
+      role: user.roles.includes('admin') ? 'admin' : user.roles.includes('moderator') ? 'moderator' : 'user',
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      phone: user.phone || '',
+      gender: user.gender || ''
     });
     setIsEditModalOpen(true);
   };
 
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  // Cleanup retry timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Add cleanup for countdown timer
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+    };
+  }, []);
+
+  // Add cleanup for timers
+  useEffect(() => {
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const processQueue = async () => {
+    if (isProcessing.current || requestQueue.current.length === 0) return;
+    
+    isProcessing.current = true;
+    const nextRequest = requestQueue.current.shift();
+    
+    if (nextRequest) {
+      try {
+        await nextRequest();
+      } catch (error) {
+        console.error('Error processing request:', error);
+        // Don't rethrow the error, just log it
+        // The error will be handled by the modal error state
+      } finally {
+        isProcessing.current = false;
+        if (requestQueue.current.length > 0) {
+          setTimeout(processQueue, 1000); // Wait 1 second between requests
+        }
+      }
+    }
+  };
+
+  const addToQueue = (request: () => Promise<void>) => {
+    requestQueue.current.push(request);
+    if (!isProcessing.current) {
+      processQueue();
+    }
+  };
+
+  const startRateLimitCountdown = (delay: number) => {
+    setRateLimitCountdown(Math.ceil(delay / 1000));
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+    }
+    countdownRef.current = setInterval(() => {
+      setRateLimitCountdown(prev => {
+        if (prev === null || prev <= 1) {
+          if (countdownRef.current) {
+            clearInterval(countdownRef.current);
+          }
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    
+    if (isSubmitting || rateLimitCountdown !== null) {
+      return;
+    }
 
-    try {
-      if (editingAdmin) {
-        // For now, we can't update password since it's handled by Supabase Auth
-        setSuccess('Admin details updated');
-        setIsModalOpen(false);
-        return;
-      }
+    setIsSubmitting(true);
+    setLastAttemptTime(Date.now());
 
-      // Create new admin
-      let userId: string;
-
-      // Try to create new user
-      const { data: newUser, error: createError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (createError) {
-        if (createError.message.includes('already registered')) {
-          // User exists, try to sign in to get their ID
-          const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
-            email: formData.email,
-            password: formData.password,
-          });
-          
-          if (signInError) {
-            throw new Error('Error signing in: ' + signInError.message);
-          }
-          if (!user) {
-            throw new Error('User not found');
-          }
-          userId = user.id;
-        } else {
-          throw new Error('Error creating user: ' + createError.message);
+    const submitRequest = async () => {
+      try {
+        if (!formData.email || !formData.password || !formData.first_name || !formData.last_name) {
+          setModalError('Email, password, first name, and last name are required');
+          return;
         }
-      } else {
-        if (!newUser.user) {
-          throw new Error('Failed to create user');
-        }
-        userId = newUser.user.id;
-      }
 
-      // Add admin role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: 'admin',
-          created_at: new Date().toISOString()
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
         });
 
-      if (roleError) {
-        if (roleError.code === '23505') { // Unique violation
-          throw new Error('This user is already an admin');
-        }
-        throw new Error('Error adding admin role: ' + roleError.message);
-      }
+        if (authError) {
+          if (authError.message.includes('rate limit')) {
+            // Handle Supabase rate limit
+            const retryDelay = 300000; // 5 minutes in milliseconds
+            startRateLimitCountdown(retryDelay);
+            setModalError('Rate limit exceeded. Please try again in 5 minutes or use a different email address.');
+            return;
+          } else if (authError.message.includes('already registered')) {
+            // Handle existing user
+            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+              email: formData.email,
+              password: formData.password,
+            });
+            
+            if (signInError) {
+              setModalError('Error signing in: ' + signInError.message);
+              return;
+            }
+            if (!signInData?.user) {
+              setModalError('User not found');
+              return;
+            }
+            
+            const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
+              p_action: 'insert',
+              p_new_role: 'user',
+              p_target_user_id: signInData.user.id
+            });
 
-      setSuccess('Admin added successfully');
-      await fetchAdmins();
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error managing admin:', error);
-      setError(error instanceof Error ? error.message : 'Failed to manage admin. Please try again.');
-    }
+            if (roleError) {
+              setModalError('Error assigning role: ' + roleError.message);
+              return;
+            }
+          } else {
+            setModalError('Error creating user: ' + authError.message);
+            return;
+          }
+        } else {
+          if (!authData?.user) {
+            setModalError('Failed to create user');
+            return;
+          }
+
+          const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
+            p_action: 'insert',
+            p_new_role: 'user',
+            p_target_user_id: authData.user.id
+          });
+
+          if (roleError) {
+            setModalError('Error assigning role: ' + roleError.message);
+            return;
+          }
+        }
+
+        setModalSuccess('User created successfully');
+        setIsModalOpen(false);
+        setFormData({ email: '', password: '', first_name: '', last_name: '', phone: '', gender: '' });
+        setRetryCount(0);
+        await fetchAllUsers();
+      } catch (error) {
+        console.error('Error in handleSubmit:', error);
+        setModalError(error instanceof Error ? error.message : 'Failed to create user');
+      }
+    };
+
+    addToQueue(submitRequest);
+    setIsSubmitting(false);
   };
 
   const handleDeleteAdmin = async (adminId: string) => {
@@ -824,46 +1041,52 @@ const AdminManagementTab: React.FC = () => {
     e.preventDefault();
     if (!selectedUser) return;
 
+    // Validate required fields
+    if (!editFormData.first_name.trim() || !editFormData.last_name.trim()) {
+      setModalError('First name and last name are required');
+      return;
+    }
+
     try {
-      // Use the enable_user_roles_rls function to update the role
-      const { error: updateError } = await supabase.rpc('enable_user_roles_rls', {
-        p_action: 'update',
-        p_new_role: editFormData.role,
-        p_target_user_id: selectedUser.id
+      // Update user profile
+      const { error: profileError } = await supabase.rpc('update_user_profile', {
+        p_user_id: selectedUser.id,
+        p_first_name: editFormData.first_name.trim(),
+        p_last_name: editFormData.last_name.trim(),
+        p_phone: editFormData.phone,
+        p_gender: editFormData.gender
       });
 
-      if (updateError) {
-        console.error('Error updating role:', updateError);
-        throw new Error(`Failed to update role: ${updateError.message}`);
+      if (profileError) {
+        throw new Error(`Failed to update profile: ${profileError.message}`);
       }
 
-      setModalSuccess('User role updated successfully');
-      
-      // Set refreshing state
-      setIsRefreshing(true);
-      
-      try {
-        // Refresh both admin and user lists
-        await Promise.all([
-          fetchAdmins(),
-          fetchAllUsers()
-        ]);
-      } catch (refreshError) {
-        console.error('Error refreshing lists:', refreshError);
-        setModalError('Role updated but failed to refresh lists. Please refresh the page manually.');
-      } finally {
-        setIsRefreshing(false);
+      // Update role if changed
+      if (editFormData.role !== selectedUser.roles[0]) {
+        const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
+          p_action: 'update',
+          p_new_role: editFormData.role,
+          p_target_user_id: selectedUser.id
+        });
+
+        if (roleError) {
+          throw new Error(`Failed to update role: ${roleError.message}`);
+        }
       }
+
+      setModalSuccess('User profile updated successfully');
+      
+      // Refresh both admin and user lists
+      await Promise.all([
+        fetchAdmins(),
+        fetchAllUsers()
+      ]);
       
       // Close the modal
       handleModalClose();
     } catch (error) {
-      console.error('Error in handleEditSubmit:', {
-        error,
-        user: selectedUser,
-        newRole: editFormData.role
-      });
-      setModalError(error instanceof Error ? error.message : 'Failed to update user role. Please check the console for details.');
+      console.error('Error in handleEditSubmit:', error);
+      setModalError(error instanceof Error ? error.message : 'Failed to update user profile');
     }
   };
 
@@ -891,7 +1114,8 @@ const AdminManagementTab: React.FC = () => {
     }
   };
 
-  const handleSort = (field: 'email' | 'roles' | 'last_sign_in') => {
+  // Update the handleSort function
+  const handleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -899,18 +1123,6 @@ const AdminManagementTab: React.FC = () => {
       setSortDirection('asc');
     }
     setActiveSortColumn(field);
-    setShowSortIcon(true);
-    
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    // Set new timeout
-    timeoutRef.current = setTimeout(() => {
-      setShowSortIcon(false);
-      setActiveSortColumn(null);
-    }, 3000);
   };
 
   const sortAdmins = (data: Admin[]) => {
@@ -964,9 +1176,6 @@ const AdminManagementTab: React.FC = () => {
 
   return (
     <Container>
-      <Header>
-        <Title>Admin Management</Title>
-      </Header>
 
       <TabContainer>
         <TabButton 
@@ -1020,96 +1229,7 @@ const AdminManagementTab: React.FC = () => {
           <FilterContainer>
             <FilterInput
               type="text"
-              placeholder="Filter by Email"
-              value={filterEmail}
-              onChange={(e) => setFilterEmail(e.target.value)}
-            />
-            <Button onClick={handleAddAdmin}>
-              <FiUserPlus />
-              Add User
-            </Button>
-          </FilterContainer>
-          <Table>
-            <thead>
-              <tr>
-                <Th style={{ width: '50px' }}>#</Th>
-                <Th 
-                  style={{ width: '300px' }}
-                  onClick={() => handleSort('email')}
-                  $sortable
-                >
-                  Email
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'email'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th style={{ width: '200px' }}>Status</Th>
-                <Th 
-                  style={{ width: '150px' }}
-                  onClick={() => handleSort('last_sign_in')}
-                  $sortable
-                >
-                  Last Account Activity
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th style={{ width: '120px' }}>Actions</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortAdmins(admins)
-                .filter(admin => 
-                  admin.email.toLowerCase().includes(filterEmail.toLowerCase())
-                )
-                .map((admin, index) => (
-                  <tr key={admin.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '300px' }}>{admin.email}</Td>
-                    <Td style={{ width: '200px' }}>
-                      <StatusBadge $status={admin.status}>
-                        {admin.status === 'active' ? 'Active' : 'Pending'}
-                      </StatusBadge>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
-                      {admin.last_sign_in 
-                        ? new Date(admin.last_sign_in).toLocaleDateString()
-                        : 'Never'
-                      }
-                    </Td>
-                    <Td style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton onClick={() => handleEditAdmin(admin)}>
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        <ActionButton 
-                          $variant="danger"
-                          onClick={() => {
-                            setUserToDelete(admin);
-                            setIsDeleteModalOpen(true);
-                          }}
-                        >
-                          <FiTrash2 size={18} />
-                        </ActionButton>
-                      </ActionGroup>
-                    </Td>
-                  </tr>
-                ))}
-            </tbody>
-          </Table>
-        </>
-      ) : activeTab === 'moderators' ? (
-        <>
-          <FilterContainer>
-            <FilterInput
-              type="text"
-              placeholder="Filter by Email"
+              placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
@@ -1131,6 +1251,141 @@ const AdminManagementTab: React.FC = () => {
               <tr>
                 <Th style={{ width: '50px' }}>#</Th>
                 <Th 
+                  style={{ width: '200px' }}
+                  onClick={() => handleSort('name')}
+                  $sortable
+                >
+                  Name
+                  <SortIcon 
+                    $active={showSortIcon && activeSortColumn === 'name'} 
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
+                </Th>
+                <Th 
+                  style={{ width: '300px' }}
+                  onClick={() => handleSort('email')}
+                  $sortable
+                >
+                  Email
+                  <SortIcon 
+                    $active={showSortIcon && activeSortColumn === 'email'} 
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
+                </Th>
+                <Th style={{ width: '200px' }}>Status</Th>
+                <Th 
+                  style={{ width: '150px' }}
+                  onClick={() => handleSort('last_sign_in')}
+                  $sortable
+                >
+                  Last Activity
+                  <SortIcon 
+                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
+                </Th>
+                {isCurrentUserAdmin && <Th style={{ width: '120px' }}>Actions</Th>}
+              </tr>
+            </thead>
+            <tbody>
+              {sortAdmins(admins)
+                .filter(admin => {
+                  const searchTerm = filterEmail.toLowerCase();
+                  const name = `${admin.first_name || ''} ${admin.last_name || ''}`.trim().toLowerCase();
+                  const email = admin.email.toLowerCase();
+                  const role = 'admin';
+                  
+                  return name.includes(searchTerm) || 
+                         email.includes(searchTerm) || 
+                         role.includes(searchTerm);
+                })
+                .map((admin, index) => (
+                  <tr key={admin.id}>
+                    <Td style={{ width: '50px' }}>{index + 1}</Td>
+                    <Td style={{ width: '200px' }}>
+                      {`${admin.first_name || ''} ${admin.last_name || ''}`.trim() || '-'}
+                    </Td>
+                    <Td style={{ width: '300px' }}>{admin.email}</Td>
+                    <Td style={{ width: '200px' }}>
+                      <StatusBadge $status={admin.status}>
+                        {admin.status === 'active' ? 'Active' : 'Pending'}
+                      </StatusBadge>
+                    </Td>
+                    <Td style={{ width: '150px' }}>
+                      {admin.last_sign_in 
+                        ? new Date(admin.last_sign_in).toLocaleDateString()
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </Td>
+                    {isCurrentUserAdmin && (
+                      <Td style={{ width: '120px' }}>
+                        <ActionGroup>
+                          <ActionButton onClick={() => handleEditAdmin(admin)}>
+                            <FiEdit2 size={18} />
+                          </ActionButton>
+                          <ActionButton 
+                            $variant="danger"
+                            onClick={() => {
+                              setUserToDelete(admin);
+                              setIsDeleteModalOpen(true);
+                            }}
+                          >
+                            <FiTrash2 size={18} />
+                          </ActionButton>
+                        </ActionGroup>
+                      </Td>
+                    )}
+                  </tr>
+                ))}
+            </tbody>
+          </Table>
+        </>
+      ) : activeTab === 'moderators' ? (
+        <>
+          <FilterContainer>
+            <FilterInput
+              type="text"
+              placeholder="Search ..."
+              value={filterEmail}
+              onChange={(e) => setFilterEmail(e.target.value)}
+            />
+            {isCurrentUserAdmin && (
+              <Button onClick={handleAddAdmin}>
+                <FiUserPlus />
+                Add User
+              </Button>
+            )}
+          </FilterContainer>
+          {!isCurrentUserAdmin && (
+            <InfoMessage>
+              <FiInfo />
+              You need admin privileges to manage user roles.
+            </InfoMessage>
+          )}
+          <Table>
+            <thead>
+              <tr>
+                <Th style={{ width: '50px' }}>#</Th>
+                <Th 
+                  style={{ width: '200px' }}
+                  onClick={() => handleSort('name')}
+                  $sortable
+                >
+                  Name
+                  <SortIcon 
+                    $active={showSortIcon && activeSortColumn === 'name'} 
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
+                </Th>
+                <Th 
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
@@ -1148,7 +1403,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Roles
+                  Role
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'roles'} 
                     $direction={sortDirection}
@@ -1174,15 +1429,26 @@ const AdminManagementTab: React.FC = () => {
             </thead>
             <tbody>
               {allUsers
-                .filter(user => 
-                  user.email.toLowerCase().includes(filterEmail.toLowerCase()) &&
-                  user.roles.includes('moderator')
-                )
+                .filter(user => {
+                  const searchTerm = filterEmail.toLowerCase();
+                  const name = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase();
+                  const email = user.email.toLowerCase();
+                  const roles = user.roles.join(' ').toLowerCase();
+                  
+                  return (user.roles.includes('moderator') &&
+                         (name.includes(searchTerm) || 
+                          email.includes(searchTerm) || 
+                          roles.includes(searchTerm)));
+                })
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
                   switch (sortField) {
                     case 'email':
                       return direction * a.email.localeCompare(b.email);
+                    case 'name':
+                      const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim();
+                      const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim();
+                      return direction * nameA.localeCompare(nameB);
                     case 'roles':
                       return direction * a.roles.join(',').localeCompare(b.roles.join(','));
                     case 'last_sign_in':
@@ -1196,6 +1462,9 @@ const AdminManagementTab: React.FC = () => {
                 .map((user: UserRole, index: number) => (
                   <tr key={user.id}>
                     <Td style={{ width: '50px' }}>{index + 1}</Td>
+                    <Td style={{ width: '200px' }}>
+                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
+                    </Td>
                     <Td style={{ width: '300px' }}>{user.email}</Td>
                     <Td style={{ width: '200px' }}>
                       <RoleBadges>
@@ -1209,7 +1478,7 @@ const AdminManagementTab: React.FC = () => {
                     <Td style={{ width: '150px' }}>
                       {user.last_sign_in 
                         ? new Date(user.last_sign_in).toLocaleDateString()
-                        : 'Never'
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                     </Td>
                     {isCurrentUserAdmin && (
@@ -1259,7 +1528,7 @@ const AdminManagementTab: React.FC = () => {
           <FilterContainer>
             <FilterInput
               type="text"
-              placeholder="Filter by Email"
+              placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
@@ -1281,6 +1550,19 @@ const AdminManagementTab: React.FC = () => {
               <tr>
                 <Th style={{ width: '50px' }}>#</Th>
                 <Th 
+                  style={{ width: '200px' }}
+                  onClick={() => handleSort('name')}
+                  $sortable
+                >
+                  Name
+                  <SortIcon 
+                    $active={showSortIcon && activeSortColumn === 'name'} 
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
+                </Th>
+                <Th 
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
@@ -1298,7 +1580,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Roles
+                  Role
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'roles'} 
                     $direction={sortDirection}
@@ -1324,14 +1606,25 @@ const AdminManagementTab: React.FC = () => {
             </thead>
             <tbody>
               {allUsers
-                .filter(user => 
-                  user.email.toLowerCase().includes(filterEmail.toLowerCase())
-                )
+                .filter(user => {
+                  const searchTerm = filterEmail.toLowerCase();
+                  const name = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase();
+                  const email = user.email.toLowerCase();
+                  const roles = user.roles.join(' ').toLowerCase();
+                  
+                  return name.includes(searchTerm) || 
+                         email.includes(searchTerm) || 
+                         roles.includes(searchTerm);
+                })
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
                   switch (sortField) {
                     case 'email':
                       return direction * a.email.localeCompare(b.email);
+                    case 'name':
+                      const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim();
+                      const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim();
+                      return direction * nameA.localeCompare(nameB);
                     case 'roles':
                       return direction * a.roles.join(',').localeCompare(b.roles.join(','));
                     case 'last_sign_in':
@@ -1345,6 +1638,9 @@ const AdminManagementTab: React.FC = () => {
                 .map((user: UserRole, index: number) => (
                   <tr key={user.id}>
                     <Td style={{ width: '50px' }}>{index + 1}</Td>
+                    <Td style={{ width: '200px' }}>
+                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
+                    </Td>
                     <Td style={{ width: '300px' }}>{user.email}</Td>
                     <Td style={{ width: '200px' }}>
                       <RoleBadges>
@@ -1358,7 +1654,7 @@ const AdminManagementTab: React.FC = () => {
                     <Td style={{ width: '150px' }}>
                       {user.last_sign_in 
                         ? new Date(user.last_sign_in).toLocaleDateString()
-                        : 'Never'
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                     </Td>
                     {isCurrentUserAdmin && (
@@ -1408,57 +1704,179 @@ const AdminManagementTab: React.FC = () => {
       <Modal $isOpen={isModalOpen}>
         <ModalContent>
           <ModalHeader>
-            <ModalTitle>
-              {editingAdmin ? 'Edit Admin' : 'Add New Admin'}
-            </ModalTitle>
-            <CloseButton onClick={() => setIsModalOpen(false)}>
+            <ModalTitle>Add New User</ModalTitle>
+            <CloseButton onClick={() => {
+              setIsModalOpen(false);
+              setRateLimitCountdown(null);
+              setRetryCount(0);
+              requestQueue.current = [];
+              if (countdownRef.current) {
+                clearInterval(countdownRef.current);
+              }
+              if (retryTimeoutRef.current) {
+                clearTimeout(retryTimeoutRef.current);
+              }
+            }}>
               <FiX size={20} />
             </CloseButton>
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
             <FormGroup>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="required">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={!!editingAdmin}
                 required
+                disabled={isSubmitting || rateLimitCountdown !== null}
                 placeholder="your@email.com"
               />
             </FormGroup>
 
             <FormGroup>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="required">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required={!editingAdmin}
-                placeholder={editingAdmin ? "Leave blank to keep current password" : ""}
+                required
+                disabled={isSubmitting || rateLimitCountdown !== null}
+                placeholder="Enter password"
               />
             </FormGroup>
 
-            {error && (
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="first-name" className="required">First Name</Label>
+                <Input
+                  id="first-name"
+                  type="text"
+                  pattern="[A-Za-z ]+"
+                  value={formData.first_name}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setFormData({ ...formData, first_name: e.target.value });
+                    }
+                  }}
+                  required
+                  disabled={isSubmitting || rateLimitCountdown !== null}
+                  placeholder="Enter first name"
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="last-name" className="required">Last Name</Label>
+                <Input
+                  id="last-name"
+                  type="text"
+                  pattern="[A-Za-z ]+"
+                  value={formData.last_name}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setFormData({ ...formData, last_name: e.target.value });
+                    }
+                  }}
+                  required
+                  disabled={isSubmitting || rateLimitCountdown !== null}
+                  placeholder="Enter last name"
+                />
+              </FormGroup>
+            </FormRow>
+
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  pattern="[0-9]*"
+                  value={formData.phone}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setFormData({ ...formData, phone: e.target.value });
+                    }
+                  }}
+                  disabled={isSubmitting || rateLimitCountdown !== null}
+                  placeholder="Enter phone number"
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="gender">Gender</Label>
+                <GenderSelectContainer>
+                  <GenderSelect
+                    id="gender"
+                    value={formData.gender}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                    disabled={isSubmitting || rateLimitCountdown !== null}
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </GenderSelect>
+                  <GenderIcon>
+                    {formData.gender === 'male' ? <FaMale size={18} /> :
+                     formData.gender === 'female' ? <FaFemale size={18} /> :
+                     formData.gender === 'other' ? <FaTransgender size={18} /> :
+                     formData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
+                     <FaQuestion size={18} />}
+                  </GenderIcon>
+                </GenderSelectContainer>
+              </FormGroup>
+            </FormRow>
+
+            {modalError && (
               <ErrorMessage>
                 <FiAlertCircle />
-                {error}
+                {modalError}
+                {rateLimitCountdown !== null && retryCount > 0 && retryCount < MAX_RETRIES && (
+                  <div style={{ fontSize: '0.875rem', marginTop: '4px' }}>
+                    Attempt {retryCount} of {MAX_RETRIES}
+                  </div>
+                )}
               </ErrorMessage>
             )}
 
-            {success && (
+            {modalSuccess && (
               <SuccessMessage>
                 <FiCheck />
-                {success}
+                {modalSuccess}
               </SuccessMessage>
             )}
 
-            <Button type="submit">
-              {editingAdmin ? 'Update Admin' : 'Add Admin'}
-            </Button>
+            <ButtonGroup>
+              <CancelButton 
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setRateLimitCountdown(null);
+                  setRetryCount(0);
+                  requestQueue.current = [];
+                  if (countdownRef.current) {
+                    clearInterval(countdownRef.current);
+                  }
+                  if (retryTimeoutRef.current) {
+                    clearTimeout(retryTimeoutRef.current);
+                  }
+                }}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </CancelButton>
+              <SaveButton 
+                type="submit"
+                disabled={isSubmitting || rateLimitCountdown !== null}
+              >
+                {isSubmitting ? 'Creating...' : 
+                 rateLimitCountdown !== null ? `Time remaining: ${formatTime(rateLimitCountdown)}` : 
+                 'Create User'}
+              </SaveButton>
+            </ButtonGroup>
           </Form>
         </ModalContent>
       </Modal>
@@ -1467,7 +1885,7 @@ const AdminManagementTab: React.FC = () => {
       <Modal $isOpen={isEditModalOpen}>
         <ModalContent>
           <ModalHeader>
-            <ModalTitle>Update Info</ModalTitle>
+            <ModalTitle>Update User Profile</ModalTitle>
             <CloseButton onClick={handleModalClose}>
               <FiX size={20} />
             </CloseButton>
@@ -1475,7 +1893,10 @@ const AdminManagementTab: React.FC = () => {
 
           <Form onSubmit={handleEditSubmit}>
             <FormGroup>
-              <Label htmlFor="edit-email">Email</Label>
+              <Label htmlFor="edit-email">
+                Email
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
               <Input
                 id="edit-email"
                 type="email"
@@ -1488,35 +1909,113 @@ const AdminManagementTab: React.FC = () => {
               <HelperText>Email cannot be changed</HelperText>
             </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="edit-password">New Password</Label>
-              <Input
-                id="edit-password"
-                type="password"
-                value={editFormData.password}
-                onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
-                placeholder="Leave blank to keep current password"
-              />
-              <HelperText>Leave blank to keep current password</HelperText>
-            </FormGroup>
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="edit-first-name">
+                  First Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <Input
+                  id="edit-first-name"
+                  type="text"
+                  pattern="[A-Za-z ]+"
+                  value={editFormData.first_name}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setEditFormData({ ...editFormData, first_name: e.target.value });
+                    }
+                  }}
+                  required
+                  placeholder="Enter first name"
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="edit-last-name">
+                  Last Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <Input
+                  id="edit-last-name"
+                  type="text"
+                  pattern="[A-Za-z ]+"
+                  value={editFormData.last_name}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setEditFormData({ ...editFormData, last_name: e.target.value });
+                    }
+                  }}
+                  required
+                  placeholder="Enter last name"
+                />
+              </FormGroup>
+            </FormRow>
+
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  type="tel"
+                  pattern="[0-9]*"
+                  value={editFormData.phone}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setEditFormData({ ...editFormData, phone: e.target.value });
+                    }
+                  }}
+                  placeholder="Enter phone number"
+                />
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="edit-gender">Gender</Label>
+                <GenderSelectContainer>
+                  <GenderSelect
+                    id="edit-gender"
+                    value={editFormData.gender}
+                    onChange={(e) => setEditFormData({ ...editFormData, gender: e.target.value })}
+                  >
+                    <option value="">Select gender </option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </GenderSelect>
+                  <GenderIcon>
+                    {editFormData.gender === 'male' ? <FaMale size={18} /> :
+                     editFormData.gender === 'female' ? <FaFemale size={18} /> :
+                     editFormData.gender === 'other' ? <FaTransgender size={18} /> :
+                     editFormData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
+                     <FaQuestion size={18} />}
+                  </GenderIcon>
+                </GenderSelectContainer>
+              </FormGroup>
+            </FormRow>
 
             <FormGroup>
-              <Label htmlFor="edit-role">Role</Label>
+              <Label htmlFor="edit-role">
+                Role
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
               <RoleSelectContainer>
                 <RoleSelect
                   id="edit-role"
                   value={editFormData.role}
                   onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
+                  required
                 >
+                  <option value="">Select role</option>
                   <option value="user">User</option>
-                  <option value="moderator">Moderator</option>
                   <option value="admin">Admin</option>
+                  <option value="moderator">Moderator</option>
                 </RoleSelect>
                 <RoleIcon>
-                  {editFormData.role === 'admin' ? <FiShield size={18} /> : editFormData.role === 'moderator' ? <FiUser size={18} /> : <FiUser size={18} />}
+                  {editFormData.role === 'admin' ? <FiShield size={18} /> : 
+                   editFormData.role === 'moderator' ? <FiUserCheck size={18} /> : 
+                   <FiUser size={18} />}
                 </RoleIcon>
               </RoleSelectContainer>
-              <HelperText>Select the user's role in the system</HelperText>
             </FormGroup>
 
             {modalError && (
@@ -1540,7 +2039,10 @@ const AdminManagementTab: React.FC = () => {
               >
                 Cancel
               </CancelButton>
-              <SaveButton type="submit">
+              <SaveButton 
+                type="submit"
+                disabled={!editFormData.first_name.trim() || !editFormData.last_name.trim() || !editFormData.role}
+              >
                 Save Changes
               </SaveButton>
             </ButtonGroup>
@@ -1785,6 +2287,45 @@ const RoleBadge = styled.span<{ $role: string }>`
   line-height: 1;
   min-width: 60px;
   text-align: center;
+`;
+
+const GenderSelectContainer = styled.div`
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+`;
+
+const GenderIcon = styled.div`
+  position: absolute;
+  right: .5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6B7280;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+`;
+
+const GenderSelect = styled.select`
+  width: 100%;
+  padding: 8px 12px;
+  padding-right: 0px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background-color: white;
+  appearance: none;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
 `;
 
 export default AdminManagementTab; 

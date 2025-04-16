@@ -36,9 +36,11 @@ import {
   FiBell,
   FiUser,
   FiRefreshCw,
-  FiLogOut
+  FiLogOut,
+  FiX
 } from 'react-icons/fi';
 import AdminManagement from '@/components/admin/AdminManagementTab';
+import AdminProfile from '@/components/admin/AdminProfile';
 
 // Initialize Supabase client properly
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -604,47 +606,68 @@ const NotificationBadge = styled.div`
   }
 `;
 
-const ProfileDropdown = styled.div<{ $isOpen: boolean }>`
+const ProfileContainer = styled.div`
+  position: relative;
+`;
+
+const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 8px;
-  background-color: white;
-  border: 1px solid #E5E7EB;
+  background: white;
   border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  display: ${props => props.$isOpen ? 'block' : 'none'};
-  min-width: 200px;
-  z-index: 1000;
+  border: 1px solid #E5E7EB;
+  width: 200px;
+  display: ${props => props.isOpen ? 'block' : 'none'};
+  z-index: 50;
+  margin-top: 8px;
 `;
 
 const DropdownItem = styled.div`
   padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
   color: #374151;
   cursor: pointer;
-  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s;
 
   &:hover {
-    background-color: #F3F4F6;
-    color: #111827;
-  }
-
-  &:first-child {
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-  }
-
-  &:last-child {
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
+    background-color: #f3f4f6;
   }
 `;
 
-const ProfileContainer = styled.div`
-  position: relative;
+const CloseButton = styled.button`
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
+  padding: 8px;
+  
+  &:hover {
+    color: #111827;
+  }
+`;
+
+const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: ${props => props.$imageUrl ? 'transparent' : '#f3f4f6'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 const AdminDashboard: React.FC = () => {
@@ -659,6 +682,8 @@ const AdminDashboard: React.FC = () => {
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
   const handleLogout = async () => {
     try {
@@ -829,7 +854,7 @@ const AdminDashboard: React.FC = () => {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <FiHome /> },
-    { id: 'lead-management', label: 'Lead Management', icon: <FiUsers /> },
+    { id: 'lead-management', label: 'Lead Management', icon: <FiTrendingUp /> },
     { id: 'user-management', label: 'User Management', icon: <FiUsers /> },
     { id: 'quote-analytics', label: 'Quote Analytics', icon: <FiPieChart /> },
     { id: 'role-blueprints', label: 'Role Blueprints', icon: <FiFileText /> },
@@ -856,7 +881,34 @@ const AdminDashboard: React.FC = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('profile_picture')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile?.profile_picture) {
+          setProfilePicture(profile.profile_picture);
+        }
+      } catch (error) {
+        console.error('Error fetching profile picture:', error);
+      }
+    };
+
+    fetchProfilePicture();
+  }, []);
+
   const renderTabContent = () => {
+    if (showProfile) {
+      return <AdminProfile onProfilePictureChange={(newPictureUrl) => setProfilePicture(newPictureUrl)} />;
+    }
+
     const currentTab = navItems.find(item => item.id === activeTab);
     if (!currentTab) return null;
 
@@ -1216,8 +1268,11 @@ const AdminDashboard: React.FC = () => {
           {navItems.map((item) => (
             <NavItem
               key={item.id}
-              $active={activeTab === item.id}
-              onClick={() => setActiveTab(item.id)}
+              $active={!showProfile && activeTab === item.id}
+              onClick={() => {
+                setActiveTab(item.id);
+                setShowProfile(false);
+              }}
             >
               <NavIcon>{item.icon}</NavIcon>
               {item.label}
@@ -1227,7 +1282,9 @@ const AdminDashboard: React.FC = () => {
       </Sidebar>
       <MainContent>
         <ContentHeader>
-          <ContentTitle>{navItems.find(item => item.id === activeTab)?.label}</ContentTitle>
+          <ContentTitle>
+            {showProfile ? 'Profile' : navItems.find(item => item.id === activeTab)?.label}
+          </ContentTitle>
           <HeaderActions>
             <NotificationBadge>
               <IconButton>
@@ -1236,13 +1293,24 @@ const AdminDashboard: React.FC = () => {
             </NotificationBadge>
             <ProfileContainer id="profile-menu">
               <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                <FiUser size={20} />
+                <ProfileIcon $imageUrl={profilePicture}>
+                  {profilePicture ? (
+                    <img src={profilePicture} alt="Profile" />
+                  ) : (
+                    <FiUser size={20} />
+                  )}
+                </ProfileIcon>
               </IconButton>
-              <ProfileDropdown $isOpen={isProfileOpen}>
-                <DropdownItem onClick={() => router.push('/admin/profile')}>
-                  <FiUser size={16} />
-                  View Profile
-                </DropdownItem>
+              <ProfileDropdown isOpen={isProfileOpen}>
+                {!showProfile && (
+                  <DropdownItem onClick={() => {
+                    setShowProfile(true);
+                    setIsProfileOpen(false);
+                  }}>
+                    <FiUser size={16} />
+                    View Profile
+                  </DropdownItem>
+                )}
                 <DropdownItem onClick={handleLogout}>
                   <FiLogOut size={16} />
                   Logout
