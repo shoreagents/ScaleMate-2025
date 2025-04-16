@@ -622,6 +622,7 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   display: ${props => props.isOpen ? 'block' : 'none'};
   z-index: 50;
   margin-top: 8px;
+  overflow: hidden;
 `;
 
 const DropdownItem = styled.div`
@@ -631,10 +632,20 @@ const DropdownItem = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: background-color 0.2s;
+  margin: 4px;
+  width: calc(100% - 8px);
+  border-radius: 6px;
 
   &:hover {
     background-color: #f3f4f6;
+  }
+
+  &:first-child {
+    margin-top: 4px;
+  }
+
+  &:last-child {
+    margin-bottom: 4px;
   }
 `;
 
