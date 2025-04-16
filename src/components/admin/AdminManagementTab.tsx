@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX } from 'react-icons/fi';
+import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 
 const Container = styled.div`
@@ -444,6 +444,35 @@ const InfoMessage = styled.div`
   font-size: 0.875rem;
 `;
 
+const PasswordInputContainer = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const PasswordInput = styled(Input)`
+  padding-right: 40px;
+  width: 100%;
+`;
+
+const ViewPasswordButton = styled.button`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    color: #374151;
+  }
+`;
+
 interface UserData {
   user_id: string;
   email: string;
@@ -565,6 +594,7 @@ const AdminManagementTab: React.FC = () => {
   const INITIAL_RETRY_DELAY = 10000; // 10 seconds
   const requestQueue = useRef<Array<() => Promise<void>>>([]);
   const isProcessing = useRef(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Add ref for timeout
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -822,6 +852,15 @@ const AdminManagementTab: React.FC = () => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const isFormValid = () => {
+    return (
+      formData.first_name.trim() !== '' &&
+      formData.last_name.trim() !== '' &&
+      formData.email.trim() !== '' &&
+      formData.password.trim() !== ''
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1722,32 +1761,6 @@ const AdminManagementTab: React.FC = () => {
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Label htmlFor="email" className="required">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                disabled={isSubmitting || rateLimitCountdown !== null}
-                placeholder="your@email.com"
-              />
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="password" className="required">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                required
-                disabled={isSubmitting || rateLimitCountdown !== null}
-                placeholder="Enter password"
-              />
-            </FormGroup>
-
             <FormRow>
               <FormGroup>
                 <Label htmlFor="first-name" className="required">First Name</Label>
@@ -1830,6 +1843,41 @@ const AdminManagementTab: React.FC = () => {
               </FormGroup>
             </FormRow>
 
+            <FormGroup>
+              <Label htmlFor="email" className="required">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+                disabled={isSubmitting || rateLimitCountdown !== null}
+                placeholder="your@email.com"
+              />
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="password" className="required">Password</Label>
+              <PasswordInputContainer>
+                <PasswordInput
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  required
+                  disabled={isSubmitting || rateLimitCountdown !== null}
+                  placeholder="Enter password"
+                />
+                <ViewPasswordButton
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isSubmitting || rateLimitCountdown !== null}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </ViewPasswordButton>
+              </PasswordInputContainer>
+            </FormGroup>
+            
             {modalError && (
               <ErrorMessage>
                 <FiAlertCircle />
@@ -1870,7 +1918,7 @@ const AdminManagementTab: React.FC = () => {
               </CancelButton>
               <SaveButton 
                 type="submit"
-                disabled={isSubmitting || rateLimitCountdown !== null}
+                disabled={!isFormValid() || isSubmitting || rateLimitCountdown !== null}
               >
                 {isSubmitting ? 'Creating...' : 
                  rateLimitCountdown !== null ? `Time remaining: ${formatTime(rateLimitCountdown)}` : 
