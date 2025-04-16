@@ -94,7 +94,7 @@ const DirectPrompt = () => {
       <textarea 
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        placeholder="Describe the ideal executive assistant role..."
+        placeholder="Describe the ideal executive assistant role ..."
       />
       <button onClick={handleSubmit}>Generate</button>
       {response && <div className="response">{response}</div>}
