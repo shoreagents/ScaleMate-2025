@@ -203,12 +203,9 @@ const MessageContainer = styled.div`
 const ErrorMessage = styled.div`
   color: ${props => props.theme.colors.error};
   font-size: 0.75rem;
-  padding: 0.25rem 0;
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  line-height: 1.2;
-  margin-top: -0.25rem;
 
   &::before {
     content: "✕";
@@ -224,8 +221,6 @@ const SuccessMessage = styled.div`
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  line-height: 1.2;
-  margin-top: -0.25rem;
 
   &::before {
     content: "✓";
