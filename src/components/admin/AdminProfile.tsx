@@ -437,7 +437,7 @@ const PasswordInput = styled(Input)`
 
 const ViewPasswordButton = styled.button`
   position: absolute;
-  right: 8px;
+  right: .5rem;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -474,6 +474,11 @@ const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
   display: flex;
   align-items: center;
   gap: 4px;
+`;
+
+const RequiredAsterisk = styled.span`
+  color: #EF4444;
+  margin-left: 4px;
 `;
 
 interface AdminProfileData {
@@ -536,26 +541,53 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      // Add retry logic with exponential backoff
+      let retries = 0;
+      const maxRetries = 3;
+      const baseDelay = 1000; // 1 second
 
-      if (profileError) throw profileError;
+      const fetchWithRetry = async () => {
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
 
-      setProfileData({
-        first_name: profile.first_name || '',
-        last_name: profile.last_name || '',
-        email: user.email || '',
-        phone: profile.phone || '',
-        gender: profile.gender || '',
-        profile_picture: profile.profile_picture || '',
-        last_password_change: profile.last_password_change || ''
-      });
+          if (profileError) {
+            if (profileError.code === 'PGRST116' && retries < maxRetries) {
+              retries++;
+              const delay = baseDelay * Math.pow(2, retries - 1);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              return fetchWithRetry();
+            }
+            throw profileError;
+          }
+
+          setProfileData({
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            email: user.email || '',
+            phone: profile.phone || '',
+            gender: profile.gender || '',
+            profile_picture: profile.profile_picture || '',
+            last_password_change: profile.last_password_change || ''
+          });
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('rate limit') && retries < maxRetries) {
+            retries++;
+            const delay = baseDelay * Math.pow(2, retries - 1);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return fetchWithRetry();
+          }
+          throw error;
+        }
+      };
+
+      await fetchWithRetry();
     } catch (error) {
       console.error('Error fetching profile:', error);
-      setBasicInfoError('Failed to load profile data');
+      setBasicInfoError('Failed to load profile data. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -809,6 +841,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     await validateCurrentPassword(value);
   };
 
+  const isBasicInfoValid = () => {
+    return profileData.first_name.trim() !== '' && profileData.last_name.trim() !== '';
+  };
+
   if (loading) {
     return <Container>Loading...</Container>;
   }
@@ -823,7 +859,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           {isEditing ? (
             <>
               <FormGroup>
-                <Label>First Name</Label>
+                <Label>
+                  First Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <Input
                   type="text"
                   pattern="[A-Za-z ]+"
@@ -833,10 +872,14 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                       setProfileData({ ...profileData, first_name: e.target.value });
                     }
                   }}
+                  placeholder="Enter your first name"
                 />
               </FormGroup>
               <FormGroup>
-                <Label>Last Name</Label>
+                <Label>
+                  Last Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <Input
                   type="text"
                   pattern="[A-Za-z ]+"
@@ -846,6 +889,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                       setProfileData({ ...profileData, last_name: e.target.value });
                     }
                   }}
+                  placeholder="Enter your last name"
                 />
               </FormGroup>
               <FormGroup>
@@ -855,7 +899,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     value={profileData.gender}
                     onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
                   >
-                    <option value="">Select gender</option>
+                    <option value="">Select your gender</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
@@ -877,7 +921,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 >
                   Cancel
                 </ChooseImageButton>
-                <SaveButton onClick={handleProfileUpdate}>
+                <SaveButton 
+                  onClick={handleProfileUpdate}
+                  disabled={!isBasicInfoValid()}
+                >
                   Save Changes
                 </SaveButton>
               </ButtonGroup>
@@ -956,6 +1003,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                       setProfileData({ ...profileData, phone: e.target.value });
                     }
                   }}
+                  placeholder="Enter your phone number"
                 />
               </InputWrapper>
             </FormGroup>
@@ -1010,7 +1058,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
                   onChange={handleCurrentPasswordChange}
-                  placeholder="Enter current password"
+                  placeholder="Enter your current password"
                 />
                 <ViewPasswordButton
                   type="button"
@@ -1049,7 +1097,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     type={showNewPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={handleNewPasswordChange}
-                    placeholder="Enter new password"
+                    placeholder="Enter your new password"
                   />
                   <ViewPasswordButton
                     type="button"
@@ -1082,7 +1130,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={handleConfirmPasswordChange}
-                    placeholder="Confirm new password"
+                    placeholder="Confirm your new password"
                   />
                   <ViewPasswordButton
                     type="button"
