@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera } from 'react-icons/fi';
+import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiX as FiXIcon, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 
 const Container = styled.div`
@@ -81,37 +81,55 @@ const SectionTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 600;
   color: #111827;
-  margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 8px;
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+  margin-bottom: 16px;
+`;
+
+const InputWrapper = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const HelperText = styled.div`
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 4px;
 `;
 
 const Label = styled.label`
-  display: block;
-  font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
-  margin-bottom: 4px;
+  min-width: 120px;
 `;
 
 const Input = styled.input`
-  width: 100%;
+  flex: 1;
   padding: 8px 12px;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #6b7280;
+  color: #111827;
   background: white;
   
   &:focus {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+
+  &:disabled {
+    background: #f9fafb;
+    color: #111827;
   }
 `;
 
@@ -177,27 +195,42 @@ const Button = styled.button`
   }
 `;
 
-const InfoRow = styled.div`
+interface InfoRowProps {
+  $isEditing?: boolean;
+}
+
+interface InfoLabelProps {
+  $isEditing?: boolean;
+}
+
+interface InfoValueProps {
+  $isEditing?: boolean;
+}
+
+const InfoRow = styled.div<InfoRowProps>`
   display: flex;
   align-items: center;
   gap: 32px;
   padding: 8px 0;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: ${props => props.$isEditing ? 'none' : '1px solid #e5e7eb'};
 
   &:last-child {
     border-bottom: none;
+    padding-bottom: 0;
   }
 `;
 
-const InfoLabel = styled.span`
+const InfoLabel = styled.span<InfoLabelProps>`
   font-weight: 500;
   color: #374151;
   min-width: 120px;
+  display: ${props => props.$isEditing ? 'none' : 'block'};
 `;
 
-const InfoValue = styled.div`
+const InfoValue = styled.div<InfoValueProps>`
   flex: 1;
   color: #6b7280;
+  display: ${props => props.$isEditing ? 'none' : 'block'};
 `;
 
 const EditButton = styled.button`
@@ -219,7 +252,7 @@ const EditButton = styled.button`
 const PasswordChangeForm = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   margin-top: 16px;
 `;
 
@@ -388,6 +421,58 @@ const UploadLabel = styled.label`
   }
 `;
 
+const PasswordInputContainer = styled.div`
+  position: relative;
+  width: 100%;
+  margin-bottom: 4px;
+`;
+
+const PasswordInput = styled(Input)`
+  padding-right: 40px;
+  width: 100%;
+`;
+
+const ViewPasswordButton = styled.button`
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #374151;
+  }
+`;
+
+const PasswordRow = styled.div`
+  display: flex;
+  gap: 16px;
+  width: 100%;
+`;
+
+const PasswordColumn = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
+  font-size: 0.75rem;
+  margin-top: 4px;
+  color: ${props => props.$matches ? '#059669' : '#dc2626'};
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
 interface AdminProfileData {
   first_name: string;
   last_name: string;
@@ -432,6 +517,12 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+  const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
+  const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
@@ -515,6 +606,18 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     }
 
     try {
+      // First verify the current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: profileData.email,
+        password: currentPassword
+      });
+
+      if (signInError) {
+        setPasswordError('Current password is incorrect');
+        return;
+      }
+
+      // Update the password
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -538,7 +641,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(() => setPasswordSuccess(null), 3000);
+      setTimeout(() => setPasswordSuccess(null), 500);
     } catch (error) {
       console.error('Error changing password:', error);
       setPasswordError('Failed to change password');
@@ -655,6 +758,54 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     }
   };
 
+  const isPasswordFormValid = () => {
+    return currentPassword.trim() !== '' && 
+           newPassword.trim() !== '' && 
+           confirmPassword.trim() !== '';
+  };
+
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewPassword(value);
+    if (confirmPassword) {
+      setPasswordsMatch(value === confirmPassword);
+    }
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setConfirmPassword(value);
+    if (newPassword) {
+      setPasswordsMatch(value === newPassword);
+    }
+  };
+
+  const validateCurrentPassword = async (password: string) => {
+    if (!password) {
+      setCurrentPasswordValid(null);
+      return;
+    }
+
+    setValidatingCurrentPassword(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: profileData.email,
+        password: password
+      });
+      setCurrentPasswordValid(!error);
+    } catch (error) {
+      setCurrentPasswordValid(false);
+    } finally {
+      setValidatingCurrentPassword(false);
+    }
+  };
+
+  const handleCurrentPasswordChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCurrentPassword(value);
+    await validateCurrentPassword(value);
+  };
+
   if (loading) {
     return <Container>Loading...</Container>;
   }
@@ -668,60 +819,54 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           </SectionTitle>
           {isEditing ? (
             <>
-              <InfoRow>
-                <InfoLabel>First Name</InfoLabel>
-                <InfoValue>
-                  <Input
-                    type="text"
-                    pattern="[A-Za-z ]+"
-                    value={profileData.first_name}
-                    onChange={(e) => {
-                      if (e.target.validity.valid) {
-                        setProfileData({ ...profileData, first_name: e.target.value });
-                      }
-                    }}
-                  />
-                </InfoValue>
-              </InfoRow>
-              <InfoRow>
-                <InfoLabel>Last Name</InfoLabel>
-                <InfoValue>
-                  <Input
-                    type="text"
-                    pattern="[A-Za-z ]+"
-                    value={profileData.last_name}
-                    onChange={(e) => {
-                      if (e.target.validity.valid) {
-                        setProfileData({ ...profileData, last_name: e.target.value });
-                      }
-                    }}
-                  />
-                </InfoValue>
-              </InfoRow>
-              <InfoRow style={{ borderBottom: 'none' }}>
-                <InfoLabel>Gender</InfoLabel>
-                <InfoValue>
-                  <GenderSelectContainer>
-                    <GenderSelect
-                      value={profileData.gender}
-                      onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
-                    >
-                      <option value="">Select gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                      <option value="prefer-not-to-say">Prefer not to say</option>
-                    </GenderSelect>
-                    <GenderIcon>
-                      {profileData.gender === 'male' ? <FaMale size={18} /> :
-                       profileData.gender === 'female' ? <FaFemale size={18} /> :
-                       profileData.gender === 'other' ? <FaTransgender size={18} /> :
-                       profileData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
-                       <FaQuestion size={18} />}
-                    </GenderIcon>
-                  </GenderSelectContainer>
-                </InfoValue>
-              </InfoRow>
+              <FormGroup>
+                <Label>First Name</Label>
+                <Input
+                  type="text"
+                  pattern="[A-Za-z ]+"
+                  value={profileData.first_name}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setProfileData({ ...profileData, first_name: e.target.value });
+                    }
+                  }}
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Last Name</Label>
+                <Input
+                  type="text"
+                  pattern="[A-Za-z ]+"
+                  value={profileData.last_name}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setProfileData({ ...profileData, last_name: e.target.value });
+                    }
+                  }}
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Gender</Label>
+                <GenderSelectContainer>
+                  <GenderSelect
+                    value={profileData.gender}
+                    onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </GenderSelect>
+                  <GenderIcon>
+                    {profileData.gender === 'male' ? <FaMale size={18} /> :
+                     profileData.gender === 'female' ? <FaFemale size={18} /> :
+                     profileData.gender === 'other' ? <FaTransgender size={18} /> :
+                     profileData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
+                     <FaQuestion size={18} />}
+                  </GenderIcon>
+                </GenderSelectContainer>
+              </FormGroup>
               <ButtonGroup>
                 <ChooseImageButton
                   type="button"
@@ -738,17 +883,17 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
             </>
           ) : (
             <>
-              <InfoRow>
-                <InfoLabel>First Name</InfoLabel>
-                <InfoValue>{profileData.first_name || '-'}</InfoValue>
+              <InfoRow $isEditing={isEditing}>
+                <InfoLabel $isEditing={isEditing}>First Name</InfoLabel>
+                <InfoValue $isEditing={isEditing}>{profileData.first_name || '-'}</InfoValue>
               </InfoRow>
-              <InfoRow>
-                <InfoLabel>Last Name</InfoLabel>
-                <InfoValue>{profileData.last_name || '-'}</InfoValue>
+              <InfoRow $isEditing={isEditing}>
+                <InfoLabel $isEditing={isEditing}>Last Name</InfoLabel>
+                <InfoValue $isEditing={isEditing}>{profileData.last_name || '-'}</InfoValue>
               </InfoRow>
-              <InfoRow style={{ borderBottom: 'none' }}>
-                <InfoLabel>Gender</InfoLabel>
-                <InfoValue>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</InfoValue>
+              <InfoRow $isEditing={isEditing} style={{ borderBottom: 'none' }}>
+                <InfoLabel $isEditing={isEditing}>Gender</InfoLabel>
+                <InfoValue $isEditing={isEditing}>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</InfoValue>
               </InfoRow>
               <div style={{ marginTop: '16px' }}>
                 <EditButton onClick={() => setIsEditing(true)}>
@@ -766,9 +911,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           ) : (
             <FiUser size={80} color="#6b7280" />
           )}
-          <UploadButton onClick={() => setIsProfileModalOpen(true)}>
-            <FiEdit2 size={16} />
-          </UploadButton>
+          {isEditing && (
+            <UploadButton onClick={() => setIsProfileModalOpen(true)}>
+              <FiEdit2 size={16} />
+            </UploadButton>
+          )}
         </ProfilePicture>
       </ProfileSection>
 
@@ -778,9 +925,9 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         </SectionTitle>
         {isEditingContact ? (
           <>
-            <InfoRow>
-              <InfoLabel>Email</InfoLabel>
-              <InfoValue>
+            <FormGroup>
+              <Label>Email</Label>
+              <InputWrapper>
                 <Input 
                   value={profileData.email}
                   disabled
@@ -789,18 +936,14 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     color: '#6b7280'
                   }}
                 />
-                <div style={{ 
-                  fontSize: '0.75rem',
-                  color: '#6b7280',
-                  marginTop: '4px'
-                }}>
+                <HelperText>
                   Email cannot be changed
-                </div>
-              </InfoValue>
-            </InfoRow>
-            <InfoRow style={{ borderBottom: 'none' }}>
-              <InfoLabel>Phone</InfoLabel>
-              <InfoValue>
+                </HelperText>
+              </InputWrapper>
+            </FormGroup>
+            <FormGroup>
+              <Label>Phone</Label>
+              <InputWrapper>
                 <Input
                   type="tel"
                   pattern="[0-9]*"
@@ -811,8 +954,8 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     }
                   }}
                 />
-              </InfoValue>
-            </InfoRow>
+              </InputWrapper>
+            </FormGroup>
             <ButtonGroup>
               <ChooseImageButton
                 type="button"
@@ -832,13 +975,13 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           </>
         ) : (
           <>
-            <InfoRow>
-              <InfoLabel>Email</InfoLabel>
-              <InfoValue>{profileData.email}</InfoValue>
+            <InfoRow $isEditing={isEditingContact}>
+              <InfoLabel $isEditing={isEditingContact}>Email</InfoLabel>
+              <InfoValue $isEditing={isEditingContact}>{profileData.email}</InfoValue>
             </InfoRow>
-            <InfoRow style={{ borderBottom: 'none' }}>
-              <InfoLabel>Phone</InfoLabel>
-              <InfoValue>{profileData.phone || '-'}</InfoValue>
+            <InfoRow $isEditing={isEditingContact} style={{ borderBottom: 'none' }}>
+              <InfoLabel $isEditing={isEditingContact}>Phone</InfoLabel>
+              <InfoValue $isEditing={isEditingContact}>{profileData.phone || '-'}</InfoValue>
             </InfoRow>
             <div style={{ marginTop: '16px' }}>
               <EditButton onClick={() => setIsEditingContact(true)}>
@@ -857,46 +1000,115 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         </SectionTitle>
         {isEditingPassword ? (
           <PasswordChangeForm onSubmit={handlePasswordChange}>
-            <FormGroup>
+            <PasswordColumn>
               <Label>Current Password</Label>
-              <Input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>New Password</Label>
-              <Input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label>Confirm New Password</Label>
-              <Input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </FormGroup>
+              <PasswordInputContainer>
+                <PasswordInput
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={handleCurrentPasswordChange}
+                  placeholder="Enter current password"
+                />
+                <ViewPasswordButton
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                >
+                  {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </ViewPasswordButton>
+              </PasswordInputContainer>
+              {validatingCurrentPassword ? (
+                <PasswordMatchIndicator $matches={true}>
+                  <FiLoader size={14} />
+                  Verifying...
+                </PasswordMatchIndicator>
+              ) : currentPasswordValid !== null && (
+                <PasswordMatchIndicator $matches={currentPasswordValid}>
+                  {currentPasswordValid ? (
+                    <>
+                      <FiCheck size={14} />
+                      Current password is correct
+                    </>
+                  ) : (
+                    <>
+                      <FiXIcon size={14} />
+                      Current password is incorrect
+                    </>
+                  )}
+                </PasswordMatchIndicator>
+              )}
+            </PasswordColumn>
+
+            <PasswordRow>
+              <PasswordColumn>
+                <Label>New Password</Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={handleNewPasswordChange}
+                    placeholder="Enter new password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+                {passwordsMatch !== null && (
+                  <PasswordMatchIndicator $matches={passwordsMatch}>
+                    {passwordsMatch ? (
+                      <>
+                        <FiCheck size={14} />
+                        Passwords match
+                      </>
+                    ) : (
+                      <>
+                        <FiXIcon size={14} />
+                        Passwords do not match
+                      </>
+                    )}
+                  </PasswordMatchIndicator>
+                )}
+              </PasswordColumn>
+
+              <PasswordColumn>
+                <Label>Confirm New Password</Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={handleConfirmPasswordChange}
+                    placeholder="Confirm new password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+              </PasswordColumn>
+            </PasswordRow>
+
             <ButtonGroup>
               <ChooseImageButton
                 type="button"
-                onClick={() => setIsEditingPassword(false)}
+                onClick={() => {
+                  setIsEditingPassword(false);
+                  setPasswordsMatch(null);
+                  setCurrentPasswordValid(null);
+                }}
               >
                 Cancel
               </ChooseImageButton>
-              <SaveButton type="submit">
-                Change Password
+              <SaveButton 
+                type="submit"
+                disabled={!passwordsMatch || !currentPasswordValid}
+              >
+                Save Changes
               </SaveButton>
             </ButtonGroup>
-            {passwordError && <ErrorMessage>{passwordError}</ErrorMessage>}
-            {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
           </PasswordChangeForm>
         ) : (
           <>
