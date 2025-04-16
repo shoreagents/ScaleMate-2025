@@ -12,6 +12,9 @@ const nextConfig = {
       enabled: true
     }
   },
+  images: {
+    domains: ['storage.googleapis.com'],
+  },
   // Configure port via environment variable instead of server option
   async rewrites() {
     return [
