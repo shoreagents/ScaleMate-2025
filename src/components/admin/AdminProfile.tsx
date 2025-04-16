@@ -172,26 +172,55 @@ const GenderSelect = styled.select`
   }
 `;
 
-const Button = styled.button`
+const ButtonGroup = styled.div<{ $isModal?: boolean; $isPassword?: boolean }>`
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 12px;
+  justify-content: ${props => props.$isModal ? 'center' : 'flex-start'};
+  margin-top: ${props => props.$isPassword ? '16px' : props.$isModal ? '0' : '24px'};
+`;
+
+const ModalButton = styled.button`
   padding: 8px 16px;
-  background-color: #3b82f6;
-  color: white;
   border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  border-radius: 8px;
   font-weight: 500;
-  transition: background-color 0.2s;
+  cursor: pointer;
+  transition: all 0.2s ease;
+`;
+
+const CancelButton = styled(ModalButton)`
+  background-color: #F3F4F6;
+  color: #374151;
 
   &:hover {
-    background-color: #2563eb;
+    background-color: #E5E7EB;
+  }
+`;
+
+const SaveButton = styled(ModalButton)`
+  background-color: #3B82F6;
+  color: white;
+
+  &:hover {
+    background-color: #2563EB;
   }
 
   &:disabled {
-    background-color: #93c5fd;
+    background-color: #93C5FD;
     cursor: not-allowed;
+    opacity: 0.7;
+  }
+`;
+
+const ChooseImageButton = styled(ModalButton)`
+  border: 1px solid rgb(59, 130, 246);
+  color: rgb(59, 130, 246);
+  background-color: transparent;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: rgb(59, 130, 246);
+    color: white;
   }
 `;
 
@@ -268,52 +297,6 @@ const ErrorMessage = styled.div`
   margin-top: 8px;
 `;
 
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 12px;
-  justify-content: flex-start;
-  margin-top: 24px;
-`;
-
-const ModalButton = styled.button`
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ChooseImageButton = styled(ModalButton)`
-  border: 1px solid rgb(59, 130, 246);
-  color: rgb(59, 130, 246);
-  background-color: transparent;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: rgb(59, 130, 246);
-    color: white;
-  }
-`;
-
-const SaveButton = styled(ModalButton)`
-  background-color: #3B82F6;
-  color: white;
-
-  &:hover {
-    background-color: #2563EB;
-  }
-
-  &:disabled {
-    background-color: #93C5FD;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-`;
-
 const ProfileModal = styled.div<{ $isOpen: boolean }>`
   display: ${props => props.$isOpen ? 'block' : 'none'};
   position: fixed;
@@ -337,6 +320,10 @@ const ProfileModalContent = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `;
 
 const ModalHeader = styled.div`
@@ -868,12 +855,12 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 </GenderSelectContainer>
               </FormGroup>
               <ButtonGroup>
-                <ChooseImageButton
+                <CancelButton
                   type="button"
                   onClick={() => setIsEditing(false)}
                 >
                   Cancel
-                </ChooseImageButton>
+                </CancelButton>
                 <SaveButton onClick={handleProfileUpdate}>
                   Save Changes
                 </SaveButton>
@@ -933,7 +920,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   disabled
                   style={{ 
                     backgroundColor: '#f9fafb',
-                    color: '#6b7280'
+                    color: '#111827'
                   }}
                 />
                 <HelperText>
@@ -957,12 +944,12 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               </InputWrapper>
             </FormGroup>
             <ButtonGroup>
-              <ChooseImageButton
+              <CancelButton
                 type="button"
                 onClick={() => setIsEditingContact(false)}
               >
                 Cancel
-              </ChooseImageButton>
+              </CancelButton>
               <SaveButton onClick={() => {
                 handleProfileUpdate();
                 setIsEditingContact(false);
@@ -1091,8 +1078,8 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               </PasswordColumn>
             </PasswordRow>
 
-            <ButtonGroup>
-              <ChooseImageButton
+            <ButtonGroup $isPassword>
+              <CancelButton
                 type="button"
                 onClick={() => {
                   setIsEditingPassword(false);
@@ -1101,7 +1088,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 }}
               >
                 Cancel
-              </ChooseImageButton>
+              </CancelButton>
               <SaveButton 
                 type="submit"
                 disabled={!passwordsMatch || !currentPasswordValid}
@@ -1162,7 +1149,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
             onChange={handleFileSelect}
           />
 
-          <ButtonGroup>
+          <ButtonGroup $isModal>
             <ChooseImageButton
               onClick={() => document.getElementById('profile-picture')?.click()}
             >
