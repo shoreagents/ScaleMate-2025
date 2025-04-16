@@ -249,30 +249,30 @@ const EditButton = styled.button`
   }
 `;
 
-const PasswordChangeForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
-`;
-
 const SuccessMessage = styled.div`
   color: #059669;
   font-size: 0.875rem;
-  margin-top: 8px;
+  margin-top: 0;
 `;
 
 const ErrorMessage = styled.div`
   color: #dc2626;
   font-size: 0.875rem;
-  margin-top: 8px;
+  margin-top: 0;
+`;
+
+const PasswordChangeForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 16px;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-start;
-  margin-top: 24px;
+  margin-top: 32px;
 `;
 
 const ModalButton = styled.button`
@@ -337,6 +337,10 @@ const ProfileModalContent = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+
+  ${ButtonGroup} {
+    justify-content: center;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -424,7 +428,6 @@ const UploadLabel = styled.label`
 const PasswordInputContainer = styled.div`
   position: relative;
   width: 100%;
-  margin-bottom: 4px;
 `;
 
 const PasswordInput = styled(Input)`
@@ -462,11 +465,11 @@ const PasswordColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: 16px;
 `;
 
 const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
   font-size: 0.75rem;
-  margin-top: 4px;
   color: ${props => props.$matches ? '#059669' : '#dc2626'};
   display: flex;
   align-items: center;
