@@ -48,9 +48,10 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DashboardContainer = styled.div`
-  display: flex;
-  min-height: 100vh;
-  background-color: white;
+  padding: 2rem;
+  margin-top: 0px;
+  min-height: calc(100vh - 80px);
+  background-color: #F9FAFB;
 `;
 
 const Header = styled.header`

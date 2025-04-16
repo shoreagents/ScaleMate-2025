@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const FormContainer = styled.div`
   max-width: 420px;
@@ -233,6 +234,35 @@ const SuccessMessage = styled.div`
   }
 `;
 
+const PasswordInputContainer = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const PasswordInput = styled(Input)`
+  padding-right: 40px;
+  width: 100%;
+`;
+
+const ViewPasswordButton = styled.button`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #374151;
+  }
+`;
+
 interface AuthFormProps {
   onSuccess?: () => void;
 }
@@ -244,6 +274,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -353,14 +384,22 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                 </InputGroup>
                 <InputGroup>
                   <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <PasswordInputContainer>
+                    <PasswordInput
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <ViewPasswordButton
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </ViewPasswordButton>
+                  </PasswordInputContainer>
                 </InputGroup>
                 {error && <ErrorMessage>{error}</ErrorMessage>}
                 {success && <SuccessMessage>{success}</SuccessMessage>}
