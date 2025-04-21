@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
+import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiXIcon, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 
 const Container = styled.div`
