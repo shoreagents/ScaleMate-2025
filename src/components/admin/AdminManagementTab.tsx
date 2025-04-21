@@ -122,7 +122,7 @@ const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed
       case 'pending':
         return '#FEF3C7';
       case 'not-confirmed':
-        return '#D1D5DB';
+        return '#d0bdbd';
       default:
         return '#D1D5DB';
     }
@@ -547,6 +547,8 @@ type UserToDelete = UserRole | Admin;
 // Update the sort field type
 type SortField = 'email' | 'name' | 'roles' | 'last_sign_in';
 
+type TabType = 'admins' | 'moderators' | 'users' | 'regular-users';
+
 const AdminManagementTab: React.FC = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [allUsers, setAllUsers] = useState<UserRole[]>([]);
@@ -567,7 +569,7 @@ const AdminManagementTab: React.FC = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'admins' | 'moderators' | 'users'>('admins');
+  const [activeTab, setActiveTab] = useState<TabType>('admins');
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRole | null>(null);
@@ -1408,6 +1410,35 @@ const AdminManagementTab: React.FC = () => {
     }
   };
 
+  const filterUsersByRole = (users: UserRole[], role: TabType) => {
+    const searchTerm = filterEmail.toLowerCase();
+    
+    return users.filter(user => {
+      const name = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase();
+      const email = user.email.toLowerCase();
+      const roles = user.roles.join(' ').toLowerCase();
+      
+      const matchesSearch = name.includes(searchTerm) || 
+                          email.includes(searchTerm) || 
+                          roles.includes(searchTerm);
+
+      switch (role) {
+        case 'regular-users':
+          return user.roles.includes('user') && 
+                 !user.roles.includes('admin') && 
+                 !user.roles.includes('moderator') && 
+                 matchesSearch;
+        case 'moderators':
+          return user.roles.includes('moderator') && matchesSearch;
+        case 'admins':
+          return user.roles.includes('admin') && matchesSearch;
+        case 'users':
+        default:
+          return matchesSearch;
+      }
+    });
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -1419,10 +1450,12 @@ const AdminManagementTab: React.FC = () => {
         <TabButton 
           $active={activeTab === 'users'} 
           onClick={() => setActiveTab('users')}
-          $type="user"
+          $type="all"
         >
-          All Users
+          All
         </TabButton>
+
+       
 
         <TabButton 
           $active={activeTab === 'admins'} 
@@ -1439,6 +1472,14 @@ const AdminManagementTab: React.FC = () => {
           Moderators
         </TabButton>
        
+        <TabButton 
+          $active={activeTab === 'regular-users'} 
+          onClick={() => setActiveTab('regular-users')}
+          $type="user"
+        >
+          Users
+        </TabButton>
+        
       </TabContainer>
 
       {error && (
@@ -1641,7 +1682,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Role
+                  Status
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'roles'} 
                     $direction={sortDirection}
@@ -1654,7 +1695,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-                  Last Account Activity
+                  Last Activity
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
                     $direction={sortDirection}
@@ -1666,18 +1707,7 @@ const AdminManagementTab: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {allUsers
-                .filter(user => {
-                  const searchTerm = filterEmail.toLowerCase();
-                  const name = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase();
-                  const email = user.email.toLowerCase();
-                  const roles = user.roles.join(' ').toLowerCase();
-                  
-                  return (user.roles.includes('moderator') &&
-                         (name.includes(searchTerm) || 
-                          email.includes(searchTerm) || 
-                          roles.includes(searchTerm)));
-                })
+              {filterUsersByRole(allUsers, activeTab)
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
                   switch (sortField) {
@@ -1697,7 +1727,7 @@ const AdminManagementTab: React.FC = () => {
                       return 0;
                   }
                 })
-                .map((user: UserRole, index: number) => (
+                .map((user, index) => (
                   <tr key={user.id}>
                     <Td style={{ width: '50px' }}>{index + 1}</Td>
                     <Td style={{ width: '200px' }}>
@@ -1705,13 +1735,9 @@ const AdminManagementTab: React.FC = () => {
                     </Td>
                     <Td style={{ width: '300px' }}>{user.email}</Td>
                     <Td style={{ width: '200px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string) => (
-                          <RoleBadge key={role} $role={role}>
-                            {role}
-                          </RoleBadge>
-                        ))}
-                      </RoleBadges>
+                      <StatusBadge $status="active">
+                        Active
+                      </StatusBadge>
                     </Td>
                     <Td style={{ width: '150px' }}>
                       {user.last_sign_in 
@@ -1818,7 +1844,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Role
+                  Status
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'roles'} 
                     $direction={sortDirection}
@@ -1831,7 +1857,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-                  Last Account Activity
+                  Last Activity
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
                     $direction={sortDirection}
@@ -1843,17 +1869,7 @@ const AdminManagementTab: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {allUsers
-                .filter(user => {
-                  const searchTerm = filterEmail.toLowerCase();
-                  const name = `${user.first_name || ''} ${user.last_name || ''}`.trim().toLowerCase();
-                  const email = user.email.toLowerCase();
-                  const roles = user.roles.join(' ').toLowerCase();
-                  
-                  return name.includes(searchTerm) || 
-                         email.includes(searchTerm) || 
-                         roles.includes(searchTerm);
-                })
+              {filterUsersByRole(allUsers, activeTab)
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
                   switch (sortField) {
@@ -1873,7 +1889,7 @@ const AdminManagementTab: React.FC = () => {
                       return 0;
                   }
                 })
-                .map((user: UserRole, index: number) => (
+                .map((user, index) => (
                   <tr key={user.id}>
                     <Td style={{ width: '50px' }}>{index + 1}</Td>
                     <Td style={{ width: '200px' }}>
@@ -1881,13 +1897,9 @@ const AdminManagementTab: React.FC = () => {
                     </Td>
                     <Td style={{ width: '300px' }}>{user.email}</Td>
                     <Td style={{ width: '200px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string) => (
-                          <RoleBadge key={role} $role={role}>
-                            {role}
-                          </RoleBadge>
-                        ))}
-                      </RoleBadges>
+                      <StatusBadge $status="active">
+                        Active
+                      </StatusBadge>
                     </Td>
                     <Td style={{ width: '150px' }}>
                       {user.last_sign_in 
@@ -2538,7 +2550,7 @@ const TabContainer = styled.div`
   padding-bottom: 8px;
 `;
 
-const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator' | 'user' }>`
+const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator' | 'user' | 'all' }>`
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2558,6 +2570,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#F0FDF4';
         case 'user':
           return '#E5E7EB';
+        case 'all':
+          return '#D1D5DB';
         default:
           return '#F3F4F6';
       }
@@ -2569,6 +2583,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#F0FDF4';
         case 'user':
           return '#E5E7EB';
+        case 'all':
+          return '#D1D5DB';
         default:
           return '#F3F4F6';
       }
@@ -2583,6 +2599,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#166534';
         case 'user':
           return '#374151';
+        case 'all':
+          return '#1F2937';
         default:
           return '#6B7280';
       }
@@ -2594,6 +2612,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#166534';
         case 'user':
           return '#374151';
+        case 'all':
+          return '#1F2937';
         default:
           return '#6B7280';
       }
@@ -2614,6 +2634,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#166534';
         case 'user':
           return '#374151';
+        case 'all':
+          return '#1F2937';
         default:
           return '#6B7280';
       }
