@@ -12,7 +12,7 @@ const Header = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 25px;
 `;
 
 const Title = styled.h2`
