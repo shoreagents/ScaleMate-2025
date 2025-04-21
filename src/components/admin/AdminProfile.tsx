@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiX as FiXIcon, FiLoader } from 'react-icons/fi';
+import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 
 const Container = styled.div`
@@ -981,7 +981,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   />
                   {usernameError && (
                     <HelperText style={{ color: '#dc2626' }}>
-                      <FiXIcon size={14} />
+                      <FiX size={14} />
                       {usernameError}
                     </HelperText>
                   )}
@@ -1005,7 +1005,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   )}
                   {!checkingUsername && !usernameError && usernameExists === true && profileData.username !== currentUsername && (
                     <HelperText style={{ color: '#dc2626' }}>
-                      <FiXIcon size={14} />
+                      <FiX size={14} />
                       Username is already taken
                     </HelperText>
                   )}
@@ -1238,7 +1238,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     </>
                   ) : (
                     <>
-                      <FiXIcon size={14} />
+                      <FiX size={14} />
                       Current password is incorrect
                     </>
                   )}
@@ -1272,7 +1272,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                       </>
                     ) : (
                       <>
-                        <FiXIcon size={14} />
+                        <FiX size={14} />
                         Passwords do not match
                       </>
                     )}
