@@ -45,7 +45,7 @@ const Table = styled.table`
   background: white;
   border-radius: 0.5rem;
   overflow: hidden;
-border: 1px solid #E5E7EB;
+  border: 1px solid #E5E7EB;
   tr:last-child td {
     border-bottom: none;
   }
