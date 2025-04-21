@@ -585,6 +585,12 @@ const AdminDashboard: React.FC = () => {
           return;
         }
 
+        if (!authUser) {
+          console.error('No authenticated user found');
+          router.push('/admin');
+          return;
+        }
+
         // Get user profile
         const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
