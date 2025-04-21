@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { createClient } from '@supabase/supabase-js';
 
 const FormContainer = styled.div`
   max-width: 420px;
@@ -263,7 +264,7 @@ interface AuthFormProps {
 }
 
 export default function AuthForm({ onSuccess }: AuthFormProps) {
-  const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -279,12 +280,85 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
     setIsLoading(true);
 
     try {
+      // Check if the input is a valid email
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginIdentifier);
+      
+      let loginEmail = loginIdentifier;
+      
+      // If it's not an email, try to find the user by username
+      if (!isEmail) {
+        console.log('Attempting to find user by username:', loginIdentifier);
+        
+        // Check if service role key is available
+        if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
+          throw new Error('Service role key is not configured. Please contact support.');
+        }
+
+        console.log('Service role key is configured, creating client...');
+        
+        // Create a service role client for the lookup
+        const serviceRoleClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+          {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          }
+        );
+
+        console.log('Querying user_profiles table...');
+        // First get the user_id from user_profiles
+        const { data: userProfile, error: profileError } = await serviceRoleClient
+          .from('user_profiles')
+          .select('user_id')
+          .eq('username', loginIdentifier)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Profile lookup error:', {
+            message: profileError.message,
+            details: profileError.details,
+            hint: profileError.hint,
+            code: profileError.code
+          });
+          throw new Error('Error looking up username');
+        }
+
+        if (!userProfile) {
+          console.log('No profile found for username:', loginIdentifier);
+          throw new Error('Username not found');
+        }
+
+        console.log('Found user profile:', userProfile);
+
+        // Get the user's email using the admin API
+        console.log('Getting user email from admin API...');
+        const { data: { user }, error: adminError } = await serviceRoleClient.auth.admin.getUserById(userProfile.user_id);
+
+        if (adminError) {
+          console.error('Admin API error:', adminError);
+          throw new Error('Error looking up user');
+        }
+
+        if (!user?.email) {
+          console.log('No email found for user_id:', userProfile.user_id);
+          throw new Error('User not found');
+        }
+
+        console.log('Found user email:', user.email);
+        loginEmail = user.email;
+      }
+
+      console.log('Attempting to sign in with email:', loginEmail);
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: loginEmail,
         password,
       });
 
       if (error) {
+        console.error('Sign in error:', error);
         throw error;
       }
 
@@ -292,6 +366,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
       onSuccess?.();
       router.push('/admin/dashboard');
     } catch (err) {
+      console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during sign in');
     } finally {
       setIsLoading(false);
@@ -305,7 +380,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(loginIdentifier, {
         redirectTo: `${window.location.origin}/admin`,
       });
 
@@ -314,7 +389,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
       }
 
       setSuccess('Password reset email sent! Please check your inbox.');
-      setEmail('');
+      setLoginIdentifier('');
       setPassword('');
       setShowResetForm(false);
     } catch (err) {
@@ -339,8 +414,8 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                     id="reset-email"
                     type="email"
                     placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
                     required
                   />
                 </InputGroup>
@@ -367,13 +442,13 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
             <FormContent>
               <FormFields>
                 <InputGroup>
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="loginIdentifier">Username or Email</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="loginIdentifier"
+                    type="text"
+                    placeholder="Enter your username or email"
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
                     required
                   />
                 </InputGroup>
