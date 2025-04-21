@@ -577,7 +577,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         gender: profile.gender || '',
         profile_picture: profile.profile_picture || '',
         last_password_change: profile.last_password_change || '',
-        username: profile.username || ''
+        username: profile.username || '',
       };
 
       setProfileData(profileData);
@@ -599,7 +599,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     setConfirmPassword('');
     setPasswordsMatch(null);
     setCurrentPasswordValid(null);
-    setUsernameError(null);
   };
 
   const handleProfileUpdate = async () => {
@@ -853,64 +852,88 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
 
   const checkUsernameExists = async (username: string) => {
     if (!username) {
-      setUsernameError('');
-      setUsernameExists(false);
+      setUsernameExists(null);
+      setCheckingUsername(false);
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
+      setCheckingUsername(true);
+
+      // Get the profile of the current user from user_details view
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userProfile } = await supabase
+        .from('user_details')
         .select('username')
-        .eq('username', username)
+        .eq('user_id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      // Store current username for UI comparison
+      if (userProfile?.username) {
+        setCurrentUsername(userProfile.username);
       }
 
-      setUsernameExists(!!data);
-      setUsernameError(data ? 'Username already exists' : '');
+      // If username is the same as the current user, set exists to true and return early
+      if (userProfile?.username === username) {
+        setUsernameExists(true);
+        setCheckingUsername(false);
+        return;
+      }
+      
+      // Query the user_details view
+      const { data, error } = await supabase
+        .from('user_details')
+        .select('username, user_id')
+        .eq('username', username)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking username:', error);
+        setUsernameExists(null);
+      } else if (data && data.length > 0) {
+        // If we found a user with this username, check if it's the same user
+        const foundUser = data[0];
+        if (foundUser.user_id === user.id) {
+          setUsernameExists(true); // It's the same user's current username
+        } else {
+          setUsernameExists(true); // Username is taken by another user
+        }
+      } else {
+        setUsernameExists(false); // Username is available
+      }
     } catch (error) {
       console.error('Error checking username:', error);
-      setUsernameError('Error checking username availability');
+      setUsernameExists(null);
+    } finally {
+      setCheckingUsername(false);
     }
   };
 
-  const debouncedCheckUsername = useCallback(
-    debounce((username: string) => {
-      checkUsernameExists(username);
-    }, 500),
-    []
-  );
-
-  useEffect(() => {
-    if (profileData.username && profileData.username !== originalProfileData.username) {
-      debouncedCheckUsername(profileData.username);
-    }
-  }, [profileData.username, originalProfileData.username]);
-
   const validateUsername = (value: string) => {
+    // Allow empty value for backspace
     if (!value) {
       setUsernameError(null);
       setUsernameExists(null);
       return false;
     }
-    if (!/^[a-zA-Z0-9._-]+$/.test(value)) {
+    if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
       setUsernameError('Only letters, numbers, dots, underscores, and hyphens allowed');
       setUsernameExists(null);
       return false;
     }
     setUsernameError(null);
-    debouncedCheckUsername(value);
+    checkUsernameExists(value);
     return true;
   };
 
   const isBasicInfoValid = () => {
-    const hasValidName = profileData.first_name.trim() !== '' && profileData.last_name.trim() !== '';
     const isCurrentUsername = profileData.username === currentUsername;
-    const hasValidUsername = profileData.username.trim() !== '' && !usernameError && (!usernameExists || isCurrentUsername);
-    return hasValidName && hasValidUsername;
+    return profileData.first_name.trim() !== '' && 
+           profileData.last_name.trim() !== '' &&
+           !usernameError &&
+           (!usernameExists || isCurrentUsername);
   };
 
   if (loading) {
@@ -934,16 +957,16 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 <InputWrapper>
                   <Input
                     type="text"
-                    pattern="[a-zA-Z0-9._-]+"
+                    pattern="[a-zA-Z0-9._-]*"
                     value={profileData.username}
                     onChange={(e) => {
                       const value = e.target.value;
                       validateUsername(value);
-                      if (e.target.validity.valid) {
+                      if (value === '' || e.target.validity.valid) {
                         setProfileData({ ...profileData, username: value });
                       }
                     }}
-                    placeholder="Enter your username"
+                    placeholder="Enter username"
                   />
                   {usernameError && (
                     <HelperText style={{ color: '#dc2626' }}>
