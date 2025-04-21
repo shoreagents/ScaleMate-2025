@@ -176,55 +176,26 @@ const GenderSelect = styled.select`
   }
 `;
 
-const ButtonGroup = styled.div<{ $isModal?: boolean; $isPassword?: boolean }>`
+const Button = styled.button`
   display: flex;
-  gap: 12px;
-  justify-content: ${props => props.$isModal ? 'center' : 'flex-start'};
-  margin-top: ${props => props.$isPassword ? '16px' : props.$isModal ? '0' : '24px'};
-`;
-
-const ModalButton = styled.button`
+  align-items: center;
+  gap: 8px;
   padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-`;
-
-const CancelButton = styled(ModalButton)`
-  background-color: #F3F4F6;
-  color: #374151;
-
-  &:hover {
-    background-color: #E5E7EB;
-  }
-`;
-
-const SaveButton = styled(ModalButton)`
-  background-color: #3B82F6;
+  background-color: #3b82f6;
   color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
 
   &:hover {
-    background-color: #2563EB;
+    background-color: #2563eb;
   }
 
   &:disabled {
-    background-color: #93C5FD;
+    background-color: #93c5fd;
     cursor: not-allowed;
-    opacity: 0.7;
-  }
-`;
-
-const ChooseImageButton = styled(ModalButton)`
-  border: 1px solid rgb(59, 130, 246);
-  color: rgb(59, 130, 246);
-  background-color: transparent;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: rgb(59, 130, 246);
-    color: white;
   }
 `;
 
@@ -282,13 +253,6 @@ const EditButton = styled.button`
   }
 `;
 
-const PasswordChangeForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 16px;
-`;
-
 const SuccessMessage = styled.div`
   color: #059669;
   font-size: 0.875rem;
@@ -298,7 +262,60 @@ const SuccessMessage = styled.div`
 const ErrorMessage = styled.div`
   color: #dc2626;
   font-size: 0.875rem;
-  margin-top: 8px;
+  margin-top: 0;
+`;
+
+const PasswordChangeForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 16px;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+  margin-top: 32px;
+`;
+
+const ModalButton = styled.button`
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ChooseImageButton = styled(ModalButton)`
+  border: 1px solid rgb(59, 130, 246);
+  color: rgb(59, 130, 246);
+  background-color: transparent;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: rgb(59, 130, 246);
+    color: white;
+  }
+`;
+
+const SaveButton = styled(ModalButton)`
+  background-color: #3B82F6;
+  color: white;
+
+  &:hover {
+    background-color: #2563EB;
+  }
+
+  &:disabled {
+    background-color: #93C5FD;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
 `;
 
 const ProfileModal = styled.div<{ $isOpen: boolean }>`
@@ -324,10 +341,10 @@ const ProfileModalContent = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+
+  ${ButtonGroup} {
+    justify-content: center;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -415,7 +432,6 @@ const UploadLabel = styled.label`
 const PasswordInputContainer = styled.div`
   position: relative;
   width: 100%;
-  margin-bottom: 4px;
 `;
 
 const PasswordInput = styled(Input)`
@@ -425,7 +441,7 @@ const PasswordInput = styled(Input)`
 
 const ViewPasswordButton = styled.button`
   position: absolute;
-  right: 8px;
+  right: .5rem;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -453,15 +469,20 @@ const PasswordColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: 16px;
 `;
 
 const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
   font-size: 0.75rem;
-  margin-top: 4px;
   color: ${props => props.$matches ? '#059669' : '#dc2626'};
   display: flex;
   align-items: center;
   gap: 4px;
+`;
+
+const RequiredAsterisk = styled.span`
+  color: #EF4444;
+  margin-left: 4px;
 `;
 
 interface AdminProfileData {
@@ -540,39 +561,21 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-<<<<<<< Updated upstream
-      const { data: profile, error: profileError } = await supabase
-=======
       const { data: profile, error } = await supabase
->>>>>>> Stashed changes
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-<<<<<<< Updated upstream
-      if (profileError) throw profileError;
-
-      setProfileData({
-=======
       if (error) throw error;
 
       const profileData = {
->>>>>>> Stashed changes
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         email: user.email || '',
         phone: profile.phone || '',
         gender: profile.gender || '',
         profile_picture: profile.profile_picture || '',
-<<<<<<< Updated upstream
-        last_password_change: profile.last_password_change || ''
-      });
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setBasicInfoError('Failed to load profile data');
-    } finally {
-=======
         last_password_change: profile.last_password_change || '',
         username: profile.username || ''
       };
@@ -582,7 +585,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profile:', error);
->>>>>>> Stashed changes
       setLoading(false);
     }
   };
@@ -849,8 +851,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     await validateCurrentPassword(value);
   };
 
-<<<<<<< Updated upstream
-=======
   const checkUsernameExists = async (username: string) => {
     if (!username) {
       setUsernameExists(null);
@@ -947,7 +947,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
            (!usernameExists || isCurrentUsername);
   };
 
->>>>>>> Stashed changes
   if (loading) {
     return <Container>Loading...</Container>;
   }
@@ -962,9 +961,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           {isEditing ? (
             <>
               <FormGroup>
-<<<<<<< Updated upstream
-                <Label>First Name</Label>
-=======
                 <Label>
                   Username
                   <RequiredAsterisk>*</RequiredAsterisk>
@@ -1020,7 +1016,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   First Name
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
->>>>>>> Stashed changes
                 <Input
                   type="text"
                   pattern="[A-Za-z ]+"
@@ -1030,10 +1025,14 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                       setProfileData({ ...profileData, first_name: e.target.value });
                     }
                   }}
+                  placeholder="Enter your first name"
                 />
               </FormGroup>
               <FormGroup>
-                <Label>Last Name</Label>
+                <Label>
+                  Last Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <Input
                   type="text"
                   pattern="[A-Za-z ]+"
@@ -1043,6 +1042,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                       setProfileData({ ...profileData, last_name: e.target.value });
                     }
                   }}
+                  placeholder="Enter your last name"
                 />
               </FormGroup>
               <FormGroup>
@@ -1052,7 +1052,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     value={profileData.gender}
                     onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
                   >
-                    <option value="">Select gender</option>
+                    <option value="">Select your gender</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
                     <option value="other">Other</option>
@@ -1068,13 +1068,16 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 </GenderSelectContainer>
               </FormGroup>
               <ButtonGroup>
-                <CancelButton
+                <ChooseImageButton
                   type="button"
                   onClick={handleCancel}
                 >
                   Cancel
-                </CancelButton>
-                <SaveButton onClick={handleProfileUpdate}>
+                </ChooseImageButton>
+                <SaveButton 
+                  onClick={handleProfileUpdate}
+                  disabled={!isBasicInfoValid()}
+                >
                   Save Changes
                 </SaveButton>
               </ButtonGroup>
@@ -1137,7 +1140,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   disabled
                   style={{ 
                     backgroundColor: '#f9fafb',
-                    color: '#111827'
+                    color: '#6b7280'
                   }}
                 />
                 <HelperText>
@@ -1157,16 +1160,17 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                       setProfileData({ ...profileData, phone: e.target.value });
                     }
                   }}
+                  placeholder="Enter your phone number"
                 />
               </InputWrapper>
             </FormGroup>
             <ButtonGroup>
-              <CancelButton
+              <ChooseImageButton
                 type="button"
                 onClick={handleCancel}
               >
                 Cancel
-              </CancelButton>
+              </ChooseImageButton>
               <SaveButton onClick={() => {
                 handleProfileUpdate();
                 setIsEditingContact(false);
@@ -1211,7 +1215,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
                   onChange={handleCurrentPasswordChange}
-                  placeholder="Enter current password"
+                  placeholder="Enter your current password"
                 />
                 <ViewPasswordButton
                   type="button"
@@ -1250,7 +1254,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     type={showNewPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={handleNewPasswordChange}
-                    placeholder="Enter new password"
+                    placeholder="Enter your new password"
                   />
                   <ViewPasswordButton
                     type="button"
@@ -1283,7 +1287,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={handleConfirmPasswordChange}
-                    placeholder="Confirm new password"
+                    placeholder="Confirm your new password"
                   />
                   <ViewPasswordButton
                     type="button"
@@ -1295,13 +1299,13 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               </PasswordColumn>
             </PasswordRow>
 
-            <ButtonGroup $isPassword>
-              <CancelButton
+            <ButtonGroup>
+              <ChooseImageButton
                 type="button"
                 onClick={handleCancel}
               >
                 Cancel
-              </CancelButton>
+              </ChooseImageButton>
               <SaveButton 
                 type="submit"
                 disabled={!passwordsMatch || !currentPasswordValid}
@@ -1362,7 +1366,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
             onChange={handleFileSelect}
           />
 
-          <ButtonGroup $isModal>
+          <ButtonGroup>
             <ChooseImageButton
               onClick={() => document.getElementById('profile-picture')?.click()}
             >

@@ -459,7 +459,7 @@ const PasswordInput = styled(Input)`
 
 const ViewPasswordButton = styled.button`
   position: absolute;
-  right: 12px;
+  right: .5rem;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -916,64 +916,106 @@ const AdminManagementTab: React.FC = () => {
           return;
         }
 
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-        });
+        // First check if user exists
+        const { data: existingUser, error: checkError } = await supabase
+          .from('user_details')
+          .select('user_id')
+          .eq('email', formData.email)
+          .single();
 
-        if (authError) {
-          if (authError.message.includes('rate limit')) {
-            // Handle Supabase rate limit
-            const retryDelay = 300000; // 5 minutes in milliseconds
-            startRateLimitCountdown(retryDelay);
-            setModalError('Rate limit exceeded. Please try again in 5 minutes or use a different email address.');
-            return;
-          } else if (authError.message.includes('already registered')) {
-            // Handle existing user
-            const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        if (checkError && checkError.code !== 'PGRST116') {
+          setModalError('Error checking user: ' + checkError.message);
+          return;
+        }
+
+        if (existingUser) {
+          setModalError('A user with this email already exists');
+          return;
+        }
+
+        // Try to create user with longer delays between attempts
+        let retries = 0;
+        const maxRetries = 2;
+        const baseDelay = 30000; // 30 seconds
+        let authData: any = null;
+
+        const createUserWithRetry = async () => {
+          try {
+            const result = await supabase.auth.signUp({
               email: formData.email,
               password: formData.password,
-            });
-            
-            if (signInError) {
-              setModalError('Error signing in: ' + signInError.message);
-              return;
-            }
-            if (!signInData?.user) {
-              setModalError('User not found');
-              return;
-            }
-            
-            const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-              p_action: 'insert',
-              p_new_role: 'user',
-              p_target_user_id: signInData.user.id
+              options: {
+                emailRedirectTo: `${window.location.origin}/auth/callback`
+              }
             });
 
-            if (roleError) {
-              setModalError('Error assigning role: ' + roleError.message);
-              return;
+            if (result.error) {
+              if (result.error.message.includes('rate limit')) {
+                if (retries < maxRetries) {
+                  retries++;
+                  const delay = baseDelay * Math.pow(2, retries - 1);
+                  setModalError(`Rate limit exceeded. Please wait ${delay/1000} seconds before trying again.`);
+                  await new Promise(resolve => setTimeout(resolve, delay));
+                  return createUserWithRetry();
+                }
+                // If we've exhausted retries, show a more helpful message
+                const retryDelay = 300000; // 5 minutes
+                startRateLimitCountdown(retryDelay);
+                setModalError('Too many attempts. Please wait 5 minutes or try using a different email address.');
+                return;
+              }
+              throw result.error;
             }
-          } else {
-            setModalError('Error creating user: ' + authError.message);
-            return;
-          }
-        } else {
-          if (!authData?.user) {
-            setModalError('Failed to create user');
-            return;
-          }
 
-          const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-            p_action: 'insert',
-            p_new_role: 'user',
-            p_target_user_id: authData.user.id
+            authData = result.data;
+          } catch (error) {
+            if (error instanceof Error && error.message.includes('rate limit') && retries < maxRetries) {
+              retries++;
+              const delay = baseDelay * Math.pow(2, retries - 1);
+              setModalError(`Rate limit exceeded. Please wait ${delay/1000} seconds before trying again.`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              return createUserWithRetry();
+            }
+            throw error;
+          }
+        };
+
+        await createUserWithRetry();
+
+        if (!authData?.user) {
+          setModalError('Failed to create user');
+          return;
+        }
+
+        // Create user profile
+        const { error: profileError } = await supabase
+          .from('user_details')
+          .insert({
+            user_id: authData.user.id,
+            email: formData.email,
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            phone: formData.phone || null,
+            gender: formData.gender || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
 
-          if (roleError) {
-            setModalError('Error assigning role: ' + roleError.message);
-            return;
-          }
+        if (profileError) {
+          setModalError('Error creating user profile: ' + profileError.message);
+          return;
+        }
+
+        // Assign user role
+        const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
+          p_action: 'insert',
+          p_new_role: 'user',
+          p_target_user_id: authData.user.id
+        });
+
+        if (roleError) {
+          setModalError('Error assigning role: ' + roleError.message);
+          return;
         }
 
         setModalSuccess('User created successfully');
@@ -984,11 +1026,12 @@ const AdminManagementTab: React.FC = () => {
       } catch (error) {
         console.error('Error in handleSubmit:', error);
         setModalError(error instanceof Error ? error.message : 'Failed to create user');
+      } finally {
+        setIsSubmitting(false);
       }
     };
 
     addToQueue(submitRequest);
-    setIsSubmitting(false);
   };
 
   const handleDeleteAdmin = async (adminId: string) => {
@@ -1919,7 +1962,10 @@ const AdminManagementTab: React.FC = () => {
           <Form onSubmit={handleSubmit}>
             <FormRow>
               <FormGroup>
-                <Label htmlFor="first-name" className="required">First Name</Label>
+                <Label htmlFor="first-name">
+                  First Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <Input
                   id="first-name"
                   type="text"
@@ -1933,7 +1979,10 @@ const AdminManagementTab: React.FC = () => {
               </FormGroup>
 
               <FormGroup>
-                <Label htmlFor="last-name" className="required">Last Name</Label>
+                <Label htmlFor="last-name">
+                  Last Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <Input
                   id="last-name"
                   type="text"
@@ -1992,7 +2041,10 @@ const AdminManagementTab: React.FC = () => {
             </FormRow>
 
             <FormGroup>
-              <Label htmlFor="email" className="required">Email</Label>
+              <Label htmlFor="email">
+                Email
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -2005,9 +2057,6 @@ const AdminManagementTab: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-<<<<<<< Updated upstream
-              <Label htmlFor="password" className="required">Password</Label>
-=======
               <Label htmlFor="username">
                 Username
                 <RequiredAsterisk>*</RequiredAsterisk>
@@ -2061,7 +2110,6 @@ const AdminManagementTab: React.FC = () => {
                 Password
                 <RequiredAsterisk>*</RequiredAsterisk>
               </Label>
->>>>>>> Stashed changes
               <PasswordInputContainer>
                 <PasswordInput
                   id="password"

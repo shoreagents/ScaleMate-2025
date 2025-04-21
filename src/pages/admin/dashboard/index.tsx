@@ -550,107 +550,6 @@ const StatusText = styled.div<{ $status: 'up' | 'down' | 'warning' }>`
   }};
 `;
 
-<<<<<<< Updated upstream
-const IconButton = styled.button`
-  background: none;
-  border: none;
-  padding: 8px;
-  cursor: pointer;
-  color: #6B7280;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: #F3F4F6;
-    color: #111827;
-  }
-`;
-
-const NotificationBadge = styled.div`
-  position: relative;
-  
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 8px;
-    height: 8px;
-    background-color: #EF4444;
-    border-radius: 50%;
-    border: 2px solid white;
-  }
-`;
-
-const ProfileContainer = styled.div`
-  position: relative;
-`;
-
-const ProfileDropdown = styled.div<{ isOpen: boolean }>`
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #E5E7EB;
-  width: 200px;
-  display: ${props => props.isOpen ? 'block' : 'none'};
-  z-index: 50;
-  margin-top: 8px;
-`;
-
-const DropdownItem = styled.div`
-  padding: 12px 16px;
-  color: #374151;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #f3f4f6;
-  }
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6B7280;
-  padding: 8px;
-  
-  &:hover {
-    color: #111827;
-  }
-`;
-
-const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: ${props => props.$imageUrl ? 'transparent' : '#f3f4f6'};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-=======
->>>>>>> Stashed changes
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -703,10 +602,10 @@ const AdminDashboard: React.FC = () => {
         setProfilePicture(profile.profile_picture);
         setLoading(false);
 
-        // Remove the username-based route redirection
-        // if (profile.username) {
-        //   router.push(`/${profile.username}`);
-        // }
+        // Only redirect to username-based route if not in admin dashboard
+        if (profile.username && !router.pathname.startsWith('/admin')) {
+          router.push(`/${profile.username}`);
+        }
       } catch (error) {
         console.error('Error in fetchUserData:', error);
         router.push('/admin');
