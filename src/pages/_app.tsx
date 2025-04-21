@@ -12,7 +12,7 @@ config.autoAddCss = false;
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
-  const showHeader = !router.pathname.startsWith('/admin');
+  const showHeader = !router.pathname.startsWith('/admin') && !router.pathname.startsWith('/user');
 
   return (
     <ThemeProvider theme={theme}>
