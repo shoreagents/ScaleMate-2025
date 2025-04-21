@@ -591,11 +591,14 @@ const AdminDashboard: React.FC = () => {
           return;
         }
 
+        // Type assertion after null check
+        const user = authUser as { id: string };
+
         // Get user profile
         const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('*')
-          .eq('user_id', authUser.id)
+          .eq('user_id', user.id)
           .single();
 
         if (profileError) {
