@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiX as FiXIcon, FiLoader } from 'react-icons/fi';
@@ -41,6 +41,7 @@ const ProfilePicture = styled.div`
   overflow: visible;
   flex-shrink: 0;
   margin-left: auto;
+  align-self: center;
 `;
 
 const ProfileImage = styled.img`
@@ -51,6 +52,7 @@ const ProfileImage = styled.img`
   position: absolute;
   top: 0;
   left: 0;
+  object-position: center;
 `;
 
 const UploadButton = styled.button`
@@ -68,7 +70,7 @@ const UploadButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  transform: translate(-70%, -10%);
+  transform: translate(-50%, -50%);
   z-index: 10;
 
   &:hover {
@@ -97,13 +99,15 @@ const InputWrapper = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 `;
 
 const HelperText = styled.div`
   font-size: 0.75rem;
   color: #6b7280;
-  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const Label = styled.label`
@@ -466,8 +470,9 @@ interface AdminProfileData {
   email: string;
   phone: string;
   gender: string;
-  profile_picture?: string;
-  last_password_change?: string;
+  profile_picture: string;
+  last_password_change: string;
+  username: string;
 }
 
 interface AdminProfileProps {
@@ -479,6 +484,16 @@ const capitalizeFirstLetter = (string: string) => {
 };
 
 const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) => {
+  const [originalProfileData, setOriginalProfileData] = useState<AdminProfileData>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    gender: '',
+    profile_picture: '',
+    last_password_change: '',
+    username: ''
+  });
   const [profileData, setProfileData] = useState<AdminProfileData>({
     first_name: '',
     last_name: '',
@@ -486,7 +501,8 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     phone: '',
     gender: '',
     profile_picture: '',
-    last_password_change: ''
+    last_password_change: '',
+    username: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
@@ -510,6 +526,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
   const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState<string>('');
 
   useEffect(() => {
     fetchProfileData();
@@ -520,29 +540,64 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+<<<<<<< Updated upstream
       const { data: profile, error: profileError } = await supabase
+=======
+      const { data: profile, error } = await supabase
+>>>>>>> Stashed changes
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
+<<<<<<< Updated upstream
       if (profileError) throw profileError;
 
       setProfileData({
+=======
+      if (error) throw error;
+
+      const profileData = {
+>>>>>>> Stashed changes
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         email: user.email || '',
         phone: profile.phone || '',
         gender: profile.gender || '',
         profile_picture: profile.profile_picture || '',
+<<<<<<< Updated upstream
         last_password_change: profile.last_password_change || ''
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
       setBasicInfoError('Failed to load profile data');
     } finally {
+=======
+        last_password_change: profile.last_password_change || '',
+        username: profile.username || ''
+      };
+
+      setProfileData(profileData);
+      setOriginalProfileData(profileData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+>>>>>>> Stashed changes
       setLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    setProfileData(originalProfileData);
+    setIsEditing(false);
+    setIsEditingContact(false);
+    setIsEditingPassword(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordsMatch(null);
+    setCurrentPasswordValid(null);
+    setUsernameError(null);
   };
 
   const handleProfileUpdate = async () => {
@@ -557,6 +612,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           last_name: profileData.last_name,
           phone: profileData.phone,
           gender: profileData.gender,
+          username: profileData.username,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id);
@@ -736,7 +792,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         onProfilePictureChange(publicUrl);
       }
 
-      setTimeout(() => setBasicInfoSuccess(null), 3000);
+      setTimeout(() => setBasicInfoSuccess(null), 500);
 
     } catch (error) {
       console.error('Error updating profile picture:', error);
@@ -793,6 +849,105 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     await validateCurrentPassword(value);
   };
 
+<<<<<<< Updated upstream
+=======
+  const checkUsernameExists = async (username: string) => {
+    if (!username) {
+      setUsernameExists(null);
+      setCheckingUsername(false);
+      return;
+    }
+
+    try {
+      setCheckingUsername(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setUsernameExists(null);
+        setCheckingUsername(false);
+        return;
+      }
+
+      // Get current user's profile to check if username is the same
+      const { data: currentProfile } = await supabase
+        .from('user_profiles')
+        .select('username')
+        .eq('user_id', user.id)
+        .single();
+
+      // Store current username for UI comparison
+      if (currentProfile?.username) {
+        setCurrentUsername(currentProfile.username);
+      }
+
+      // If username is the same as current user's, set exists to true
+      if (currentProfile?.username === username) {
+        setUsernameExists(true);
+        setCheckingUsername(false);
+        return;
+      }
+
+      console.log('Checking username:', username);
+      
+      // Query the user_details view with a simpler approach
+      const { data, error } = await supabase
+        .from('user_details')
+        .select('username')
+        .eq('username', username)
+        .limit(1);
+
+      console.log('Query response:', { data, error });
+
+      if (error) {
+        console.error('Error checking username:', error);
+        setUsernameExists(null);
+      } else {
+        const exists = data && data.length > 0;
+        console.log('Username exists:', exists);
+        setUsernameExists(exists);
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+      setUsernameExists(null);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
+  // Add debounced version of checkUsernameExists
+  const debouncedCheckUsername = useCallback(
+    debounce((username: string) => {
+      checkUsernameExists(username);
+    }, 500),
+    []
+  );
+
+  // Update validateUsername function
+  const validateUsername = (value: string) => {
+    if (!value) {
+      setUsernameError(null);
+      setUsernameExists(null);
+      return false;
+    }
+    if (!/^[a-zA-Z0-9._-]+$/.test(value)) {
+      setUsernameError('Only letters, numbers, dots, underscores, and hyphens allowed');
+      setUsernameExists(null);
+      return false;
+    }
+    setUsernameError(null);
+    debouncedCheckUsername(value);
+    return true;
+  };
+
+  // Update isBasicInfoValid function
+  const isBasicInfoValid = () => {
+    const isCurrentUsername = profileData.username === currentUsername;
+    return profileData.first_name.trim() !== '' && 
+           profileData.last_name.trim() !== '' &&
+           !usernameError &&
+           (!usernameExists || isCurrentUsername);
+  };
+
+>>>>>>> Stashed changes
   if (loading) {
     return <Container>Loading...</Container>;
   }
@@ -807,7 +962,65 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           {isEditing ? (
             <>
               <FormGroup>
+<<<<<<< Updated upstream
                 <Label>First Name</Label>
+=======
+                <Label>
+                  Username
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <InputWrapper>
+                  <Input
+                    type="text"
+                    pattern="[a-zA-Z0-9._-]+"
+                    value={profileData.username}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      validateUsername(value);
+                      if (e.target.validity.valid) {
+                        setProfileData({ ...profileData, username: value });
+                      }
+                    }}
+                    placeholder="Enter your username"
+                  />
+                  {usernameError && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiXIcon size={14} />
+                      {usernameError}
+                    </HelperText>
+                  )}
+                  {checkingUsername && (
+                    <HelperText style={{ color: '#6b7280' }}>
+                      <FiLoader size={14} />
+                      Checking username...
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === false && (
+                    <HelperText style={{ color: '#059669' }}>
+                      <FiCheck size={14} />
+                      Username is available
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === true && profileData.username === currentUsername && (
+                    <HelperText style={{ color: '#6b7280' }}>
+                      <FiCheck size={14} />
+                      This is your current username
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === true && profileData.username !== currentUsername && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiXIcon size={14} />
+                      Username is already taken
+                    </HelperText>
+                  )}
+                </InputWrapper>
+              </FormGroup>
+              <FormGroup>
+                <Label>
+                  First Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+>>>>>>> Stashed changes
                 <Input
                   type="text"
                   pattern="[A-Za-z ]+"
@@ -857,7 +1070,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               <ButtonGroup>
                 <CancelButton
                   type="button"
-                  onClick={() => setIsEditing(false)}
+                  onClick={handleCancel}
                 >
                   Cancel
                 </CancelButton>
@@ -870,6 +1083,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
             </>
           ) : (
             <>
+              <InfoRow $isEditing={isEditing}>
+                <InfoLabel $isEditing={isEditing}>Username</InfoLabel>
+                <InfoValue $isEditing={isEditing}>{profileData.username || '-'}</InfoValue>
+              </InfoRow>
               <InfoRow $isEditing={isEditing}>
                 <InfoLabel $isEditing={isEditing}>First Name</InfoLabel>
                 <InfoValue $isEditing={isEditing}>{profileData.first_name || '-'}</InfoValue>
@@ -946,7 +1163,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
             <ButtonGroup>
               <CancelButton
                 type="button"
-                onClick={() => setIsEditingContact(false)}
+                onClick={handleCancel}
               >
                 Cancel
               </CancelButton>
@@ -1081,11 +1298,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
             <ButtonGroup $isPassword>
               <CancelButton
                 type="button"
-                onClick={() => {
-                  setIsEditingPassword(false);
-                  setPasswordsMatch(null);
-                  setCurrentPasswordValid(null);
-                }}
+                onClick={handleCancel}
               >
                 Cancel
               </CancelButton>
@@ -1166,6 +1379,19 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       </ProfileModal>
     </Container>
   );
+};
+
+// Add debounce utility function
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return function executedFunction(...args: any[]) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 };
 
 export default AdminProfile; 

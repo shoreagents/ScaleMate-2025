@@ -7,6 +7,7 @@ import DashboardTab from '@/components/admin/DashboardTab';
 import UserManagementTab from '@/components/admin/UserManagementTab';
 import AdminManagementTab from '@/components/admin/AdminManagementTab';
 import GenericTab from '@/components/admin/GenericTab';
+import UserHeader from '@/components/layout/UserHeader';
 import { 
   FiHome, 
   FiUsers, 
@@ -33,10 +34,8 @@ import {
   FiActivity,
   FiAward,
   FiStar,
-  FiBell,
   FiUser,
   FiRefreshCw,
-  FiLogOut,
   FiX
 } from 'react-icons/fi';
 import AdminManagement from '@/components/admin/AdminManagementTab';
@@ -363,28 +362,6 @@ const MainContent = styled.div`
   background-color: #F9FAFB;
 `;
 
-const ContentHeader = styled.div`
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 250px;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  padding: ${({ theme }) => theme.spacing.lg};
-  background-color: white;
-  border-bottom: 1px solid #E5E7EB;
-  z-index: 100;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ContentTitle = styled.h1`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0;
-`;
-
 const NavItem = styled.div<{ $active?: boolean }>`
   padding: ${({ theme }) => theme.spacing.sm};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
@@ -573,6 +550,7 @@ const StatusText = styled.div<{ $status: 'up' | 'down' | 'warning' }>`
   }};
 `;
 
+<<<<<<< Updated upstream
 const IconButton = styled.button`
   background: none;
   border: none;
@@ -671,6 +649,8 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   }
 `;
 
+=======
+>>>>>>> Stashed changes
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -696,49 +676,44 @@ const AdminDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    const checkPermissions = async () => {
+    const fetchUserData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError) {
+          console.error('Error fetching auth user:', authError);
           router.push('/admin');
           return;
         }
-        setUser(user);
 
-        // Get user's role and permissions
-        const { data: roleData, error: roleError } = await supabase
-          .from('user_roles')
+        // Get user profile
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', authUser.id)
           .single();
 
-        if (roleError) {
-          console.error('Error fetching user role:', roleError);
-          setDebugInfo({
-            error: roleError,
-            userId: user.id,
-            email: user.email
-          });
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          router.push('/admin');
           return;
         }
 
-        setUserRole(roleData?.role || 'user');
-        setHasAdminPermissions(roleData?.role === 'admin' && roleData?.permissions?.includes('*'));
-        setDebugInfo({
-          userId: user.id,
-          email: user.email,
-          role: roleData?.role,
-          permissions: roleData?.permissions
-        });
-      } catch (error) {
-        console.error('Error checking permissions:', error);
-        setDebugInfo({ error });
-      } finally {
+        setUser(authUser);
+        setProfilePicture(profile.profile_picture);
         setLoading(false);
+
+        // Remove the username-based route redirection
+        // if (profile.username) {
+        //   router.push(`/${profile.username}`);
+        // }
+      } catch (error) {
+        console.error('Error in fetchUserData:', error);
+        router.push('/admin');
       }
     };
 
-    checkPermissions();
+    fetchUserData();
   }, [router]);
 
   // Improved database connection check with simpler query
@@ -1282,44 +1257,13 @@ const AdminDashboard: React.FC = () => {
         </SidebarContent>
       </Sidebar>
       <MainContent>
-        <ContentHeader>
-          <ContentTitle>
-            {showProfile ? 'Profile' : navItems.find(item => item.id === activeTab)?.label}
-          </ContentTitle>
-          <HeaderActions>
-            <NotificationBadge>
-              <IconButton>
-                <FiBell size={20} />
-              </IconButton>
-            </NotificationBadge>
-            <ProfileContainer id="profile-menu">
-              <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                <ProfileIcon $imageUrl={profilePicture}>
-                  {profilePicture ? (
-                    <img src={profilePicture} alt="Profile" />
-                  ) : (
-                    <FiUser size={20} />
-                  )}
-                </ProfileIcon>
-              </IconButton>
-              <ProfileDropdown isOpen={isProfileOpen}>
-                {!showProfile && (
-                  <DropdownItem onClick={() => {
-                    setShowProfile(true);
-                    setIsProfileOpen(false);
-                  }}>
-                    <FiUser size={16} />
-                    View Profile
-                  </DropdownItem>
-                )}
-                <DropdownItem onClick={handleLogout}>
-                  <FiLogOut size={16} />
-                  Logout
-                </DropdownItem>
-              </ProfileDropdown>
-            </ProfileContainer>
-          </HeaderActions>
-        </ContentHeader>
+        <UserHeader
+          title={showProfile ? 'Profile' : navItems.find(item => item.id === activeTab)?.label || ''}
+          profilePicture={profilePicture}
+          onLogout={handleLogout}
+          onProfileClick={() => setShowProfile(true)}
+          showProfile={showProfile}
+        />
         {renderTabContent()}
       </MainContent>
     </DashboardContainer>
