@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiXIcon, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 
 const Container = styled.div`
@@ -275,9 +275,12 @@ const SuccessMessage = styled.div`
   gap: 8px;
 `;
 
-const HelperText = styled.span`
+const HelperText = styled.div`
   font-size: 0.75rem;
-  color: #6B7280;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const RoleSelectContainer = styled.div`
@@ -497,17 +500,19 @@ interface Admin {
   status: 'active' | 'pending';
   created_at: string;
   last_sign_in: string | null;
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  gender?: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  gender: string;
+  username: string;
 }
 
 interface AdminFormData {
-  email: string;
-  password: string;
   first_name: string;
   last_name: string;
+  username: string;
+  email: string;
+  password: string;
   phone: string;
   gender: string;
 }
@@ -517,11 +522,12 @@ interface UserRole {
   email: string;
   roles: string[];
   created_at: string;
-  last_sign_in: string | null | undefined;
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  gender?: string;
+  last_sign_in: string | null;
+  first_name: string;
+  last_name: string;
+  phone: string;
+  gender: string;
+  username: string;
 }
 
 interface UserEditFormData {
@@ -532,6 +538,7 @@ interface UserEditFormData {
   last_name: string;
   phone: string;
   gender: string;
+  username: string;
 }
 
 // Add type for user to delete
@@ -547,10 +554,11 @@ const AdminManagementTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [formData, setFormData] = useState<AdminFormData>({
-    email: '',
-    password: '',
     first_name: '',
     last_name: '',
+    username: '',
+    email: '',
+    password: '',
     phone: '',
     gender: ''
   });
@@ -572,7 +580,8 @@ const AdminManagementTab: React.FC = () => {
     first_name: '',
     last_name: '',
     phone: '',
-    gender: ''
+    gender: '',
+    username: ''
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filterEmail, setFilterEmail] = useState('');
@@ -595,6 +604,10 @@ const AdminManagementTab: React.FC = () => {
   const requestQueue = useRef<Array<() => Promise<void>>>([]);
   const isProcessing = useRef(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string>('');
 
   // Add ref for timeout
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -637,7 +650,8 @@ const AdminManagementTab: React.FC = () => {
           gender,
           created_at,
           last_sign_in_at,
-          roles
+          roles,
+          username
         `)
         .order('created_at', { ascending: false });
 
@@ -653,7 +667,8 @@ const AdminManagementTab: React.FC = () => {
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         phone: user.phone || '',
-        gender: user.gender || ''
+        gender: user.gender || '',
+        username: user.username || ''
       }));
 
       setAllUsers(formattedUsers);
@@ -679,7 +694,8 @@ const AdminManagementTab: React.FC = () => {
           gender,
           created_at,
           last_sign_in_at,
-          roles
+          roles,
+          username
         `)
         .order('created_at', { ascending: false });
 
@@ -703,7 +719,8 @@ const AdminManagementTab: React.FC = () => {
           first_name: user.first_name || '',
           last_name: user.last_name || '',
           phone: user.phone || '',
-          gender: user.gender || ''
+          gender: user.gender || '',
+          username: user.username || ''
         }));
 
       setAdmins(formattedAdmins);
@@ -721,7 +738,7 @@ const AdminManagementTab: React.FC = () => {
       return;
     }
     setEditingAdmin(null);
-    setFormData({ email: '', password: '', first_name: '', last_name: '', phone: '', gender: '' });
+    setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', phone: '', gender: '' });
     setError(null);
     setSuccess(null);
     setIsModalOpen(true);
@@ -741,7 +758,8 @@ const AdminManagementTab: React.FC = () => {
       first_name: admin.first_name || '',
       last_name: admin.last_name || '',
       phone: admin.phone || '',
-      gender: admin.gender || ''
+      gender: admin.gender || '',
+      username: admin.username || ''
     });
     setEditFormData({
       email: admin.email,
@@ -750,13 +768,25 @@ const AdminManagementTab: React.FC = () => {
       first_name: admin.first_name || '',
       last_name: admin.last_name || '',
       phone: admin.phone || '',
-      gender: admin.gender || ''
+      gender: admin.gender || '',
+      username: admin.username || ''
     });
     setIsEditModalOpen(true);
   };
 
   const handleEditUser = (user: UserRole) => {
-    setSelectedUser(user);
+    setSelectedUser({
+      id: user.id,
+      email: user.email,
+      roles: user.roles,
+      created_at: user.created_at,
+      last_sign_in: user.last_sign_in,
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      phone: user.phone || '',
+      gender: user.gender || '',
+      username: user.username || ''
+    });
     setEditFormData({
       email: user.email,
       password: '',
@@ -764,7 +794,8 @@ const AdminManagementTab: React.FC = () => {
       first_name: user.first_name || '',
       last_name: user.last_name || '',
       phone: user.phone || '',
-      gender: user.gender || ''
+      gender: user.gender || '',
+      username: user.username || ''
     });
     setIsEditModalOpen(true);
   };
@@ -858,8 +889,13 @@ const AdminManagementTab: React.FC = () => {
     return (
       formData.first_name.trim() !== '' &&
       formData.last_name.trim() !== '' &&
+      formData.username.trim() !== '' &&
       formData.email.trim() !== '' &&
-      formData.password.trim() !== ''
+      formData.password.trim() !== '' &&
+      formData.phone.trim() !== '' &&
+      formData.gender.trim() !== '' &&
+      !usernameError &&
+      usernameExists === false
     );
   };
 
@@ -942,7 +978,7 @@ const AdminManagementTab: React.FC = () => {
 
         setModalSuccess('User created successfully');
         setIsModalOpen(false);
-        setFormData({ email: '', password: '', first_name: '', last_name: '', phone: '', gender: '' });
+        setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', phone: '', gender: '' });
         setRetryCount(0);
         await fetchAllUsers();
       } catch (error) {
@@ -1081,19 +1117,20 @@ const AdminManagementTab: React.FC = () => {
     if (!selectedUser) return;
 
     // Validate required fields
-    if (!editFormData.first_name.trim() || !editFormData.last_name.trim()) {
-      setModalError('First name and last name are required');
+    if (!editFormData.first_name.trim() || !editFormData.last_name.trim() || !editFormData.username.trim()) {
+      setModalError('First name, last name, and username are required');
       return;
     }
 
     try {
       // Update user profile
-      const { error: profileError } = await supabase.rpc('update_user_profile', {
+      const { error: profileError } = await supabase.rpc('update_user_profile_v2', {
         p_user_id: selectedUser.id,
         p_first_name: editFormData.first_name.trim(),
         p_last_name: editFormData.last_name.trim(),
         p_phone: editFormData.phone,
-        p_gender: editFormData.gender
+        p_gender: editFormData.gender,
+        p_username: editFormData.username.trim()
       });
 
       if (profileError) {
@@ -1208,6 +1245,125 @@ const AdminManagementTab: React.FC = () => {
       }
     };
   }, []);
+
+  const validateUsername = (value: string) => {
+    // Allow empty value for backspace
+    if (!value) {
+      setUsernameError(null);
+      setUsernameExists(null);
+      return false;
+    }
+    if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
+      setUsernameError('Only letters, numbers, dots, underscores, and hyphens allowed');
+      setUsernameExists(null);
+      return false;
+    }
+    setUsernameError(null);
+    checkUsernameExists(value);
+    return true;
+  };
+
+  const checkUsernameExists = async (username: string) => {
+    if (!username) {
+      setUsernameExists(null);
+      setCheckingUsername(false);
+      return;
+    }
+
+    try {
+      setCheckingUsername(true);
+
+      // Get the profile of the user being edited from user_details view
+      const { data: userProfile } = await supabase
+        .from('user_details')
+        .select('username')
+        .eq('user_id', selectedUser?.id)
+        .single();
+
+      console.log('User being edited:', {
+        selectedUserId: selectedUser?.id,
+        currentUsername: userProfile?.username,
+        inputUsername: username
+      });
+
+      // Store current username for UI comparison
+      if (userProfile?.username) {
+        setCurrentUsername(userProfile.username);
+      }
+
+      // If username is the same as the user being edited, set exists to true and return early
+      if (userProfile?.username === username) {
+        console.log('Username matches current user being edited');
+        setUsernameExists(true);
+        setCheckingUsername(false);
+        return;
+      }
+
+      console.log('Checking username:', username);
+      
+      // Query the user_details view with a simpler approach
+      const { data, error } = await supabase
+        .from('user_details')
+        .select('username, user_id')
+        .eq('username', username)
+        .limit(1);
+
+      console.log('Query response:', { data, error });
+
+      if (error) {
+        console.error('Error checking username:', error);
+        setUsernameExists(null);
+      } else if (data && data.length > 0) {
+        // If we found a user with this username, check if it's the same user we're editing
+        const foundUser = data[0];
+        console.log('Found user:', {
+          foundUserId: foundUser.user_id,
+          selectedUserId: selectedUser?.id,
+          isSameUser: foundUser.user_id === selectedUser?.id
+        });
+
+        // Only set usernameExists to true for "This is the current username" if it's the same user
+        if (foundUser.user_id === selectedUser?.id) {
+          console.log('Username belongs to the same user being edited');
+          setUsernameExists(true); // It's the same user's current username
+        } else {
+          console.log('Username belongs to a different user');
+          setUsernameExists(true); // Username is taken by another user
+        }
+      } else {
+        console.log('Username is available');
+        setUsernameExists(false); // Username is available
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+      setUsernameExists(null);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
+  // Update isBasicInfoValid function
+  const isBasicInfoValid = () => {
+    const isCurrentUsername = formData.username === currentUsername;
+    return formData.first_name.trim() !== '' && 
+           formData.last_name.trim() !== '' &&
+           !usernameError &&
+           (!usernameExists || isCurrentUsername);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof AdminFormData) => {
+    const value = e.target.value;
+    // Allow empty value for backspace
+    if (value === '') {
+      setFormData(prev => ({ ...prev, [field]: value }));
+      return;
+    }
+    
+    // Validate pattern only if there's input
+    if (e.target.validity.valid) {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -1767,13 +1923,9 @@ const AdminManagementTab: React.FC = () => {
                 <Input
                   id="first-name"
                   type="text"
-                  pattern="[A-Za-z ]+"
+                  pattern="[A-Za-z ]*"
                   value={formData.first_name}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setFormData({ ...formData, first_name: e.target.value });
-                    }
-                  }}
+                  onChange={(e) => handleInputChange(e, 'first_name')}
                   required
                   disabled={isSubmitting || rateLimitCountdown !== null}
                   placeholder="Enter first name"
@@ -1785,13 +1937,9 @@ const AdminManagementTab: React.FC = () => {
                 <Input
                   id="last-name"
                   type="text"
-                  pattern="[A-Za-z ]+"
+                  pattern="[A-Za-z ]*"
                   value={formData.last_name}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setFormData({ ...formData, last_name: e.target.value });
-                    }
-                  }}
+                  onChange={(e) => handleInputChange(e, 'last_name')}
                   required
                   disabled={isSubmitting || rateLimitCountdown !== null}
                   placeholder="Enter last name"
@@ -1857,7 +2005,63 @@ const AdminManagementTab: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
+<<<<<<< Updated upstream
               <Label htmlFor="password" className="required">Password</Label>
+=======
+              <Label htmlFor="username">
+                Username
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
+              <InputWrapper>
+                <Input
+                  id="username"
+                  type="text"
+                  pattern="[a-zA-Z0-9._-]*"
+                  value={formData.username}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    validateUsername(value);
+                    if (value === '' || e.target.validity.valid) {
+                      setFormData({ ...formData, username: value });
+                    }
+                  }}
+                  placeholder="Enter username"
+                  required
+                  disabled={isSubmitting || rateLimitCountdown !== null}
+                />
+                {usernameError && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    {usernameError}
+                  </HelperText>
+                )}
+                {checkingUsername && (
+                  <HelperText style={{ color: '#6b7280' }}>
+                    <FiLoader size={14} />
+                    Checking username...
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === false && (
+                  <HelperText style={{ color: '#059669' }}>
+                    <FiCheck size={14} />
+                    Username is available
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    Username is already taken
+                  </HelperText>
+                )}
+              </InputWrapper>
+            </FormGroup>
+
+            <FormGroup>
+              <Label htmlFor="password">
+                Password
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
+>>>>>>> Stashed changes
               <PasswordInputContainer>
                 <PasswordInput
                   id="password"
@@ -1918,7 +2122,17 @@ const AdminManagementTab: React.FC = () => {
               </CancelButton>
               <SaveButton 
                 type="submit"
-                disabled={!isFormValid() || isSubmitting || rateLimitCountdown !== null}
+                disabled={Boolean(
+                  !formData.first_name.trim() || 
+                  !formData.last_name.trim() || 
+                  !formData.username.trim() || 
+                  !formData.email.trim() || 
+                  !formData.password.trim() || 
+                  usernameError ||
+                  usernameExists === true ||
+                  isSubmitting || 
+                  rateLimitCountdown !== null
+                )}
               >
                 {isSubmitting ? 'Creating...' : 
                  rateLimitCountdown !== null ? `Time remaining: ${formatTime(rateLimitCountdown)}` : 
@@ -1957,6 +2171,61 @@ const AdminManagementTab: React.FC = () => {
               <HelperText>Email cannot be changed</HelperText>
             </FormGroup>
 
+            <FormGroup>
+              <Label htmlFor="edit-username">
+                Username
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
+              <InputWrapper>
+                <Input
+                  id="edit-username"
+                  type="text"
+                  pattern="[a-zA-Z0-9._-]*"
+                  value={editFormData.username}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    validateUsername(value);
+                    if (value === '' || e.target.validity.valid) {
+                      setEditFormData({ ...editFormData, username: value });
+                    }
+                  }}
+                  placeholder="Enter username"
+                  required
+                  style={{ width: '100%' }}
+                />
+                {usernameError && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    {usernameError}
+                  </HelperText>
+                )}
+                {checkingUsername && (
+                  <HelperText style={{ color: '#6b7280' }}>
+                    <FiLoader size={14} />
+                    Checking username...
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === false && (
+                  <HelperText style={{ color: '#059669' }}>
+                    <FiCheck size={14} />
+                    Username is available
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && editFormData.username === currentUsername && (
+                  <HelperText style={{ color: '#6b7280' }}>
+                    <FiCheck size={14} />
+                    This is the current username
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && editFormData.username !== currentUsername && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    Username is already taken
+                  </HelperText>
+                )}
+              </InputWrapper>
+            </FormGroup>
+
             <FormRow>
               <FormGroup>
                 <Label htmlFor="edit-first-name">
@@ -1966,15 +2235,16 @@ const AdminManagementTab: React.FC = () => {
                 <Input
                   id="edit-first-name"
                   type="text"
-                  pattern="[A-Za-z ]+"
+                  pattern="[A-Za-z ]*"
                   value={editFormData.first_name}
                   onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setEditFormData({ ...editFormData, first_name: e.target.value });
+                    const value = e.target.value;
+                    if (value === '' || e.target.validity.valid) {
+                      setEditFormData({ ...editFormData, first_name: value });
                     }
                   }}
-                  required
                   placeholder="Enter first name"
+                  required
                 />
               </FormGroup>
 
@@ -1986,11 +2256,12 @@ const AdminManagementTab: React.FC = () => {
                 <Input
                   id="edit-last-name"
                   type="text"
-                  pattern="[A-Za-z ]+"
+                  pattern="[A-Za-z ]*"
                   value={editFormData.last_name}
                   onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setEditFormData({ ...editFormData, last_name: e.target.value });
+                    const value = e.target.value;
+                    if (value === '' || e.target.validity.valid) {
+                      setEditFormData({ ...editFormData, last_name: value });
                     }
                   }}
                   required
@@ -2089,7 +2360,14 @@ const AdminManagementTab: React.FC = () => {
               </CancelButton>
               <SaveButton 
                 type="submit"
-                disabled={!editFormData.first_name.trim() || !editFormData.last_name.trim() || !editFormData.role}
+                disabled={
+                  !editFormData.first_name.trim() || 
+                  !editFormData.last_name.trim() || 
+                  !editFormData.role || 
+                  !editFormData.username.trim() || 
+                  usernameError ||
+                  (usernameExists === true && editFormData.username !== currentUsername)
+                }
               >
                 Save Changes
               </SaveButton>
@@ -2374,6 +2652,14 @@ const GenderSelect = styled.select`
     border-color: #3B82F6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
 export default AdminManagementTab; 
