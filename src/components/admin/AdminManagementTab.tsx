@@ -2408,14 +2408,11 @@ const AdminManagementTab: React.FC = () => {
               </CancelButton>
               <SaveButton 
                 type="submit"
-                disabled={
+                disabled={Boolean(
                   !editFormData.first_name.trim() || 
                   !editFormData.last_name.trim() || 
-                  !editFormData.role || 
-                  !editFormData.username.trim() || 
-                  usernameError ||
-                  (usernameExists === true && editFormData.username !== currentUsername)
-                }
+                  !editFormData.role
+                )}
               >
                 Save Changes
               </SaveButton>
