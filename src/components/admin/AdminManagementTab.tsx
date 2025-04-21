@@ -2411,7 +2411,10 @@ const AdminManagementTab: React.FC = () => {
                 disabled={Boolean(
                   !editFormData.first_name.trim() || 
                   !editFormData.last_name.trim() || 
-                  !editFormData.role
+                  !editFormData.role || 
+                  !editFormData.username.trim() || 
+                  usernameError ||
+                  (usernameExists === true && editFormData.username !== currentUsername)
                 )}
               >
                 Save Changes
