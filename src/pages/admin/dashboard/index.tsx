@@ -897,6 +897,20 @@ const AdminDashboard: React.FC = () => {
     fetchProfilePicture();
   }, []);
 
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+    setShowProfile(false);
+    router.push(`/admin/dashboard?tab=${tab}`, undefined, { shallow: true });
+  };
+
+  // Set initial tab from URL if present
+  useEffect(() => {
+    const { tab } = router.query;
+    if (tab && typeof tab === 'string' && navItems.some(item => item.id === tab)) {
+      setActiveTab(tab);
+    }
+  }, [router.query]);
+
   const renderTabContent = () => {
     if (showProfile) {
       return <AdminProfile onProfilePictureChange={(newPictureUrl) => setProfilePicture(newPictureUrl)} />;
@@ -1262,10 +1276,7 @@ const AdminDashboard: React.FC = () => {
             <NavItem
               key={item.id}
               $active={!showProfile && activeTab === item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                setShowProfile(false);
-              }}
+              onClick={() => handleTabClick(item.id)}
             >
               <NavIcon>{item.icon}</NavIcon>
               {item.label}

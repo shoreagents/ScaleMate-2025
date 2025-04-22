@@ -141,6 +141,13 @@ const DashboardPage: React.FC = () => {
     checkUserRole();
   }, [router]);
 
+  useEffect(() => {
+    const { tab } = router.query;
+    if (tab && typeof tab === 'string' && ['dashboard', 'role-builder', 'readiness-quiz', 'quote-builder', 'course-library'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [router.query]);
+
   if (isLoading) {
     return null; // Or a loading spinner
   }
@@ -152,6 +159,7 @@ const DashboardPage: React.FC = () => {
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
+    router.push(`/user/dashboard?tab=${tab}`, undefined, { shallow: true });
   };
 
   const renderContent = () => {
