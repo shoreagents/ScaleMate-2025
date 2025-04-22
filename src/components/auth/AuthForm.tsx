@@ -390,20 +390,23 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
       setSuccess('Successfully signed in!');
       onSuccess?.();
 
-      // Redirect based on role
-      if (userRoles.includes('admin')) {
-        router.push('/admin/dashboard');
-      } else if (userRoles.includes('moderator')) {
-        router.push('/admin/dashboard');
-      } else if (userRoles.includes('user')) {
-        router.push('/user/dashboard');
-      } else {
-        console.error('User has no valid role:', {
-          user_id: user.id,
-          roles: userRoles
-        });
-        throw new Error('User has no valid role assigned. Please contact support.');
-      }
+      // Add delay before redirect
+      setTimeout(() => {
+        // Redirect based on role
+        if (userRoles.includes('admin')) {
+          router.push('/admin/dashboard');
+        } else if (userRoles.includes('moderator')) {
+          router.push('/admin/dashboard');
+        } else if (userRoles.includes('user')) {
+          router.push('/user/dashboard');
+        } else {
+          console.error('User has no valid role:', {
+            user_id: user.id,
+            roles: userRoles
+          });
+          throw new Error('User has no valid role assigned. Please contact support.');
+        }
+      }, 500); // 0.5 second delay
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during sign in');
