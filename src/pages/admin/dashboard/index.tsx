@@ -7,7 +7,7 @@ import DashboardTab from '@/components/admin/DashboardTab';
 import UserManagementTab from '@/components/admin/UserManagementTab';
 import AdminManagementTab from '@/components/admin/AdminManagementTab';
 import GenericTab from '@/components/admin/GenericTab';
-import UserHeader from '@/components/layout/UserHeader';
+import DashboardHeader from '@/components/layout/DashboardHeader';
 import { 
   FiHome, 
   FiUsers, 
@@ -36,7 +36,8 @@ import {
   FiStar,
   FiUser,
   FiRefreshCw,
-  FiX
+  FiX,
+  FiLayout
 } from 'react-icons/fi';
 import AdminManagement from '@/components/admin/AdminManagementTab';
 import AdminProfile from '@/components/admin/AdminProfile';
@@ -846,7 +847,7 @@ const AdminDashboard: React.FC = () => {
   ]);
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <FiHome /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <FiLayout /> },
     { id: 'lead-management', label: 'Lead Management', icon: <FiTrendingUp /> },
     { id: 'user-management', label: 'User Management', icon: <FiUsers /> },
     { id: 'quote-analytics', label: 'Quote Analytics', icon: <FiPieChart /> },
@@ -900,14 +901,31 @@ const AdminDashboard: React.FC = () => {
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
     setShowProfile(false);
-    router.push(`/admin/dashboard?tab=${tab}`, undefined, { shallow: true });
+    if (tab === 'dashboard') {
+      router.push('/admin/dashboard', undefined, { shallow: true });
+    } else {
+      router.push(`/admin/dashboard?tab=${tab}`, undefined, { shallow: true });
+    }
   };
 
-  // Set initial tab from URL if present
+  // Add new useEffect to handle profile URL updates
+  useEffect(() => {
+    if (showProfile) {
+      router.push('/admin/dashboard?tab=profile', undefined, { shallow: true });
+    }
+  }, [showProfile]);
+
+  // Update the existing useEffect to handle profile tab
   useEffect(() => {
     const { tab } = router.query;
-    if (tab && typeof tab === 'string' && navItems.some(item => item.id === tab)) {
-      setActiveTab(tab);
+    if (tab && typeof tab === 'string') {
+      if (tab === 'profile') {
+        setShowProfile(true);
+        setActiveTab('dashboard');
+      } else if (navItems.some(item => item.id === tab)) {
+        setActiveTab(tab);
+        setShowProfile(false);
+      }
     }
   }, [router.query]);
 
@@ -1285,7 +1303,7 @@ const AdminDashboard: React.FC = () => {
         </SidebarContent>
       </Sidebar>
       <MainContent>
-        <UserHeader
+        <DashboardHeader
           title={showProfile ? 'Profile' : navItems.find(item => item.id === activeTab)?.label || ''}
           profilePicture={profilePicture}
           onLogout={handleLogout}

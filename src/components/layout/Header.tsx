@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import { FiUser, FiLogOut } from 'react-icons/fi';
+import { supabase } from '@/lib/supabase';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -12,7 +15,6 @@ const HeaderContainer = styled.header`
 `;
 
 const Container = styled.div`
-  max-width: 72rem;
   margin: 0 auto;
   padding: 0 1rem;
 `;
@@ -80,7 +82,170 @@ const SignUpButton = styled.span`
   }
 `;
 
+const ProfileContainer = styled.div`
+  position: relative;
+`;
+
+const ProfileDropdown = styled.div<{ isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  width: 200px;
+  display: ${props => props.isOpen ? 'block' : 'none'};
+  z-index: 50;
+  margin-top: 8px;
+  overflow: hidden;
+`;
+
+const DropdownItem = styled.div`
+  padding: 12px 16px;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px;
+  width: calc(100% - 8px);
+  border-radius: 6px;
+
+  &:hover {
+    background-color: #f3f4f6;
+  }
+
+  &:first-child {
+    margin-top: 4px;
+  }
+
+  &:last-child {
+    margin-bottom: 4px;
+  }
+`;
+
+const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: ${props => props.$imageUrl ? 'transparent' : '#f3f4f6'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const IconButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: #F3F4F6;
+    color: #111827;
+  }
+`;
+
+const Spinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  border-top-color: #3B82F6;
+  animation: spin 1s ease-in-out infinite;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
 const Header = () => {
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      setIsLoading(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsLoggedIn(!!user);
+
+        if (user) {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('profile_picture')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profile?.profile_picture) {
+            setProfilePicture(profile.profile_picture);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking auth:', error);
+        setIsLoggedIn(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  };
+
+  const handleDashboardClick = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      // Get user's role
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (roles && roles.length > 0) {
+        const userRoles = roles.map(r => r.role);
+        if (userRoles.includes('admin') || userRoles.includes('moderator')) {
+          router.push('/admin/dashboard');
+        } else if (userRoles.includes('user')) {
+          router.push('/user/dashboard');
+        }
+      }
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <HeaderContainer>
       <Container>
@@ -93,8 +258,36 @@ const Header = () => {
             <NavItem>Resources</NavItem>
           </Nav>
           <AuthSection>
-            <LoginButton href="/login">Login</LoginButton>
-            <SignUpButton>Sign Up Free</SignUpButton>
+            {isLoading ? (
+              <Spinner />
+            ) : isLoggedIn ? (
+              <ProfileContainer id="profile-menu">
+                <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
+                  <ProfileIcon $imageUrl={profilePicture}>
+                    {profilePicture ? (
+                      <img src={profilePicture} alt="Profile" />
+                    ) : (
+                      <FiUser size={20} />
+                    )}
+                  </ProfileIcon>
+                </IconButton>
+                <ProfileDropdown isOpen={isProfileOpen}>
+                  <DropdownItem onClick={handleDashboardClick}>
+                    <FiUser size={16} />
+                    Dashboard
+                  </DropdownItem>
+                  <DropdownItem onClick={handleLogout}>
+                    <FiLogOut size={16} />
+                    Logout
+                  </DropdownItem>
+                </ProfileDropdown>
+              </ProfileContainer>
+            ) : (
+              <>
+                <LoginButton href="/login">Login</LoginButton>
+                <SignUpButton onClick={() => router.push('/login')}>Sign Up</SignUpButton>
+              </>
+            )}
           </AuthSection>
         </HeaderContent>
       </Container>

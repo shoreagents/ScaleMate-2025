@@ -14,24 +14,12 @@ const FormContainer = styled.div`
   background: white;
   border: 1px solid #E5E7EB;
   border-radius: 12px;
-  animation: fadeIn 0.3s ease-out;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -40%);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, -50%);
-    }
-  }
 `;
 
 const LogoContainer = styled.div`

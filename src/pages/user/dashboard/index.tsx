@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
 import DashboardTab from '@/components/user/DashboardTab';
 import RoleBuilderTab from '@/components/user/RoleBuilderTab';
-import UserHeader from '@/components/layout/UserHeader';
+import DashboardHeader from '@/components/layout/DashboardHeader';
 import { supabase } from '@/lib/supabase';
 import { 
   FaHouse, 
@@ -103,6 +103,7 @@ const DashboardPage: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
+  const [profilePicture, setProfilePicture] = useState('https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg');
 
   useEffect(() => {
     const checkUserRole = async () => {
@@ -245,11 +246,12 @@ const DashboardPage: React.FC = () => {
           </SidebarContent>
         </Sidebar>
         <MainContent>
-          <UserHeader 
-            title="Dashboard"
-            profilePicture="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+          <DashboardHeader
+            title={activeTab === 'profile' ? 'Profile' : 'Dashboard'}
+            profilePicture={profilePicture}
             onLogout={handleLogout}
-            showProfile={true}
+            onProfileClick={() => setActiveTab('profile')}
+            showProfile={activeTab === 'profile'}
           />
           {renderContent()}
         </MainContent>
