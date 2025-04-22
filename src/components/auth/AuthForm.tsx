@@ -11,13 +11,6 @@ const FormContainer = styled.div`
   width: 100%;
   height: 500px;
   padding: 2rem;
-  background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
 `;
@@ -31,16 +24,17 @@ const Title = styled.h1`
   font-size: 1.75rem;
   font-weight: 700;
   color: ${props => props.theme.colors.text.primary};
-  text-align: center;
+  text-align: left;
   margin: 0;
+  line-height: 1.2;
 `;
 
 const Subtitle = styled.p`
   font-size: 0.875rem;
   color: ${props => props.theme.colors.text.secondary};
-  text-align: center;
+  text-align: left;
   margin-bottom: 2rem;
-  line-height: 1.5;
+  line-height: 1.2;
 `;
 
 const Form = styled.form`
@@ -51,19 +45,13 @@ const Form = styled.form`
 `;
 
 const FormContent = styled.div`
-  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 0;
 `;
 
 const FormFields = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding-right: 0.5rem;
-  margin-bottom: 0.5rem;
-  max-height: calc(100% - 100px);
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -80,14 +68,14 @@ const FormFields = styled.div`
 `;
 
 const FormActions = styled.div`
-  margin-top: auto;
+  margin-top: 0rem;
 `;
 
 const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
 `;
 
 const Label = styled.label`
@@ -119,7 +107,6 @@ const Input = styled.input`
 const ButtonContainer = styled.div`
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
 `;
 
 const Button = styled.button`
@@ -166,12 +153,9 @@ const ForgotPasswordLink = styled.button`
   color: ${props => props.theme.colors.primary};
   font-size: 0.875rem;
   font-weight: 500;
-  text-align: center;
   cursor: pointer;
-  padding: 0.5rem 0;
-  width: 100%;
+  padding: 0;
   transition: color 0.2s ease;
-  margin-top: 0.5rem;
 
   &:hover {
     color: ${props => props.theme.colors.primaryDark};
@@ -244,6 +228,37 @@ const ViewPasswordButton = styled.button`
 
   &:hover {
     color: #374151;
+  }
+`;
+
+const PasswordInputGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+`;
+
+const PasswordLabelContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const SignUpLink = styled.div`
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+
+  a {
+    color: ${props => props.theme.colors.primary};
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 0.25rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 `;
 
@@ -467,7 +482,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
       ) : (
         <>
           <Title>Login</Title>
-          <Subtitle>Sign in to your account to continue</Subtitle>
+          <Subtitle>Sign in to your account</Subtitle>
           <Form onSubmit={handleSubmit}>
             <FormContent>
               <FormFields>
@@ -482,8 +497,13 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                     required
                   />
                 </InputGroup>
-                <InputGroup>
-                  <Label htmlFor="password">Password</Label>
+                <PasswordInputGroup>
+                  <PasswordLabelContainer>
+                    <Label htmlFor="password">Password</Label>
+                    <ForgotPasswordLink type="button" onClick={() => setShowResetForm(true)}>
+                      Forgot Password?
+                    </ForgotPasswordLink>
+                  </PasswordLabelContainer>
                   <PasswordInputContainer>
                     <PasswordInput
                       id="password"
@@ -500,7 +520,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                       {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                     </ViewPasswordButton>
                   </PasswordInputContainer>
-                </InputGroup>
+                </PasswordInputGroup>
                 {error && <ErrorMessage>{error}</ErrorMessage>}
                 {success && <SuccessMessage>{success}</SuccessMessage>}
               </FormFields>
@@ -510,9 +530,9 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </ButtonContainer>
-                <ForgotPasswordLink type="button" onClick={() => setShowResetForm(true)}>
-                  Forgot your password?
-                </ForgotPasswordLink>
+                <SignUpLink>
+                  Don't have an account? <a href="/signup">Sign Up Now</a>
+                </SignUpLink>
               </FormActions>
             </FormContent>
           </Form>

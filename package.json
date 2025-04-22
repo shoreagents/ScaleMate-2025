@@ -25,6 +25,7 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "latest",
     "cross-env": "^7.0.3",
+    "framer-motion": "^12.7.4",
     "lucide-react": "^0.488.0",
     "next": "latest",
     "openai": "latest",
