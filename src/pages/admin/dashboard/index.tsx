@@ -677,7 +677,7 @@ const AdminDashboard: React.FC = () => {
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut();
-      router.push('/admin');
+      router.push('/');
     } catch (error) {
       console.error('Error during logout:', error);
     }

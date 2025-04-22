@@ -56,10 +56,11 @@ const AuthSection = styled.div`
   gap: 1rem;
 `;
 
-const LoginButton = styled.span`
+const LoginButton = styled(Link)`
   color: #0F172A;
   cursor: pointer;
   transition: color 0.2s;
+  text-decoration: none;
 
   &:hover {
     color: #3B82F6;
@@ -92,7 +93,7 @@ const Header = () => {
             <NavItem>Resources</NavItem>
           </Nav>
           <AuthSection>
-            <LoginButton>Login</LoginButton>
+            <LoginButton href="/login">Login</LoginButton>
             <SignUpButton>Sign Up Free</SignUpButton>
           </AuthSection>
         </HeaderContent>

@@ -5,7 +5,7 @@ import { useTheme } from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import AuthForm from '@/components/auth/AuthForm';
 
-const AdminPage = () => {
+const LoginPage = () => {
   const router = useRouter();
   const theme = useTheme();
 
@@ -14,4 +14,4 @@ const AdminPage = () => {
   );
 };
 
-export default AdminPage; 
+export default LoginPage; 
