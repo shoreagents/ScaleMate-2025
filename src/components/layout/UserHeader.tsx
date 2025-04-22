@@ -78,7 +78,6 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   width: 200px;
   display: ${props => props.isOpen ? 'block' : 'none'};
   z-index: 50;
-  margin-top: 8px;
   overflow: hidden;
 `;
 
@@ -141,6 +140,13 @@ const UserHeader: React.FC<UserHeaderProps> = ({
 }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
+  const handleProfileClick = () => {
+    if (onProfileClick) {
+      onProfileClick();
+      setIsProfileOpen(false);
+    }
+  };
+
   return (
     <ContentHeader>
       <ContentTitle>{title}</ContentTitle>
@@ -161,15 +167,10 @@ const UserHeader: React.FC<UserHeaderProps> = ({
             </ProfileIcon>
           </IconButton>
           <ProfileDropdown isOpen={isProfileOpen}>
-            {!showProfile && onProfileClick && (
-              <DropdownItem onClick={() => {
-                onProfileClick();
-                setIsProfileOpen(false);
-              }}>
-                <FiUser size={16} />
-                View Profile
-              </DropdownItem>
-            )}
+            <DropdownItem onClick={handleProfileClick}>
+              <FiUser size={16} />
+              View Profile
+            </DropdownItem>
             <DropdownItem onClick={onLogout}>
               <FiLogOut size={16} />
               Logout

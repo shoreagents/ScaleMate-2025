@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
 import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
-import { MyDashboardTab, RoleBuilderTab, UserHeader } from '@/components/user';
+import DashboardTab from '@/components/user/DashboardTab';
+import RoleBuilderTab from '@/components/user/RoleBuilderTab';
+import UserHeader from '@/components/layout/UserHeader';
+import { supabase } from '@/lib/supabase';
 import { 
   FaHouse, 
   FaUsersGear, 
@@ -98,38 +101,66 @@ const MainContent = styled.main`
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState(() => {
-    // Get initial section from URL path
-    const path = router.asPath;
-    if (path.includes('/role-builder')) return 'role-builder';
-    return 'dashboard';
-  });
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleLogout = () => {
-    router.push('/user');
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        const { data: roles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+
+        if (rolesError) {
+          console.error('Error fetching user roles:', rolesError);
+          router.push('/login');
+          return;
+        }
+
+        if (!roles || !roles.some(r => r.role === 'user')) {
+          console.error('User does not have user role:', roles);
+          router.push('/login');
+          return;
+        }
+
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error checking user role:', error);
+        router.push('/login');
+      }
+    };
+
+    checkUserRole();
+  }, [router]);
+
+  if (isLoading) {
+    return null; // Or a loading spinner
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
   };
 
-  const handleNavClick = async (section: string) => {
-    setActiveSection(section);
-    
-    // Update URL based on section
-    if (section === 'role-builder') {
-      await router.push('/user/dashboard/role-builder');
-    } else if (section === 'dashboard') {
-      await router.push('/user/dashboard');
-    } else {
-      // For other sections, we'll keep them in the base dashboard for now
-      await router.push('/user/dashboard');
-    }
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
   };
 
   const renderContent = () => {
-    switch (activeSection) {
+    switch (activeTab) {
       case 'role-builder':
         return <RoleBuilderTab />;
       default:
         return (
-          <MyDashboardTab 
+          <DashboardTab 
             user={{
               name: "Alex",
               email: "alex@example.com",
@@ -149,56 +180,56 @@ const DashboardPage: React.FC = () => {
               <LogoText>ScaleMate</LogoText>
             </LogoContainer>
             <Nav>
-              <NavLink href="#" $active={activeSection === 'dashboard'} onClick={() => handleNavClick('dashboard')}>
+              <NavLink $active={activeTab === 'dashboard'} onClick={() => handleTabClick('dashboard')}>
                 <NavIcon><FaHouse /></NavIcon>
                 <NavText>My Dashboard</NavText>
               </NavLink>
-              <NavLink href="#" $active={activeSection === 'role-builder'} onClick={() => handleNavClick('role-builder')}>
+              <NavLink $active={activeTab === 'role-builder'} onClick={() => handleTabClick('role-builder')}>
                 <NavIcon><FaUsersGear /></NavIcon>
                 <NavText>Interactive Role Builder</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('quote-calculator')}>
+              <NavLink onClick={() => handleTabClick('quote-calculator')}>
                 <NavIcon><FaCalculator /></NavIcon>
                 <NavText>Expanded Quote Calculator</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('team-savings')}>
+              <NavLink onClick={() => handleTabClick('team-savings')}>
                 <NavIcon><FaCoins /></NavIcon>
                 <NavText>Detailed Team Savings Tool</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('readiness-score')}>
+              <NavLink onClick={() => handleTabClick('readiness-score')}>
                 <NavIcon><FaChartSimple /></NavIcon>
                 <NavText>Readiness Score Page</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('saved-blueprints')}>
+              <NavLink onClick={() => handleTabClick('saved-blueprints')}>
                 <NavIcon><FaBookmark /></NavIcon>
                 <NavText>Saved Role Blueprints</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('saved-quotes')}>
+              <NavLink onClick={() => handleTabClick('saved-quotes')}>
                 <NavIcon><FaFileLines /></NavIcon>
                 <NavText>Saved Quotes</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('resource-library')}>
+              <NavLink onClick={() => handleTabClick('resource-library')}>
                 <NavIcon><FaBook /></NavIcon>
                 <NavText>Resource Library</NavText>
                 <UnlockedBadge>Unlocked</UnlockedBadge>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('course-dashboard')}>
+              <NavLink onClick={() => handleTabClick('course-dashboard')}>
                 <NavIcon><FaGraduationCap /></NavIcon>
                 <NavText>Course Dashboard</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('ai-tool-library')}>
+              <NavLink onClick={() => handleTabClick('ai-tool-library')}>
                 <NavIcon><FaRobot /></NavIcon>
                 <NavText>AI Tool Library</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('saved-tool-stack')}>
+              <NavLink onClick={() => handleTabClick('saved-tool-stack')}>
                 <NavIcon><FaLayerGroup /></NavIcon>
                 <NavText>Saved Tool Stack</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('gamified-tracker')}>
+              <NavLink onClick={() => handleTabClick('gamified-tracker')}>
                 <NavIcon><FaTrophy /></NavIcon>
                 <NavText>Gamified Tracker</NavText>
               </NavLink>
-              <NavLink href="#" onClick={() => handleNavClick('account-settings')}>
+              <NavLink onClick={() => handleTabClick('account-settings')}>
                 <NavIcon><FaGear /></NavIcon>
                 <NavText>Account Settings</NavText>
               </NavLink>
@@ -207,12 +238,10 @@ const DashboardPage: React.FC = () => {
         </Sidebar>
         <MainContent>
           <UserHeader 
-            activeSection={activeSection}
-            user={{
-              name: "Alex",
-              email: "alex@example.com",
-              avatar: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
-            }}
+            title="Dashboard"
+            profilePicture="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+            onLogout={handleLogout}
+            showProfile={true}
           />
           {renderContent()}
         </MainContent>

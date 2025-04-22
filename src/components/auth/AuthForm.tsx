@@ -352,7 +352,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
       }
 
       console.log('Attempting to sign in with email:', loginEmail);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password,
       });
@@ -362,9 +362,48 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
         throw error;
       }
 
+      if (!user?.id) {
+        throw new Error('User ID not found after login');
+      }
+
+      // Get user's role from user_roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (rolesError) {
+        console.error('Roles fetch error:', rolesError);
+        throw new Error('Error fetching user roles');
+      }
+
+      if (!roles || roles.length === 0) {
+        console.error('No roles found for user:', {
+          user_id: user.id,
+          email: user.email
+        });
+        throw new Error('User has no roles assigned. Please contact support.');
+      }
+
+      const userRoles = roles.map(r => r.role);
+
       setSuccess('Successfully signed in!');
       onSuccess?.();
-      router.push('/admin/dashboard');
+
+      // Redirect based on role
+      if (userRoles.includes('admin')) {
+        router.push('/admin/dashboard');
+      } else if (userRoles.includes('moderator')) {
+        router.push('/admin/dashboard');
+      } else if (userRoles.includes('user')) {
+        router.push('/user/dashboard');
+      } else {
+        console.error('User has no valid role:', {
+          user_id: user.id,
+          roles: userRoles
+        });
+        throw new Error('User has no valid role assigned. Please contact support.');
+      }
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during sign in');
@@ -436,8 +475,8 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
         </>
       ) : (
         <>
-          <Title>Admin</Title>
-          <Subtitle>Sign in to access the ScaleMate admin dashboard</Subtitle>
+          <Title>Login</Title>
+          <Subtitle>Sign in to your account to continue</Subtitle>
           <Form onSubmit={handleSubmit}>
             <FormContent>
               <FormFields>
