@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
-import UserHeader from '@/components/layout/UserHeader';
+import DashboardHeader from '@/components/layout/DashboardHeader';
 import { supabase } from '@/lib/supabase';
 import { 
   FaLightbulb, 
@@ -390,17 +390,14 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
     router.push('/');
   };
 
-  const handleProfileClick = () => {
-    setShowProfile(true);
-  };
-
   return (
     <DashboardContainer>
-      <UserHeader 
+      <DashboardHeader
         title="Dashboard"
         profilePicture={user.avatar}
         onLogout={handleLogout}
-        onProfileClick={handleProfileClick}
+        onProfileClick={() => setShowProfile(true)}
+        showProfile={showProfile}
       />
       {showProfile ? (
         <UserProfile />

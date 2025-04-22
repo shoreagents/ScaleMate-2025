@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
+import { FiBell, FiUser, FiLogOut, FiHome } from 'react-icons/fi';
+import { useRouter } from 'next/router';
 
 const ContentHeader = styled.div`
   position: fixed;
@@ -8,7 +9,7 @@ const ContentHeader = styled.div`
   right: 0;
   left: 250px;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  padding: ${({ theme }) => theme.spacing.lg};
+  padding: .5rem 1.5rem;
   background-color: white;
   border-bottom: 1px solid #E5E7EB;
   z-index: 100;
@@ -49,13 +50,15 @@ const NotificationBadge = styled.div`
 const IconButton = styled.button`
   background: none;
   border: none;
-  padding: 8px;
   cursor: pointer;
   color: #6B7280;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
   transition: all 0.2s ease;
 
   &:hover {
@@ -106,8 +109,8 @@ const DropdownItem = styled.div`
 `;
 
 const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background-color: ${props => props.$imageUrl ? 'transparent' : '#f3f4f6'};
   display: flex;
@@ -115,6 +118,7 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
+  pointer-events: none;
 
   img {
     width: 100%;
@@ -123,21 +127,22 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   }
 `;
 
-interface UserHeaderProps {
+interface DashboardHeaderProps {
   title: string;
   profilePicture?: string | null;
   onLogout: () => void;
-  onProfileClick?: () => void;
+  onProfileClick: () => void;
   showProfile?: boolean;
 }
 
-const UserHeader: React.FC<UserHeaderProps> = ({
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   title,
   profilePicture,
   onLogout,
   onProfileClick,
   showProfile = false
 }) => {
+  const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleProfileClick = () => {
@@ -147,10 +152,17 @@ const UserHeader: React.FC<UserHeaderProps> = ({
     }
   };
 
+  const handleHomeClick = () => {
+    router.push('/');
+  };
+
   return (
     <ContentHeader>
       <ContentTitle>{title}</ContentTitle>
       <HeaderActions>
+        <IconButton onClick={handleHomeClick}>
+          <FiHome size={20} />
+        </IconButton>
         <NotificationBadge>
           <IconButton>
             <FiBell size={20} />
@@ -182,4 +194,4 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   );
 };
 
-export default UserHeader; 
+export default DashboardHeader; 
