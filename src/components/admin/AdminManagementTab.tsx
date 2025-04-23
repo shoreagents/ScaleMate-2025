@@ -327,7 +327,7 @@ const ButtonGroup = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 16px;
 `;
 
 const ModalButton = styled.button`
@@ -602,6 +602,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+  const [passwordLength, setPasswordLength] = useState<boolean>(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
@@ -896,7 +897,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       formData.gender.trim() !== '' &&
       !usernameError &&
       usernameExists === false &&
-      passwordsMatch === true
+      passwordsMatch === true &&
+      passwordLength
     );
   };
 
@@ -919,8 +921,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       try {
         if (!formData.email || !formData.password || !formData.first_name || !formData.last_name) {
           setModalError('Email, password, first name, and last name are required');
-          return;
-        }
+        return;
+      }
 
         // First check if user exists
         const { data: existingUser, error: checkError } = await supabase
@@ -948,8 +950,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         const createUserWithRetry = async () => {
           try {
             const result = await supabase.auth.signUp({
-              email: formData.email,
-              password: formData.password,
+            email: formData.email,
+            password: formData.password,
               options: {
                 emailRedirectTo: `${window.location.origin}/auth/callback`
               }
@@ -1033,7 +1035,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         }
 
         setSuccessMessage('User created successfully');
-        setIsModalOpen(false);
+      setIsModalOpen(false);
         setIsSuccessModalOpen(true);
         setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
         setRetryCount(0);
@@ -1042,8 +1044,9 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         setCheckingUsername(false);
         setCurrentUsername('');
         setPasswordsMatch(null);
+        setPasswordLength(false);
         await fetchAllUsers();
-      } catch (error) {
+    } catch (error) {
         console.error('Error in handleSubmit:', error);
         setModalError(error instanceof Error ? error.message : 'Failed to create user');
       } finally {
@@ -1071,13 +1074,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       // Refresh the admin list
       await fetchAdmins();
       setSuccessMessage('Admin removed successfully');
-      
-      // Auto close the modal after 0.5 seconds
-      setTimeout(() => {
-        setIsDeleteModalOpen(false);
-        setUserToDelete(null);
-        setSuccessMessage('');
-      }, 500);
     } catch (error) {
       console.error('Error deleting admin:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete admin');
@@ -1156,13 +1152,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       // Set success message and refresh the user list
       setSuccessMessage('User deleted successfully');
       await fetchAllUsers();
-
-      // Auto close the modal after 0.5 seconds
-      setTimeout(() => {
-        setIsDeleteModalOpen(false);
-        setUserToDelete(null);
-        setSuccessMessage('');
-      }, 500);
     } catch (error) {
       console.error('Error in handleDeleteUser:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete user');
@@ -1197,10 +1186,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       // Update role if changed
       if (editFormData.role !== selectedUser.roles[0]) {
         const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-          p_action: 'update',
-          p_new_role: editFormData.role,
-          p_target_user_id: selectedUser.id
-        });
+        p_action: 'update',
+        p_new_role: editFormData.role,
+        p_target_user_id: selectedUser.id
+      });
 
         if (roleError) {
           throw new Error(`Failed to update role: ${roleError.message}`);
@@ -1269,6 +1258,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
     setUsernameExists(null);
     setCheckingUsername(false);
     setCurrentUsername('');
+    setPasswordsMatch(null);
+    setPasswordLength(false);
   };
 
   const handleDeleteClick = (user: UserRole) => {
@@ -1285,8 +1276,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       } else if (userToDelete.role === 'admin') {
         await handleDeleteAdmin(userToDelete.id);
       }
-      setIsDeleteModalOpen(false);
-      setUserToDelete(null);
+      // The modal will now only close when OK is clicked in the success message
     } catch (error) {
       console.error('Error deleting user:', error);
     }
@@ -1500,6 +1490,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData({ ...formData, password: value });
+    setPasswordLength(value.length >= 8);
     if (formData.confirmPassword) {
       setPasswordsMatch(value === formData.confirmPassword);
     }
@@ -1597,10 +1588,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               onChange={(e) => setFilterEmail(e.target.value)}
             />
             {isCurrentUserAdmin && (
-              <Button onClick={handleAddAdmin}>
-                <FiUserPlus />
-                Add User
-              </Button>
+            <Button onClick={handleAddAdmin}>
+              <FiUserPlus />
+              Add User
+            </Button>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -1712,14 +1703,14 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       }
                     </Td>
                     {isCurrentUserAdmin && (
-                      <Td style={{ width: '120px' }}>
-                        <ActionGroup>
+                    <Td style={{ width: '120px' }}>
+                      <ActionGroup>
                           <ActionButton 
                             onClick={() => handleEditUser(user)}
                             title="Update Info"
                           >
-                            <FiEdit2 size={18} />
-                          </ActionButton>
+                          <FiEdit2 size={18} />
+                        </ActionButton>
                           {isConfirmingDelete === user.id ? (
                             <>
                               <ActionButton 
@@ -1735,18 +1726,18 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                               </ActionButton>
                             </>
                           ) : (
-                            <ActionButton 
-                              $variant="danger"
-                              onClick={() => {
+                        <ActionButton 
+                          $variant="danger"
+                          onClick={() => {
                                 setUserToDelete(user);
-                                setIsDeleteModalOpen(true);
-                              }}
-                            >
-                              <FiTrash2 size={18} />
-                            </ActionButton>
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
+                          <FiTrash2 size={18} />
+                        </ActionButton>
                           )}
-                        </ActionGroup>
-                      </Td>
+                      </ActionGroup>
+                    </Td>
                     )}
                   </tr>
                 ))}
@@ -2107,6 +2098,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               setCheckingUsername(false);
               setCurrentUsername('');
               setPasswordsMatch(null);
+              setPasswordLength(false);
             }}>
               <FiX size={20} />
             </CloseButton>
@@ -2114,7 +2106,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
           <Form onSubmit={handleSubmit}>
             <FormRow>
-              <FormGroup>
+            <FormGroup>
                 <Label htmlFor="first-name">
                   First Name
                   <RequiredAsterisk>*</RequiredAsterisk>
@@ -2198,15 +2190,28 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 Email
                 <RequiredAsterisk>*</RequiredAsterisk>
               </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-                disabled={isSubmitting || rateLimitCountdown !== null}
-                placeholder="your@email.com"
-              />
+              <InputWrapper>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    if (modalError && modalError.includes('A user with this email already exists')) {
+                      setModalError(null);
+                    }
+                  }}
+                  required
+                  disabled={isSubmitting || rateLimitCountdown !== null}
+                  placeholder="your@email.com"
+                />
+                {modalError && modalError.includes('A user with this email already exists') && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    A user with this email already exists
+                  </HelperText>
+                )}
+              </InputWrapper>
             </FormGroup>
 
             <FormRow>
@@ -2308,21 +2313,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                     {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
-                {passwordsMatch !== null && (
-                  <PasswordMatchIndicator $matches={passwordsMatch}>
-                    {passwordsMatch ? (
-                      <>
-                        <FiCheck size={14} />
-                        Passwords match
-                      </>
-                    ) : (
-                      <>
-                        <FiX size={14} />
-                        Passwords do not match
-                      </>
-                    )}
-                  </PasswordMatchIndicator>
-                )}
               </FormGroup>
 
               <FormGroup>
@@ -2351,7 +2341,40 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               </FormGroup>
             </FormRow>
 
-            {modalError && (
+            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '-8px' }}>
+              {formData.password && (
+                <PasswordMatchIndicator $matches={passwordLength}>
+                  {passwordLength ? (
+                    <>
+                      <FiCheck size={14} />
+                      Password length is valid
+                    </>
+                  ) : (
+                    <>
+                      <FiX size={14} />
+                      Password must be at least 8 characters
+                    </>
+                  )}
+                </PasswordMatchIndicator>
+              )}
+              {passwordsMatch !== null && (
+                <PasswordMatchIndicator $matches={passwordsMatch}>
+                  {passwordsMatch ? (
+                    <>
+                      <FiCheck size={14} />
+                      Passwords match
+                    </>
+                  ) : (
+                    <>
+                      <FiX size={14} />
+                      Passwords do not match
+                    </>
+                  )}
+                </PasswordMatchIndicator>
+              )}
+            </div>
+
+            {modalError && !modalError.includes('A user with this email already exists') && (
               <ErrorMessage>
                 <FiAlertCircle />
                 {modalError}
@@ -2389,6 +2412,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   setCheckingUsername(false);
                   setCurrentUsername('');
                   setPasswordsMatch(null);
+                  setPasswordLength(false);
                 }}
                 disabled={isSubmitting}
               >
@@ -2406,6 +2430,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   usernameError ||
                   usernameExists === true ||
                   passwordsMatch !== true ||
+                  passwordLength !== true ||
                   isSubmitting || 
                   rateLimitCountdown !== null
                 )}
@@ -2432,7 +2457,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           <Form onSubmit={handleEditSubmit}>
             
           <FormRow>
-              <FormGroup>
+            <FormGroup>
                 <Label htmlFor="edit-first-name">
                   First Name
                   <RequiredAsterisk>*</RequiredAsterisk>
@@ -2535,13 +2560,13 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
             </FormGroup>
 
             <FormRow>
-              <FormGroup>
+            <FormGroup>
                 <Label htmlFor="edit-username">
                   Username
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
                 <InputWrapper>
-                  <Input
+              <Input
                     id="edit-username"
                     type="text"
                     pattern="[a-zA-Z0-9._-]*"
@@ -2588,32 +2613,32 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                     </HelperText>
                   )}
                 </InputWrapper>
-              </FormGroup>
+            </FormGroup>
 
-              <FormGroup>
+            <FormGroup>
                 <Label htmlFor="edit-role">
                   Role
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <RoleSelectContainer>
-                  <RoleSelect
-                    id="edit-role"
-                    value={editFormData.role}
-                    onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
+              <RoleSelectContainer>
+                <RoleSelect
+                  id="edit-role"
+                  value={editFormData.role}
+                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
                     required
-                  >
+                >
                     <option value="">Select role</option>
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
                     <option value="moderator">Moderator</option>
-                  </RoleSelect>
-                  <RoleIcon>
+                </RoleSelect>
+                <RoleIcon>
                     {editFormData.role === 'admin' ? <FiShield size={18} /> : 
                      editFormData.role === 'moderator' ? <FiUserCheck size={18} /> : 
                      <FiUser size={18} />}
-                  </RoleIcon>
-                </RoleSelectContainer>
-              </FormGroup>
+                </RoleIcon>
+              </RoleSelectContainer>
+            </FormGroup>
             </FormRow>
 
             
@@ -3118,7 +3143,6 @@ const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
 `;
 
 export default AdminManagementTab; 

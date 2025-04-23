@@ -484,6 +484,12 @@ const RequiredAsterisk = styled.span`
   margin-left: 4px;
 `;
 
+const PasswordValidations = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+`;
+
 interface AdminProfileData {
   first_name: string;
   last_name: string;
@@ -550,6 +556,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [currentUsername, setCurrentUsername] = useState<string>('');
+  const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -813,12 +820,14 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   const isPasswordFormValid = () => {
     return currentPassword.trim() !== '' && 
            newPassword.trim() !== '' && 
-           confirmPassword.trim() !== '';
+           confirmPassword.trim() !== '' &&
+           passwordLength === true;
   };
 
   const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNewPassword(value);
+    setPasswordLength(value.length >= 8);
     if (confirmPassword) {
       setPasswordsMatch(value === confirmPassword);
     }
@@ -1222,7 +1231,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         {isEditingPassword ? (
           <PasswordChangeForm onSubmit={handlePasswordChange}>
             <PasswordColumn>
-              <Label>Current Password</Label>
+              <Label>
+                Current Password
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
               <PasswordInputContainer>
                 <PasswordInput
                   type={showCurrentPassword ? "text" : "password"}
@@ -1261,7 +1273,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
 
             <PasswordRow>
               <PasswordColumn>
-                <Label>New Password</Label>
+                <Label>
+                  New Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <PasswordInputContainer>
                   <PasswordInput
                     type={showNewPassword ? "text" : "password"}
@@ -1276,25 +1291,45 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                     {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
-                {passwordsMatch !== null && (
-                  <PasswordMatchIndicator $matches={passwordsMatch}>
-                    {passwordsMatch ? (
-                      <>
-                        <FiCheck size={14} />
-                        Passwords match
-                      </>
-                    ) : (
-                      <>
-                        <FiX size={14} />
-                        Passwords do not match
-                      </>
-                    )}
-                  </PasswordMatchIndicator>
-                )}
+                <PasswordValidations>
+                  {newPassword && (
+                    <PasswordMatchIndicator $matches={passwordLength === true}>
+                      {passwordLength ? (
+                        <>
+                          <FiCheck size={14} />
+                          Password length is valid
+                        </>
+                      ) : (
+                        <>
+                          <FiX size={14} />
+                          Password must be at least 8 characters
+                        </>
+                      )}
+                    </PasswordMatchIndicator>
+                  )}
+                  {passwordsMatch !== null && (
+                    <PasswordMatchIndicator $matches={passwordsMatch}>
+                      {passwordsMatch ? (
+                        <>
+                          <FiCheck size={14} />
+                          Passwords match
+                        </>
+                      ) : (
+                        <>
+                          <FiX size={14} />
+                          Passwords do not match
+                        </>
+                      )}
+                    </PasswordMatchIndicator>
+                  )}
+                </PasswordValidations>
               </PasswordColumn>
 
               <PasswordColumn>
-                <Label>Confirm New Password</Label>
+                <Label>
+                  Confirm New Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <PasswordInputContainer>
                   <PasswordInput
                     type={showConfirmPassword ? "text" : "password"}
@@ -1321,7 +1356,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               </ChooseImageButton>
               <SaveButton 
                 type="submit"
-                disabled={!passwordsMatch || !currentPasswordValid}
+                disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
               >
                 Save Changes
               </SaveButton>
