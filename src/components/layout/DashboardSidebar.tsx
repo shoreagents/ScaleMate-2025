@@ -44,6 +44,7 @@ const NavLink = styled.a<{ $active?: boolean }>`
   background-color: ${props => props.$active ? 'rgba(59, 130, 246, 0.1)' : 'transparent'};
   text-decoration: none;
   transition: all 0.2s;
+  cursor: pointer;
 
   &:hover {
     background-color: ${props => props.$active ? 'rgba(59, 130, 246, 0.1)' : '#F9FAFB'};
