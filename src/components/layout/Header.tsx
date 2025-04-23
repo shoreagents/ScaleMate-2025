@@ -96,7 +96,6 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   width: 200px;
   display: ${props => props.isOpen ? 'block' : 'none'};
   z-index: 50;
-  margin-top: 8px;
   overflow: hidden;
 `;
 
