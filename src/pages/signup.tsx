@@ -118,10 +118,17 @@ const ButtonContainer = styled.div`
   gap: 1rem;
 `;
 
+const RequiredAsterisk = styled.span`
+  color: #EF4444;
+  margin-left: 4px;
+`;
+
 const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  display: flex;
+  align-items: center;
 `;
 
 const InputWrapper = styled.div`
@@ -147,6 +154,7 @@ const Input = styled.input`
   background: white;
   color: ${props => props.theme.colors.text.primary};
   transition: all 0.2s ease;
+  width: 100%;
 
   &:focus {
     outline: none;
@@ -486,18 +494,6 @@ const SignUpPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Add effect to clear messages after 2 seconds
-  useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        setError(null);
-        setSuccess(null);
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [error, success]);
-
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
     if (!value) {
@@ -718,7 +714,10 @@ const SignUpPage = () => {
             <Form onSubmit={handleSubmit}>
               <FormRow>
                 <FormGroup>
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">
+                    First Name
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
                   <Input
                     id="firstName"
                     name="firstName"
@@ -730,7 +729,10 @@ const SignUpPage = () => {
                   />
                 </FormGroup>
                 <FormGroup>
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">
+                    Last Name
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
                   <Input
                     id="lastName"
                     name="lastName"
@@ -743,7 +745,10 @@ const SignUpPage = () => {
                 </FormGroup>
               </FormRow>
               <InputGroup>
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">
+                  Username
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <InputWrapper>
                   <Input
                     id="username"
@@ -781,7 +786,10 @@ const SignUpPage = () => {
                 </InputWrapper>
               </InputGroup>
               <InputGroup>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">
+                  Email
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <InputWrapper>
                   <Input
                     id="email"
@@ -797,7 +805,10 @@ const SignUpPage = () => {
               <PasswordSection>
                 <FormRow>
                   <FormGroup>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">
+                      Password
+                      <RequiredAsterisk>*</RequiredAsterisk>
+                    </Label>
                     <InputWrapper>
                       <PasswordInputWrapper>
                         <Input
@@ -820,7 +831,10 @@ const SignUpPage = () => {
                     </InputWrapper>
                   </FormGroup>
                   <FormGroup>
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Label htmlFor="confirmPassword">
+                      Confirm Password
+                      <RequiredAsterisk>*</RequiredAsterisk>
+                    </Label>
                     <InputWrapper>
                       <PasswordInputWrapper>
                         <Input
@@ -846,10 +860,10 @@ const SignUpPage = () => {
                 <FormRow>
                   <FormGroup>
                     <PasswordHelperText>
-                      {formData.password && formData.password.length < 8 && (
-                        <HelperText style={{ color: '#dc2626' }}>
-                          <FiX size={14} />
-                          Password must be at least 8 characters
+                      {formData.password && (
+                        <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#dc2626' }}>
+                          {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
+                          {formData.password.length >= 8 ? 'Password length is valid' : 'Password must be at least 8 characters'}
                         </HelperText>
                       )}
                       {formData.confirmPassword && (
