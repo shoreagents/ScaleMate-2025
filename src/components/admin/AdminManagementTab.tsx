@@ -164,7 +164,7 @@ const ModalContent = styled.div`
   padding: 16px 32px 32px 32px;
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
+  max-width: 530px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
@@ -339,11 +339,13 @@ const ModalButton = styled.button`
 `;
 
 const CancelButton = styled(ModalButton)`
-  background-color: #F3F4F6;
-  color: #374151;
+  background: transparent;
+  border: 1.5px solid #9aa2b3;
+  color: ${props => props.theme.colors.text.primary};
 
   &:hover {
-    background-color: #E5E7EB;
+    background: ${props => props.theme.colors.background.secondary};
+    border-color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -505,6 +507,7 @@ interface Admin {
   phone: string;
   gender: string;
   username: string;
+  roles: string[];
 }
 
 interface AdminFormData {
@@ -513,8 +516,10 @@ interface AdminFormData {
   username: string;
   email: string;
   password: string;
+  confirmPassword: string; // Add confirmPassword field
   phone: string;
   gender: string;
+  role: 'admin' | 'moderator' | 'user';
 }
 
 interface UserRole {
@@ -561,8 +566,10 @@ const AdminManagementTab: React.FC = () => {
     username: '',
     email: '',
     password: '',
+    confirmPassword: '', // Add confirmPassword field
     phone: '',
-    gender: ''
+    gender: '',
+    role: 'user'
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -606,6 +613,8 @@ const AdminManagementTab: React.FC = () => {
   const requestQueue = useRef<Array<() => Promise<void>>>([]);
   const isProcessing = useRef(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
@@ -613,6 +622,8 @@ const AdminManagementTab: React.FC = () => {
 
   // Add ref for timeout
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   useEffect(() => {
     checkCurrentUserRole();
@@ -722,7 +733,8 @@ const AdminManagementTab: React.FC = () => {
           last_name: user.last_name || '',
           phone: user.phone || '',
           gender: user.gender || '',
-          username: user.username || ''
+          username: user.username || '',
+          roles: user.roles || []
         }));
 
       setAdmins(formattedAdmins);
@@ -740,7 +752,7 @@ const AdminManagementTab: React.FC = () => {
       return;
     }
     setEditingAdmin(null);
-    setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', phone: '', gender: '' });
+    setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
     setError(null);
     setSuccess(null);
     setIsModalOpen(true);
@@ -894,10 +906,12 @@ const AdminManagementTab: React.FC = () => {
       formData.username.trim() !== '' &&
       formData.email.trim() !== '' &&
       formData.password.trim() !== '' &&
+      formData.confirmPassword.trim() !== '' &&
       formData.phone.trim() !== '' &&
       formData.gender.trim() !== '' &&
       !usernameError &&
-      usernameExists === false
+      usernameExists === false &&
+      passwordsMatch === true
     );
   };
 
@@ -905,6 +919,11 @@ const AdminManagementTab: React.FC = () => {
     e.preventDefault();
     
     if (isSubmitting || rateLimitCountdown !== null) {
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setModalError('Passwords do not match');
       return;
     }
 
@@ -989,29 +1008,37 @@ const AdminManagementTab: React.FC = () => {
           return;
         }
 
-        // Create user profile
-        const { error: profileError } = await supabase
-          .from('user_details')
-          .insert({
-            user_id: authData.user.id,
-            email: formData.email,
-            first_name: formData.first_name,
-            last_name: formData.last_name,
-            phone: formData.phone || null,
-            gender: formData.gender || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
+        // Create user profile using RPC function
+        const { error: profileError } = await supabase.rpc('update_user_profile_v2', {
+          p_user_id: authData.user.id,
+          p_first_name: formData.first_name,
+          p_last_name: formData.last_name,
+          p_phone: formData.phone || null,
+          p_gender: formData.gender || null,
+          p_username: formData.username
+        });
 
         if (profileError) {
           setModalError('Error creating user profile: ' + profileError.message);
           return;
         }
 
-        // Assign user role
+        // First remove any existing roles using enable_user_roles_rls
+        const { error: deleteRolesError } = await supabase.rpc('enable_user_roles_rls', {
+          p_action: 'delete',
+          p_new_role: 'user', // This will remove all roles
+          p_target_user_id: authData.user.id
+        });
+
+        if (deleteRolesError) {
+          setModalError('Error clearing existing roles: ' + deleteRolesError.message);
+          return;
+        }
+
+        // Then assign the selected role
         const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
           p_action: 'insert',
-          p_new_role: 'user',
+          p_new_role: formData.role,
           p_target_user_id: authData.user.id
         });
 
@@ -1020,10 +1047,16 @@ const AdminManagementTab: React.FC = () => {
           return;
         }
 
-        setModalSuccess('User created successfully');
+        setSuccessMessage('User created successfully');
         setIsModalOpen(false);
-        setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', phone: '', gender: '' });
+        setIsSuccessModalOpen(true);
+        setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
         setRetryCount(0);
+        setUsernameError(null);
+        setUsernameExists(null);
+        setCheckingUsername(false);
+        setCurrentUsername('');
+        setPasswordsMatch(null);
         await fetchAllUsers();
       } catch (error) {
         console.error('Error in handleSubmit:', error);
@@ -1041,6 +1074,7 @@ const AdminManagementTab: React.FC = () => {
       // Use the enable_user_roles_rls function to delete admin role
       const { error: deleteError } = await supabase.rpc('enable_user_roles_rls', {
         p_action: 'delete',
+        p_new_role: 'admin',
         p_target_user_id: adminId
       });
 
@@ -1051,10 +1085,17 @@ const AdminManagementTab: React.FC = () => {
 
       // Refresh the admin list
       await fetchAdmins();
-      setSuccess('Admin removed successfully');
+      setSuccessMessage('Admin removed successfully');
+      
+      // Auto close the modal after 0.5 seconds
+      setTimeout(() => {
+        setIsDeleteModalOpen(false);
+        setUserToDelete(null);
+        setSuccessMessage('');
+      }, 500);
     } catch (error) {
       console.error('Error deleting admin:', error);
-      setError(error instanceof Error ? error.message : 'Failed to delete admin');
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete admin');
     }
   };
 
@@ -1117,28 +1158,14 @@ const AdminManagementTab: React.FC = () => {
     try {
       const userId = typeof user === 'string' ? user : user.id;
       
-      // First delete all roles for the user
-      const { error: roleError } = await supabase.rpc('delete_user_roles', {
-        user_id: userId
+      // Delete user completely using the new RPC function
+      const { error: deleteError } = await supabase.rpc('delete_user_completely', {
+        p_user_id: userId
       });
 
-      if (roleError) {
-        console.error('Error deleting user roles:', roleError);
-        throw new Error('Failed to delete user roles');
-      }
-
-      // Then delete the user using our API endpoint
-      const response = await fetch('/api/admin/delete-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete user');
+      if (deleteError) {
+        console.error('Error deleting user:', deleteError);
+        throw new Error('Failed to delete user');
       }
 
       // Set success message and refresh the user list
@@ -1195,15 +1222,52 @@ const AdminManagementTab: React.FC = () => {
         }
       }
 
-      setModalSuccess('User profile updated successfully');
+      // Update local state first to prevent flicker
+      const updatedUser = {
+        ...selectedUser,
+        first_name: editFormData.first_name.trim(),
+        last_name: editFormData.last_name.trim(),
+        phone: editFormData.phone,
+        gender: editFormData.gender,
+        username: editFormData.username.trim(),
+        roles: [editFormData.role]
+      };
+
+      // Update the allUsers array with the new data
+      setAllUsers(prevUsers => 
+        prevUsers.map(user => 
+          user.id === selectedUser.id ? updatedUser : user
+        )
+      );
+
+      // Update admins array if the user is an admin
+      if (updatedUser.roles.includes('admin')) {
+        setAdmins(prevAdmins => 
+          prevAdmins.map(admin => 
+            admin.id === selectedUser.id ? {
+              ...admin,
+              first_name: editFormData.first_name.trim(),
+              last_name: editFormData.last_name.trim(),
+              phone: editFormData.phone,
+              gender: editFormData.gender,
+              username: editFormData.username.trim(),
+              roles: [editFormData.role]
+            } : admin
+          )
+        );
+      }
+
+      // Set success message and show success modal
+      setSuccessMessage('User profile updated successfully');
+      setIsSuccessModalOpen(true);
       
-      // Refresh both admin and user lists
-      await Promise.all([
-        fetchAdmins(),
-        fetchAllUsers()
-      ]);
+      // Clear username validation states
+      setUsernameError(null);
+      setUsernameExists(null);
+      setCheckingUsername(false);
+      setCurrentUsername('');
       
-      // Close the modal
+      // Close the edit modal
       handleModalClose();
     } catch (error) {
       console.error('Error in handleEditSubmit:', error);
@@ -1214,8 +1278,12 @@ const AdminManagementTab: React.FC = () => {
   const handleModalClose = () => {
     setIsEditModalOpen(false);
     setSelectedUser(null);
-    setModalSuccess(null); // Clear modal success message
-    setModalError(null); // Clear modal error message
+    setModalSuccess(null);
+    setModalError(null);
+    setUsernameError(null);
+    setUsernameExists(null);
+    setCheckingUsername(false);
+    setCurrentUsername('');
   };
 
   const handleDeleteClick = (user: UserRole) => {
@@ -1299,7 +1367,7 @@ const AdminManagementTab: React.FC = () => {
       return false;
     }
     if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
-      setUsernameError('Only letters, numbers, dots, underscores, and hyphens allowed');
+      setUsernameError('Special characters are not allowed');
       setUsernameExists(null);
       return false;
     }
@@ -1439,6 +1507,23 @@ const AdminManagementTab: React.FC = () => {
     });
   };
 
+  // Add password validation functions
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, password: value });
+    if (formData.confirmPassword) {
+      setPasswordsMatch(value === formData.confirmPassword);
+    }
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData({ ...formData, confirmPassword: value });
+    if (formData.password) {
+      setPasswordsMatch(value === formData.password);
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -1452,10 +1537,8 @@ const AdminManagementTab: React.FC = () => {
           onClick={() => setActiveTab('users')}
           $type="all"
         >
-          All
+          All Users
         </TabButton>
-
-       
 
         <TabButton 
           $active={activeTab === 'admins'} 
@@ -1464,6 +1547,7 @@ const AdminManagementTab: React.FC = () => {
         >
           Admins
         </TabButton>
+
         <TabButton 
           $active={activeTab === 'moderators'} 
           onClick={() => setActiveTab('moderators')}
@@ -1479,7 +1563,6 @@ const AdminManagementTab: React.FC = () => {
         >
           Users
         </TabButton>
-        
       </TabContainer>
 
       {error && (
@@ -1555,7 +1638,6 @@ const AdminManagementTab: React.FC = () => {
                     ↑
                   </SortIcon>
                 </Th>
-                <Th style={{ width: '200px' }}>Status</Th>
                 <Th 
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
@@ -1573,50 +1655,71 @@ const AdminManagementTab: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {sortAdmins(admins)
-                .filter(admin => {
-                  const searchTerm = filterEmail.toLowerCase();
-                  const name = `${admin.first_name || ''} ${admin.last_name || ''}`.trim().toLowerCase();
-                  const email = admin.email.toLowerCase();
-                  const role = 'admin';
-                  
-                  return name.includes(searchTerm) || 
-                         email.includes(searchTerm) || 
-                         role.includes(searchTerm);
+              {filterUsersByRole(allUsers, activeTab)
+                .sort((a, b) => {
+                  const direction = sortDirection === 'asc' ? 1 : -1;
+                  switch (sortField) {
+                    case 'email':
+                      return direction * a.email.localeCompare(b.email);
+                    case 'name':
+                      const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim();
+                      const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim();
+                      return direction * nameA.localeCompare(nameB);
+                    case 'last_sign_in':
+                      const dateA = a.last_sign_in ? new Date(a.last_sign_in).getTime() : 0;
+                      const dateB = b.last_sign_in ? new Date(b.last_sign_in).getTime() : 0;
+                      return direction * (dateA - dateB);
+                    default:
+                      return 0;
+                  }
                 })
-                .map((admin, index) => (
-                  <tr key={admin.id}>
+                .map((user, index) => (
+                  <tr key={user.id}>
                     <Td style={{ width: '50px' }}>{index + 1}</Td>
                     <Td style={{ width: '200px' }}>
-                      {`${admin.first_name || ''} ${admin.last_name || ''}`.trim() || '-'}
+                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
                     </Td>
-                    <Td style={{ width: '300px' }}>{admin.email}</Td>
-                    <Td style={{ width: '200px' }}>
-                      <StatusBadge $status={admin.status}>
-                        {admin.status === 'active' ? 'Active' : 'Pending'}
-                      </StatusBadge>
-                    </Td>
+                    <Td style={{ width: '300px' }}>{user.email}</Td>
                     <Td style={{ width: '150px' }}>
-                      {admin.last_sign_in 
-                        ? new Date(admin.last_sign_in).toLocaleDateString()
+                      {user.last_sign_in 
+                        ? new Date(user.last_sign_in).toLocaleDateString()
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                     </Td>
                     {isCurrentUserAdmin && (
                       <Td style={{ width: '120px' }}>
                         <ActionGroup>
-                          <ActionButton onClick={() => handleEditAdmin(admin)}>
+                          <ActionButton 
+                            onClick={() => handleEditUser(user)}
+                            title="Update Info"
+                          >
                             <FiEdit2 size={18} />
                           </ActionButton>
-                          <ActionButton 
-                            $variant="danger"
-                            onClick={() => {
-                              setUserToDelete(admin);
-                              setIsDeleteModalOpen(true);
-                            }}
-                          >
-                            <FiTrash2 size={18} />
-                          </ActionButton>
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
+                                onClick={() => handleDeleteUser(user as UserToDelete)}
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
+                                onClick={() => setIsConfirmingDelete(null)}
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                            <ActionButton 
+                              $variant="danger"
+                              onClick={() => {
+                                setUserToDelete(user as UserToDelete);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          )}
                         </ActionGroup>
                       </Td>
                     )}
@@ -1682,7 +1785,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Status
+                  Roles
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'roles'} 
                     $direction={sortDirection}
@@ -1735,9 +1838,13 @@ const AdminManagementTab: React.FC = () => {
                     </Td>
                     <Td style={{ width: '300px' }}>{user.email}</Td>
                     <Td style={{ width: '200px' }}>
-                      <StatusBadge $status="active">
-                        Active
-                      </StatusBadge>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
                     </Td>
                     <Td style={{ width: '150px' }}>
                       {user.last_sign_in 
@@ -1844,7 +1951,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Status
+                  Roles
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'roles'} 
                     $direction={sortDirection}
@@ -1897,9 +2004,13 @@ const AdminManagementTab: React.FC = () => {
                     </Td>
                     <Td style={{ width: '300px' }}>{user.email}</Td>
                     <Td style={{ width: '200px' }}>
-                      <StatusBadge $status="active">
-                        Active
-                      </StatusBadge>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
                     </Td>
                     <Td style={{ width: '150px' }}>
                       {user.last_sign_in 
@@ -1966,6 +2077,11 @@ const AdminManagementTab: React.FC = () => {
               if (retryTimeoutRef.current) {
                 clearTimeout(retryTimeoutRef.current);
               }
+              setUsernameError(null);
+              setUsernameExists(null);
+              setCheckingUsername(false);
+              setCurrentUsername('');
+              setPasswordsMatch(null);
             }}>
               <FiX size={20} />
             </CloseButton>
@@ -2068,80 +2184,148 @@ const AdminManagementTab: React.FC = () => {
               />
             </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="username">
-                Username
-                <RequiredAsterisk>*</RequiredAsterisk>
-              </Label>
-              <InputWrapper>
-                <Input
-                  id="username"
-                  type="text"
-                  pattern="[a-zA-Z0-9._-]*"
-                  value={formData.username}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    validateUsername(value);
-                    if (value === '' || e.target.validity.valid) {
-                      setFormData({ ...formData, username: value });
-                    }
-                  }}
-                  placeholder="Enter username"
-                  required
-                  disabled={isSubmitting || rateLimitCountdown !== null}
-                />
-                {usernameError && (
-                  <HelperText style={{ color: '#dc2626' }}>
-                    <FiX size={14} />
-                    {usernameError}
-                  </HelperText>
-                )}
-                {checkingUsername && (
-                  <HelperText style={{ color: '#6b7280' }}>
-                    <FiLoader size={14} />
-                    Checking username...
-                  </HelperText>
-                )}
-                {!checkingUsername && !usernameError && usernameExists === false && (
-                  <HelperText style={{ color: '#059669' }}>
-                    <FiCheck size={14} />
-                    Username is available
-                  </HelperText>
-                )}
-                {!checkingUsername && !usernameError && usernameExists === true && (
-                  <HelperText style={{ color: '#dc2626' }}>
-                    <FiX size={14} />
-                    Username is already taken
-                  </HelperText>
-                )}
-              </InputWrapper>
-            </FormGroup>
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="username">
+                  Username
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <InputWrapper>
+                  <Input
+                    id="username"
+                    type="text"
+                    pattern="[a-zA-Z0-9._-]*"
+                    value={formData.username}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      validateUsername(value);
+                      if (value === '' || e.target.validity.valid) {
+                        setFormData({ ...formData, username: value });
+                      }
+                    }}
+                    placeholder="Enter username"
+                    required
+                    disabled={isSubmitting || rateLimitCountdown !== null}
+                  />
+                  {usernameError && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
+                      {usernameError}
+                    </HelperText>
+                  )}
+                  {checkingUsername && (
+                    <HelperText style={{ color: '#6b7280' }}>
+                      <FiLoader size={14} />
+                      Checking username...
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === false && (
+                    <HelperText style={{ color: '#059669' }}>
+                      <FiCheck size={14} />
+                      Username is available
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === true && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
+                      Username is already taken
+                    </HelperText>
+                  )}
+                </InputWrapper>
+              </FormGroup>
 
-            <FormGroup>
-              <Label htmlFor="password">
-                Password
-                <RequiredAsterisk>*</RequiredAsterisk>
-              </Label>
-              <PasswordInputContainer>
-                <PasswordInput
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  disabled={isSubmitting || rateLimitCountdown !== null}
-                  placeholder="Enter password"
-                />
-                <ViewPasswordButton
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isSubmitting || rateLimitCountdown !== null}
-                >
-                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </ViewPasswordButton>
-              </PasswordInputContainer>
-            </FormGroup>
-            
+              <FormGroup>
+                <Label htmlFor="role">
+                  Role
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <RoleSelectContainer>
+                  <RoleSelect
+                    id="role"
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
+                    required
+                  >
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="moderator">Moderator</option>
+                  </RoleSelect>
+                  <RoleIcon>
+                    {formData.role === 'admin' ? <FiShield size={18} /> : 
+                     formData.role === 'moderator' ? <FiUserCheck size={18} /> : 
+                     <FiUser size={18} />}
+                  </RoleIcon>
+                </RoleSelectContainer>
+              </FormGroup>
+            </FormRow>
+
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="password">
+                  Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={handlePasswordChange}
+                    required
+                    disabled={isSubmitting || rateLimitCountdown !== null}
+                    placeholder="Enter password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isSubmitting || rateLimitCountdown !== null}
+                  >
+                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+                {passwordsMatch !== null && (
+                  <PasswordMatchIndicator $matches={passwordsMatch}>
+                    {passwordsMatch ? (
+                      <>
+                        <FiCheck size={14} />
+                        Passwords match
+                      </>
+                    ) : (
+                      <>
+                        <FiX size={14} />
+                        Passwords do not match
+                      </>
+                    )}
+                  </PasswordMatchIndicator>
+                )}
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="confirmPassword">
+                  Confirm Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={handleConfirmPasswordChange}
+                    required
+                    disabled={isSubmitting || rateLimitCountdown !== null}
+                    placeholder="Confirm your password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    disabled={isSubmitting || rateLimitCountdown !== null}
+                  >
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+              </FormGroup>
+            </FormRow>
+
             {modalError && (
               <ErrorMessage>
                 <FiAlertCircle />
@@ -2175,6 +2359,11 @@ const AdminManagementTab: React.FC = () => {
                   if (retryTimeoutRef.current) {
                     clearTimeout(retryTimeoutRef.current);
                   }
+                  setUsernameError(null);
+                  setUsernameExists(null);
+                  setCheckingUsername(false);
+                  setCurrentUsername('');
+                  setPasswordsMatch(null);
                 }}
                 disabled={isSubmitting}
               >
@@ -2188,8 +2377,10 @@ const AdminManagementTab: React.FC = () => {
                   !formData.username.trim() || 
                   !formData.email.trim() || 
                   !formData.password.trim() || 
+                  !formData.confirmPassword.trim() || 
                   usernameError ||
                   usernameExists === true ||
+                  passwordsMatch !== true ||
                   isSubmitting || 
                   rateLimitCountdown !== null
                 )}
@@ -2214,79 +2405,8 @@ const AdminManagementTab: React.FC = () => {
           </ModalHeader>
 
           <Form onSubmit={handleEditSubmit}>
-            <FormGroup>
-              <Label htmlFor="edit-email">
-                Email
-                <RequiredAsterisk>*</RequiredAsterisk>
-              </Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editFormData.email}
-                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                required
-                disabled
-                className="disabled-input"
-              />
-              <HelperText>Email cannot be changed</HelperText>
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="edit-username">
-                Username
-                <RequiredAsterisk>*</RequiredAsterisk>
-              </Label>
-              <InputWrapper>
-                <Input
-                  id="edit-username"
-                  type="text"
-                  pattern="[a-zA-Z0-9._-]*"
-                  value={editFormData.username}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    validateUsername(value);
-                    if (value === '' || e.target.validity.valid) {
-                      setEditFormData({ ...editFormData, username: value });
-                    }
-                  }}
-                  placeholder="Enter username"
-                  required
-                  style={{ width: '100%' }}
-                />
-                {usernameError && (
-                  <HelperText style={{ color: '#dc2626' }}>
-                    <FiX size={14} />
-                    {usernameError}
-                  </HelperText>
-                )}
-                {checkingUsername && (
-                  <HelperText style={{ color: '#6b7280' }}>
-                    <FiLoader size={14} />
-                    Checking username...
-                  </HelperText>
-                )}
-                {!checkingUsername && !usernameError && usernameExists === false && (
-                  <HelperText style={{ color: '#059669' }}>
-                    <FiCheck size={14} />
-                    Username is available
-                  </HelperText>
-                )}
-                {!checkingUsername && !usernameError && usernameExists === true && editFormData.username === currentUsername && (
-                  <HelperText style={{ color: '#6b7280' }}>
-                    <FiCheck size={14} />
-                    This is the current username
-                  </HelperText>
-                )}
-                {!checkingUsername && !usernameError && usernameExists === true && editFormData.username !== currentUsername && (
-                  <HelperText style={{ color: '#dc2626' }}>
-                    <FiX size={14} />
-                    Username is already taken
-                  </HelperText>
-                )}
-              </InputWrapper>
-            </FormGroup>
-
-            <FormRow>
+            
+          <FormRow>
               <FormGroup>
                 <Label htmlFor="edit-first-name">
                   First Name
@@ -2373,29 +2493,105 @@ const AdminManagementTab: React.FC = () => {
             </FormRow>
 
             <FormGroup>
-              <Label htmlFor="edit-role">
-                Role
+              <Label htmlFor="edit-email">
+                Email
                 <RequiredAsterisk>*</RequiredAsterisk>
               </Label>
-              <RoleSelectContainer>
-                <RoleSelect
-                  id="edit-role"
-                  value={editFormData.role}
-                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
-                  required
-                >
-                  <option value="">Select role</option>
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  <option value="moderator">Moderator</option>
-                </RoleSelect>
-                <RoleIcon>
-                  {editFormData.role === 'admin' ? <FiShield size={18} /> : 
-                   editFormData.role === 'moderator' ? <FiUserCheck size={18} /> : 
-                   <FiUser size={18} />}
-                </RoleIcon>
-              </RoleSelectContainer>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                required
+                disabled
+                className="disabled-input"
+              />
+              <HelperText>Email cannot be changed</HelperText>
             </FormGroup>
+
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="edit-username">
+                  Username
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <InputWrapper>
+                  <Input
+                    id="edit-username"
+                    type="text"
+                    pattern="[a-zA-Z0-9._-]*"
+                    value={editFormData.username}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      validateUsername(value);
+                      if (value === '' || e.target.validity.valid) {
+                        setEditFormData({ ...editFormData, username: value });
+                      }
+                    }}
+                    placeholder="Enter username"
+                    required
+                    style={{ width: '100%' }}
+                  />
+                  {usernameError && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
+                      {usernameError}
+                    </HelperText>
+                  )}
+                  {checkingUsername && (
+                    <HelperText style={{ color: '#6b7280' }}>
+                      <FiLoader size={14} />
+                      Checking username...
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === false && (
+                    <HelperText style={{ color: '#059669' }}>
+                      <FiCheck size={14} />
+                      Username is available
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === true && editFormData.username === currentUsername && (
+                    <HelperText style={{ color: '#6b7280' }}>
+                      <FiCheck size={14} />
+                      This is the current username
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === true && editFormData.username !== currentUsername && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
+                      Username is already taken
+                    </HelperText>
+                  )}
+                </InputWrapper>
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="edit-role">
+                  Role
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <RoleSelectContainer>
+                  <RoleSelect
+                    id="edit-role"
+                    value={editFormData.role}
+                    onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
+                    required
+                  >
+                    <option value="">Select role</option>
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="moderator">Moderator</option>
+                  </RoleSelect>
+                  <RoleIcon>
+                    {editFormData.role === 'admin' ? <FiShield size={18} /> : 
+                     editFormData.role === 'moderator' ? <FiUserCheck size={18} /> : 
+                     <FiUser size={18} />}
+                  </RoleIcon>
+                </RoleSelectContainer>
+              </FormGroup>
+            </FormRow>
+
+            
 
             {modalError && (
               <ErrorMessage>
@@ -2478,37 +2674,86 @@ const AdminManagementTab: React.FC = () => {
       {/* Delete User Confirmation Modal */}
       {isDeleteModalOpen && userToDelete && (
         <Modal $isOpen={isDeleteModalOpen}>
-          <ModalContent style={{ maxWidth: '400px', textAlign: 'center', padding: '8px 32px 32px' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827', marginBottom: '0px' }}>
-              Delete User
-            </h3>
+          <ModalContent style={{ maxWidth: '400px', textAlign: 'center', padding: '32px' }}>
             {successMessage ? (
-              <div style={{ padding: '16px 0' }}>
-                <p style={{ 
-                  color: '#059669', 
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  margin: 0,
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                gap: '16px' 
+              }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  backgroundColor: '#D1FAE5',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px'
+                  marginBottom: '8px'
                 }}>
-                  <FiCheck size={20} />
+                  <FiCheck size={32} color="#059669" />
+                </div>
+                <p style={{ 
+                  color: '#059669', 
+                  fontSize: '1.125rem',
+                  fontWeight: 500,
+                  margin: 0,
+                  lineHeight: '1.5'
+                }}>
                   {successMessage}
                 </p>
+                <div style={{ marginTop: '8px' }}>
+                  <SaveButton 
+                    onClick={() => {
+                      setIsDeleteModalOpen(false);
+                      setUserToDelete(null);
+                      setSuccessMessage('');
+                    }}
+                  >
+                    OK
+                  </SaveButton>
+                </div>
               </div>
             ) : (
-              <>
-                <p style={{ color: '#4B5563', marginBottom: '24px' }}>
-                  Are you sure you want to delete {userToDelete.email}? This action cannot be undone.
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                gap: '16px' 
+              }}>
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  backgroundColor: '#FEE2E2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '8px'
+                }}>
+                  <FiTrash2 size={32} color="#DC2626" />
+                </div>
+                <p style={{ 
+                  color: '#1F2937', 
+                  fontSize: '1.125rem',
+                  fontWeight: 500,
+                  margin: 0,
+                  lineHeight: '1.5'
+                }}>
+                  Are you sure you want to delete {userToDelete.username || userToDelete.email}? This action cannot be undone.
                 </p>
                 {errorMessage && (
-                  <p style={{ color: '#DC2626', marginBottom: '16px' }}>
+                  <p style={{ 
+                    color: '#DC2626', 
+                    fontSize: '1rem',
+                    margin: 0,
+                    lineHeight: '1.5'
+                  }}>
                     {errorMessage}
                   </p>
                 )}
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '8px' }}>
                   <CancelButton 
                     onClick={() => {
                       setIsDeleteModalOpen(false);
@@ -2534,8 +2779,54 @@ const AdminManagementTab: React.FC = () => {
                     Delete
                   </DeleteButton>
                 </div>
-              </>
+              </div>
             )}
+          </ModalContent>
+        </Modal>
+      )}
+
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <Modal $isOpen={isSuccessModalOpen}>
+          <ModalContent style={{ maxWidth: '400px', textAlign: 'center', padding: '32px' }}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              gap: '16px' 
+            }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                backgroundColor: '#D1FAE5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: '8px'
+              }}>
+                <FiCheck size={32} color="#059669" />
+              </div>
+              <p style={{ 
+                color: '#059669', 
+                fontSize: '1.125rem',
+                fontWeight: 500,
+                margin: 0,
+                lineHeight: '1.5'
+              }}>
+                {successMessage}
+              </p>
+              <div style={{ marginTop: '8px' }}>
+                <SaveButton 
+                  onClick={() => {
+                    setIsSuccessModalOpen(false);
+                    setSuccessMessage('');
+                  }}
+                >
+                  OK
+                </SaveButton>
+              </div>
+            </div>
           </ModalContent>
         </Modal>
       )}
@@ -2548,6 +2839,8 @@ const TabContainer = styled.div`
   gap: 12px;
   margin-bottom: 24px;
   padding-bottom: 8px;
+  position: relative;
+  z-index: 1;
 `;
 
 const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator' | 'user' | 'all' }>`
@@ -2561,6 +2854,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
   font-weight: 500;
   transition: all 0.2s;
   min-width: 120px;
+  position: relative;
+  z-index: 2;
   background-color: ${props => {
     if (props.$active) {
       switch (props.$type) {
@@ -2640,6 +2935,76 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#6B7280';
       }
     }};
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px ${props => {
+      switch (props.$type) {
+        case 'admin':
+          return '#1E40AF';
+        case 'moderator':
+          return '#166534';
+        case 'user':
+          return '#374151';
+        case 'all':
+          return '#1F2937';
+        default:
+          return '#6B7280';
+      }
+    }};
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    border-radius: 9999px;
+    border: 1px solid ${props => {
+      switch (props.$type) {
+        case 'admin':
+          return '#1E40AF';
+        case 'moderator':
+          return '#166534';
+        case 'user':
+          return '#374151';
+        case 'all':
+          return '#1F2937';
+        default:
+          return '#6B7280';
+      }
+    }};
+    opacity: ${props => props.$active ? 1 : 0};
+    transition: opacity 0.2s;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 9999px;
+    border: 1px solid ${props => {
+      switch (props.$type) {
+        case 'admin':
+          return '#1E40AF';
+        case 'moderator':
+          return '#166534';
+        case 'user':
+          return '#374151';
+        case 'all':
+          return '#1F2937';
+        default:
+          return '#6B7280';
+      }
+    }};
+    opacity: ${props => props.$active ? 1 : 0};
+    transition: opacity 0.2s;
   }
 `;
 
@@ -2730,6 +3095,15 @@ const InputWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+`;
+
+const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
+  font-size: 0.75rem;
+  color: ${props => props.$matches ? '#059669' : '#dc2626'};
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
 `;
 
 export default AdminManagementTab; 

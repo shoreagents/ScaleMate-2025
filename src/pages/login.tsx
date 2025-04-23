@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import { useTheme } from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import AuthForm from '@/components/auth/AuthForm';
-import { FiChevronLeft, FiChevronRight, FiMessageSquare } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FaQuoteLeft } from 'react-icons/fa';
 import Link from 'next/link';
 
 const LoginContainer = styled.div`
@@ -37,7 +38,7 @@ const TestimonialsColumn = styled.div`
   width: 100%;
   background-color: #0F172A;
   color: white;
-  padding: 3rem;
+  padding: 5rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -48,6 +49,7 @@ const TestimonialsColumn = styled.div`
   @media (min-width: 1024px) {
     width: 61.5%;
     min-height: 100vh;
+    padding: 8rem;
   }
 `;
 
@@ -87,10 +89,10 @@ const QuoteIcon = styled.div`
 `;
 
 const TestimonialText = styled.blockquote`
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 500;
   color: white;
-  margin-bottom: 2rem;
+  margin:  0 0 2rem 0 ;
   line-height: 1.6;
 `;
 
@@ -116,6 +118,82 @@ const ClientName = styled.div`
 const ClientHandle = styled.div`
   font-size: 0.875rem;
   color: rgba(255, 255, 255, 0.6);
+`;
+
+const TestimonialContainer = styled.div<{ $isVisible: boolean }>`
+  opacity: ${props => props.$isVisible ? 1 : 0};
+  transform: translateY(${props => props.$isVisible ? '0' : '20px'});
+  transition: all 0.5s ease-in-out;
+`;
+
+const ErrorMessage = styled.div`
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  background-color: #FEE2E2;
+  color: #DC2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+  z-index: 10;
+
+  &::before {
+    content: "✕";
+    font-size: 1rem;
+    font-weight: bold;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+`;
+
+const SuccessMessage = styled.div`
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  background-color: #D1FAE5;
+  color: #059669;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+  z-index: 10;
+
+  &::before {
+    content: "✓";
+    font-size: 1rem;
+    font-weight: bold;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 `;
 
 const testimonials = [
@@ -146,6 +224,9 @@ const LoginPage = () => {
   const router = useRouter();
   const theme = useTheme();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -171,45 +252,58 @@ const LoginPage = () => {
     checkAuth();
   }, [router]);
 
-  const handlePrevTestimonial = () => {
-    setActiveTestimonial((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
-  };
+  // Add auto-rotation effect with animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsVisible(false);
+      setTimeout(() => {
+        setActiveTestimonial((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+        setIsVisible(true);
+      }, 500); // Wait for fade out before changing content
+    }, 5000);
 
-  const handleNextTestimonial = () => {
-    setActiveTestimonial((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
-  };
+    return () => clearInterval(interval);
+  }, []);
+
+  // Add effect to clear messages after 2 seconds
+  useEffect(() => {
+    if (error || success) {
+      const timer = setTimeout(() => {
+        setError(null);
+        setSuccess(null);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, success]);
 
   return (
     <LoginContainer>
       <AuthColumn>
         <Logo href="/">ScaleMate</Logo>
         <AuthFormContainer>
-          <AuthForm />
+          <AuthForm onError={setError} onSuccess={setSuccess} />
         </AuthFormContainer>
       </AuthColumn>
       <TestimonialsColumn>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {success && <SuccessMessage>{success}</SuccessMessage>}
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <QuoteIcon>
-            <FiMessageSquare />
+            <FaQuoteLeft />
           </QuoteIcon>
-          <TestimonialText>
-            "{testimonials[activeTestimonial].text}"
-          </TestimonialText>
-          <ClientInfo>
-            <Avatar src={testimonials[activeTestimonial].avatar} alt={testimonials[activeTestimonial].name} />
-            <ClientDetails>
-              <ClientName>{testimonials[activeTestimonial].name}</ClientName>
-              <ClientHandle>{testimonials[activeTestimonial].handle}</ClientHandle>
-            </ClientDetails>
-          </ClientInfo>
-          <div style={{ position: 'absolute', bottom: '3rem', right: '3rem', display: 'flex', alignItems: 'center', color: 'rgba(255, 255, 255, 0.8)' }}>
-            <button onClick={handlePrevTestimonial} style={{ marginRight: '1rem' }}>
-              <FiChevronLeft size={20} />
-            </button>
-            <button onClick={handleNextTestimonial}>
-              <FiChevronRight size={20} />
-            </button>
-          </div>
+          <TestimonialContainer $isVisible={isVisible}>
+            <TestimonialText>
+              "{testimonials[activeTestimonial].text}"
+            </TestimonialText>
+            <ClientInfo>
+              <Avatar src={testimonials[activeTestimonial].avatar} alt={testimonials[activeTestimonial].name} />
+              <ClientDetails>
+                <ClientName>{testimonials[activeTestimonial].name}</ClientName>
+                <ClientHandle>{testimonials[activeTestimonial].handle}</ClientHandle>
+              </ClientDetails>
+            </ClientInfo>
+          </TestimonialContainer>
         </div>
       </TestimonialsColumn>
     </LoginContainer>

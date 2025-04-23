@@ -14,7 +14,8 @@ export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const showHeader = !router.pathname.startsWith('/admin') && 
                     !router.pathname.startsWith('/user') && 
-                    router.pathname !== '/login';
+                    router.pathname !== '/login' &&
+                    router.pathname !== '/signup';
 
   return (
     <ThemeProvider theme={theme}>
