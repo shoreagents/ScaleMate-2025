@@ -1074,13 +1074,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       // Refresh the admin list
       await fetchAdmins();
       setSuccessMessage('Admin removed successfully');
-      
-      // Auto close the modal after 0.5 seconds
-      setTimeout(() => {
-        setIsDeleteModalOpen(false);
-        setUserToDelete(null);
-        setSuccessMessage('');
-      }, 500);
     } catch (error) {
       console.error('Error deleting admin:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete admin');
@@ -1159,13 +1152,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       // Set success message and refresh the user list
       setSuccessMessage('User deleted successfully');
       await fetchAllUsers();
-
-      // Auto close the modal after 0.5 seconds
-      setTimeout(() => {
-        setIsDeleteModalOpen(false);
-        setUserToDelete(null);
-        setSuccessMessage('');
-      }, 500);
     } catch (error) {
       console.error('Error in handleDeleteUser:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete user');
@@ -1286,12 +1272,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
     
     try {
       if (userToDelete.role === 'user') {
-      await handleDeleteUser(userToDelete);
+        await handleDeleteUser(userToDelete);
       } else if (userToDelete.role === 'admin') {
         await handleDeleteAdmin(userToDelete.id);
       }
-      setIsDeleteModalOpen(false);
-      setUserToDelete(null);
     } catch (error) {
       console.error('Error deleting user:', error);
     }
