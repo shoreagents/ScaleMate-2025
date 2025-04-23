@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
+import type { FC, ReactElement } from 'react';
 
 const Container = styled.div`
   padding: 24px;
@@ -540,7 +541,7 @@ interface AdminManagementTabProps {
   onUserDeleted?: () => void;
 }
 
-const AdminManagementTab: React.FC<AdminManagementTabProps> = ({ onUserDeleted }) => {
+const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): ReactElement => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [allUsers, setAllUsers] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1279,7 +1280,11 @@ const AdminManagementTab: React.FC<AdminManagementTabProps> = ({ onUserDeleted }
     if (!userToDelete) return;
     
     try {
-      await handleDeleteUser(userToDelete);
+      if (userToDelete.role === 'user') {
+        await handleDeleteUser(userToDelete);
+      } else if (userToDelete.role === 'admin') {
+        await handleDeleteAdmin(userToDelete.id);
+      }
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
     } catch (error) {
@@ -2760,17 +2765,7 @@ const AdminManagementTab: React.FC<AdminManagementTabProps> = ({ onUserDeleted }
                     Cancel
                   </CancelButton>
                   <DeleteButton 
-                    onClick={async () => {
-                      try {
-                        if ('roles' in userToDelete) {
-                          await handleDeleteUser(userToDelete);
-                        } else if ('id' in userToDelete) {
-                          await handleDeleteAdmin(userToDelete.id);
-                        }                        
-                      } catch (error) {
-                        console.error('Error deleting user:', error);
-                      }
-                    }}
+                    onClick={handleDeleteConfirm}
                   >
                     Delete
                   </DeleteButton>
