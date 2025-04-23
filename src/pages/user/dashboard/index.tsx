@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
 import DashboardTab from '@/components/user/DashboardTab';
 import RoleBuilderTab from '@/components/user/RoleBuilderTab';
+import QuoteCalculatorTab from '@/components/user/QuoteCalculatorTab';
 import DashboardHeader from '@/components/layout/DashboardHeader';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -21,6 +22,14 @@ import {
   FaTrophy,
   FaGear
 } from 'react-icons/fa6';
+import CostSavingsTab from '@/components/user/CostSavingsTab';
+import RolesBlueprintTab from '@/components/user/RolesBlueprintTab';
+import SavedQuotesTab from '@/components/user/SavedQuotesTab';
+import ResourceLibraryTab from '@/components/user/ResourceLibraryTab';
+import CourseDashboardTab from '@/components/user/CourseDashboardTab';
+import AIToolLibraryTab from '@/components/user/AIToolLibraryTab';
+import SavedToolStackTab from '@/components/user/SavedToolStackTab';
+import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -99,7 +108,7 @@ const MainContent = styled.main`
   background-color: #F9FAFB;
 `;
 
-const DashboardPage: React.FC = () => {
+const DashboardPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
@@ -144,7 +153,7 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     const { tab } = router.query;
-    if (tab && typeof tab === 'string' && ['dashboard', 'role-builder', 'readiness-quiz', 'quote-builder', 'course-library'].includes(tab)) {
+    if (tab && typeof tab === 'string' && ['dashboard', 'role-builder', 'readiness-quiz', 'quote-builder', 'course-library', 'quote-calculator'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [router.query]);
@@ -167,6 +176,24 @@ const DashboardPage: React.FC = () => {
     switch (activeTab) {
       case 'role-builder':
         return <RoleBuilderTab />;
+      case 'quote-calculator':
+        return <QuoteCalculatorTab />;
+      case 'team-savings':
+        return <CostSavingsTab />;
+      case 'saved-blueprints':
+        return <RolesBlueprintTab />;
+      case 'saved-quotes':
+        return <SavedQuotesTab />;
+      case 'resource-library':
+        return <ResourceLibraryTab />;
+      case 'course-dashboard':
+        return <CourseDashboardTab />;
+      case 'ai-tool-library':
+        return <AIToolLibraryTab />;
+      case 'saved-tool-stack':
+        return <SavedToolStackTab />;
+      case 'gamified-tracker':
+        return <GamifiedTrackerTab />;
       default:
         return (
           <DashboardTab 
@@ -197,11 +224,11 @@ const DashboardPage: React.FC = () => {
                 <NavIcon><FaUsersGear /></NavIcon>
                 <NavText>Interactive Role Builder</NavText>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('quote-calculator')}>
+              <NavLink $active={activeTab === 'quote-calculator'} onClick={() => handleTabClick('quote-calculator')}>
                 <NavIcon><FaCalculator /></NavIcon>
                 <NavText>Expanded Quote Calculator</NavText>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('team-savings')}>
+              <NavLink $active={activeTab === 'team-savings'} onClick={() => handleTabClick('team-savings')}>
                 <NavIcon><FaCoins /></NavIcon>
                 <NavText>Detailed Team Savings Tool</NavText>
               </NavLink>
@@ -209,32 +236,53 @@ const DashboardPage: React.FC = () => {
                 <NavIcon><FaChartSimple /></NavIcon>
                 <NavText>Readiness Score Page</NavText>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('saved-blueprints')}>
+              <NavLink 
+                $active={activeTab === 'saved-blueprints'} 
+                onClick={() => handleTabClick('saved-blueprints')}
+              >
                 <NavIcon><FaBookmark /></NavIcon>
                 <NavText>Saved Role Blueprints</NavText>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('saved-quotes')}>
+              <NavLink 
+                $active={activeTab === 'saved-quotes'} 
+                onClick={() => handleTabClick('saved-quotes')}
+              >
                 <NavIcon><FaFileLines /></NavIcon>
                 <NavText>Saved Quotes</NavText>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('resource-library')}>
+              <NavLink 
+                $active={activeTab === 'resource-library'} 
+                onClick={() => handleTabClick('resource-library')}
+              >
                 <NavIcon><FaBook /></NavIcon>
                 <NavText>Resource Library</NavText>
                 <UnlockedBadge>Unlocked</UnlockedBadge>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('course-dashboard')}>
+              <NavLink 
+                $active={activeTab === 'course-dashboard'} 
+                onClick={() => handleTabClick('course-dashboard')}
+              >
                 <NavIcon><FaGraduationCap /></NavIcon>
                 <NavText>Course Dashboard</NavText>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('ai-tool-library')}>
+              <NavLink 
+                $active={activeTab === 'ai-tool-library'} 
+                onClick={() => handleTabClick('ai-tool-library')}
+              >
                 <NavIcon><FaRobot /></NavIcon>
                 <NavText>AI Tool Library</NavText>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('saved-tool-stack')}>
+              <NavLink 
+                $active={activeTab === 'saved-tool-stack'} 
+                onClick={() => handleTabClick('saved-tool-stack')}
+              >
                 <NavIcon><FaLayerGroup /></NavIcon>
                 <NavText>Saved Tool Stack</NavText>
               </NavLink>
-              <NavLink onClick={() => handleTabClick('gamified-tracker')}>
+              <NavLink 
+                $active={activeTab === 'gamified-tracker'} 
+                onClick={() => handleTabClick('gamified-tracker')}
+              >
                 <NavIcon><FaTrophy /></NavIcon>
                 <NavText>Gamified Tracker</NavText>
               </NavLink>
