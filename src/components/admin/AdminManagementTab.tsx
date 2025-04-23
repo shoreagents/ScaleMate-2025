@@ -1276,6 +1276,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       } else if (userToDelete.role === 'admin') {
         await handleDeleteAdmin(userToDelete.id);
       }
+      // The modal will now only close when OK is clicked in the success message
     } catch (error) {
       console.error('Error deleting user:', error);
     }
