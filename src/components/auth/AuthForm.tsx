@@ -438,7 +438,7 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
                   <PasswordLabelContainer>
                     <Label htmlFor="password">Password</Label>
                     <ForgotPasswordLink type="button" onClick={() => setShowResetForm(true)}>
-                      Forgot Password?
+                      Forgot Your Password?
                     </ForgotPasswordLink>
                   </PasswordLabelContainer>
                   <PasswordInputContainer>
