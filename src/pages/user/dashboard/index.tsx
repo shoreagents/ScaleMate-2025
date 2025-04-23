@@ -43,6 +43,7 @@ const Sidebar = styled.aside`
   border-right: 1px solid #E5E7EB;
   position: fixed;
   height: 100vh;
+  z-index: 20;
 `;
 
 const SidebarContent = styled.div`
