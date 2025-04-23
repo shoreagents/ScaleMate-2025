@@ -10,15 +10,16 @@ import {
   faBookmark as faBookmarkRegular
 } from '@fortawesome/free-solid-svg-icons';
 
-const Container = styled.div`
+const MainContent = styled.main`
+  flex: 1;
   padding: 1.5rem;
+  background-color: #F9FAFB;
 `;
 
 const FiltersContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4rem;
   margin-bottom: 1.5rem;
 `;
 
@@ -162,7 +163,7 @@ const LearnMoreButton = styled.button`
 
 const AIToolLibraryTab: React.FC = () => {
   return (
-    <Container>
+    <MainContent>
       <FiltersContainer>
         <FilterButtons>
           <FilterButton $active>All Tools</FilterButton>
@@ -247,7 +248,7 @@ const AIToolLibraryTab: React.FC = () => {
           </CardContent>
         </ToolCard>
       </ToolsGrid>
-    </Container>
+    </MainContent>
   );
 };
 

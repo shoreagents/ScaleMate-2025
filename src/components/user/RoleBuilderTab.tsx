@@ -9,10 +9,16 @@ import {
   FaRegCopy 
 } from 'react-icons/fa6';
 
+const MainContent = styled.main`
+  flex: 1;
+  padding: 1.5rem;
+  background-color: #F9FAFB;
+`;
+
 const Container = styled.div`
   padding: 1.5rem;
   max-width: 72rem;
-  margin: 4rem auto 0;
+  margin: 0 auto;
 `;
 
 const ProgressSteps = styled.div`
@@ -194,7 +200,7 @@ const RoleBuilderTab: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = React.useState<string>('sales');
 
   return (
-    <Container>
+    <MainContent>
       <ProgressSteps>
         <StepContainer>
           <StepCircle $active>1</StepCircle>
@@ -293,7 +299,7 @@ const RoleBuilderTab: React.FC = () => {
           <PreviewText>Complete all steps to generate your full role blueprint...</PreviewText>
         </PreviewContent>
       </PreviewPanel>
-    </Container>
+    </MainContent>
   );
 };
 
