@@ -493,18 +493,6 @@ const SignUpPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Add effect to clear messages after 2 seconds
-  useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        setError(null);
-        setSuccess(null);
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [error, success]);
-
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
     if (!value) {
@@ -871,12 +859,10 @@ const SignUpPage = () => {
                 <FormRow>
                   <FormGroup>
                     <PasswordHelperText>
-                      {formData.password && formData.password.length < 8 && (
-                        <HelperText style={{ color: '#dc2626' }}>
-                          <FiX size={14} />
-                          Password must be at least 8 characters
-                        </HelperText>
-                      )}
+                      <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#dc2626' }}>
+                        {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
+                        {formData.password.length >= 8 ? 'Password length is valid' : 'Password must be at least 8 characters'}
+                      </HelperText>
                       {formData.confirmPassword && (
                         passwordError ? (
                           <HelperText style={{ color: '#dc2626' }}>
