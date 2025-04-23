@@ -284,7 +284,7 @@ const Header = () => {
             ) : (
               <>
                 <LoginButton href="/login">Login</LoginButton>
-                <SignUpButton onClick={() => router.push('/login')}>Sign Up</SignUpButton>
+                <SignUpButton onClick={() => router.push('/signup')}>Sign Up</SignUpButton>
               </>
             )}
           </AuthSection>
