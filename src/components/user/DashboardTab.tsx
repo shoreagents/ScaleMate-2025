@@ -39,7 +39,6 @@ const MainContent = styled.main`
   flex: 1;
   padding: 1.5rem;
   background-color: #F9FAFB;
-  margin-top: 4rem; /* Match header height */
 `;
 
 const WelcomeSection = styled.section`

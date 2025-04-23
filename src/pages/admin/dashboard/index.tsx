@@ -8,37 +8,38 @@ import UserManagementTab from '@/components/admin/UserManagementTab';
 import AdminManagementTab from '@/components/admin/AdminManagementTab';
 import GenericTab from '@/components/admin/GenericTab';
 import DashboardHeader from '@/components/layout/DashboardHeader';
+import DashboardSidebar, { NavItem } from '@/components/layout/DashboardSidebar';
 import { 
-  FiHome, 
-  FiUsers, 
-  FiPieChart, 
-  FiFileText, 
-  FiBook, 
-  FiFolder, 
-  FiFile, 
-  FiTool, 
-  FiHelpCircle, 
-  FiGrid, 
-  FiSettings,
-  FiUserPlus,
-  FiTrendingUp,
-  FiBriefcase,
-  FiBookOpen,
-  FiArchive,
-  FiEdit,
-  FiCpu,
-  FiCheckCircle,
-  FiLayers,
-  FiServer,
-  FiBarChart2,
-  FiActivity,
-  FiAward,
-  FiStar,
-  FiUser,
-  FiRefreshCw,
-  FiX,
-  FiLayout
-} from 'react-icons/fi';
+  FaHouse, 
+  FaUsers, 
+  FaChartPie, 
+  FaFileLines, 
+  FaBook, 
+  FaFolder, 
+  FaFile, 
+  FaScrewdriverWrench, 
+  FaCircleQuestion, 
+  FaGrip, 
+  FaGear,
+  FaUserPlus,
+  FaChartLine,
+  FaBriefcase,
+  FaBookOpen,
+  FaBoxArchive,
+  FaPen,
+  FaMicrochip,
+  FaCircleCheck,
+  FaLayerGroup,
+  FaServer,
+  FaChartBar,
+  FaTrophy,
+  FaStar,
+  FaUser,
+  FaRotate,
+  FaXmark,
+  FaGripVertical,
+  FaRobot
+} from 'react-icons/fa6';
 import AdminManagement from '@/components/admin/AdminManagementTab';
 import AdminProfile from '@/components/admin/AdminProfile';
 
@@ -48,10 +49,77 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DashboardContainer = styled.div`
+  display: flex;
+  min-height: 100vh;
+  background-color: white;
+`;
+
+const MainContent = styled.main`
+  flex: 1;
+  margin-left: 16rem;
   padding: 2rem;
-  margin-top: 0px;
-  min-height: calc(100vh - 80px);
+  padding-top: 5rem;
   background-color: #F9FAFB;
+  min-height: 100vh;
+`;
+
+const Sidebar = styled.aside`
+  width: 16rem;
+  background-color: white;
+  border-right: 1px solid #E5E7EB;
+  position: fixed;
+  height: 100vh;
+  z-index: 20;
+`;
+
+const SidebarContent = styled.div`
+  padding: 1.5rem;
+`;
+
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+`;
+
+const LogoText = styled.span`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0F172A;
+`;
+
+const Nav = styled.nav`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const NavLink = styled.a<{ $active?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  color: ${props => props.$active ? '#3B82F6' : 'rgba(15, 23, 42, 0.7)'};
+  background-color: ${props => props.$active ? 'rgba(59, 130, 246, 0.1)' : 'transparent'};
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: ${props => props.$active ? 'rgba(59, 130, 246, 0.1)' : '#F9FAFB'};
+  }
+`;
+
+const NavIcon = styled.span`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+`;
+
+const NavText = styled.span`
+  font-size: 0.875rem;
 `;
 
 const Header = styled.header`
@@ -73,28 +141,30 @@ const Description = styled.p`
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: 1.5rem;
   width: 100%;
 `;
 
 const Card = styled.div`
   background-color: white;
   border-radius: 12px;
-  padding: 10px 24px 24px 24px ;
+  padding: 1.5rem;
   border: 1px solid #E5E7EB;
   width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
 const CardTitle = styled.h2`
   font-size: 1.125rem;
   font-weight: 600;
   color: #111827;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 `;
 
 const CardContent = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 `;
 
 const MetricValue = styled.div`
@@ -332,69 +402,6 @@ const RequirementItem = styled.li<{ $met: boolean }>`
   }
 `;
 
-const Sidebar = styled.div`
-  width: 250px;
-  background-color: white;
-  padding: ${({ theme }) => theme.spacing.lg};
-  position: fixed;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  overflow-y: auto;
-  border-right: 1px solid #E5E7EB;
-  display: flex;
-  flex-direction: column;
-`;
-
-const SidebarContent = styled.div`
-  flex: 1;
-`;
-
-const SidebarFooter = styled.div`
-  margin-top: auto;
-  padding-top: ${({ theme }) => theme.spacing.lg};
-`;
-
-const MainContent = styled.div`
-  flex: 1;
-  padding: ${({ theme }) => theme.spacing.xl};
-  padding-top: calc(${({ theme }) => theme.spacing.xl} + 72px);
-  margin-left: 250px;
-  background-color: #F9FAFB;
-`;
-
-const NavItem = styled.div<{ $active?: boolean }>`
-  padding: ${({ theme }) => theme.spacing.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.sm};
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  background-color: ${({ theme, $active }) => 
-    $active ? theme.colors.primary + '15' : 'transparent'};
-  color: ${({ theme, $active }) => 
-    $active ? theme.colors.primary : theme.colors.text.primary};
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.primary + '15'};
-  }
-`;
-
-const NavIcon = styled.span`
-  font-size: 1.25rem;
-  display: flex;
-  align-items: center;
-`;
-
-const NavTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
 const TabContent = styled.div<{ $active: boolean }>`
   display: ${props => props.$active ? 'block' : 'none'};
 `;
@@ -419,12 +426,6 @@ const Logo = styled.div`
   align-items: center;
   margin-bottom: ${({ theme }) => theme.spacing.lg};
   padding: ${({ theme }) => theme.spacing.sm};
-`;
-
-const LogoText = styled.span`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #000000;
 `;
 
 const LogoIcon = styled.span`
@@ -846,20 +847,20 @@ const AdminDashboard: React.FC = () => {
     { name: 'Auth Service', status: 'up' as const, lastChecked: new Date() }
   ]);
 
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: <FiLayout /> },
-    { id: 'lead-management', label: 'Lead Management', icon: <FiTrendingUp /> },
-    { id: 'user-management', label: 'User Management', icon: <FiUsers /> },
-    { id: 'quote-analytics', label: 'Quote Analytics', icon: <FiPieChart /> },
-    { id: 'role-blueprints', label: 'Role Blueprints', icon: <FiFileText /> },
-    { id: 'course-manager', label: 'Course Manager', icon: <FiBook /> },
-    { id: 'resource-library', label: 'Resource Library', icon: <FiFolder /> },
-    { id: 'blog-management', label: 'Blog Management', icon: <FiFile /> },
-    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FiTool /> },
-    { id: 'quiz-management', label: 'Quiz Management', icon: <FiHelpCircle /> },
-    { id: 'content-blocks', label: 'Content Blocks', icon: <FiGrid /> },
-    { id: 'admin-management', label: 'Admin Management', icon: <FiUserPlus /> },
-    { id: 'system-settings', label: 'System Settings', icon: <FiSettings /> }
+  const navItems: NavItem[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: <FaGripVertical /> },
+    { id: 'lead-management', label: 'Lead Management', icon: <FaChartLine /> },
+    { id: 'user-management', label: 'User Management', icon: <FaUsers /> },
+    { id: 'quote-analytics', label: 'Quote Analytics', icon: <FaChartPie /> },
+    { id: 'role-blueprints', label: 'Role Blueprints', icon: <FaFileLines /> },
+    { id: 'course-manager', label: 'Course Manager', icon: <FaBook /> },
+    { id: 'resource-library', label: 'Resource Library', icon: <FaFolder /> },
+    { id: 'blog-management', label: 'Blog Management', icon: <FaFile /> },
+    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FaRobot /> },
+    { id: 'quiz-management', label: 'Quiz Management', icon: <FaCircleQuestion /> },
+    { id: 'content-blocks', label: 'Content Blocks', icon: <FaGrip /> },
+    { id: 'admin-management', label: 'Admin Management', icon: <FaUserPlus /> },
+    { id: 'system-settings', label: 'System Settings', icon: <FaGear /> }
   ];
 
   // Add click outside handler
@@ -944,7 +945,7 @@ const AdminDashboard: React.FC = () => {
             <Grid>
               <MetricCard>
                 <MetricIcon $color="#3B82F6">
-                  <FiBarChart2 />
+                  <FaChartBar />
                 </MetricIcon>
                 <MetricValue>{metrics.totalLeads}</MetricValue>
                 <MetricLabel>Total Leads</MetricLabel>
@@ -954,7 +955,7 @@ const AdminDashboard: React.FC = () => {
               </MetricCard>
               <MetricCard>
                 <MetricIcon $color="#EC297B">
-                  <FiUsers />
+                  <FaUsers />
                 </MetricIcon>
                 <MetricValue>{metrics.activeUsers}</MetricValue>
                 <MetricLabel>Active Users</MetricLabel>
@@ -964,7 +965,7 @@ const AdminDashboard: React.FC = () => {
               </MetricCard>
               <MetricCard>
                 <MetricIcon $color="#00E915">
-                  <FiActivity />
+                  <FaChartLine />
                 </MetricIcon>
                 <MetricValue>{metrics.newRolesGenerated}</MetricValue>
                 <MetricLabel>New Roles Generated</MetricLabel>
@@ -974,7 +975,7 @@ const AdminDashboard: React.FC = () => {
               </MetricCard>
               <MetricCard>
                 <MetricIcon $color="#8B5CF6">
-                  <FiStar />
+                  <FaStar />
                 </MetricIcon>
                 <MetricValue>{metrics.topRoles}</MetricValue>
                 <MetricLabel>Top Roles</MetricLabel>
@@ -983,13 +984,13 @@ const AdminDashboard: React.FC = () => {
                 </MetricTrend>
               </MetricCard>
             </Grid>
-            <Grid style={{ marginTop: '24px', gridTemplateColumns: '2fr 1fr' }}>
+            <Grid style={{ marginTop: '1.5rem', gridTemplateColumns: '2fr 1fr' }}>
               <Card>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardContent>
                   <ActivityItem>
                     <ActivityIcon $color="#3B82F6">
-                      <FiUserPlus />
+                      <FaUserPlus />
                     </ActivityIcon>
                     <ActivityContent>
                       <ActivityTitle>New Lead Created</ActivityTitle>
@@ -998,7 +999,7 @@ const AdminDashboard: React.FC = () => {
                   </ActivityItem>
                   <ActivityItem>
                     <ActivityIcon $color="#00E915">
-                      <FiBriefcase />
+                      <FaBriefcase />
                     </ActivityIcon>
                     <ActivityContent>
                       <ActivityTitle>Role Template Generated</ActivityTitle>
@@ -1007,7 +1008,7 @@ const AdminDashboard: React.FC = () => {
                   </ActivityItem>
                   <ActivityItem>
                     <ActivityIcon $color="#EC297B">
-                      <FiUsers />
+                      <FaUsers />
                     </ActivityIcon>
                     <ActivityContent>
                       <ActivityTitle>New User Registration</ActivityTitle>
@@ -1021,26 +1022,26 @@ const AdminDashboard: React.FC = () => {
                 <CardContent>
                   <QuickAction>
                     <ActionIcon>
-                      <FiUserPlus />
+                      <FaUserPlus />
                     </ActionIcon>
                     <ActionText>Add New Lead</ActionText>
                   </QuickAction>
-                  <QuickAction style={{ marginTop: '12px' }}>
+                  <QuickAction>
                     <ActionIcon>
-                      <FiBriefcase />
+                      <FaBriefcase />
                     </ActionIcon>
                     <ActionText>Create Role Template</ActionText>
                   </QuickAction>
-                  <QuickAction style={{ marginTop: '12px' }}>
+                  <QuickAction>
                     <ActionIcon>
-                      <FiEdit />
+                      <FaPen />
                     </ActionIcon>
                     <ActionText>Write Blog Post</ActionText>
                   </QuickAction>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid style={{ marginTop: '24px', gridTemplateColumns: '1fr' }}>
+            <Grid style={{ marginTop: '1.5rem', gridTemplateColumns: '1fr' }}>
               <SystemStatusCard>
                 <CardTitle>System Health</CardTitle>
                 <CardContent>
@@ -1052,7 +1053,7 @@ const AdminDashboard: React.FC = () => {
                         <div style={{ 
                           fontSize: '0.75rem', 
                           color: '#EF4444',
-                          marginTop: '2px' 
+                          marginTop: '0.5rem' 
                         }}>
                           {connectionError}
                         </div>
@@ -1065,10 +1066,10 @@ const AdminDashboard: React.FC = () => {
                     <div style={{ 
                       fontSize: '0.75rem', 
                       color: '#6B7280', 
-                      marginLeft: '8px',
+                      marginLeft: '0.5rem',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '4px' 
+                      gap: '0.25rem' 
                     }}>
                       {lastChecked.toLocaleTimeString()}
                       <button 
@@ -1076,14 +1077,14 @@ const AdminDashboard: React.FC = () => {
                         style={{
                           background: 'none',
                           border: 'none',
-                          padding: '4px',
+                          padding: '0.25rem',
                           cursor: 'pointer',
                           color: '#6B7280',
                           display: 'flex',
                           alignItems: 'center'
                         }}
                       >
-                        <FiRefreshCw size={14} />
+                        <FaRotate size={14} />
                       </button>
                     </div>
                   </div>
@@ -1285,23 +1286,12 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <DashboardContainer>
-      <Sidebar>
-        <SidebarContent>
-          <Logo>
-            <LogoText>ScaleMate</LogoText>
-          </Logo>
-          {navItems.map((item) => (
-            <NavItem
-              key={item.id}
-              $active={!showProfile && activeTab === item.id}
-              onClick={() => handleTabClick(item.id)}
-            >
-              <NavIcon>{item.icon}</NavIcon>
-              {item.label}
-            </NavItem>
-          ))}
-        </SidebarContent>
-      </Sidebar>
+      <DashboardSidebar
+        logoText="ScaleMate"
+        navItems={navItems}
+        activeTab={activeTab}
+        onTabClick={handleTabClick}
+      />
       <MainContent>
         <DashboardHeader
           title={showProfile ? 'Profile' : navItems.find(item => item.id === activeTab)?.label || ''}
