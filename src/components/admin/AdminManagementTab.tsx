@@ -1,12 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-<<<<<<< Updated upstream
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
-=======
-import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo } from 'react-icons/fi';
->>>>>>> Stashed changes
 
 const Container = styled.div`
   padding: 24px;
@@ -58,20 +54,10 @@ const Table = styled.table`
 const Th = styled.th<{ $sortable?: boolean }>`
   padding: 12px 16px;
   text-align: left;
-<<<<<<< Updated upstream
   color: rgb(107, 114, 128);
   font-weight: 500;
   border-bottom: 1px solid #E5E7EB;
   font-size: 16px;
-=======
-  color: #4B5563;
-  font-weight: 500;
-  border-bottom: 1px solid #E5E7EB;
-  vertical-align: middle;
-  white-space: nowrap;
-  height: 48px;
-  box-sizing: border-box;
->>>>>>> Stashed changes
   cursor: ${props => props.$sortable ? 'pointer' : 'default'};
   user-select: none;
   
@@ -100,26 +86,7 @@ const Td = styled.td`
   padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
   color: #111827;
-<<<<<<< Updated upstream
   font-size: 16px;
-=======
-  border-bottom: 1px solid #E5E7EB;
-  vertical-align: middle;
-  text-align: left;
-  white-space: nowrap;
-  height: 48px;
-  box-sizing: border-box;
-  
-  &:first-child {
-    padding-left: 16px;
-    width: 50px;
-  }
-  
-  &:last-child {
-    padding-right: 16px;
-    width: 120px;
-  }
->>>>>>> Stashed changes
 `;
 
 const ActionButton = styled.button<{ $variant?: 'danger' | 'success' }>`
@@ -148,7 +115,6 @@ const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 500;
-<<<<<<< Updated upstream
   background-color: ${props => {
     switch (props.$status) {
       case 'active':
@@ -173,10 +139,6 @@ const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed
         return '#1F2937';
     }
   }};
-=======
-  background-color: ${props => props.$status === 'active' ? '#D1FAE5' : '#FEF3C7'};
-  color: ${props => props.$status === 'active' ? '#059669' : '#D97706'};
->>>>>>> Stashed changes
   text-transform: capitalize;
   display: inline-block;
   line-height: 1;
@@ -263,11 +225,7 @@ const Label = styled.label`
 `;
 
 const Input = styled.input`
-<<<<<<< Updated upstream
    padding: 8px 12px;
-=======
-      padding: 0.875rem 1rem;
->>>>>>> Stashed changes
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -280,11 +238,7 @@ const Input = styled.input`
 `;
 
 const Select = styled.select`
-<<<<<<< Updated upstream
   padding: 8px 12px;
-=======
-      padding: 0.875rem 1rem;
->>>>>>> Stashed changes
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -321,18 +275,12 @@ const SuccessMessage = styled.div`
   gap: 8px;
 `;
 
-<<<<<<< Updated upstream
 const HelperText = styled.div`
   font-size: 0.75rem;
   color: #6b7280;
   display: flex;
   align-items: center;
   gap: 4px;
-=======
-const HelperText = styled.span`
-  font-size: 0.75rem;
-  color: #6B7280;
->>>>>>> Stashed changes
 `;
 
 const RoleSelectContainer = styled.div`
@@ -344,17 +292,10 @@ const RoleSelectContainer = styled.div`
 
 const RoleIcon = styled.div`
   position: absolute;
-<<<<<<< Updated upstream
   right: .5rem;
   top: 50%;
   transform: translateY(-50%);
   color: #374151;
-=======
-  right: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6B7280;
->>>>>>> Stashed changes
   pointer-events: none;
   display: flex;
   align-items: center;
@@ -365,13 +306,8 @@ const RoleIcon = styled.div`
 
 const RoleSelect = styled.select`
   width: 100%;
-<<<<<<< Updated upstream
   padding: 8px 12px;
   padding-right: 12px;
-=======
-  padding: 0.875rem 1rem;
-  padding-right: 2.5rem;
->>>>>>> Stashed changes
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.875rem;
@@ -403,7 +339,6 @@ const ModalButton = styled.button`
 `;
 
 const CancelButton = styled(ModalButton)`
-<<<<<<< Updated upstream
   background: transparent;
   border: 1.5px solid #9aa2b3;
   color: ${props => props.theme.colors.text.primary};
@@ -411,13 +346,6 @@ const CancelButton = styled(ModalButton)`
   &:hover {
     background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
-=======
-  background-color: #F3F4F6;
-  color: #374151;
-
-  &:hover {
-    background-color: #E5E7EB;
->>>>>>> Stashed changes
   }
 `;
 
@@ -441,10 +369,7 @@ const SaveButton = styled(ModalButton)`
   &:disabled {
     background-color: #93C5FD;
     cursor: not-allowed;
-<<<<<<< Updated upstream
     opacity: 0.7;
-=======
->>>>>>> Stashed changes
   }
 `;
 
@@ -524,7 +449,6 @@ const InfoMessage = styled.div`
   font-size: 0.875rem;
 `;
 
-<<<<<<< Updated upstream
 const PasswordInputContainer = styled.div`
   position: relative;
   width: 100%;
@@ -554,8 +478,6 @@ const ViewPasswordButton = styled.button`
   }
 `;
 
-=======
->>>>>>> Stashed changes
 interface UserData {
   user_id: string;
   email: string;
@@ -617,27 +539,21 @@ interface UserEditFormData {
   email: string;
   password: string;
   role: 'admin' | 'moderator' | 'user';
-<<<<<<< Updated upstream
   first_name: string;
   last_name: string;
   phone: string;
   gender: string;
   username: string;
-=======
->>>>>>> Stashed changes
 }
 
 // Add type for user to delete
 type UserToDelete = UserRole | Admin;
 
-<<<<<<< Updated upstream
 // Update the sort field type
 type SortField = 'email' | 'name' | 'roles' | 'last_sign_in';
 
 type TabType = 'admins' | 'moderators' | 'users' | 'regular-users';
 
-=======
->>>>>>> Stashed changes
 const AdminManagementTab: React.FC = () => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [allUsers, setAllUsers] = useState<UserRole[]>([]);
@@ -660,11 +576,7 @@ const AdminManagementTab: React.FC = () => {
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<string | null>(null);
-<<<<<<< Updated upstream
   const [activeTab, setActiveTab] = useState<TabType>('admins');
-=======
-  const [activeTab, setActiveTab] = useState<'admins' | 'moderators' | 'users'>('admins');
->>>>>>> Stashed changes
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRole | null>(null);
@@ -673,7 +585,6 @@ const AdminManagementTab: React.FC = () => {
   const [editFormData, setEditFormData] = useState<UserEditFormData>({
     email: '',
     password: '',
-<<<<<<< Updated upstream
     role: 'user',
     first_name: '',
     last_name: '',
@@ -684,20 +595,12 @@ const AdminManagementTab: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filterEmail, setFilterEmail] = useState('');
   const [sortField, setSortField] = useState<SortField>('email');
-=======
-    role: 'user'
-  });
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [filterEmail, setFilterEmail] = useState('');
-  const [sortField, setSortField] = useState<'email' | 'roles' | 'last_sign_in'>('email');
->>>>>>> Stashed changes
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserToDelete | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showSortIcon, setShowSortIcon] = useState(false);
-<<<<<<< Updated upstream
   const [activeSortColumn, setActiveSortColumn] = useState<SortField | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastAttemptTime, setLastAttemptTime] = useState<number | null>(null);
@@ -721,12 +624,6 @@ const AdminManagementTab: React.FC = () => {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-=======
-  const [activeSortColumn, setActiveSortColumn] = useState<'email' | 'roles' | 'last_sign_in' | null>(null);
-
-  // Add ref for timeout
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
->>>>>>> Stashed changes
 
   useEffect(() => {
     checkCurrentUserRole();
@@ -871,36 +768,27 @@ const AdminManagementTab: React.FC = () => {
       email: admin.email,
       roles: ['admin'],
       created_at: admin.created_at,
-<<<<<<< Updated upstream
       last_sign_in: admin.last_sign_in,
       first_name: admin.first_name || '',
       last_name: admin.last_name || '',
       phone: admin.phone || '',
       gender: admin.gender || '',
       username: admin.username || ''
-=======
-      last_sign_in: admin.last_sign_in
->>>>>>> Stashed changes
     });
     setEditFormData({
       email: admin.email,
       password: '',
-<<<<<<< Updated upstream
       role: 'admin',
       first_name: admin.first_name || '',
       last_name: admin.last_name || '',
       phone: admin.phone || '',
       gender: admin.gender || '',
       username: admin.username || ''
-=======
-      role: 'admin'
->>>>>>> Stashed changes
     });
     setIsEditModalOpen(true);
   };
 
   const handleEditUser = (user: UserRole) => {
-<<<<<<< Updated upstream
     setSelectedUser({
       id: user.id,
       email: user.email,
@@ -1025,15 +913,6 @@ const AdminManagementTab: React.FC = () => {
       usernameExists === false &&
       passwordsMatch === true
     );
-=======
-    setSelectedUser(user);
-    setEditFormData({
-      email: user.email,
-      password: '',
-      role: user.roles.includes('admin') ? 'admin' : user.roles.includes('moderator') ? 'moderator' : 'user'
-    });
-    setIsEditModalOpen(true);
->>>>>>> Stashed changes
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1195,10 +1074,7 @@ const AdminManagementTab: React.FC = () => {
       // Use the enable_user_roles_rls function to delete admin role
       const { error: deleteError } = await supabase.rpc('enable_user_roles_rls', {
         p_action: 'delete',
-<<<<<<< Updated upstream
         p_new_role: 'admin',
-=======
->>>>>>> Stashed changes
         p_target_user_id: adminId
       });
 
@@ -1209,7 +1085,6 @@ const AdminManagementTab: React.FC = () => {
 
       // Refresh the admin list
       await fetchAdmins();
-<<<<<<< Updated upstream
       setSuccessMessage('Admin removed successfully');
       
       // Auto close the modal after 0.5 seconds
@@ -1218,9 +1093,6 @@ const AdminManagementTab: React.FC = () => {
         setUserToDelete(null);
         setSuccessMessage('');
       }, 500);
-=======
-      setSuccess('Admin removed successfully');
->>>>>>> Stashed changes
     } catch (error) {
       console.error('Error deleting admin:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete admin');
@@ -1652,265 +1524,18 @@ const AdminManagementTab: React.FC = () => {
     }
   };
 
-  const handleUpdateUserRole = async (userId: string, newRole: string) => {
-    try {
-      // First, remove any existing roles for this user
-      const { error: deleteError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
-
-      if (deleteError) throw deleteError;
-
-      // Then add the new role
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert([
-          {
-            user_id: userId,
-            role: newRole,
-            created_at: new Date().toISOString()
-          }
-        ]);
-
-      if (insertError) throw insertError;
-
-      // Refresh the user list
-      await fetchAllUsers();
-      setSuccess('User role updated successfully');
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      setError(error instanceof Error ? error.message : 'Failed to update user role');
-    }
-  };
-
-  const handleRoleToggle = (user: UserRole) => {
-    setSelectedUser(user);
-    setNewRole(user.roles.includes('admin') ? 'user' : 'admin');
-    setIsRoleModalOpen(true);
-  };
-
-  const confirmRoleChange = async () => {
-    if (!selectedUser) return;
-    
-    try {
-      await handleUpdateUserRole(selectedUser.id, newRole);
-      setIsRoleModalOpen(false);
-      setSelectedUser(null);
-    } catch (error) {
-      console.error('Error in confirmRoleChange:', {
-        error,
-        user: selectedUser,
-        newRole
-      });
-      setModalError(error instanceof Error ? error.message : 'Failed to update user role. Please check the console for details.');
-    }
-  };
-
-  const handleDeleteUser = async (user: UserToDelete | string) => {
-    try {
-      const userId = typeof user === 'string' ? user : user.id;
-      
-      // First delete all roles for the user
-      const { error: roleError } = await supabase.rpc('delete_user_roles', {
-        user_id: userId
-      });
-
-      if (roleError) {
-        console.error('Error deleting user roles:', roleError);
-        throw new Error('Failed to delete user roles');
-      }
-
-      // Then delete the user using our API endpoint
-      const response = await fetch('/api/admin/delete-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete user');
-      }
-
-      // Set success message and refresh the user list
-      setSuccessMessage('User deleted successfully');
-      await fetchAllUsers();
-
-      // Auto close the modal after 0.5 seconds
-      setTimeout(() => {
-        setIsDeleteModalOpen(false);
-        setUserToDelete(null);
-        setSuccessMessage('');
-      }, 500);
-    } catch (error) {
-      console.error('Error in handleDeleteUser:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete user');
-    }
-  };
-
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUser) return;
-
-    try {
-      // Use the enable_user_roles_rls function to update the role
-      const { error: updateError } = await supabase.rpc('enable_user_roles_rls', {
-        p_action: 'update',
-        p_new_role: editFormData.role,
-        p_target_user_id: selectedUser.id
-      });
-
-      if (updateError) {
-        console.error('Error updating role:', updateError);
-        throw new Error(`Failed to update role: ${updateError.message}`);
-      }
-
-      setModalSuccess('User role updated successfully');
-      
-      // Set refreshing state
-      setIsRefreshing(true);
-      
-      try {
-        // Refresh both admin and user lists
-        await Promise.all([
-          fetchAdmins(),
-          fetchAllUsers()
-        ]);
-      } catch (refreshError) {
-        console.error('Error refreshing lists:', refreshError);
-        setModalError('Role updated but failed to refresh lists. Please refresh the page manually.');
-      } finally {
-        setIsRefreshing(false);
-      }
-      
-      // Close the modal
-      handleModalClose();
-    } catch (error) {
-      console.error('Error in handleEditSubmit:', {
-        error,
-        user: selectedUser,
-        newRole: editFormData.role
-      });
-      setModalError(error instanceof Error ? error.message : 'Failed to update user role. Please check the console for details.');
-    }
-  };
-
-  const handleModalClose = () => {
-    setIsEditModalOpen(false);
-    setSelectedUser(null);
-    setModalSuccess(null); // Clear modal success message
-    setModalError(null); // Clear modal error message
-  };
-
-  const handleDeleteClick = (user: UserRole) => {
-    setUserToDelete(user);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!userToDelete) return;
-    
-    try {
-      await handleDeleteUser(userToDelete);
-      setIsDeleteModalOpen(false);
-      setUserToDelete(null);
-    } catch (error) {
-      console.error('Error deleting user:', error);
-    }
-  };
-
-  const handleSort = (field: 'email' | 'roles' | 'last_sign_in') => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-    setActiveSortColumn(field);
-    setShowSortIcon(true);
-    
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-    
-    // Set new timeout
-    timeoutRef.current = setTimeout(() => {
-      setShowSortIcon(false);
-      setActiveSortColumn(null);
-    }, 3000);
-  };
-
-  const sortAdmins = (data: Admin[]) => {
-    const direction = sortDirection === 'asc' ? 1 : -1;
-    
-    return [...data].sort((a, b) => {
-      switch (sortField) {
-        case 'email':
-          return direction * a.email.localeCompare(b.email);
-        case 'last_sign_in':
-          const dateA = a.last_sign_in ? new Date(a.last_sign_in).getTime() : 0;
-          const dateB = b.last_sign_in ? new Date(b.last_sign_in).getTime() : 0;
-          return direction * (dateA - dateB);
-        default:
-          return 0;
-      }
-    });
-  };
-
-  const sortUsers = (data: UserRole[]) => {
-    const direction = sortDirection === 'asc' ? 1 : -1;
-    
-    return [...data].sort((a, b) => {
-      switch (sortField) {
-        case 'email':
-          return direction * a.email.localeCompare(b.email);
-        case 'roles':
-          return direction * a.roles.join(',').localeCompare(b.roles.join(','));
-        case 'last_sign_in':
-          const dateA = a.last_sign_in ? new Date(a.last_sign_in).getTime() : 0;
-          const dateB = b.last_sign_in ? new Date(b.last_sign_in).getTime() : 0;
-          return direction * (dateA - dateB);
-        default:
-          return 0;
-      }
-    });
-  };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
   if (loading) {
     return <div>Loading...</div>;
   }
 
   return (
     <Container>
-<<<<<<< Updated upstream
-=======
-      <Header>
-        <Title>Admin Management</Title>
-      </Header>
->>>>>>> Stashed changes
 
       <TabContainer>
         <TabButton 
           $active={activeTab === 'users'} 
           onClick={() => setActiveTab('users')}
-<<<<<<< Updated upstream
           $type="all"
-=======
-          $type="user"
->>>>>>> Stashed changes
         >
           All Users
         </TabButton>
@@ -1929,7 +1554,6 @@ const AdminManagementTab: React.FC = () => {
           $type="moderator"
         >
           Moderators
-<<<<<<< Updated upstream
         </TabButton>
        
         <TabButton 
@@ -1938,10 +1562,7 @@ const AdminManagementTab: React.FC = () => {
           $type="user"
         >
           Users
-=======
->>>>>>> Stashed changes
         </TabButton>
-       
       </TabContainer>
 
       {error && (
@@ -1970,100 +1591,7 @@ const AdminManagementTab: React.FC = () => {
           <FilterContainer>
             <FilterInput
               type="text"
-<<<<<<< Updated upstream
               placeholder="Search ..."
-=======
-              placeholder="Filter by Email"
-              value={filterEmail}
-              onChange={(e) => setFilterEmail(e.target.value)}
-            />
-            <Button onClick={handleAddAdmin}>
-              <FiUserPlus />
-              Add User
-            </Button>
-          </FilterContainer>
-          <Table>
-            <thead>
-              <tr>
-                <Th style={{ width: '50px' }}>#</Th>
-                <Th 
-                  style={{ width: '300px' }}
-                  onClick={() => handleSort('email')}
-                  $sortable
-                >
-                  Email
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'email'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th style={{ width: '200px' }}>Status</Th>
-                <Th 
-                  style={{ width: '150px' }}
-                  onClick={() => handleSort('last_sign_in')}
-                  $sortable
-                >
-                  Last Account Activity
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th style={{ width: '120px' }}>Actions</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortAdmins(admins)
-                .filter(admin => 
-                  admin.email.toLowerCase().includes(filterEmail.toLowerCase())
-                )
-                .map((admin, index) => (
-                  <tr key={admin.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '300px' }}>{admin.email}</Td>
-                    <Td style={{ width: '200px' }}>
-                      <StatusBadge $status={admin.status}>
-                        {admin.status === 'active' ? 'Active' : 'Pending'}
-                      </StatusBadge>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
-                      {admin.last_sign_in 
-                        ? new Date(admin.last_sign_in).toLocaleDateString()
-                        : 'Never'
-                      }
-                    </Td>
-                    <Td style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton onClick={() => handleEditAdmin(admin)}>
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        <ActionButton 
-                          $variant="danger"
-                          onClick={() => {
-                            setUserToDelete(admin);
-                            setIsDeleteModalOpen(true);
-                          }}
-                        >
-                          <FiTrash2 size={18} />
-                        </ActionButton>
-                      </ActionGroup>
-                    </Td>
-                  </tr>
-                ))}
-            </tbody>
-          </Table>
-        </>
-      ) : activeTab === 'moderators' ? (
-        <>
-          <FilterContainer>
-            <FilterInput
-              type="text"
-              placeholder="Filter by Email"
->>>>>>> Stashed changes
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
@@ -2085,7 +1613,6 @@ const AdminManagementTab: React.FC = () => {
               <tr>
                 <Th style={{ width: '50px' }}>#</Th>
                 <Th 
-<<<<<<< Updated upstream
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
                   $sortable
@@ -2099,8 +1626,6 @@ const AdminManagementTab: React.FC = () => {
                   </SortIcon>
                 </Th>
                 <Th 
-=======
->>>>>>> Stashed changes
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
@@ -2114,31 +1639,11 @@ const AdminManagementTab: React.FC = () => {
                   </SortIcon>
                 </Th>
                 <Th 
-<<<<<<< Updated upstream
-=======
-                  style={{ width: '200px' }}
-                  onClick={() => handleSort('roles')}
-                  $sortable
-                >
-                  Roles
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'roles'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
->>>>>>> Stashed changes
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-<<<<<<< Updated upstream
                   Last Activity
-=======
-                  Last Account Activity
->>>>>>> Stashed changes
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
                     $direction={sortDirection}
@@ -2150,29 +1655,16 @@ const AdminManagementTab: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-<<<<<<< Updated upstream
               {filterUsersByRole(allUsers, activeTab)
-=======
-              {allUsers
-                .filter(user => 
-                  user.email.toLowerCase().includes(filterEmail.toLowerCase()) &&
-                  user.roles.includes('moderator')
-                )
->>>>>>> Stashed changes
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
                   switch (sortField) {
                     case 'email':
                       return direction * a.email.localeCompare(b.email);
-<<<<<<< Updated upstream
                     case 'name':
                       const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim();
                       const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim();
                       return direction * nameA.localeCompare(nameB);
-=======
-                    case 'roles':
-                      return direction * a.roles.join(',').localeCompare(b.roles.join(','));
->>>>>>> Stashed changes
                     case 'last_sign_in':
                       const dateA = a.last_sign_in ? new Date(a.last_sign_in).getTime() : 0;
                       const dateB = b.last_sign_in ? new Date(b.last_sign_in).getTime() : 0;
@@ -2181,7 +1673,6 @@ const AdminManagementTab: React.FC = () => {
                       return 0;
                   }
                 })
-<<<<<<< Updated upstream
                 .map((user, index) => (
                   <tr key={user.id}>
                     <Td style={{ width: '50px' }}>{index + 1}</Td>
@@ -2193,25 +1684,6 @@ const AdminManagementTab: React.FC = () => {
                       {user.last_sign_in 
                         ? new Date(user.last_sign_in).toLocaleDateString()
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-=======
-                .map((user: UserRole, index: number) => (
-                  <tr key={user.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '300px' }}>{user.email}</Td>
-                    <Td style={{ width: '200px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string) => (
-                          <RoleBadge key={role} $role={role}>
-                            {role}
-                          </RoleBadge>
-                        ))}
-                      </RoleBadges>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
-                      {user.last_sign_in 
-                        ? new Date(user.last_sign_in).toLocaleDateString()
-                        : 'Never'
->>>>>>> Stashed changes
                       }
                     </Td>
                     {isCurrentUserAdmin && (
@@ -2256,7 +1728,6 @@ const AdminManagementTab: React.FC = () => {
             </tbody>
           </Table>
         </>
-<<<<<<< Updated upstream
       ) : activeTab === 'moderators' ? (
         <>
           <FilterContainer>
@@ -2423,18 +1894,12 @@ const AdminManagementTab: React.FC = () => {
             </tbody>
           </Table>
         </>
-=======
->>>>>>> Stashed changes
       ) : (
         <>
           <FilterContainer>
             <FilterInput
               type="text"
-<<<<<<< Updated upstream
               placeholder="Search ..."
-=======
-              placeholder="Filter by Email"
->>>>>>> Stashed changes
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
@@ -2456,7 +1921,6 @@ const AdminManagementTab: React.FC = () => {
               <tr>
                 <Th style={{ width: '50px' }}>#</Th>
                 <Th 
-<<<<<<< Updated upstream
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
                   $sortable
@@ -2470,8 +1934,6 @@ const AdminManagementTab: React.FC = () => {
                   </SortIcon>
                 </Th>
                 <Th 
-=======
->>>>>>> Stashed changes
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
@@ -2502,11 +1964,7 @@ const AdminManagementTab: React.FC = () => {
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-<<<<<<< Updated upstream
                   Last Activity
-=======
-                  Last Account Activity
->>>>>>> Stashed changes
                   <SortIcon 
                     $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
                     $direction={sortDirection}
@@ -2518,26 +1976,16 @@ const AdminManagementTab: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-<<<<<<< Updated upstream
               {filterUsersByRole(allUsers, activeTab)
-=======
-              {allUsers
-                .filter(user => 
-                  user.email.toLowerCase().includes(filterEmail.toLowerCase())
-                )
->>>>>>> Stashed changes
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
                   switch (sortField) {
                     case 'email':
                       return direction * a.email.localeCompare(b.email);
-<<<<<<< Updated upstream
                     case 'name':
                       const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim();
                       const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim();
                       return direction * nameA.localeCompare(nameB);
-=======
->>>>>>> Stashed changes
                     case 'roles':
                       return direction * a.roles.join(',').localeCompare(b.roles.join(','));
                     case 'last_sign_in':
@@ -2548,7 +1996,6 @@ const AdminManagementTab: React.FC = () => {
                       return 0;
                   }
                 })
-<<<<<<< Updated upstream
                 .map((user, index) => (
                   <tr key={user.id}>
                     <Td style={{ width: '50px' }}>{index + 1}</Td>
@@ -2560,16 +2007,6 @@ const AdminManagementTab: React.FC = () => {
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
-=======
-                .map((user: UserRole, index: number) => (
-                  <tr key={user.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '300px' }}>{user.email}</Td>
-                    <Td style={{ width: '200px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string) => (
-                          <RoleBadge key={role} $role={role}>
->>>>>>> Stashed changes
                             {role}
                           </RoleBadge>
                         ))}
@@ -2578,11 +2015,7 @@ const AdminManagementTab: React.FC = () => {
                     <Td style={{ width: '150px' }}>
                       {user.last_sign_in 
                         ? new Date(user.last_sign_in).toLocaleDateString()
-<<<<<<< Updated upstream
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-=======
-                        : 'Never'
->>>>>>> Stashed changes
                       }
                     </Td>
                     {isCurrentUserAdmin && (
@@ -2965,18 +2398,13 @@ const AdminManagementTab: React.FC = () => {
       <Modal $isOpen={isEditModalOpen}>
         <ModalContent>
           <ModalHeader>
-<<<<<<< Updated upstream
             <ModalTitle>Update User Profile</ModalTitle>
-=======
-            <ModalTitle>Update Info</ModalTitle>
->>>>>>> Stashed changes
             <CloseButton onClick={handleModalClose}>
               <FiX size={20} />
             </CloseButton>
           </ModalHeader>
 
           <Form onSubmit={handleEditSubmit}>
-<<<<<<< Updated upstream
             
           <FormRow>
               <FormGroup>
@@ -3069,10 +2497,6 @@ const AdminManagementTab: React.FC = () => {
                 Email
                 <RequiredAsterisk>*</RequiredAsterisk>
               </Label>
-=======
-            <FormGroup>
-              <Label htmlFor="edit-email">Email</Label>
->>>>>>> Stashed changes
               <Input
                 id="edit-email"
                 type="email"
@@ -3085,7 +2509,6 @@ const AdminManagementTab: React.FC = () => {
               <HelperText>Email cannot be changed</HelperText>
             </FormGroup>
 
-<<<<<<< Updated upstream
             <FormRow>
               <FormGroup>
                 <Label htmlFor="edit-username">
@@ -3169,38 +2592,6 @@ const AdminManagementTab: React.FC = () => {
             </FormRow>
 
             
-=======
-            <FormGroup>
-              <Label htmlFor="edit-password">New Password</Label>
-              <Input
-                id="edit-password"
-                type="password"
-                value={editFormData.password}
-                onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
-                placeholder="Leave blank to keep current password"
-              />
-              <HelperText>Leave blank to keep current password</HelperText>
-            </FormGroup>
-
-            <FormGroup>
-              <Label htmlFor="edit-role">Role</Label>
-              <RoleSelectContainer>
-                <RoleSelect
-                  id="edit-role"
-                  value={editFormData.role}
-                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
-                >
-                  <option value="user">User</option>
-                  <option value="moderator">Moderator</option>
-                  <option value="admin">Admin</option>
-                </RoleSelect>
-                <RoleIcon>
-                  {editFormData.role === 'admin' ? <FiShield size={18} /> : editFormData.role === 'moderator' ? <FiUser size={18} /> : <FiUser size={18} />}
-                </RoleIcon>
-              </RoleSelectContainer>
-              <HelperText>Select the user's role in the system</HelperText>
-            </FormGroup>
->>>>>>> Stashed changes
 
             {modalError && (
               <ErrorMessage>
@@ -3223,7 +2614,6 @@ const AdminManagementTab: React.FC = () => {
               >
                 Cancel
               </CancelButton>
-<<<<<<< Updated upstream
               <SaveButton 
                 type="submit"
                 disabled={Boolean(
@@ -3235,9 +2625,6 @@ const AdminManagementTab: React.FC = () => {
                   (usernameExists === true && editFormData.username !== currentUsername)
                 )}
               >
-=======
-              <SaveButton type="submit">
->>>>>>> Stashed changes
                 Save Changes
               </SaveButton>
             </ButtonGroup>
@@ -3287,7 +2674,6 @@ const AdminManagementTab: React.FC = () => {
       {/* Delete User Confirmation Modal */}
       {isDeleteModalOpen && userToDelete && (
         <Modal $isOpen={isDeleteModalOpen}>
-<<<<<<< Updated upstream
           <ModalContent style={{ maxWidth: '400px', textAlign: 'center', padding: '32px' }}>
             {successMessage ? (
               <div style={{ 
@@ -3368,39 +2754,6 @@ const AdminManagementTab: React.FC = () => {
                   </p>
                 )}
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '8px' }}>
-=======
-          <ModalContent style={{ maxWidth: '400px', textAlign: 'center', padding: '8px 32px 32px' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827', marginBottom: '0px' }}>
-              Delete User
-            </h3>
-            {successMessage ? (
-              <div style={{ padding: '16px 0' }}>
-                <p style={{ 
-                  color: '#059669', 
-                  fontSize: '1rem',
-                  fontWeight: 500,
-                  margin: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}>
-                  <FiCheck size={20} />
-                  {successMessage}
-                </p>
-              </div>
-            ) : (
-              <>
-                <p style={{ color: '#4B5563', marginBottom: '24px' }}>
-                  Are you sure you want to delete {userToDelete.email}? This action cannot be undone.
-                </p>
-                {errorMessage && (
-                  <p style={{ color: '#DC2626', marginBottom: '16px' }}>
-                    {errorMessage}
-                  </p>
-                )}
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
->>>>>>> Stashed changes
                   <CancelButton 
                     onClick={() => {
                       setIsDeleteModalOpen(false);
@@ -3426,16 +2779,11 @@ const AdminManagementTab: React.FC = () => {
                     Delete
                   </DeleteButton>
                 </div>
-<<<<<<< Updated upstream
               </div>
-=======
-              </>
->>>>>>> Stashed changes
             )}
           </ModalContent>
         </Modal>
       )}
-<<<<<<< Updated upstream
 
       {/* Success Modal */}
       {isSuccessModalOpen && (
@@ -3482,8 +2830,6 @@ const AdminManagementTab: React.FC = () => {
           </ModalContent>
         </Modal>
       )}
-=======
->>>>>>> Stashed changes
     </Container>
   );
 };
@@ -3497,11 +2843,7 @@ const TabContainer = styled.div`
   z-index: 1;
 `;
 
-<<<<<<< Updated upstream
 const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator' | 'user' | 'all' }>`
-=======
-const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator' | 'user' }>`
->>>>>>> Stashed changes
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3512,11 +2854,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
   font-weight: 500;
   transition: all 0.2s;
   min-width: 120px;
-<<<<<<< Updated upstream
   position: relative;
   z-index: 2;
-=======
->>>>>>> Stashed changes
   background-color: ${props => {
     if (props.$active) {
       switch (props.$type) {
@@ -3526,11 +2865,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#F0FDF4';
         case 'user':
           return '#E5E7EB';
-<<<<<<< Updated upstream
         case 'all':
           return '#D1D5DB';
-=======
->>>>>>> Stashed changes
         default:
           return '#F3F4F6';
       }
@@ -3542,11 +2878,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#F0FDF4';
         case 'user':
           return '#E5E7EB';
-<<<<<<< Updated upstream
         case 'all':
           return '#D1D5DB';
-=======
->>>>>>> Stashed changes
         default:
           return '#F3F4F6';
       }
@@ -3561,11 +2894,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#166534';
         case 'user':
           return '#374151';
-<<<<<<< Updated upstream
         case 'all':
           return '#1F2937';
-=======
->>>>>>> Stashed changes
         default:
           return '#6B7280';
       }
@@ -3577,11 +2907,8 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#166534';
         case 'user':
           return '#374151';
-<<<<<<< Updated upstream
         case 'all':
           return '#1F2937';
-=======
->>>>>>> Stashed changes
         default:
           return '#6B7280';
       }
@@ -3602,16 +2929,12 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
           return '#166534';
         case 'user':
           return '#374151';
-<<<<<<< Updated upstream
         case 'all':
           return '#1F2937';
-=======
->>>>>>> Stashed changes
         default:
           return '#6B7280';
       }
     }};
-<<<<<<< Updated upstream
   }
 
   &:focus-visible {
@@ -3682,8 +3005,6 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
     }};
     opacity: ${props => props.$active ? 1 : 0};
     transition: opacity 0.2s;
-=======
->>>>>>> Stashed changes
   }
 `;
 
