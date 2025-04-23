@@ -8,11 +8,11 @@ node_modules
 .env.production.local
 
 # Next.js build output
-.next
-out
+**/.next
+**/out
 
 # Next.js cache
-.next/cache/
-.next/cache/webpack/
-.next/cache/webpack/client-development/
-.next/cache/webpack/client-development/0.pack.gz
+**/.next/cache/
+**/.next/cache/webpack/
+**/.next/cache/webpack/client-development/
+**/.next/cache/webpack/client-development/*.pack.gz
