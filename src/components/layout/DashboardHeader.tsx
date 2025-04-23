@@ -9,13 +9,14 @@ const ContentHeader = styled.div`
   right: 0;
   left: 16rem;
   margin-bottom: ${({ theme }) => theme.spacing.xl};
-  padding: .5rem 1.5rem;
+  padding: .25rem 1.5rem;
   background-color: white;
   border-bottom: 1px solid #E5E7EB;
   z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 3.5rem;
 `;
 
 const ContentTitle = styled.h1`

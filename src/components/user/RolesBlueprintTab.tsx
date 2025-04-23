@@ -4,11 +4,16 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faSearch, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { faPenToSquare, faFilePdf, faCopy } from '@fortawesome/free-regular-svg-icons';
 
+const MainContent = styled.main`
+  flex: 1;
+  padding: 1.5rem;
+  background-color: #F9FAFB;
+`;
+
 const ActionsContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 4rem;
   margin-bottom: 1.5rem;
 `;
 
@@ -170,7 +175,7 @@ const ActionButton = styled.button`
 
 const RolesBlueprintTab: React.FC = () => {
   return (
-    <>
+    <MainContent>
       <ActionsContainer id="roles-actions">
         <SearchFilterGroup>
           <SearchContainer>
@@ -286,7 +291,7 @@ const RolesBlueprintTab: React.FC = () => {
           </CardFooter>
         </RoleCard>
       </RolesGrid>
-    </>
+    </MainContent>
   );
 };
 
