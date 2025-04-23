@@ -1,15 +1,11 @@
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-.next
+node_modules
+.next/
+.vercel
+*.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .next/cache
 .next/cache/webpack
 .next/cache/webpack/client-development
@@ -17,29 +13,3 @@
 .next/static/chunks/webpack.js
 .next/static/chunks
 .next/trace
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
