@@ -4,12 +4,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFilePdf, faBookmark } from '@fortawesome/free-regular-svg-icons';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
+const MainContent = styled.main`
+  flex: 1;
+  padding: 1.5rem;
+  background-color: #F9FAFB;
+`;
+
 const Section = styled.section`
   background-color: white;
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
-  margin-top: 4rem;
   margin-bottom: 1.5rem;
 `;
 
@@ -263,7 +268,7 @@ const ConsultButton = styled.button`
 
 const QuoteCalculatorTab: React.FC = () => {
   return (
-    <>
+    <MainContent>
       <Section id="quote-input">
         <SectionHeader>
           <SectionTitle>Role Details</SectionTitle>
@@ -374,7 +379,7 @@ const QuoteCalculatorTab: React.FC = () => {
           Schedule Consultation
         </ConsultButton>
       </ActionBar>
-    </>
+    </MainContent>
   );
 };
 

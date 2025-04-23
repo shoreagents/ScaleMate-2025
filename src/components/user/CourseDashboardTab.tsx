@@ -13,12 +13,17 @@ const Container = styled.div`
   padding: 1.5rem;
 `;
 
+const MainContent = styled.main`
+  flex: 1;
+  padding: 1.5rem;
+  background-color: #F9FAFB;
+`;
+
 const ProgressOverview = styled.div`
   background-color: white;
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
-  margin-top: 4rem;
   margin-bottom: 2rem;
 `;
 
@@ -202,7 +207,7 @@ const LockedMessage = styled.div`
 
 const CourseDashboardTab: React.FC = () => {
   return (
-    <Container>
+    <MainContent>
       <ProgressOverview>
         <OverviewHeader>
           <HeaderText>
@@ -317,7 +322,7 @@ const CourseDashboardTab: React.FC = () => {
           </CardContent>
         </CourseCard>
       </CourseGrid>
-    </Container>
+    </MainContent>
   );
 };
 

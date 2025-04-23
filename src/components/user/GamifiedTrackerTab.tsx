@@ -12,13 +12,16 @@ import {
   faStar
 } from '@fortawesome/free-solid-svg-icons';
 
-const Container = styled.div`
+const MainContent = styled.main`
+  flex: 1;
   padding: 1.5rem;
+  background-color: #F9FAFB;
 `;
 
 const Section = styled.section`
   background-color: white;
   border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
 `;
@@ -111,6 +114,7 @@ const ActivityGrid = styled.div`
 const ActivityCard = styled.div`
   background-color: white;
   border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
   padding: 1.5rem;
 `;
 
@@ -182,30 +186,30 @@ const RewardXP = styled.span`
 
 const GamifiedTrackerTab: React.FC = () => {
   return (
-    <Container>
-      {/* XP Progress Section */}
+    <MainContent>
       <Section>
         <SectionHeader>
-          <SectionTitle>Current Level: Power User</SectionTitle>
+          <SectionTitle>XP Progress</SectionTitle>
           <XPText>2,450 / 3,000 XP</XPText>
         </SectionHeader>
         <ProgressBar>
           <ProgressFill $width={82} />
         </ProgressBar>
-        <ProgressInfo>550 XP needed for next level: Expert Navigator</ProgressInfo>
+        <ProgressInfo>550 XP until next level</ProgressInfo>
       </Section>
 
-      {/* Badges Grid */}
       <Section>
-        <SectionTitle>Earned Badges</SectionTitle>
+        <SectionHeader>
+          <SectionTitle>Badges</SectionTitle>
+        </SectionHeader>
         <BadgesGrid>
           {/* Badge 1 */}
           <BadgeCard>
             <BadgeIcon>
               <BadgeIconInner icon={faRocket} />
             </BadgeIcon>
-            <BadgeTitle>First Flight</BadgeTitle>
-            <BadgeDescription>Created first role</BadgeDescription>
+            <BadgeTitle>Rocket Starter</BadgeTitle>
+            <BadgeDescription>Complete your first role blueprint</BadgeDescription>
           </BadgeCard>
 
           {/* Badge 2 */}
@@ -214,25 +218,61 @@ const GamifiedTrackerTab: React.FC = () => {
               <BadgeIconInner icon={faCalculator} />
             </BadgeIcon>
             <BadgeTitle>Cost Master</BadgeTitle>
-            <BadgeDescription>10 quotes generated</BadgeDescription>
+            <BadgeDescription>Create 5 cost calculations</BadgeDescription>
           </BadgeCard>
 
           {/* Badge 3 */}
-          <BadgeCard $locked>
-            <BadgeIcon $locked>
-              <BadgeIconInner icon={faUsers} $locked />
+          <BadgeCard>
+            <BadgeIcon>
+              <BadgeIconInner icon={faUsers} />
             </BadgeIcon>
             <BadgeTitle>Team Builder</BadgeTitle>
-            <BadgeDescription>Build 5-person team</BadgeDescription>
+            <BadgeDescription>Build a team of 5+ members</BadgeDescription>
           </BadgeCard>
 
           {/* Badge 4 */}
+          <BadgeCard>
+            <BadgeIcon>
+              <BadgeIconInner icon={faGraduationCap} />
+            </BadgeIcon>
+            <BadgeTitle>Learning Champion</BadgeTitle>
+            <BadgeDescription>Complete 3 courses</BadgeDescription>
+          </BadgeCard>
+
+          {/* Badge 5 */}
           <BadgeCard $locked>
             <BadgeIcon $locked>
-              <BadgeIconInner icon={faGraduationCap} $locked />
+              <BadgeIconInner icon={faUsersGear} $locked />
             </BadgeIcon>
-            <BadgeTitle>Course Pro</BadgeTitle>
-            <BadgeDescription>Complete 3 courses</BadgeDescription>
+            <BadgeTitle>Role Master</BadgeTitle>
+            <BadgeDescription>Create 10 role blueprints</BadgeDescription>
+          </BadgeCard>
+
+          {/* Badge 6 */}
+          <BadgeCard $locked>
+            <BadgeIcon $locked>
+              <BadgeIconInner icon={faBook} $locked />
+            </BadgeIcon>
+            <BadgeTitle>Resource Guru</BadgeTitle>
+            <BadgeDescription>Access all resource library items</BadgeDescription>
+          </BadgeCard>
+
+          {/* Badge 7 */}
+          <BadgeCard $locked>
+            <BadgeIcon $locked>
+              <BadgeIconInner icon={faTrophy} $locked />
+            </BadgeIcon>
+            <BadgeTitle>Achievement Hunter</BadgeTitle>
+            <BadgeDescription>Unlock 10 badges</BadgeDescription>
+          </BadgeCard>
+
+          {/* Badge 8 */}
+          <BadgeCard $locked>
+            <BadgeIcon $locked>
+              <BadgeIconInner icon={faStar} $locked />
+            </BadgeIcon>
+            <BadgeTitle>Scale Master</BadgeTitle>
+            <BadgeDescription>Reach level 10</BadgeDescription>
           </BadgeCard>
         </BadgesGrid>
       </Section>
@@ -288,7 +328,7 @@ const GamifiedTrackerTab: React.FC = () => {
           </ActivityList>
         </ActivityCard>
       </ActivityGrid>
-    </Container>
+    </MainContent>
   );
 };
 

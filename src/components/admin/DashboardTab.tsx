@@ -1,176 +1,416 @@
 import React from 'react';
 import styled from 'styled-components';
+import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
 
-const Grid = styled.div`
+const DashboardContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #F9FAFB;
+`;
+
+const MainContent = styled.main`
+  flex: 1;
+  padding: 1.5rem;
+  background-color: #F9FAFB;
+`;
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const StatsPanel = styled.section`
   display: grid;
   grid-template-columns: repeat(1, 1fr);
-  gap: ${({ theme }) => theme.spacing.lg};
+  gap: 24px;
 
   @media (min-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 `;
 
-const Card = styled.div`
-  background-color: ${({ theme }) => theme.colors.background.secondary};
-  border-radius: 1rem;
-  padding: ${({ theme }) => theme.spacing.lg};
-  box-shadow: ${({ theme }) => theme.shadows.md};
+const StatCard = styled.div`
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
 `;
 
-const CardTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Metric = styled.div`
+const StatHeader = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-const MetricValue = styled.span`
-  font-size: 2rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.primary};
-`;
-
-const MetricLabel = styled.span`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
-const UserList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const UserItem = styled.div`
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing.sm};
-  background-color: ${({ theme }) => theme.colors.background.primary};
-  border-radius: 0.5rem;
+  justify-content: space-between;
+  margin-bottom: 16px;
 `;
 
-const UserInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const UserEmail = styled.span`
-  font-weight: 500;
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const UserRole = styled.span`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
-const StatusIndicator = styled.div<{ $status: 'up' | 'down' }>`
-  width: 0.75rem;
-  height: 0.75rem;
+const IconContainer = styled.div<{ $color: string }>`
+  width: 48px;
+  height: 48px;
+  background-color: ${props => `${props.$color}10`};
   border-radius: 50%;
-  background-color: ${({ theme, $status }) => 
-    $status === 'up' ? theme.colors.success : theme.colors.error};
-`;
-
-const ServiceStatus = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: ${({ theme }) => theme.spacing.sm};
-  background-color: ${({ theme }) => theme.colors.background.primary};
-  border-radius: 0.5rem;
+  justify-content: center;
+  color: ${props => props.$color};
+  font-size: 1.25rem;
 `;
 
-const ServiceName = styled.span`
-  font-weight: 500;
-`;
-
-const LastChecked = styled.span`
+const TimeLabel = styled.span`
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: rgba(15, 23, 42, 0.6);
 `;
 
-interface DashboardTabProps {
-  metrics: {
-    totalUsers: number;
-    activeUsers: number;
-    conversionRate: number;
-  };
-  recentUsers: Array<{
-    email: string;
-    role: string;
-  }>;
-  services: Array<{
-    name: string;
-    status: 'up' | 'down';
-    lastChecked: Date;
-  }>;
-}
+const StatValue = styled.h3`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+`;
 
-const DashboardTab: React.FC<DashboardTabProps> = ({ metrics, recentUsers, services }) => {
+const StatLabel = styled.p`
+  color: rgba(15, 23, 42, 0.7);
+  margin: 0;
+`;
+
+const TrendIndicator = styled.div<{ $isPositive: boolean }>`
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: ${props => props.$isPositive ? '#00E915' : '#EC297B'};
+`;
+
+const TopRolesContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const RoleItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const RoleLabel = styled.span`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const RoleValue = styled.span`
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0F172A;
+`;
+
+const ContentGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 2fr 1fr;
+  }
+`;
+
+const ActivityFeed = styled.div`
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  padding: 24px;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: #0F172A;
+`;
+
+const ActivityList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const ActivityItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+`;
+
+const ActivityIcon = styled.div<{ $color: string }>`
+  width: 32px;
+  height: 32px;
+  background-color: ${props => `${props.$color}10`};
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${props => props.$color};
+`;
+
+const ActivityContent = styled.div`
+  flex: 1;
+`;
+
+const ActivityText = styled.p`
+  color: #0F172A;
+  margin: 0;
+`;
+
+const ActivityTime = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.6);
+  margin: 0;
+`;
+
+const QuickActions = styled.div`
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  padding: 24px;
+`;
+
+const ActionButton = styled.button<{ $primary?: boolean }>`
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+
+  ${props => props.$primary ? `
+    background-color: #3B82F6;
+    color: white;
+    border: none;
+    &:hover {
+      background-color: #2563EB;
+    }
+  ` : `
+    background-color: white;
+    color: #3B82F6;
+    border: 1px solid #3B82F6;
+    &:hover {
+      background-color: #3B82F6;
+      color: white;
+    }
+  `}
+`;
+
+const SystemWarnings = styled.section`
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  padding: 24px;
+`;
+
+const WarningList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const WarningItem = styled.div<{ $type: 'error' | 'info' }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: ${props => props.$type === 'error' ? '#EC297B10' : '#F9FAFB'};
+`;
+
+const WarningContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const WarningIcon = styled.div<{ $type: 'error' | 'info' }>`
+  color: ${props => props.$type === 'error' ? '#EC297B' : '#3B82F6'};
+  font-size: 1.25rem;
+`;
+
+const WarningText = styled.div``;
+
+const WarningTitle = styled.p<{ $type: 'error' | 'info' }>`
+  font-weight: 600;
+  color: ${props => props.$type === 'error' ? '#EC297B' : '#0F172A'};
+  margin: 0;
+`;
+
+const WarningDescription = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.6);
+  margin: 0;
+`;
+
+const WarningTime = styled.span`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.6);
+`;
+
+const DashboardTab: React.FC = () => {
   return (
-    <Grid>
-      <Card>
-        <CardTitle>Key Metrics</CardTitle>
-        <Grid>
-          <Metric>
-            <MetricValue>{metrics.totalUsers}</MetricValue>
-            <MetricLabel>Total Users</MetricLabel>
-          </Metric>
-          <Metric>
-            <MetricValue>{metrics.activeUsers}</MetricValue>
-            <MetricLabel>Active Users</MetricLabel>
-          </Metric>
-          <Metric>
-            <MetricValue>{metrics.conversionRate}%</MetricValue>
-            <MetricLabel>Conversion Rate</MetricLabel>
-          </Metric>
-        </Grid>
-      </Card>
+    <DashboardContainer>
+      <MainContent>
+        <Container>
+          <StatsPanel>
+            <StatCard>
+              <StatHeader>
+                <IconContainer $color="#3B82F6">
+                  <FaUserPlus />
+                </IconContainer>
+                <TimeLabel>This Week</TimeLabel>
+              </StatHeader>
+              <StatValue>247</StatValue>
+              <StatLabel>Total Leads</StatLabel>
+              <TrendIndicator $isPositive={true}>
+                <FaUserPlus style={{ marginRight: '4px' }} />
+                <span>12% vs last week</span>
+              </TrendIndicator>
+            </StatCard>
 
-      <Card>
-        <CardTitle>Recent Users</CardTitle>
-        <UserList>
-          {recentUsers.map((user, index) => (
-            <UserItem key={index}>
-              <UserInfo>
-                <UserEmail>{user.email}</UserEmail>
-                <UserRole>{user.role}</UserRole>
-              </UserInfo>
-            </UserItem>
-          ))}
-        </UserList>
-      </Card>
+            <StatCard>
+              <StatHeader>
+                <IconContainer $color="#EC297B">
+                  <FaUsers />
+                </IconContainer>
+                <TimeLabel>Today</TimeLabel>
+              </StatHeader>
+              <StatValue>1,893</StatValue>
+              <StatLabel>Active Users</StatLabel>
+              <TrendIndicator $isPositive={true}>
+                <FaUserPlus style={{ marginRight: '4px' }} />
+                <span>8% vs yesterday</span>
+              </TrendIndicator>
+            </StatCard>
 
-      <Card>
-        <CardTitle>System Status</CardTitle>
-        <UserList>
-          {services.map((service, index) => (
-            <ServiceStatus key={index}>
-              <ServiceName>{service.name}</ServiceName>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <StatusIndicator $status={service.status} />
-                <LastChecked>
-                  Last checked: {service.lastChecked.toLocaleTimeString()}
-                </LastChecked>
-              </div>
-            </ServiceStatus>
-          ))}
-        </UserList>
-      </Card>
-    </Grid>
+            <StatCard>
+              <StatHeader>
+                <IconContainer $color="#00E915">
+                  <FaSitemap />
+                </IconContainer>
+                <TimeLabel>This Month</TimeLabel>
+              </StatHeader>
+              <StatValue>156</StatValue>
+              <StatLabel>New Roles Generated</StatLabel>
+              <TrendIndicator $isPositive={false}>
+                <FaUserPlus style={{ marginRight: '4px' }} />
+                <span>3% vs last month</span>
+              </TrendIndicator>
+            </StatCard>
+
+            <StatCard>
+              <StatHeader>
+                <IconContainer $color="#3B82F6">
+                  <FaStar />
+                </IconContainer>
+                <TimeLabel>Top Roles</TimeLabel>
+              </StatHeader>
+              <TopRolesContainer>
+                <RoleItem>
+                  <RoleLabel>VA</RoleLabel>
+                  <RoleValue>42%</RoleValue>
+                </RoleItem>
+                <RoleItem>
+                  <RoleLabel>CSR</RoleLabel>
+                  <RoleValue>28%</RoleValue>
+                </RoleItem>
+              </TopRolesContainer>
+            </StatCard>
+          </StatsPanel>
+
+          <ContentGrid>
+            <ActivityFeed>
+              <SectionTitle>Recent Activity</SectionTitle>
+              <ActivityList>
+                <ActivityItem>
+                  <ActivityIcon $color="#3B82F6">
+                    <FaFileInvoice />
+                  </ActivityIcon>
+                  <ActivityContent>
+                    <ActivityText>New quote generated for <strong>TechCorp Inc.</strong></ActivityText>
+                    <ActivityTime>2 minutes ago</ActivityTime>
+                  </ActivityContent>
+                </ActivityItem>
+                <ActivityItem>
+                  <ActivityIcon $color="#00E915">
+                    <FaDownload />
+                  </ActivityIcon>
+                  <ActivityContent>
+                    <ActivityText><strong>Role Blueprint</strong> downloaded by John Smith</ActivityText>
+                    <ActivityTime>15 minutes ago</ActivityTime>
+                  </ActivityContent>
+                </ActivityItem>
+                <ActivityItem>
+                  <ActivityIcon $color="#EC297B">
+                    <FaUserPlus />
+                  </ActivityIcon>
+                  <ActivityContent>
+                    <ActivityText>New user signup: <strong>Sarah Johnson</strong></ActivityText>
+                    <ActivityTime>32 minutes ago</ActivityTime>
+                  </ActivityContent>
+                </ActivityItem>
+              </ActivityList>
+            </ActivityFeed>
+
+            <QuickActions>
+              <SectionTitle>Quick Actions</SectionTitle>
+              <ActionButton $primary>
+                <FaPlus />
+                Post New Blog
+              </ActionButton>
+              <ActionButton>
+                <FaUserPlus />
+                Create User
+              </ActionButton>
+              <ActionButton>
+                <FaCheckDouble />
+                Review New Roles
+              </ActionButton>
+            </QuickActions>
+          </ContentGrid>
+
+          <SystemWarnings>
+            <SectionTitle>System Health</SectionTitle>
+            <WarningList>
+              <WarningItem $type="error">
+                <WarningContent>
+                  <WarningIcon $type="error">
+                    <FaExclamationTriangle />
+                  </WarningIcon>
+                  <WarningText>
+                    <WarningTitle $type="error">API Timeout</WarningTitle>
+                    <WarningDescription>Payment gateway response delay</WarningDescription>
+                  </WarningText>
+                </WarningContent>
+                <WarningTime>2 mins ago</WarningTime>
+              </WarningItem>
+              <WarningItem $type="info">
+                <WarningContent>
+                  <WarningIcon $type="info">
+                    <FaInfoCircle />
+                  </WarningIcon>
+                  <WarningText>
+                    <WarningTitle $type="info">System Update</WarningTitle>
+                    <WarningDescription>New version deployment completed</WarningDescription>
+                  </WarningText>
+                </WarningContent>
+                <WarningTime>1 hour ago</WarningTime>
+              </WarningItem>
+            </WarningList>
+          </SystemWarnings>
+        </Container>
+      </MainContent>
+    </DashboardContainer>
   );
 };
 

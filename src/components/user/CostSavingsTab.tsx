@@ -4,12 +4,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faFilePdf, faBookmark } from '@fortawesome/free-regular-svg-icons';
 
+const MainContent = styled.main`
+  flex: 1;
+  padding: 1.5rem;
+  background-color: #F9FAFB;
+`;
+
 const Section = styled.section`
   background-color: white;
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
-  margin-top: 4rem;
   margin-bottom: 1.5rem;
 `;
 
@@ -206,7 +211,7 @@ const ActionButton = styled.button<{ $primary?: boolean }>`
 
 const CostSavingsTab: React.FC = () => {
   return (
-    <>
+    <MainContent>
       <Section id="team-input">
         <SectionHeader>
           <SectionTitle>Team Composition</SectionTitle>
@@ -324,7 +329,7 @@ const CostSavingsTab: React.FC = () => {
           Schedule Team Review
         </ActionButton>
       </ActionBar>
-    </>
+    </MainContent>
   );
 };
 
