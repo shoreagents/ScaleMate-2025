@@ -1640,6 +1640,19 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   </SortIcon>
                 </Th>
                 <Th 
+                  style={{ width: '200px' }}
+                  onClick={() => handleSort('roles')}
+                  $sortable
+                >
+                  Roles
+                  <SortIcon 
+                    $active={showSortIcon && activeSortColumn === 'roles'} 
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
+                </Th>
+                <Th 
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
@@ -1666,6 +1679,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim();
                       const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim();
                       return direction * nameA.localeCompare(nameB);
+                    case 'roles':
+                      return direction * a.roles.join(',').localeCompare(b.roles.join(','));
                     case 'last_sign_in':
                       const dateA = a.last_sign_in ? new Date(a.last_sign_in).getTime() : 0;
                       const dateB = b.last_sign_in ? new Date(b.last_sign_in).getTime() : 0;
@@ -1681,6 +1696,15 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
                     </Td>
                     <Td style={{ width: '300px' }}>{user.email}</Td>
+                    <Td style={{ width: '200px' }}>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </Td>
                     <Td style={{ width: '150px' }}>
                       {user.last_sign_in 
                         ? new Date(user.last_sign_in).toLocaleDateString()
