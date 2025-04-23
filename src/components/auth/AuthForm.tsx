@@ -10,7 +10,6 @@ const FormContainer = styled.div`
   max-width: 420px;
   width: 100%;
   height: 500px;
-  padding: 2rem;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -41,18 +40,21 @@ const Subtitle = styled.p`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  height: 100%;
-  justify-content: space-between;
+  gap: 1rem;
 `;
 
 const FormContent = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 `;
 
 const FormFields = styled.div`
   flex: 1;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -69,14 +71,15 @@ const FormFields = styled.div`
 `;
 
 const FormActions = styled.div`
-  margin-top: 0rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 `;
 
 const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
 `;
 
 const Label = styled.label`
@@ -107,7 +110,7 @@ const Input = styled.input`
 
 const ButtonContainer = styled.div`
   display: flex;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   gap: 1rem;
 `;
 
@@ -218,7 +221,6 @@ const PasswordLabelContainer = styled.div`
 
 const SignUpLink = styled.div`
   text-align: center;
-  margin-top: 1rem;
   font-size: 0.875rem;
   color: ${props => props.theme.colors.text.secondary};
 
@@ -290,13 +292,13 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
         }
 
         if (!userProfile) {
-          throw new Error('Username not found');
+          throw new Error('Account does not exist');
         }
 
         const { data: { user }, error: adminError } = await serviceRoleClient.auth.admin.getUserById(userProfile.user_id);
 
         if (adminError || !user?.email) {
-          throw new Error('User not found');
+          throw new Error('Account does not exist');
         }
 
         loginEmail = user.email;
