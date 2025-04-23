@@ -478,37 +478,40 @@ const ViewPasswordButton = styled.button`
   }
 `;
 
-interface UserData {
-  user_id: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone: string;
-  gender: string;
-  created_at: string;
-  last_sign_in_at: string | null;
-  roles: string[];
-}
-
-interface AdminRoleData {
-  user_id: string;
-  created_at: string;
-  users: UserData | null;
-}
-
-interface Admin {
+interface BaseUser {
   id: string;
-  email: string;
-  status: 'active' | 'pending';
-  created_at: string;
-  last_sign_in: string | null;
   first_name: string;
   last_name: string;
+  email: string;
+  created_at: string;
+  last_login?: string;
+}
+
+interface Admin extends BaseUser {
+  role: 'admin';
+  last_sign_in: string | null;
   phone: string;
   gender: string;
   username: string;
   roles: string[];
+  status: 'active' | 'pending';
 }
+
+interface UserRole extends BaseUser {
+  role: 'user';
+  last_sign_in: string | null;
+  phone: string;
+  gender: string;
+  username: string;
+  roles: string[];
+  status: string;
+}
+
+type UserToDelete = UserRole | Admin;
+
+type SortField = 'email' | 'name' | 'roles' | 'last_sign_in';
+
+type TabType = 'admins' | 'moderators' | 'users' | 'regular-users';
 
 interface AdminFormData {
   first_name: string;
@@ -516,23 +519,10 @@ interface AdminFormData {
   username: string;
   email: string;
   password: string;
-  confirmPassword: string; // Add confirmPassword field
+  confirmPassword: string;
   phone: string;
   gender: string;
   role: 'admin' | 'moderator' | 'user';
-}
-
-interface UserRole {
-  id: string;
-  email: string;
-  roles: string[];
-  created_at: string;
-  last_sign_in: string | null;
-  first_name: string;
-  last_name: string;
-  phone: string;
-  gender: string;
-  username: string;
 }
 
 interface UserEditFormData {
@@ -546,21 +536,17 @@ interface UserEditFormData {
   username: string;
 }
 
-// Add type for user to delete
-type UserToDelete = UserRole | Admin;
+interface AdminManagementTabProps {
+  onUserDeleted?: () => void;
+}
 
-// Update the sort field type
-type SortField = 'email' | 'name' | 'roles' | 'last_sign_in';
-
-type TabType = 'admins' | 'moderators' | 'users' | 'regular-users';
-
-const AdminManagementTab: React.FC = () => {
+const AdminManagementTab: React.FC<AdminManagementTabProps> = ({ onUserDeleted }) => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [allUsers, setAllUsers] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
-  const [formData, setFormData] = useState<AdminFormData>({
+  const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     username: '',
@@ -681,7 +667,9 @@ const AdminManagementTab: React.FC = () => {
         last_name: user.last_name || '',
         phone: user.phone || '',
         gender: user.gender || '',
-        username: user.username || ''
+        username: user.username || '',
+        role: 'user',
+        status: 'active'
       }));
 
       setAllUsers(formattedUsers);
@@ -721,12 +709,12 @@ const AdminManagementTab: React.FC = () => {
         return;
       }
 
-      const formattedAdmins = users
+      const formattedAdmins: Admin[] = users
         .filter(user => user.roles.includes('admin'))
         .map(user => ({
           id: user.user_id,
           email: user.email,
-          status: 'active' as const,
+          status: 'active',
           created_at: user.created_at,
           last_sign_in: user.last_sign_in_at || null,
           first_name: user.first_name || '',
@@ -734,7 +722,8 @@ const AdminManagementTab: React.FC = () => {
           phone: user.phone || '',
           gender: user.gender || '',
           username: user.username || '',
-          roles: user.roles || []
+          roles: user.roles || [],
+          role: 'admin'
         }));
 
       setAdmins(formattedAdmins);
@@ -773,7 +762,9 @@ const AdminManagementTab: React.FC = () => {
       last_name: admin.last_name || '',
       phone: admin.phone || '',
       gender: admin.gender || '',
-      username: admin.username || ''
+      username: admin.username || '',
+      role: 'user',
+      status: 'active'
     });
     setEditFormData({
       email: admin.email,
@@ -790,16 +781,9 @@ const AdminManagementTab: React.FC = () => {
 
   const handleEditUser = (user: UserRole) => {
     setSelectedUser({
-      id: user.id,
-      email: user.email,
-      roles: user.roles,
-      created_at: user.created_at,
-      last_sign_in: user.last_sign_in,
-      first_name: user.first_name || '',
-      last_name: user.last_name || '',
-      phone: user.phone || '',
-      gender: user.gender || '',
-      username: user.username || ''
+      ...user,
+      role: 'user',
+      status: user.status || 'active'
     });
     setEditFormData({
       email: user.email,
@@ -1524,6 +1508,18 @@ const AdminManagementTab: React.FC = () => {
     }
   };
 
+  const handleDelete = async (user: UserToDelete) => {
+    try {
+      if (user.role === 'user') {
+        await handleDeleteUser(user);
+      } else if (user.role === 'admin') {
+        await handleDeleteAdmin(user.id);
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -1699,7 +1695,7 @@ const AdminManagementTab: React.FC = () => {
                             <>
                               <ActionButton 
                                 $variant="success"
-                                onClick={() => handleDeleteUser(user as UserToDelete)}
+                                onClick={() => handleDelete(user)}
                               >
                                 <FiCheck size={18} />
                               </ActionButton>
@@ -1713,7 +1709,7 @@ const AdminManagementTab: React.FC = () => {
                             <ActionButton 
                               $variant="danger"
                               onClick={() => {
-                                setUserToDelete(user as UserToDelete);
+                                setUserToDelete(user);
                                 setIsDeleteModalOpen(true);
                               }}
                             >
@@ -1865,7 +1861,7 @@ const AdminManagementTab: React.FC = () => {
                             <>
                               <ActionButton 
                                 $variant="success"
-                                onClick={() => handleDeleteUser(user as UserToDelete)}
+                                onClick={() => handleDelete(user)}
                               >
                                 <FiCheck size={18} />
                               </ActionButton>
@@ -1879,7 +1875,7 @@ const AdminManagementTab: React.FC = () => {
                             <ActionButton 
                               $variant="danger"
                               onClick={() => {
-                                setUserToDelete(user as UserToDelete);
+                                setUserToDelete(user);
                                 setIsDeleteModalOpen(true);
                               }}
                             >
@@ -2031,7 +2027,7 @@ const AdminManagementTab: React.FC = () => {
                             <>
                               <ActionButton 
                                 $variant="success"
-                                onClick={() => handleDeleteUser(user as UserToDelete)}
+                                onClick={() => handleDelete(user)}
                               >
                                 <FiCheck size={18} />
                               </ActionButton>
@@ -2045,7 +2041,7 @@ const AdminManagementTab: React.FC = () => {
                             <ActionButton 
                               $variant="danger"
                               onClick={() => {
-                                setUserToDelete(user as UserToDelete);
+                                setUserToDelete(user);
                                 setIsDeleteModalOpen(true);
                               }}
                             >
