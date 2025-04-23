@@ -6,13 +6,3 @@ node_modules
 .env.development.local
 .env.test.local
 .env.production.local
-
-# Next.js build output
-**/.next
-**/out
-
-# Next.js cache
-**/.next/cache/
-**/.next/cache/webpack/
-**/.next/cache/webpack/client-development/
-**/.next/cache/webpack/client-development/*.pack.gz
