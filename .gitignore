@@ -12,3 +12,4 @@ node_modules
 .next/cache/webpack/client-development/*.pack.gz
 .next/static/chunks/webpack.js
 .next/static/chunks
+.next/trace
