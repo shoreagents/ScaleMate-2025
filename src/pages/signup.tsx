@@ -118,10 +118,17 @@ const ButtonContainer = styled.div`
   gap: 1rem;
 `;
 
+const RequiredAsterisk = styled.span`
+  color: #EF4444;
+  margin-left: 4px;
+`;
+
 const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  display: flex;
+  align-items: center;
 `;
 
 const InputWrapper = styled.div`
@@ -718,7 +725,10 @@ const SignUpPage = () => {
             <Form onSubmit={handleSubmit}>
               <FormRow>
                 <FormGroup>
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">
+                    First Name
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
                   <Input
                     id="firstName"
                     name="firstName"
@@ -730,7 +740,10 @@ const SignUpPage = () => {
                   />
                 </FormGroup>
                 <FormGroup>
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">
+                    Last Name
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
                   <Input
                     id="lastName"
                     name="lastName"
@@ -743,7 +756,10 @@ const SignUpPage = () => {
                 </FormGroup>
               </FormRow>
               <InputGroup>
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">
+                  Username
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <InputWrapper>
                   <Input
                     id="username"
@@ -781,7 +797,10 @@ const SignUpPage = () => {
                 </InputWrapper>
               </InputGroup>
               <InputGroup>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">
+                  Email
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
                 <InputWrapper>
                   <Input
                     id="email"
@@ -797,7 +816,10 @@ const SignUpPage = () => {
               <PasswordSection>
                 <FormRow>
                   <FormGroup>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password">
+                      Password
+                      <RequiredAsterisk>*</RequiredAsterisk>
+                    </Label>
                     <InputWrapper>
                       <PasswordInputWrapper>
                         <Input
@@ -820,7 +842,10 @@ const SignUpPage = () => {
                     </InputWrapper>
                   </FormGroup>
                   <FormGroup>
-                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <Label htmlFor="confirmPassword">
+                      Confirm Password
+                      <RequiredAsterisk>*</RequiredAsterisk>
+                    </Label>
                     <InputWrapper>
                       <PasswordInputWrapper>
                         <Input

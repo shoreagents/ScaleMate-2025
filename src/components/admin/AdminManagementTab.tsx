@@ -327,7 +327,7 @@ const ButtonGroup = styled.div`
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 16px;
 `;
 
 const ModalButton = styled.button`
@@ -602,6 +602,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+  const [passwordLength, setPasswordLength] = useState<boolean>(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
@@ -896,7 +897,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       formData.gender.trim() !== '' &&
       !usernameError &&
       usernameExists === false &&
-      passwordsMatch === true
+      passwordsMatch === true &&
+      passwordLength
     );
   };
 
@@ -1042,6 +1044,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         setCheckingUsername(false);
         setCurrentUsername('');
         setPasswordsMatch(null);
+        setPasswordLength(false);
         await fetchAllUsers();
     } catch (error) {
         console.error('Error in handleSubmit:', error);
@@ -1269,6 +1272,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
     setUsernameExists(null);
     setCheckingUsername(false);
     setCurrentUsername('');
+    setPasswordsMatch(null);
+    setPasswordLength(false);
   };
 
   const handleDeleteClick = (user: UserRole) => {
@@ -1500,6 +1505,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFormData({ ...formData, password: value });
+    setPasswordLength(value.length >= 8);
     if (formData.confirmPassword) {
       setPasswordsMatch(value === formData.confirmPassword);
     }
@@ -2107,6 +2113,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               setCheckingUsername(false);
               setCurrentUsername('');
               setPasswordsMatch(null);
+              setPasswordLength(false);
             }}>
               <FiX size={20} />
             </CloseButton>
@@ -2321,21 +2328,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                     {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
-                {passwordsMatch !== null && (
-                  <PasswordMatchIndicator $matches={passwordsMatch}>
-                    {passwordsMatch ? (
-                      <>
-                        <FiCheck size={14} />
-                        Passwords match
-                      </>
-                    ) : (
-                      <>
-                        <FiX size={14} />
-                        Passwords do not match
-                      </>
-                    )}
-                  </PasswordMatchIndicator>
-                )}
               </FormGroup>
 
               <FormGroup>
@@ -2363,6 +2355,39 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 </PasswordInputContainer>
               </FormGroup>
             </FormRow>
+
+            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '-8px' }}>
+              {formData.password && (
+                <PasswordMatchIndicator $matches={passwordLength}>
+                  {passwordLength ? (
+                    <>
+                      <FiCheck size={14} />
+                      Password length is valid
+                    </>
+                  ) : (
+                    <>
+                      <FiX size={14} />
+                      Password must be at least 8 characters
+                    </>
+                  )}
+                </PasswordMatchIndicator>
+              )}
+              {passwordsMatch !== null && (
+                <PasswordMatchIndicator $matches={passwordsMatch}>
+                  {passwordsMatch ? (
+                    <>
+                      <FiCheck size={14} />
+                      Passwords match
+                    </>
+                  ) : (
+                    <>
+                      <FiX size={14} />
+                      Passwords do not match
+                    </>
+                  )}
+                </PasswordMatchIndicator>
+              )}
+            </div>
 
             {modalError && !modalError.includes('A user with this email already exists') && (
               <ErrorMessage>
@@ -2402,6 +2427,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   setCheckingUsername(false);
                   setCurrentUsername('');
                   setPasswordsMatch(null);
+                  setPasswordLength(false);
                 }}
                 disabled={isSubmitting}
               >
@@ -2419,6 +2445,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   usernameError ||
                   usernameExists === true ||
                   passwordsMatch !== true ||
+                  passwordLength !== true ||
                   isSubmitting || 
                   rateLimitCountdown !== null
                 )}
