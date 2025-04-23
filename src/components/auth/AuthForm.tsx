@@ -416,7 +416,7 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
         </>
       ) : (
         <>
-          <Title>Login</Title>
+          <Title>Welcome Back</Title>
           <Subtitle>Sign in to your account</Subtitle>
           <Form onSubmit={handleSubmit}>
             <FormContent>
