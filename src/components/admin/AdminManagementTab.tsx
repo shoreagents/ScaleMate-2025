@@ -2768,9 +2768,9 @@ const AdminManagementTab: React.FC = () => {
                       try {
                         if ('roles' in userToDelete) {
                           await handleDeleteUser(userToDelete);
-                        } else {
+                        } else if ('id' in userToDelete) {
                           await handleDeleteAdmin(userToDelete.id);
-                        }
+                        }                        
                       } catch (error) {
                         console.error('Error deleting user:', error);
                       }
