@@ -7,9 +7,7 @@ export const theme: DefaultTheme = {
     secondary: '#6B7280',
     background: {
       primary: '#FFFFFF',
-      secondary: '#F9FAFB',
-      tertiary: '#F3F4F6',
-      hover: '#F3F4F6'
+      secondary: '#F9FAFB'
     },
     text: {
       primary: '#1F2937',
@@ -46,12 +44,6 @@ export const theme: DefaultTheme = {
     lg: '1024px',
     xl: '1280px',
   },
-  borderRadius: {
-    sm: '0.375rem',
-    md: '0.5rem',
-    lg: '0.75rem',
-    xl: '1rem'
-  }
 };
 
 export default theme; 
