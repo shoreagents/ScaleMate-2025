@@ -13,6 +13,7 @@ const FormContainer = styled.div`
   padding: 2rem;
   display: flex;
   flex-direction: column;
+  position: relative;
 `;
 
 const LogoContainer = styled.div`
@@ -106,6 +107,7 @@ const Input = styled.input`
 
 const ButtonContainer = styled.div`
   display: flex;
+  margin-top: 2rem;
   gap: 1rem;
 `;
 
@@ -137,7 +139,7 @@ const Button = styled.button`
 
 const SecondaryButton = styled(Button)`
   background: transparent;
-  border: 1.5px solid ${props => props.theme.colors.border};
+  border: 1.5px solid #9aa2b3;
   color: ${props => props.theme.colors.text.primary};
   margin-top: 0;
 
@@ -159,7 +161,6 @@ const ForgotPasswordLink = styled.button`
 
   &:hover {
     color: ${props => props.theme.colors.primaryDark};
-    text-decoration: underline;
   }
 `;
 
@@ -171,35 +172,6 @@ const MessageContainer = styled.div`
   align-items: center;
   gap: 0.5rem;
   margin-top: 0.5rem;
-`;
-
-const ErrorMessage = styled.div`
-  color: ${props => props.theme.colors.error};
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-
-  &::before {
-    content: "✕";
-    font-size: 0.75rem;
-    font-weight: bold;
-  }
-`;
-
-const SuccessMessage = styled.div`
-  color: ${props => props.theme.colors.success};
-  font-size: 0.75rem;
-  padding: 0.25rem 0;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-
-  &::before {
-    content: "✓";
-    font-size: 0.75rem;
-    font-weight: bold;
-  }
 `;
 
 const PasswordInputContainer = styled.div`
@@ -235,7 +207,7 @@ const PasswordInputGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 8px;
 `;
 
 const PasswordLabelContainer = styled.div`
@@ -255,18 +227,20 @@ const SignUpLink = styled.div`
     text-decoration: none;
     font-weight: 500;
     margin-left: 0.25rem;
+    transition: color 0.2s ease;
 
     &:hover {
-      text-decoration: underline;
+      color: ${props => props.theme.colors.primaryDark};
     }
   }
 `;
 
 interface AuthFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (message: string) => void;
+  onError?: (error: string) => void;
 }
 
-export default function AuthForm({ onSuccess }: AuthFormProps) {
+export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -290,16 +264,10 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
       
       // If it's not an email, try to find the user by username
       if (!isEmail) {
-        console.log('Attempting to find user by username:', loginIdentifier);
-        
-        // Check if service role key is available
         if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
           throw new Error('Service role key is not configured. Please contact support.');
         }
 
-        console.log('Service role key is configured, creating client...');
-        
-        // Create a service role client for the lookup
         const serviceRoleClient = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
@@ -311,8 +279,6 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
           }
         );
 
-        console.log('Querying user_profiles table...');
-        // First get the user_id from user_profiles
         const { data: userProfile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .select('user_id')
@@ -320,48 +286,28 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
           .maybeSingle();
 
         if (profileError) {
-          console.error('Profile lookup error:', {
-            message: profileError.message,
-            details: profileError.details,
-            hint: profileError.hint,
-            code: profileError.code
-          });
           throw new Error('Error looking up username');
         }
 
         if (!userProfile) {
-          console.log('No profile found for username:', loginIdentifier);
           throw new Error('Username not found');
         }
 
-        console.log('Found user profile:', userProfile);
-
-        // Get the user's email using the admin API
-        console.log('Getting user email from admin API...');
         const { data: { user }, error: adminError } = await serviceRoleClient.auth.admin.getUserById(userProfile.user_id);
 
-        if (adminError) {
-          console.error('Admin API error:', adminError);
-          throw new Error('Error looking up user');
-        }
-
-        if (!user?.email) {
-          console.log('No email found for user_id:', userProfile.user_id);
+        if (adminError || !user?.email) {
           throw new Error('User not found');
         }
 
-        console.log('Found user email:', user.email);
         loginEmail = user.email;
       }
 
-      console.log('Attempting to sign in with email:', loginEmail);
       const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password,
       });
 
       if (error) {
-        console.error('Sign in error:', error);
         throw error;
       }
 
@@ -376,43 +322,33 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
         .eq('user_id', user.id);
 
       if (rolesError) {
-        console.error('Roles fetch error:', rolesError);
         throw new Error('Error fetching user roles');
       }
 
       if (!roles || roles.length === 0) {
-        console.error('No roles found for user:', {
-          user_id: user.id,
-          email: user.email
-        });
         throw new Error('User has no roles assigned. Please contact support.');
       }
 
       const userRoles = roles.map(r => r.role);
 
       setSuccess('Successfully signed in!');
-      onSuccess?.();
+      onSuccess?.('Successfully signed in!');
 
-      // Add delay before redirect
-      setTimeout(() => {
-        // Redirect based on role
-        if (userRoles.includes('admin')) {
-          router.push('/admin/dashboard');
-        } else if (userRoles.includes('moderator')) {
-          router.push('/admin/dashboard');
-        } else if (userRoles.includes('user')) {
-          router.push('/user/dashboard');
-        } else {
-          console.error('User has no valid role:', {
-            user_id: user.id,
-            roles: userRoles
-          });
-          throw new Error('User has no valid role assigned. Please contact support.');
-        }
-      }, 500); // 0.5 second delay
+      // Redirect based on role immediately
+      if (userRoles.includes('admin')) {
+        router.push('/admin/dashboard');
+      } else if (userRoles.includes('moderator')) {
+        router.push('/admin/dashboard');
+      } else if (userRoles.includes('user')) {
+        router.push('/user/dashboard');
+      } else {
+        throw new Error('User has no valid role assigned. Please contact support.');
+      }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred during sign in');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign in';
+      setError(errorMessage);
+      onError?.(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -464,7 +400,6 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                     required
                   />
                 </InputGroup>
-                {success && <SuccessMessage>{success}</SuccessMessage>}
               </FormFields>
               <FormActions>
                 <ButtonContainer>
@@ -497,7 +432,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                     required
                   />
                 </InputGroup>
-                <PasswordInputGroup>
+                <InputGroup>
                   <PasswordLabelContainer>
                     <Label htmlFor="password">Password</Label>
                     <ForgotPasswordLink type="button" onClick={() => setShowResetForm(true)}>
@@ -520,9 +455,7 @@ export default function AuthForm({ onSuccess }: AuthFormProps) {
                       {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                     </ViewPasswordButton>
                   </PasswordInputContainer>
-                </PasswordInputGroup>
-                {error && <ErrorMessage>{error}</ErrorMessage>}
-                {success && <SuccessMessage>{success}</SuccessMessage>}
+                </InputGroup>
               </FormFields>
               <FormActions>
                 <ButtonContainer>

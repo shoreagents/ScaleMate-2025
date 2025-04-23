@@ -292,14 +292,13 @@ const ModalButton = styled.button`
 `;
 
 const ChooseImageButton = styled(ModalButton)`
-  border: 1px solid rgb(59, 130, 246);
-  color: rgb(59, 130, 246);
-  background-color: transparent;
-  transition: all 0.2s ease;
+  background: transparent;
+  border: 1.5px solid #9aa2b3;
+  color: ${props => props.theme.colors.text.primary};
 
   &:hover {
-    background-color: rgb(59, 130, 246);
-    color: white;
+    background: ${props => props.theme.colors.background.secondary};
+    border-color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -599,6 +598,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     setConfirmPassword('');
     setPasswordsMatch(null);
     setCurrentPasswordValid(null);
+    setUsernameError(null);
+    setUsernameExists(null);
+    setCheckingUsername(false);
+    setCurrentUsername('');
   };
 
   const handleProfileUpdate = async () => {
@@ -623,6 +626,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       if (isEditing) {
         setBasicInfoSuccess('Profile updated successfully');
         setIsEditing(false);
+        // Clear username validation states
+        setUsernameError(null);
+        setUsernameExists(null);
+        setCheckingUsername(false);
+        setCurrentUsername('');
         setTimeout(() => setBasicInfoSuccess(null), 500);
       }
       if (isEditingContact) {
@@ -919,7 +927,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       return false;
     }
     if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
-      setUsernameError('Only letters, numbers, dots, underscores, and hyphens allowed');
+      setUsernameError('Special characters are not allowed');
       setUsernameExists(null);
       return false;
     }
@@ -934,6 +942,22 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
            profileData.last_name.trim() !== '' &&
            !usernameError &&
            (!usernameExists || isCurrentUsername);
+  };
+
+  const handleModalClose = () => {
+    setIsProfileModalOpen(false);
+    setPreviewImage(null);
+    setSelectedFile(null);
+    setBasicInfoError(null);
+    setBasicInfoSuccess(null);
+    setContactError(null);
+    setContactSuccess(null);
+    setPasswordError(null);
+    setPasswordSuccess(null);
+    setUsernameError(null);
+    setUsernameExists(null);
+    setCheckingUsername(false);
+    setCurrentUsername('');
   };
 
   if (loading) {
@@ -1331,11 +1355,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
             <ModalDescription>
               A picture helps people recognize you and lets you know when you're signed in to your account.
             </ModalDescription>
-            <CloseButton onClick={() => {
-              setIsProfileModalOpen(false);
-              setPreviewImage(null);
-              setSelectedFile(null);
-            }}>
+            <CloseButton onClick={handleModalClose}>
               <FiX size={20} />
             </CloseButton>
           </ModalHeader>
