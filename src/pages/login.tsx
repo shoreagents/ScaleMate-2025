@@ -24,7 +24,6 @@ const AuthColumn = styled.div`
   display: flex;
   flex-direction: column;
   padding: 2rem;
-  padding-left: 4rem;
   min-height: 50vh;
   background-color: white;
 

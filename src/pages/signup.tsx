@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { useTheme } from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight, FiLoader, FiCheck, FiX, FiEye, FiEyeOff } from 'react-icons/fi';
 import { FaQuoteLeft } from 'react-icons/fa';
 import Link from 'next/link';
 
@@ -23,7 +23,6 @@ const AuthColumn = styled.div`
   display: flex;
   flex-direction: column;
   padding: 2rem;
-  padding-left: 4rem;
   min-height: 50vh;
   background-color: white;
 
@@ -80,7 +79,6 @@ const AuthFormContainer = styled.div`
 const FormContainer = styled.div`
   max-width: 420px;
   width: 100%;
-  padding: 2rem;
   display: flex;
   flex-direction: column;
 `;
@@ -105,18 +103,18 @@ const Subtitle = styled.p`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 `;
 
 const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-bottom: 8px;
 `;
 
 const ButtonContainer = styled.div`
   display: flex;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
   gap: 1rem;
 `;
 
@@ -124,6 +122,21 @@ const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+`;
+
+const InputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const PasswordInputWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
 `;
 
 const Input = styled.input`
@@ -144,6 +157,42 @@ const Input = styled.input`
   &::placeholder {
     color: ${props => props.theme.colors.text.secondary};
   }
+`;
+
+const PasswordToggle = styled.button`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: ${props => props.theme.colors.text.secondary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+  z-index: 1;
+
+  &:hover {
+    color: ${props => props.theme.colors.text.primary};
+  }
+`;
+
+const HelperText = styled.div`
+  font-size: 0.75rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+`;
+
+const PasswordHelperText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 `;
 
 const Button = styled.button`
@@ -174,7 +223,6 @@ const Button = styled.button`
 
 const SignInLink = styled.div`
   text-align: center;
-  margin-top: 1rem;
   font-size: 0.875rem;
   color: ${props => props.theme.colors.text.secondary};
 
@@ -239,6 +287,95 @@ const ClientHandle = styled.div`
   color: rgba(255, 255, 255, 0.6);
 `;
 
+const FormRow = styled.div`
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+`;
+
+const ErrorMessage = styled.div`
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  background-color: #FEE2E2;
+  color: #DC2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+  z-index: 10;
+
+  &::before {
+    content: "✕";
+    font-size: 1rem;
+    font-weight: bold;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+`;
+
+const SuccessMessage = styled.div`
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  background-color: #D1FAE5;
+  color: #059669;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+  z-index: 10;
+
+  &::before {
+    content: "✓";
+    font-size: 1rem;
+    font-weight: bold;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+`;
+
+const PasswordSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
 const testimonials = [
   {
     id: 1,
@@ -272,10 +409,22 @@ const SignUpPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    username: ''
+    username: '',
+    firstName: '',
+    lastName: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailExists, setEmailExists] = useState<boolean | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -301,52 +450,189 @@ const SignUpPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Add effect to clear messages after 2 seconds
+  useEffect(() => {
+    if (error || success) {
+      const timer = setTimeout(() => {
+        setError(null);
+        setSuccess(null);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error, success]);
+
+  const validateUsername = (value: string) => {
+    // Allow empty value for backspace
+    if (!value) {
+      setUsernameError(null);
+      setUsernameExists(null);
+      return false;
+    }
+    if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
+      setUsernameError('Special characters are not allowed');
+      setUsernameExists(null);
+      return false;
+    }
+    setUsernameError(null);
+    checkUsernameExists(value);
+    return true;
+  };
+
+  const checkUsernameExists = async (username: string) => {
+    if (!username) {
+      setUsernameExists(null);
+      setCheckingUsername(false);
+      return;
+    }
+
+    try {
+      setCheckingUsername(true);
+      
+      // Query the user_details view
+      const { data, error } = await supabase
+        .from('user_details')
+        .select('username, user_id')
+        .eq('username', username)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking username:', error);
+        setUsernameExists(null);
+      } else if (data && data.length > 0) {
+        setUsernameExists(true); // Username is taken
+      } else {
+        setUsernameExists(false); // Username is available
+      }
+    } catch (error) {
+      console.error('Error checking username:', error);
+      setUsernameExists(null);
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
+  const validatePasswords = (password: string, confirmPassword: string) => {
+    if (!confirmPassword) {
+      setPasswordError(null);
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setPasswordError('Passwords do not match');
+      return false;
+    }
+    setPasswordError(null);
+    return true;
+  };
+
+  const checkEmailExists = async (email: string) => {
+    if (!email) {
+      setEmailExists(null);
+      setCheckingEmail(false);
+      return;
+    }
+
+    try {
+      setCheckingEmail(true);
+      
+      // Query the user_details view
+      const { data, error } = await supabase
+        .from('user_details')
+        .select('email')
+        .eq('email', email)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking email:', error);
+        setEmailExists(null);
+      } else if (data && data.length > 0) {
+        setEmailExists(true); // Email is taken
+      } else {
+        setEmailExists(false); // Email is available
+      }
+    } catch (error) {
+      console.error('Error checking email:', error);
+      setEmailExists(null);
+    } finally {
+      setCheckingEmail(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setIsLoading(true);
 
     try {
-      if (formData.password !== formData.confirmPassword) {
+      // Validate passwords
+      if (!validatePasswords(formData.password, formData.confirmPassword)) {
         throw new Error('Passwords do not match');
       }
 
+      // Validate username
+      if (usernameExists) {
+        throw new Error('Username is already taken');
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Validate password strength
+      if (formData.password.length < 8) {
+        throw new Error('Password must be at least 8 characters long');
+      }
+
+      // Validate first name and last name
+      if (!formData.firstName.trim()) {
+        throw new Error('First name is required');
+      }
+      if (!formData.lastName.trim()) {
+        throw new Error('Last name is required');
+      }
+
+      // Sign up with Supabase
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
       });
 
-      if (signUpError) throw signUpError;
-
-      if (user) {
-        // Create user profile with username
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert([
-            {
-              user_id: user.id,
-              username: formData.username,
-              email: formData.email
-            }
-          ]);
-
-        if (profileError) throw profileError;
-
-        // Assign user role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert([
-            {
-              user_id: user.id,
-              role: 'user'
-            }
-          ]);
-
-        if (roleError) throw roleError;
-
-        router.push('/user/dashboard');
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        throw new Error(signUpError.message || 'Failed to create account');
       }
+
+      if (!user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // Create user profile using the update_user_profile_v2 function
+      const { error: profileError } = await supabase.rpc('update_user_profile_v2', {
+        p_user_id: user.id,
+        p_username: formData.username,
+        p_first_name: formData.firstName.trim(),
+        p_last_name: formData.lastName.trim(),
+        p_phone: null,
+        p_gender: null
+      });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // If profile creation fails, try to delete the auth user to maintain consistency
+        await supabase.auth.admin.deleteUser(user.id);
+        throw new Error('Failed to create user profile: ' + profileError.message);
+      }
+
+      setSuccess('Account created successfully!');
+      // Wait for 1 second before redirecting to login page
+      setTimeout(() => {
+        router.push('/login');
+      }, 1000);
     } catch (err) {
+      console.error('Sign up error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during sign up');
     } finally {
       setIsLoading(false);
@@ -359,6 +645,23 @@ const SignUpPage = () => {
       ...prev,
       [name]: value
     }));
+
+    if (name === 'username') {
+      validateUsername(value);
+    }
+
+    if (name === 'email') {
+      // Only check if email exists, no format validation
+      checkEmailExists(value);
+    }
+
+    // Check password match when either password field changes
+    if (name === 'password' || name === 'confirmPassword') {
+      validatePasswords(
+        name === 'password' ? value : formData.password,
+        name === 'confirmPassword' ? value : formData.confirmPassword
+      );
+    }
   };
 
   return (
@@ -370,57 +673,189 @@ const SignUpPage = () => {
             <Title>Create Account</Title>
             <Subtitle>Sign up to get started with ScaleMate</Subtitle>
             <Form onSubmit={handleSubmit}>
+              <FormRow>
+                <FormGroup>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    placeholder="Enter your first name"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    placeholder="Enter your last name"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                  />
+                </FormGroup>
+              </FormRow>
               <InputGroup>
                 <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  placeholder="Choose a username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  required
-                />
+                <InputWrapper>
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="Choose a username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                  />
+                  {usernameError && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
+                      {usernameError}
+                    </HelperText>
+                  )}
+                  {checkingUsername && (
+                    <HelperText style={{ color: '#6b7280' }}>
+                      <FiLoader size={14} />
+                      Checking username...
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === false && (
+                    <HelperText style={{ color: '#059669' }}>
+                      <FiCheck size={14} />
+                      Username is available
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === true && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
+                      Username is already taken
+                    </HelperText>
+                  )}
+                </InputWrapper>
               </InputGroup>
               <InputGroup>
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
+                <InputWrapper>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                  {checkingEmail && (
+                    <HelperText style={{ color: '#6b7280' }}>
+                      <FiLoader size={14} />
+                      Checking account...
+                    </HelperText>
+                  )}
+                  {!checkingEmail && emailExists === true && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
+                      Account already exists
+                    </HelperText>
+                  )}
+                </InputWrapper>
               </InputGroup>
-              <InputGroup>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Create a password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </InputGroup>
-              <InputGroup>
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                />
-              </InputGroup>
-              {error && <div style={{ color: 'red', fontSize: '0.875rem' }}>{error}</div>}
+              <PasswordSection>
+                <FormRow>
+                  <FormGroup>
+                    <Label htmlFor="password">Password</Label>
+                    <InputWrapper>
+                      <PasswordInputWrapper>
+                        <Input
+                          id="password"
+                          name="password"
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Create a password"
+                          value={formData.password}
+                          onChange={handleChange}
+                          required
+                        />
+                        <PasswordToggle
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                        </PasswordToggle>
+                      </PasswordInputWrapper>
+                    </InputWrapper>
+                  </FormGroup>
+                  <FormGroup>
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <InputWrapper>
+                      <PasswordInputWrapper>
+                        <Input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="Confirm your password"
+                          value={formData.confirmPassword}
+                          onChange={handleChange}
+                          required
+                        />
+                        <PasswordToggle
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        >
+                          {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                        </PasswordToggle>
+                      </PasswordInputWrapper>
+                    </InputWrapper>
+                  </FormGroup>
+                </FormRow>
+                <FormRow>
+                  <FormGroup>
+                    <PasswordHelperText>
+                      {formData.password && formData.password.length < 8 && (
+                        <HelperText style={{ color: '#dc2626' }}>
+                          <FiX size={14} />
+                          Password must be at least 8 characters
+                        </HelperText>
+                      )}
+                      {formData.confirmPassword && (
+                        passwordError ? (
+                          <HelperText style={{ color: '#dc2626' }}>
+                            <FiX size={14} />
+                            Passwords do not match
+                          </HelperText>
+                        ) : (
+                          <HelperText style={{ color: '#059669' }}>
+                            <FiCheck size={14} />
+                            Passwords match
+                          </HelperText>
+                        )
+                      )}
+                    </PasswordHelperText>
+                  </FormGroup>
+                </FormRow>
+              </PasswordSection>
+              {error && (
+                <div style={{ 
+                  color: '#dc2626', 
+                  fontSize: '0.875rem',
+                  padding: '0.75rem',
+                  backgroundColor: '#fee2e2',
+                  borderRadius: '8px',
+                  marginBottom: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <FiX size={16} />
+                  {error}
+                </div>
+              )}
               <ButtonContainer>
-                <Button type="submit" disabled={isLoading}>
+                <Button type="submit" disabled={isLoading || !!passwordError}>
                   {isLoading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </ButtonContainer>
@@ -432,6 +867,8 @@ const SignUpPage = () => {
         </AuthFormContainer>
       </AuthColumn>
       <TestimonialsColumn>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {success && <SuccessMessage>{success}</SuccessMessage>}
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <QuoteIcon>
             <FaQuoteLeft />
