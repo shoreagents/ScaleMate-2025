@@ -9,6 +9,8 @@ declare module 'styled-components' {
       background: {
         primary: string;
         secondary: string;
+        tertiary: string;
+        hover: string;
       };
       text: {
         primary: string;
@@ -40,6 +42,12 @@ declare module 'styled-components' {
       sans: string;
     };
     breakpoints: {
+      sm: string;
+      md: string;
+      lg: string;
+      xl: string;
+    };
+    borderRadius: {
       sm: string;
       md: string;
       lg: string;
