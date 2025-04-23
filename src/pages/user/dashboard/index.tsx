@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
 import { MyDashboardTab, RoleBuilderTab, UserHeader } from '@/components/user';
 import { 
@@ -19,6 +18,18 @@ import {
   FaTrophy,
   FaGear
 } from 'react-icons/fa6';
+<<<<<<< Updated upstream
+=======
+import CostSavingsTab from '@/components/user/CostSavingsTab';
+import RolesBlueprintTab from '@/components/user/RolesBlueprintTab';
+import SavedQuotesTab from '@/components/user/SavedQuotesTab';
+import ResourceLibraryTab from '@/components/user/ResourceLibraryTab';
+import CourseDashboardTab from '@/components/user/CourseDashboardTab';
+import AIToolLibraryTab from '@/components/user/AIToolLibraryTab';
+import SavedToolStackTab from '@/components/user/SavedToolStackTab';
+import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
+import AccountSettingsTab from '@/components/user/AccountSettingsTab';
+>>>>>>> Stashed changes
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -144,6 +155,29 @@ const DashboardPage: React.FC = () => {
     switch (activeSection) {
       case 'role-builder':
         return <RoleBuilderTab />;
+<<<<<<< Updated upstream
+=======
+      case 'quote-calculator':
+        return <QuoteCalculatorTab />;
+      case 'team-savings':
+        return <CostSavingsTab />;
+      case 'saved-blueprints':
+        return <RolesBlueprintTab />;
+      case 'saved-quotes':
+        return <SavedQuotesTab />;
+      case 'resource-library':
+        return <ResourceLibraryTab />;
+      case 'course-dashboard':
+        return <CourseDashboardTab />;
+      case 'ai-tool-library':
+        return <AIToolLibraryTab />;
+      case 'saved-tool-stack':
+        return <SavedToolStackTab />;
+      case 'gamified-tracker':
+        return <GamifiedTrackerTab />;
+      case 'account-settings':
+        return <AccountSettingsTab />;
+>>>>>>> Stashed changes
       default:
         return (
           <MyDashboardTab 
@@ -166,56 +200,133 @@ const DashboardPage: React.FC = () => {
               <LogoText>ScaleMate</LogoText>
             </Logo>
             <Nav>
-              <NavItem $active={activeSection === 'dashboard'} onClick={() => handleNavClick('dashboard')}>
+<<<<<<< Updated upstream
+              <NavLink href="#" $active={activeSection === 'dashboard'} onClick={() => handleNavClick('dashboard')}>
+                <NavIcon><FaHouse /></NavIcon>
+                <NavText>My Dashboard</NavText>
+              </NavLink>
+              <NavLink href="#" $active={activeSection === 'role-builder'} onClick={() => handleNavClick('role-builder')}>
+                <NavIcon><FaUsersGear /></NavIcon>
+                <NavText>Interactive Role Builder</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('quote-calculator')}>
+                <NavIcon><FaCalculator /></NavIcon>
+                <NavText>Expanded Quote Calculator</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('team-savings')}>
+                <NavIcon><FaCoins /></NavIcon>
+                <NavText>Detailed Team Savings Tool</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('readiness-score')}>
+                <NavIcon><FaChartSimple /></NavIcon>
+                <NavText>Readiness Score Page</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('saved-blueprints')}>
+                <NavIcon><FaBookmark /></NavIcon>
+                <NavText>Saved Role Blueprints</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('saved-quotes')}>
+                <NavIcon><FaFileLines /></NavIcon>
+                <NavText>Saved Quotes</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('resource-library')}>
+                <NavIcon><FaBook /></NavIcon>
+                <NavText>Resource Library</NavText>
+                <UnlockedBadge>Unlocked</UnlockedBadge>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('course-dashboard')}>
+                <NavIcon><FaGraduationCap /></NavIcon>
+                <NavText>Course Dashboard</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('ai-tool-library')}>
+                <NavIcon><FaRobot /></NavIcon>
+                <NavText>AI Tool Library</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('saved-tool-stack')}>
+                <NavIcon><FaLayerGroup /></NavIcon>
+                <NavText>Saved Tool Stack</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('gamified-tracker')}>
+                <NavIcon><FaTrophy /></NavIcon>
+                <NavText>Gamified Tracker</NavText>
+              </NavLink>
+              <NavLink href="#" onClick={() => handleNavClick('account-settings')}>
+=======
+              <NavItem $active={activeTab === 'dashboard'} onClick={() => handleTabClick('dashboard')}>
                 <NavIcon><FaHouse /></NavIcon>
                 <NavText>My Dashboard</NavText>
               </NavItem>
-              <NavItem $active={activeSection === 'role-builder'} onClick={() => handleNavClick('role-builder')}>
+              <NavItem $active={activeTab === 'role-builder'} onClick={() => handleTabClick('role-builder')}>
                 <NavIcon><FaUsersGear /></NavIcon>
                 <NavText>Interactive Role Builder</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('quote-calculator')}>
+              <NavItem $active={activeTab === 'quote-calculator'} onClick={() => handleTabClick('quote-calculator')}>
                 <NavIcon><FaCalculator /></NavIcon>
                 <NavText>Expanded Quote Calculator</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('team-savings')}>
+              <NavItem $active={activeTab === 'team-savings'} onClick={() => handleTabClick('team-savings')}>
                 <NavIcon><FaCoins /></NavIcon>
                 <NavText>Detailed Team Savings Tool</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('readiness-score')}>
+              <NavItem $active={activeTab === 'readiness-score'} onClick={() => handleTabClick('readiness-score')}>
                 <NavIcon><FaChartSimple /></NavIcon>
                 <NavText>Readiness Score Page</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('saved-blueprints')}>
+              <NavItem 
+                $active={activeTab === 'saved-blueprints'} 
+                onClick={() => handleTabClick('saved-blueprints')}
+              >
                 <NavIcon><FaBookmark /></NavIcon>
                 <NavText>Saved Role Blueprints</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('saved-quotes')}>
+              <NavItem 
+                $active={activeTab === 'saved-quotes'} 
+                onClick={() => handleTabClick('saved-quotes')}
+              >
                 <NavIcon><FaFileLines /></NavIcon>
                 <NavText>Saved Quotes</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('resource-library')}>
+              <NavItem 
+                $active={activeTab === 'resource-library'} 
+                onClick={() => handleTabClick('resource-library')}
+              >
                 <NavIcon><FaBook /></NavIcon>
                 <NavText>Resource Library</NavText>
                 <UnlockedBadge>Unlocked</UnlockedBadge>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('course-dashboard')}>
+              <NavItem 
+                $active={activeTab === 'course-dashboard'} 
+                onClick={() => handleTabClick('course-dashboard')}
+              >
                 <NavIcon><FaGraduationCap /></NavIcon>
                 <NavText>Course Dashboard</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('ai-tool-library')}>
+              <NavItem 
+                $active={activeTab === 'ai-tool-library'} 
+                onClick={() => handleTabClick('ai-tool-library')}
+              >
                 <NavIcon><FaRobot /></NavIcon>
                 <NavText>AI Tool Library</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('saved-tool-stack')}>
+              <NavItem 
+                $active={activeTab === 'saved-tool-stack'} 
+                onClick={() => handleTabClick('saved-tool-stack')}
+              >
                 <NavIcon><FaLayerGroup /></NavIcon>
                 <NavText>Saved Tool Stack</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('gamified-tracker')}>
+              <NavItem 
+                $active={activeTab === 'gamified-tracker'} 
+                onClick={() => handleTabClick('gamified-tracker')}
+              >
                 <NavIcon><FaTrophy /></NavIcon>
                 <NavText>Gamified Tracker</NavText>
               </NavItem>
-              <NavItem onClick={() => handleNavClick('account-settings')}>
+              <NavItem 
+                $active={activeTab === 'account-settings'} 
+                onClick={() => handleTabClick('account-settings')}
+              >
+>>>>>>> Stashed changes
                 <NavIcon><FaGear /></NavIcon>
                 <NavText>Account Settings</NavText>
               </NavItem>
