@@ -370,6 +370,41 @@ const SuccessMessage = styled.div`
   }
 `;
 
+const AccountExistsMessage = styled.div`
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  background-color: #FEF3C7;
+  color: #D97706;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+  z-index: 10;
+
+  &::before {
+    content: "!";
+    font-size: 1rem;
+    font-weight: bold;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+`;
+
 const PasswordSection = styled.div`
   display: flex;
   flex-direction: column;
@@ -425,6 +460,7 @@ const SignUpPage = () => {
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [accountExists, setAccountExists] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -579,6 +615,13 @@ const SignUpPage = () => {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         throw new Error('Please enter a valid email address');
+      }
+
+      // Check if email exists
+      if (emailExists) {
+        setAccountExists(true);
+        setTimeout(() => setAccountExists(false), 2000);
+        return;
       }
 
       // Validate password strength
@@ -749,18 +792,6 @@ const SignUpPage = () => {
                     onChange={handleChange}
                     required
                   />
-                  {checkingEmail && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiLoader size={14} />
-                      Checking account...
-                    </HelperText>
-                  )}
-                  {!checkingEmail && emailExists === true && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      Account already exists
-                    </HelperText>
-                  )}
                 </InputWrapper>
               </InputGroup>
               <PasswordSection>
@@ -869,6 +900,7 @@ const SignUpPage = () => {
       <TestimonialsColumn>
         {error && <ErrorMessage>{error}</ErrorMessage>}
         {success && <SuccessMessage>{success}</SuccessMessage>}
+        {accountExists && <AccountExistsMessage>An account with this email already exists</AccountExistsMessage>}
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <QuoteIcon>
             <FaQuoteLeft />
