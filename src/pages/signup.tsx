@@ -154,6 +154,7 @@ const Input = styled.input`
   background: white;
   color: ${props => props.theme.colors.text.primary};
   transition: all 0.2s ease;
+  width: 100%;
 
   &:focus {
     outline: none;
@@ -859,10 +860,12 @@ const SignUpPage = () => {
                 <FormRow>
                   <FormGroup>
                     <PasswordHelperText>
-                      <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#dc2626' }}>
-                        {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
-                        {formData.password.length >= 8 ? 'Password length is valid' : 'Password must be at least 8 characters'}
-                      </HelperText>
+                      {formData.password && (
+                        <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#dc2626' }}>
+                          {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
+                          {formData.password.length >= 8 ? 'Password length is valid' : 'Password must be at least 8 characters'}
+                        </HelperText>
+                      )}
                       {formData.confirmPassword && (
                         passwordError ? (
                           <HelperText style={{ color: '#dc2626' }}>
