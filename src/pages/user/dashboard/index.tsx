@@ -1,217 +1,355 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
-import UserHeader from '@/components/user/UserHeader';
-import { FiHome, FiUser, FiDollarSign, FiBarChart2, FiBookmark, FiBook, FiTool, FiAward, FiSettings } from 'react-icons/fi';
+import Link from 'next/link';
+import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
+import { MyDashboardTab, RoleBuilderTab, UserHeader } from '@/components/user';
+import { 
+  FaHouse, 
+  FaUsersGear, 
+  FaCalculator, 
+  FaCoins, 
+  FaChartSimple,
+  FaBookmark,
+  FaFileLines,
+  FaBook,
+  FaGraduationCap,
+  FaRobot,
+  FaLayerGroup,
+  FaTrophy,
+  FaGear
+} from 'react-icons/fa6';
+<<<<<<< Updated upstream
+=======
+import CostSavingsTab from '@/components/user/CostSavingsTab';
+import RolesBlueprintTab from '@/components/user/RolesBlueprintTab';
+import SavedQuotesTab from '@/components/user/SavedQuotesTab';
+import ResourceLibraryTab from '@/components/user/ResourceLibraryTab';
+import CourseDashboardTab from '@/components/user/CourseDashboardTab';
+import AIToolLibraryTab from '@/components/user/AIToolLibraryTab';
+import SavedToolStackTab from '@/components/user/SavedToolStackTab';
+import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
+import AccountSettingsTab from '@/components/user/AccountSettingsTab';
+>>>>>>> Stashed changes
 
-const Container = styled.div`
+const DashboardContainer = styled.div`
   display: flex;
   min-height: 100vh;
   background-color: #F9FAFB;
 `;
 
-const Sidebar = styled.div`
+const Sidebar = styled.aside`
   width: 250px;
   background-color: white;
-  border-right: 1px solid #E5E7EB;
+  padding: 0;
   position: fixed;
-  top: 0;
   left: 0;
+  top: 0;
   bottom: 0;
-  z-index: 20;
+  overflow-y: auto;
+  border-right: 1px solid #E5E7EB;
   display: flex;
   flex-direction: column;
 `;
 
+const SidebarContent = styled.div`
+  flex: 1;
+`;
+
 const Logo = styled.div`
-  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  padding: ${({ theme }) => theme.spacing.lg};
   border-bottom: 1px solid #E5E7EB;
-  
-  img {
-    height: 32px;
-    width: auto;
+`;
+
+const LogoText = styled.span`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
+`;
+
+const NavItem = styled.div<{ $active?: boolean }>`
+  padding: ${({ theme }) => theme.spacing.sm};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  background-color: ${({ theme, $active }) => 
+    $active ? theme.colors.primary + '15' : 'transparent'};
+  color: ${({ theme, $active }) => 
+    $active ? theme.colors.primary : theme.colors.text.primary};
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primary + '15'};
   }
+`;
+
+const NavIcon = styled.span`
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+`;
+
+const NavText = styled.span`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: inherit;
+`;
+
+const UnlockedBadge = styled.span`
+  margin-left: ${({ theme }) => theme.spacing.xs};
+  font-size: 0.75rem;
+  color: ${({ theme }) => theme.colors.success};
+  font-weight: 500;
+  background-color: ${({ theme }) => `${theme.colors.success}15`};
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+`;
+
+const MainContent = styled.main`
+  flex: 1;
+  padding: ${({ theme }) => theme.spacing.xl};
+  padding-top: calc(${({ theme }) => theme.spacing.xl} + 72px);
+  margin-left: 250px;
+  background-color: #F9FAFB;
 `;
 
 const Nav = styled.nav`
-  flex: 1;
-  padding: 1rem 0.75rem;
-  overflow-y: auto;
-`;
-
-const NavSection = styled.div`
-  margin-bottom: 1rem;
-
-  &:not(:first-child) {
-    border-top: 1px solid #E5E7EB;
-    padding-top: 1rem;
-  }
-`;
-
-const NavItem = styled.a<{ $active?: boolean }>`
   display: flex;
-  align-items: center;
-  padding: 0.75rem;
-  color: ${props => props.$active ? '#111827' : '#6B7280'};
-  text-decoration: none;
-  border-radius: 0.5rem;
-  margin-bottom: 0.25rem;
-  background-color: ${props => props.$active ? '#F3F4F6' : 'transparent'};
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: #F3F4F6;
-    color: #111827;
-  }
-
-  svg {
-    margin-right: 0.75rem;
-  }
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.lg};
 `;
 
-const Content = styled.main`
-  margin-left: 250px;
-  padding-top: 4rem;
-  width: calc(100% - 250px);
-  min-height: 100vh;
-`;
-
+<<<<<<< Updated upstream
 const DashboardPage: React.FC = () => {
+=======
+const DashboardPage = () => {
+>>>>>>> Stashed changes
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState(() => {
+    // Get initial section from URL path
+    const path = router.asPath;
+    if (path.includes('/role-builder')) return 'role-builder';
+    return 'dashboard';
+  });
 
-  const handleNavClick = (section: string) => {
-    setActiveSection(section);
+  const handleLogout = () => {
+    router.push('/user');
   };
 
-  const mockUser = {
-    name: 'John Doe',
-    email: 'john@example.com',
-    avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg'
+  const handleNavClick = async (section: string) => {
+    setActiveSection(section);
+    
+    // Update URL based on section
+    if (section === 'role-builder') {
+      await router.push('/user/dashboard/role-builder');
+    } else if (section === 'dashboard') {
+      await router.push('/user/dashboard');
+    } else {
+      // For other sections, we'll keep them in the base dashboard for now
+      await router.push('/user/dashboard');
+    }
   };
 
   const renderContent = () => {
     switch (activeSection) {
-      case 'dashboard':
-        return <div>Dashboard Content</div>;
       case 'role-builder':
-        return <div>Role Builder Content</div>;
+        return <RoleBuilderTab />;
+<<<<<<< Updated upstream
+=======
       case 'quote-calculator':
-        return <div>Quote Calculator Content</div>;
+        return <QuoteCalculatorTab />;
       case 'team-savings':
-        return <div>Team Savings Content</div>;
-      case 'readiness-score':
-        return <div>Readiness Score Content</div>;
+        return <CostSavingsTab />;
       case 'saved-blueprints':
-        return <div>Saved Blueprints Content</div>;
+        return <RolesBlueprintTab />;
       case 'saved-quotes':
-        return <div>Saved Quotes Content</div>;
+        return <SavedQuotesTab />;
       case 'resource-library':
-        return <div>Resource Library Content</div>;
+        return <ResourceLibraryTab />;
       case 'course-dashboard':
-        return <div>Course Dashboard Content</div>;
+        return <CourseDashboardTab />;
       case 'ai-tool-library':
-        return <div>AI Tool Library Content</div>;
+        return <AIToolLibraryTab />;
       case 'saved-tool-stack':
-        return <div>Saved Tool Stack Content</div>;
+        return <SavedToolStackTab />;
       case 'gamified-tracker':
-        return <div>Gamified Tracker Content</div>;
+        return <GamifiedTrackerTab />;
       case 'account-settings':
-        return <div>Account Settings Content</div>;
+        return <AccountSettingsTab />;
+>>>>>>> Stashed changes
       default:
-        return <div>Dashboard Content</div>;
+        return (
+          <MyDashboardTab 
+            user={{
+              name: "Alex",
+              email: "alex@example.com",
+              avatar: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+            }}
+          />
+        );
     }
   };
 
   return (
-    <Container>
-      <Sidebar>
-        <Logo>
-          <img src="/logo.svg" alt="ScaleMate" />
-        </Logo>
-        <Nav>
-          <NavSection>
-            <NavItem href="#" onClick={() => handleNavClick('dashboard')} $active={activeSection === 'dashboard'}>
-              <FiHome size={20} />
-              Dashboard
-            </NavItem>
-          </NavSection>
-
-          <NavSection>
-            <NavItem href="#" onClick={() => handleNavClick('role-builder')} $active={activeSection === 'role-builder'}>
-              <FiUser size={20} />
-              Role Builder
-            </NavItem>
-            <NavItem href="#" onClick={() => handleNavClick('quote-calculator')} $active={activeSection === 'quote-calculator'}>
-              <FiDollarSign size={20} />
-              Quote Calculator
-            </NavItem>
-            <NavItem href="#" onClick={() => handleNavClick('team-savings')} $active={activeSection === 'team-savings'}>
-              <FiBarChart2 size={20} />
-              Team Savings
-            </NavItem>
-            <NavItem href="#" onClick={() => handleNavClick('readiness-score')} $active={activeSection === 'readiness-score'}>
-              <FiBarChart2 size={20} />
-              Readiness Score
-            </NavItem>
-          </NavSection>
-
-          <NavSection>
-            <NavItem href="#" onClick={() => handleNavClick('saved-blueprints')} $active={activeSection === 'saved-blueprints'}>
-              <FiBookmark size={20} />
-              Saved Blueprints
-            </NavItem>
-            <NavItem href="#" onClick={() => handleNavClick('saved-quotes')} $active={activeSection === 'saved-quotes'}>
-              <FiBookmark size={20} />
-              Saved Quotes
-            </NavItem>
-          </NavSection>
-
-          <NavSection>
-            <NavItem href="#" onClick={() => handleNavClick('resource-library')} $active={activeSection === 'resource-library'}>
-              <FiBook size={20} />
-              Resource Library
-            </NavItem>
-            <NavItem href="#" onClick={() => handleNavClick('course-dashboard')} $active={activeSection === 'course-dashboard'}>
-              <FiBook size={20} />
-              Course Dashboard
-            </NavItem>
-          </NavSection>
-
-          <NavSection>
-            <NavItem href="#" onClick={() => handleNavClick('ai-tool-library')} $active={activeSection === 'ai-tool-library'}>
-              <FiTool size={20} />
-              AI Tool Library
-            </NavItem>
-            <NavItem href="#" onClick={() => handleNavClick('saved-tool-stack')} $active={activeSection === 'saved-tool-stack'}>
-              <FiTool size={20} />
-              Saved Tool Stack
-            </NavItem>
-          </NavSection>
-
-          <NavSection>
-            <NavItem href="#" onClick={() => handleNavClick('gamified-tracker')} $active={activeSection === 'gamified-tracker'}>
-              <FiAward size={20} />
-              Gamified Tracker
-            </NavItem>
-          </NavSection>
-
-          <NavSection>
-            <NavItem href="#" onClick={() => handleNavClick('account-settings')} $active={activeSection === 'account-settings'}>
-              <FiSettings size={20} />
-              Account Settings
-            </NavItem>
-          </NavSection>
-        </Nav>
-      </Sidebar>
-
-      <UserHeader activeSection={activeSection} user={mockUser} />
-
-      <Content>
-        {renderContent()}
-      </Content>
-    </Container>
+    <NoNavbarLayout>
+      <DashboardContainer>
+        <Sidebar>
+          <SidebarContent>
+            <Logo>
+              <LogoText>ScaleMate</LogoText>
+            </Logo>
+            <Nav>
+<<<<<<< Updated upstream
+              <NavItem $active={activeSection === 'dashboard'} onClick={() => handleNavClick('dashboard')}>
+                <NavIcon><FaHouse /></NavIcon>
+                <NavText>My Dashboard</NavText>
+              </NavItem>
+              <NavItem $active={activeSection === 'role-builder'} onClick={() => handleNavClick('role-builder')}>
+                <NavIcon><FaUsersGear /></NavIcon>
+                <NavText>Interactive Role Builder</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('quote-calculator')}>
+                <NavIcon><FaCalculator /></NavIcon>
+                <NavText>Expanded Quote Calculator</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('team-savings')}>
+                <NavIcon><FaCoins /></NavIcon>
+                <NavText>Detailed Team Savings Tool</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('readiness-score')}>
+                <NavIcon><FaChartSimple /></NavIcon>
+                <NavText>Readiness Score Page</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('saved-blueprints')}>
+                <NavIcon><FaBookmark /></NavIcon>
+                <NavText>Saved Role Blueprints</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('saved-quotes')}>
+                <NavIcon><FaFileLines /></NavIcon>
+                <NavText>Saved Quotes</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('resource-library')}>
+=======
+              <NavItem $active={activeTab === 'dashboard'} onClick={() => handleTabClick('dashboard')}>
+                <NavIcon><FaHouse /></NavIcon>
+                <NavText>My Dashboard</NavText>
+              </NavItem>
+              <NavItem $active={activeTab === 'role-builder'} onClick={() => handleTabClick('role-builder')}>
+                <NavIcon><FaUsersGear /></NavIcon>
+                <NavText>Interactive Role Builder</NavText>
+              </NavItem>
+              <NavItem $active={activeTab === 'quote-calculator'} onClick={() => handleTabClick('quote-calculator')}>
+                <NavIcon><FaCalculator /></NavIcon>
+                <NavText>Expanded Quote Calculator</NavText>
+              </NavItem>
+              <NavItem $active={activeTab === 'team-savings'} onClick={() => handleTabClick('team-savings')}>
+                <NavIcon><FaCoins /></NavIcon>
+                <NavText>Detailed Team Savings Tool</NavText>
+              </NavItem>
+              <NavItem $active={activeTab === 'readiness-score'} onClick={() => handleTabClick('readiness-score')}>
+                <NavIcon><FaChartSimple /></NavIcon>
+                <NavText>Readiness Score Page</NavText>
+              </NavItem>
+              <NavItem 
+                $active={activeTab === 'saved-blueprints'} 
+                onClick={() => handleTabClick('saved-blueprints')}
+              >
+                <NavIcon><FaBookmark /></NavIcon>
+                <NavText>Saved Role Blueprints</NavText>
+              </NavItem>
+              <NavItem 
+                $active={activeTab === 'saved-quotes'} 
+                onClick={() => handleTabClick('saved-quotes')}
+              >
+                <NavIcon><FaFileLines /></NavIcon>
+                <NavText>Saved Quotes</NavText>
+              </NavItem>
+              <NavItem 
+                $active={activeTab === 'resource-library'} 
+                onClick={() => handleTabClick('resource-library')}
+              >
+>>>>>>> Stashed changes
+                <NavIcon><FaBook /></NavIcon>
+                <NavText>Resource Library</NavText>
+                <UnlockedBadge>Unlocked</UnlockedBadge>
+              </NavItem>
+<<<<<<< Updated upstream
+              <NavItem onClick={() => handleNavClick('course-dashboard')}>
+                <NavIcon><FaGraduationCap /></NavIcon>
+                <NavText>Course Dashboard</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('ai-tool-library')}>
+                <NavIcon><FaRobot /></NavIcon>
+                <NavText>AI Tool Library</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('saved-tool-stack')}>
+                <NavIcon><FaLayerGroup /></NavIcon>
+                <NavText>Saved Tool Stack</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('gamified-tracker')}>
+                <NavIcon><FaTrophy /></NavIcon>
+                <NavText>Gamified Tracker</NavText>
+              </NavItem>
+              <NavItem onClick={() => handleNavClick('account-settings')}>
+=======
+              <NavItem 
+                $active={activeTab === 'course-dashboard'} 
+                onClick={() => handleTabClick('course-dashboard')}
+              >
+                <NavIcon><FaGraduationCap /></NavIcon>
+                <NavText>Course Dashboard</NavText>
+              </NavItem>
+              <NavItem 
+                $active={activeTab === 'ai-tool-library'} 
+                onClick={() => handleTabClick('ai-tool-library')}
+              >
+                <NavIcon><FaRobot /></NavIcon>
+                <NavText>AI Tool Library</NavText>
+              </NavItem>
+              <NavItem 
+                $active={activeTab === 'saved-tool-stack'} 
+                onClick={() => handleTabClick('saved-tool-stack')}
+              >
+                <NavIcon><FaLayerGroup /></NavIcon>
+                <NavText>Saved Tool Stack</NavText>
+              </NavItem>
+              <NavItem 
+                $active={activeTab === 'gamified-tracker'} 
+                onClick={() => handleTabClick('gamified-tracker')}
+              >
+                <NavIcon><FaTrophy /></NavIcon>
+                <NavText>Gamified Tracker</NavText>
+              </NavItem>
+              <NavItem 
+                $active={activeTab === 'account-settings'} 
+                onClick={() => handleTabClick('account-settings')}
+              >
+>>>>>>> Stashed changes
+                <NavIcon><FaGear /></NavIcon>
+                <NavText>Account Settings</NavText>
+              </NavItem>
+            </Nav>
+          </SidebarContent>
+        </Sidebar>
+        <MainContent>
+          <UserHeader 
+            activeSection={activeSection}
+            user={{
+              name: "Alex",
+              email: "alex@example.com",
+              avatar: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+            }}
+          />
+          {renderContent()}
+        </MainContent>
+      </DashboardContainer>
+    </NoNavbarLayout>
   );
 };
 
