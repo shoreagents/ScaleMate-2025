@@ -306,6 +306,8 @@ const ChooseImageButton = styled(ModalButton)`
 const SaveButton = styled(ModalButton)`
   background-color: #3B82F6;
   color: white;
+  min-width: 100px;
+  justify-content: center;
 
   &:hover {
     background-color: #2563EB;
@@ -490,6 +492,19 @@ const PasswordValidations = styled.div`
   gap: 0;
 `;
 
+const SpinningIcon = styled(FiLoader)`
+  animation: spin 3s linear infinite;
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
 interface AdminProfileData {
   first_name: string;
   last_name: string;
@@ -557,6 +572,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [currentUsername, setCurrentUsername] = useState<string>('');
   const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
+  const [isUpdatingProfilePicture, setIsUpdatingProfilePicture] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
@@ -757,6 +773,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     if (!selectedFile) return;
 
     try {
+      setIsUpdatingProfilePicture(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -817,11 +834,12 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       if (onProfilePictureChange) {
         onProfilePictureChange(publicUrl);
       }
-
     } catch (error) {
       console.error('Error updating profile picture:', error);
       setBasicInfoError(error instanceof Error ? error.message : 'Failed to update profile picture');
       setTimeout(() => setBasicInfoError(null), 3000);
+    } finally {
+      setIsUpdatingProfilePicture(false);
     }
   };
 
@@ -1421,14 +1439,19 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           <ButtonGroup>
             <ChooseImageButton
               onClick={() => document.getElementById('profile-picture')?.click()}
+              disabled={isUpdatingProfilePicture}
             >
               Choose Image
             </ChooseImageButton>
             <SaveButton
               onClick={handleProfilePictureUpload}
-              disabled={!selectedFile}
+              disabled={!selectedFile || isUpdatingProfilePicture}
             >
-              Update
+              {isUpdatingProfilePicture ? (
+                <SpinningIcon size={16} />
+              ) : (
+                'Update'
+              )}
             </SaveButton>
           </ButtonGroup>
         </ProfileModalContent>

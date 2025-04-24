@@ -664,83 +664,36 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
 const DashboardPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isLoading, setIsLoading] = useState(true);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
-    const checkUserRole = async () => {
+    const fetchUserData = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          router.push('/login');
-          return;
+        if (user) {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profile) {
+            setUserData(profile);
+            setProfilePicture(profile.profile_picture);
+          }
         }
-
-        // Fetch user profile to get profile picture
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('profile_picture')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profile?.profile_picture) {
-          setProfilePicture(profile.profile_picture);
-        }
-
-        const { data: roles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-
-        if (rolesError) {
-          console.error('Error fetching user roles:', rolesError);
-          router.push('/login');
-          return;
-        }
-
-        if (!roles || !roles.some(r => r.role === 'admin')) {
-          console.error('User does not have admin role:', roles);
-          router.push('/login');
-          return;
-        }
-
-        setIsLoading(false);
       } catch (error) {
-        console.error('Error checking user role:', error);
-        router.push('/login');
+        console.error('Error fetching user data:', error);
       }
     };
 
-    checkUserRole();
-  }, [router]);
+    fetchUserData();
+  }, []);
 
-  useEffect(() => {
-    const { tab } = router.query;
-    if (tab && typeof tab === 'string' && [
-      'dashboard',
-      'user-management',
-      'role-management',
-      'admin-management',
-      'analytics',
-      'system-settings',
-      'content-management',
-      'resource-library',
-      'course-management',
-      'ai-tools',
-      'tool-stacks',
-      'achievements',
-      'notifications',
-      'help-center',
-      'database'
-    ].includes(tab)) {
-      setActiveTab(tab);
-    }
-  }, [router.query]);
-
-  if (isLoading) {
-    return null; // Or a loading spinner
-  }
+  const handleProfilePictureChange = (newPictureUrl: string) => {
+    setProfilePicture(newPictureUrl);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -749,11 +702,17 @@ const DashboardPage = () => {
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
-    router.push(`/admin/dashboard?tab=${tab}`, undefined, { shallow: true });
+  };
+
+  const getTabTitle = (tab: string) => {
+    const tabItem = navItems.find(item => item.id === tab);
+    return tabItem ? tabItem.label : 'Dashboard';
   };
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'profile':
+        return <AdminProfile onProfilePictureChange={handleProfilePictureChange} />;
       case 'dashboard':
         return <DashboardTab />;
       case 'user-management':
@@ -784,10 +743,8 @@ const DashboardPage = () => {
         return <GenericTab title="Help Center Management" />;
       case 'database':
         return <GenericTab title="Database Management" />;
-      case 'profile':
-        return <AdminProfile />;
       default:
-        return <DashboardTab />;
+        return <AdminDashboardTab user={userData} />;
     }
   };
 
@@ -808,11 +765,6 @@ const DashboardPage = () => {
     { id: 'help-center', label: 'Help Center', icon: <FaCircleQuestion /> },
     { id: 'database', label: 'Database', icon: <FaDatabase /> }
   ];
-
-  const getTabTitle = (tab: string) => {
-    const tabItem = navItems.find(item => item.id === tab);
-    return tabItem ? tabItem.label : 'Dashboard';
-  };
 
   return (
     <NoNavbarLayout>
