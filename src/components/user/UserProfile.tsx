@@ -476,6 +476,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
   const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
   const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
   const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -484,7 +485,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
   const fetchProfileData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setError('User not found');
+        setLoading(false);
+        return;
+      }
 
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -509,6 +514,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profile:', error);
+      setError('Failed to fetch profile data');
       setLoading(false);
     }
   };
