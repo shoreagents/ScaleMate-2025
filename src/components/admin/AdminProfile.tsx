@@ -510,6 +510,16 @@ const capitalizeFirstLetter = (string: string) => {
 };
 
 const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) => {
+  const [originalProfileData, setOriginalProfileData] = useState<AdminProfileData>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    gender: '',
+    profile_picture: '',
+    last_password_change: '',
+    username: ''
+  });
   const [profileData, setProfileData] = useState<AdminProfileData>({
     first_name: '',
     last_name: '',
@@ -521,17 +531,32 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     username: ''
   });
   const [isEditing, setIsEditing] = useState(false);
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
+  const [basicInfoError, setBasicInfoError] = useState<string | null>(null);
+  const [basicInfoSuccess, setBasicInfoSuccess] = useState<string | null>(null);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contactSuccess, setContactSuccess] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [usernameError, setUsernameError] = useState('');
-  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  const [usernameSuccess, setUsernameSuccess] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+  const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
+  const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState<string>('');
+  const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -542,52 +567,48 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('user_profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-      if (profile) {
-        setProfileData({
-          first_name: profile.first_name || '',
-          last_name: profile.last_name || '',
-          email: user.email || '',
-          phone: profile.phone || '',
-          gender: profile.gender || '',
-          profile_picture: profile.profile_picture || '',
-          last_password_change: profile.last_password_change || '',
-          username: profile.username || ''
-        });
-      }
+      if (error) throw error;
+
+      const profileData = {
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
+        email: user.email || '',
+        phone: profile.phone || '',
+        gender: profile.gender || '',
+        profile_picture: profile.profile_picture || '',
+        last_password_change: profile.last_password_change || '',
+        username: profile.username || '',
+      };
+
+      setProfileData(profileData);
+      setOriginalProfileData(profileData);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching profile:', error);
+      setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    setProfileData({
-      first_name: '',
-      last_name: '',
-      email: '',
-      phone: '',
-      gender: '',
-      profile_picture: '',
-      last_password_change: '',
-      username: ''
-    });
+    setProfileData(originalProfileData);
     setIsEditing(false);
-    setIsPasswordModalOpen(false);
+    setIsEditingContact(false);
+    setIsEditingPassword(false);
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    setPasswordError('');
-    setPasswordSuccess('');
-    setIsUploading(false);
-    setSelectedFile(null);
-    setUsernameError('');
-    setIsCheckingUsername(false);
-    setUsernameSuccess('');
+    setPasswordsMatch(null);
+    setCurrentPasswordValid(null);
+    setUsernameError(null);
+    setUsernameExists(null);
+    setCheckingUsername(false);
+    setCurrentUsername('');
   };
 
   const handleProfileUpdate = async () => {
@@ -610,15 +631,28 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       if (updateError) throw updateError;
 
       if (isEditing) {
-        setUsernameSuccess('Profile updated successfully');
+        setBasicInfoSuccess('Profile updated successfully');
         setIsEditing(false);
-        setTimeout(() => setUsernameSuccess(null), 500);
+        // Clear username validation states
+        setUsernameError(null);
+        setUsernameExists(null);
+        setCheckingUsername(false);
+        setCurrentUsername('');
+        setTimeout(() => setBasicInfoSuccess(null), 500);
+      }
+      if (isEditingContact) {
+        setContactSuccess('Profile updated successfully');
+        setIsEditingContact(false);
+        setTimeout(() => setContactSuccess(null), 500);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
       const errorMessage = 'Failed to update profile';
       if (isEditing) {
-        setUsernameError(errorMessage);
+        setBasicInfoError(errorMessage);
+      }
+      if (isEditingContact) {
+        setContactError(errorMessage);
       }
     }
   };
@@ -662,7 +696,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       if (profileError) throw profileError;
 
       setPasswordSuccess('Password updated successfully');
-      setIsPasswordModalOpen(false);
+      setIsEditingPassword(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -678,26 +712,35 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        setUsernameError('Please select an image file');
-        setTimeout(() => setUsernameError(null), 3000);
+        setBasicInfoError('Please select an image file');
+        setTimeout(() => setBasicInfoError(null), 3000);
         return;
       }
 
       // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setUsernameError('Image size should be less than 5MB');
-        setTimeout(() => setUsernameError(null), 3000);
+        setBasicInfoError('Image size should be less than 5MB');
+        setTimeout(() => setBasicInfoError(null), 3000);
         return;
       }
 
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileData(prev => ({ ...prev, profile_picture: reader.result as string }));
+        setPreviewImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
+
+  // Add useEffect to set initial preview image when modal opens
+  useEffect(() => {
+    if (isProfileModalOpen && profileData.profile_picture) {
+      setPreviewImage(profileData.profile_picture);
+    } else if (isProfileModalOpen) {
+      setPreviewImage(null);
+    }
+  }, [isProfileModalOpen, profileData.profile_picture]);
 
   const handleProfilePictureUpload = async () => {
     if (!selectedFile) return;
@@ -755,8 +798,9 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
 
       // Update local state
       setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));
-      setUsernameSuccess('Profile picture updated successfully');
-      setIsPasswordModalOpen(false);
+      setBasicInfoSuccess('Profile picture updated successfully');
+      setIsProfileModalOpen(false);
+      setPreviewImage(null);
       setSelectedFile(null);
       
       // Notify parent component of the change
@@ -764,12 +808,12 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         onProfilePictureChange(publicUrl);
       }
 
-      setTimeout(() => setUsernameSuccess(null), 500);
+      setTimeout(() => setBasicInfoSuccess(null), 500);
 
     } catch (error) {
       console.error('Error updating profile picture:', error);
-      setUsernameError(error instanceof Error ? error.message : 'Failed to update profile picture');
-      setTimeout(() => setUsernameError(null), 3000);
+      setBasicInfoError(error instanceof Error ? error.message : 'Failed to update profile picture');
+      setTimeout(() => setBasicInfoError(null), 3000);
     }
   };
 
@@ -777,30 +821,61 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     return currentPassword.trim() !== '' && 
            newPassword.trim() !== '' && 
            confirmPassword.trim() !== '' &&
-           !usernameError;
+           passwordLength === true;
   };
 
   const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNewPassword(value);
-    setPasswordError('');
+    setPasswordLength(value.length >= 8);
+    if (confirmPassword) {
+      setPasswordsMatch(value === confirmPassword);
+    }
   };
 
   const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setConfirmPassword(value);
-    setPasswordError('');
+    if (newPassword) {
+      setPasswordsMatch(value === newPassword);
+    }
+  };
+
+  const validateCurrentPassword = async (password: string) => {
+    if (!password) {
+      setCurrentPasswordValid(null);
+      return;
+    }
+
+    setValidatingCurrentPassword(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: profileData.email,
+        password: password
+      });
+      setCurrentPasswordValid(!error);
+    } catch (error) {
+      setCurrentPasswordValid(false);
+    } finally {
+      setValidatingCurrentPassword(false);
+    }
+  };
+
+  const handleCurrentPasswordChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCurrentPassword(value);
+    await validateCurrentPassword(value);
   };
 
   const checkUsernameExists = async (username: string) => {
     if (!username) {
-      setUsernameError('');
-      setIsCheckingUsername(false);
+      setUsernameExists(null);
+      setCheckingUsername(false);
       return;
     }
 
     try {
-      setIsCheckingUsername(true);
+      setCheckingUsername(true);
 
       // Get the profile of the current user from user_details view
       const { data: { user } } = await supabase.auth.getUser();
@@ -812,10 +887,15 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         .eq('user_id', user.id)
         .single();
 
+      // Store current username for UI comparison
+      if (userProfile?.username) {
+        setCurrentUsername(userProfile.username);
+      }
+
       // If username is the same as the current user, set exists to true and return early
       if (userProfile?.username === username) {
-        setUsernameError('This is your current username');
-        setIsCheckingUsername(false);
+        setUsernameExists(true);
+        setCheckingUsername(false);
         return;
       }
       
@@ -828,53 +908,70 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
 
       if (error) {
         console.error('Error checking username:', error);
-        setUsernameError('Failed to check username');
+        setUsernameExists(null);
       } else if (data && data.length > 0) {
         // If we found a user with this username, check if it's the same user
         const foundUser = data[0];
         if (foundUser.user_id === user.id) {
-          setUsernameError('Username is already taken');
+          setUsernameExists(true); // It's the same user's current username
         } else {
-          setUsernameError('Username is available');
+          setUsernameExists(true); // Username is taken by another user
         }
       } else {
-        setUsernameError('Username is available');
+        setUsernameExists(false); // Username is available
       }
     } catch (error) {
       console.error('Error checking username:', error);
-      setUsernameError('Failed to check username');
+      setUsernameExists(null);
     } finally {
-      setIsCheckingUsername(false);
+      setCheckingUsername(false);
     }
   };
 
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
     if (!value) {
-      setUsernameError('');
+      setUsernameError(null);
+      setUsernameExists(null);
       return false;
     }
     if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
       setUsernameError('Special characters are not allowed');
+      setUsernameExists(null);
       return false;
     }
-    setUsernameError('');
+    setUsernameError(null);
     checkUsernameExists(value);
     return true;
   };
 
   const isBasicInfoValid = () => {
+    const isCurrentUsername = profileData.username === currentUsername;
     return profileData.first_name.trim() !== '' && 
            profileData.last_name.trim() !== '' &&
-           !usernameError;
+           !usernameError &&
+           (!usernameExists || isCurrentUsername);
   };
 
   const handleModalClose = () => {
-    setIsPasswordModalOpen(false);
+    setIsProfileModalOpen(false);
+    setPreviewImage(null);
     setSelectedFile(null);
-    setUsernameError('');
-    setUsernameSuccess('');
+    setBasicInfoError(null);
+    setBasicInfoSuccess(null);
+    setContactError(null);
+    setContactSuccess(null);
+    setPasswordError(null);
+    setPasswordSuccess(null);
+    setUsernameError(null);
+    setUsernameExists(null);
+    setCheckingUsername(false);
+    setCurrentUsername('');
   };
+
+  if (loading) {
+    return <Container>Loading...</Container>;
+  }
 
   return (
     <Container>
@@ -906,16 +1003,34 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   />
                   {usernameError && (
                     <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
                       {usernameError}
                     </HelperText>
                   )}
-                  {isCheckingUsername && (
+                  {checkingUsername && (
                     <HelperText style={{ color: '#6b7280' }}>
                       <FiLoader size={14} />
                       Checking username...
                     </HelperText>
                   )}
-                  {usernameSuccess && <SuccessMessage>{usernameSuccess}</SuccessMessage>}
+                  {!checkingUsername && !usernameError && usernameExists === false && (
+                    <HelperText style={{ color: '#059669' }}>
+                      <FiCheck size={14} />
+                      Username is available
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === true && profileData.username === currentUsername && (
+                    <HelperText style={{ color: '#6b7280' }}>
+                      <FiCheck size={14} />
+                      This is your current username
+                    </HelperText>
+                  )}
+                  {!checkingUsername && !usernameError && usernameExists === true && profileData.username !== currentUsername && (
+                    <HelperText style={{ color: '#dc2626' }}>
+                      <FiX size={14} />
+                      Username is already taken
+                    </HelperText>
+                  )}
                 </InputWrapper>
               </FormGroup>
               <FormGroup>
@@ -988,7 +1103,8 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   Save Changes
                 </SaveButton>
               </ButtonGroup>
-              {usernameError && <ErrorMessage>{usernameError}</ErrorMessage>}
+              {basicInfoError && <ErrorMessage>{basicInfoError}</ErrorMessage>}
+              {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
             </>
           ) : (
             <>
@@ -1014,7 +1130,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   Edit Basic Info
                 </EditButton>
               </div>
-              {usernameSuccess && <SuccessMessage>{usernameSuccess}</SuccessMessage>}
+              {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
             </>
           )}
         </ProfileInfo>
@@ -1025,7 +1141,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
             <FiUser size={80} color="#6b7280" />
           )}
           {isEditing && (
-            <UploadButton onClick={() => setIsPasswordModalOpen(true)}>
+            <UploadButton onClick={() => setIsProfileModalOpen(true)}>
               <FiEdit2 size={16} />
             </UploadButton>
           )}
@@ -1036,27 +1152,83 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         <SectionTitle>
           Contact Info
         </SectionTitle>
-        <InfoRow $isEditing={isEditing}>
-          <InfoLabel $isEditing={isEditing}>Email</InfoLabel>
-          <InfoValue $isEditing={isEditing}>{profileData.email}</InfoValue>
-        </InfoRow>
-        <InfoRow $isEditing={isEditing} style={{ borderBottom: 'none' }}>
-          <InfoLabel $isEditing={isEditing}>Phone</InfoLabel>
-          <InfoValue $isEditing={isEditing}>{profileData.phone || '-'}</InfoValue>
-        </InfoRow>
-        <div style={{ marginTop: '16px' }}>
-          <EditButton onClick={() => setIsEditing(true)}>
-            <FiEdit2 />
-            Edit Contact Info
-          </EditButton>
-        </div>
+        {isEditingContact ? (
+          <>
+            <FormGroup>
+              <Label>Email</Label>
+              <InputWrapper>
+                <Input 
+                  value={profileData.email}
+                  disabled
+                  style={{ 
+                    backgroundColor: '#f9fafb',
+                    color: '#6b7280'
+                  }}
+                />
+                <HelperText>
+                  Email cannot be changed
+                </HelperText>
+              </InputWrapper>
+            </FormGroup>
+            <FormGroup>
+              <Label>Phone</Label>
+              <InputWrapper>
+                <Input
+                  type="tel"
+                  pattern="[0-9]*"
+                  value={profileData.phone}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setProfileData({ ...profileData, phone: e.target.value });
+                    }
+                  }}
+                  placeholder="Enter your phone number"
+                />
+              </InputWrapper>
+            </FormGroup>
+            <ButtonGroup>
+              <ChooseImageButton
+                type="button"
+                onClick={handleCancel}
+              >
+                Cancel
+              </ChooseImageButton>
+              <SaveButton onClick={() => {
+                handleProfileUpdate();
+                setIsEditingContact(false);
+              }}>
+                Save Changes
+              </SaveButton>
+            </ButtonGroup>
+            {contactError && <ErrorMessage>{contactError}</ErrorMessage>}
+            {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+          </>
+        ) : (
+          <>
+            <InfoRow $isEditing={isEditingContact}>
+              <InfoLabel $isEditing={isEditingContact}>Email</InfoLabel>
+              <InfoValue $isEditing={isEditingContact}>{profileData.email}</InfoValue>
+            </InfoRow>
+            <InfoRow $isEditing={isEditingContact} style={{ borderBottom: 'none' }}>
+              <InfoLabel $isEditing={isEditingContact}>Phone</InfoLabel>
+              <InfoValue $isEditing={isEditingContact}>{profileData.phone || '-'}</InfoValue>
+            </InfoRow>
+            <div style={{ marginTop: '16px' }}>
+              <EditButton onClick={() => setIsEditingContact(true)}>
+                <FiEdit2 />
+                Edit Contact Info
+              </EditButton>
+            </div>
+            {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+          </>
+        )}
       </Section>
 
       <Section>
         <SectionTitle>
           Password
         </SectionTitle>
-        {isPasswordModalOpen ? (
+        {isEditingPassword ? (
           <PasswordChangeForm onSubmit={handlePasswordChange}>
             <PasswordColumn>
               <Label>
@@ -1065,18 +1237,38 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               </Label>
               <PasswordInputContainer>
                 <PasswordInput
-                  type="password"
+                  type={showCurrentPassword ? "text" : "password"}
                   value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  onChange={handleCurrentPasswordChange}
                   placeholder="Enter your current password"
                 />
                 <ViewPasswordButton
                   type="button"
-                  onClick={() => setIsPasswordModalOpen(false)}
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                 >
-                  <FiEye size={18} />
+                  {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </ViewPasswordButton>
               </PasswordInputContainer>
+              {validatingCurrentPassword ? (
+                <PasswordMatchIndicator $matches={true}>
+                  <FiLoader size={14} />
+                  Verifying...
+                </PasswordMatchIndicator>
+              ) : currentPasswordValid !== null && (
+                <PasswordMatchIndicator $matches={currentPasswordValid}>
+                  {currentPasswordValid ? (
+                    <>
+                      <FiCheck size={14} />
+                      Current password is correct
+                    </>
+                  ) : (
+                    <>
+                      <FiX size={14} />
+                      Current password is incorrect
+                    </>
+                  )}
+                </PasswordMatchIndicator>
+              )}
             </PasswordColumn>
 
             <PasswordRow>
@@ -1087,18 +1279,50 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 </Label>
                 <PasswordInputContainer>
                   <PasswordInput
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    onChange={handleNewPasswordChange}
                     placeholder="Enter your new password"
                   />
                   <ViewPasswordButton
                     type="button"
-                    onClick={() => setIsPasswordModalOpen(false)}
+                    onClick={() => setShowNewPassword(!showNewPassword)}
                   >
-                    <FiEye size={18} />
+                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
+                <PasswordValidations>
+                  {newPassword && (
+                    <PasswordMatchIndicator $matches={passwordLength === true}>
+                      {passwordLength ? (
+                        <>
+                          <FiCheck size={14} />
+                          Password length is valid
+                        </>
+                      ) : (
+                        <>
+                          <FiX size={14} />
+                          Password must be at least 8 characters
+                        </>
+                      )}
+                    </PasswordMatchIndicator>
+                  )}
+                  {passwordsMatch !== null && (
+                    <PasswordMatchIndicator $matches={passwordsMatch}>
+                      {passwordsMatch ? (
+                        <>
+                          <FiCheck size={14} />
+                          Passwords match
+                        </>
+                      ) : (
+                        <>
+                          <FiX size={14} />
+                          Passwords do not match
+                        </>
+                      )}
+                    </PasswordMatchIndicator>
+                  )}
+                </PasswordValidations>
               </PasswordColumn>
 
               <PasswordColumn>
@@ -1108,16 +1332,16 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 </Label>
                 <PasswordInputContainer>
                   <PasswordInput
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={handleConfirmPasswordChange}
                     placeholder="Confirm your new password"
                   />
                   <ViewPasswordButton
                     type="button"
-                    onClick={() => setIsPasswordModalOpen(false)}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    <FiEye size={18} />
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
               </PasswordColumn>
@@ -1132,13 +1356,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               </ChooseImageButton>
               <SaveButton 
                 type="submit"
-                disabled={!isPasswordFormValid()}
+                disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
               >
                 Save Changes
               </SaveButton>
             </ButtonGroup>
-            {passwordError && <ErrorMessage>{passwordError}</ErrorMessage>}
-            {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
           </PasswordChangeForm>
         ) : (
           <>
@@ -1151,7 +1373,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               </InfoValue>
             </InfoRow>
             <div style={{ marginTop: '16px' }}>
-              <EditButton onClick={() => setIsPasswordModalOpen(true)}>
+              <EditButton onClick={() => setIsEditingPassword(true)}>
                 <FiEdit2 />
                 Change Password
               </EditButton>
@@ -1161,7 +1383,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         )}
       </Section>
 
-      <ProfileModal $isOpen={isPasswordModalOpen}>
+      <ProfileModal $isOpen={isProfileModalOpen}>
         <ProfileModalContent>
           <ModalHeader>
             <ModalTitle>Profile Picture</ModalTitle>
@@ -1174,8 +1396,8 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
           </ModalHeader>
 
           <ImagePreview>
-            {profileData.profile_picture ? (
-              <PreviewImage src={profileData.profile_picture} alt="Preview" />
+            {previewImage ? (
+              <PreviewImage src={previewImage} alt="Preview" />
             ) : (
               <FiUser size={80} color="#6b7280" />
             )}
