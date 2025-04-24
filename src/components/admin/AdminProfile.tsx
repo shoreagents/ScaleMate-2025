@@ -556,7 +556,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [currentUsername, setCurrentUsername] = useState<string>('');
   const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -565,11 +564,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   const fetchProfileData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setError('User not found');
-        setLoading(false);
-        return;
-      }
+      if (!user) return;
 
       const { data: profile, error } = await supabase
         .from('user_profiles')
@@ -595,7 +590,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      setError('Failed to fetch profile data');
       setLoading(false);
     }
   };
