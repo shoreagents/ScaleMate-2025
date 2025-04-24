@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase environment variables');
@@ -14,50 +14,28 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function main() {
-  console.log('Testing Supabase connection...');
-  console.log('Using Supabase URL:', supabaseUrl);
-  
+async function testConnection() {
   try {
-    // Simple health check query that doesn't require any tables
+    console.log('Testing Supabase connection...');
+    console.log('URL:', supabaseUrl);
+    
+    // Try to fetch a single row from a table
     const { data, error } = await supabase
-      .from('_tables')
-      .select('*');
+      .from('user_roles')
+      .select('*')
+      .limit(1);
     
     if (error) {
-      if (error.message.includes('relation "public._tables" does not exist')) {
-        // This is actually a good sign - it means we can connect to the database
-        // The error is just because the table doesn't exist
-        console.log('✅ Database connection successful (no tables exist yet)');
-        return { 
-          success: true, 
-          message: 'Connection successful - database is empty',
-        };
-      }
-      
-      console.error('❌ Database connection failed:', error.message);
-      return { 
-        success: false, 
-        message: `Connection failed: ${error.message}`,
-        error 
-      };
+      console.error('❌ Connection test failed:', error.message);
+      return;
     }
     
-    console.log('✅ Database connection successful');
-    console.log('Tables:', data);
-    return { 
-      success: true, 
-      message: 'Connection successful',
-      data 
-    };
+    console.log('✅ Connection successful!');
+    console.log('Data:', data);
   } catch (error) {
-    console.error('❌ Database connection error:', error);
-    return { 
-      success: false, 
-      message: error instanceof Error ? error.message : 'Unknown error',
-      error 
-    };
+    console.error('❌ Connection error:', error);
   }
 }
 
-main().catch(console.error); 
+// Run the test
+testConnection(); 
