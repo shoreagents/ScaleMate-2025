@@ -60,6 +60,7 @@ const DashboardPage = () => {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
+          console.error('No user found');
           router.push('/login');
           return;
         }
@@ -70,6 +71,12 @@ const DashboardPage = () => {
           .select('profile_picture')
           .eq('user_id', user.id)
           .single();
+
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
+          router.push('/login');
+          return;
+        }
 
         if (profile?.profile_picture) {
           setProfilePicture(profile.profile_picture);
