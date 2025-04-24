@@ -5,9 +5,10 @@ import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye,
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 
 const Container = styled.div`
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 1.5rem;
+  width: 100%;
 `;
 
 const Section = styled.div`
@@ -269,7 +270,6 @@ const PasswordChangeForm = styled.form`
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-top: 16px;
 `;
 
 const ButtonGroup = styled.div`
@@ -468,7 +468,6 @@ const PasswordColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 16px;
 `;
 
 const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
@@ -681,10 +680,17 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         password: newPassword
       });
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Password update error:', updateError);
+        setPasswordError(updateError.message);
+        return;
+      }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setPasswordError('User not found');
+        return;
+      }
 
       const { error: profileError } = await supabase
         .from('user_profiles')
@@ -693,7 +699,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         })
         .eq('user_id', user.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile update error:', profileError);
+        setPasswordError('Failed to update profile');
+        return;
+      }
 
       setPasswordSuccess('Password updated successfully');
       setIsEditingPassword(false);
@@ -703,7 +713,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       setTimeout(() => setPasswordSuccess(null), 500);
     } catch (error) {
       console.error('Error changing password:', error);
-      setPasswordError('Failed to change password');
+      setPasswordError(error instanceof Error ? error.message : 'Failed to change password');
     }
   };
 
@@ -798,7 +808,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
 
       // Update local state
       setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));
-      setBasicInfoSuccess('Profile picture updated successfully');
       setIsProfileModalOpen(false);
       setPreviewImage(null);
       setSelectedFile(null);
@@ -807,8 +816,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       if (onProfilePictureChange) {
         onProfilePictureChange(publicUrl);
       }
-
-      setTimeout(() => setBasicInfoSuccess(null), 500);
 
     } catch (error) {
       console.error('Error updating profile picture:', error);
@@ -1420,7 +1427,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
               onClick={handleProfilePictureUpload}
               disabled={!selectedFile}
             >
-              Save Changes
+              Update
             </SaveButton>
           </ButtonGroup>
         </ProfileModalContent>

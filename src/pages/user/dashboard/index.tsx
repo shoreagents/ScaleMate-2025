@@ -52,7 +52,7 @@ const DashboardPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
-  const [profilePicture, setProfilePicture] = useState('https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg');
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
   useEffect(() => {
     const checkUserRole = async () => {
@@ -62,6 +62,17 @@ const DashboardPage = () => {
         if (!user) {
           router.push('/login');
           return;
+        }
+
+        // Fetch user profile to get profile picture
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('profile_picture')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profile?.profile_picture) {
+          setProfilePicture(profile.profile_picture);
         }
 
         const { data: roles, error: rolesError } = await supabase
@@ -135,15 +146,7 @@ const DashboardPage = () => {
       case 'gamified-tracker':
         return <GamifiedTrackerTab />;
       default:
-        return (
-          <DashboardTab 
-            user={{
-              name: "Alex",
-              email: "alex@example.com",
-              avatar: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
-            }}
-          />
-        );
+        return <DashboardTab />;
     }
   };
 
