@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiEdit2, FiX, FiUser, FiEye, FiEyeOff, FiCheck, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 
 const Container = styled.div`
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 1.5rem;
+  width: 100%;
 `;
 
 const Section = styled.div`
@@ -16,16 +17,22 @@ const Section = styled.div`
   padding: 10px 24px 24px 24px;
   border: 1px solid #E5E7EB;
   margin-bottom: 24px;
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 const ProfileSection = styled(Section)`
   display: flex;
   gap: 48px;
   align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 const ProfileInfo = styled.div`
   flex: 1;
+  width: 100%;
+  box-sizing: border-box;
 `;
 
 const ProfilePicture = styled.div`
@@ -93,6 +100,7 @@ const FormGroup = styled.div`
   align-items: flex-start;
   gap: 32px;
   margin-bottom: 16px;
+  width: 100%;
 `;
 
 const InputWrapper = styled.div`
@@ -100,71 +108,319 @@ const InputWrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+`;
+
+const HelperText = styled.div`
+  font-size: 0.75rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const Label = styled.label`
-  font-size: 0.875rem;
   font-weight: 500;
   color: #374151;
+  min-width: 120px;
+  width: 120px;
 `;
 
 const Input = styled.input`
+  flex: 1;
   padding: 8px 12px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 0.875rem;
   color: #111827;
-  transition: all 0.2s;
+  background: white;
+  width: 100%;
+  
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+
+  &:disabled {
+    background: #f9fafb;
+    color: #111827;
+  }
+`;
+
+const GenderSelectContainer = styled.div`
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex: 1;
+`;
+
+const GenderIcon = styled.div`
+  position: absolute;
+  right: .5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6B7280;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+`;
+
+const GenderSelect = styled.select`
+  width: 100%;
+  padding: 8px 12px;
+  padding-right: 0px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background-color: white;
+  appearance: none;
+  cursor: pointer;
 
   &:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 `;
 
-const Button = styled.button`
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+  margin-top: 32px;
+`;
+
+const ModalButton = styled.button`
   padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  border: none;
+  border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
 `;
 
-const PrimaryButton = styled(Button)`
+const ChooseImageButton = styled(ModalButton)`
+  background: transparent;
+  border: 1.5px solid #9aa2b3;
+  color: ${props => props.theme.colors.text.primary};
+
+  &:hover {
+    background: ${props => props.theme.colors.background.secondary};
+    border-color: ${props => props.theme.colors.text.primary};
+  }
+`;
+
+const SaveButton = styled(ModalButton)`
   background-color: #3B82F6;
   color: white;
-  border: none;
 
   &:hover {
     background-color: #2563EB;
   }
-`;
 
-const SecondaryButton = styled(Button)`
-  background-color: white;
-  color: #374151;
-  border: 1px solid #E5E7EB;
-
-  &:hover {
-    background-color: #F9FAFB;
+  &:disabled {
+    background-color: #93C5FD;
+    cursor: not-allowed;
+    opacity: 0.7;
   }
 `;
 
-const ErrorMessage = styled.div`
-  color: #DC2626;
+const ProfileModal = styled.div<{ $isOpen: boolean }>`
+  display: ${props => props.$isOpen ? 'block' : 'none'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+`;
+
+const ProfileModalContent = styled.div`
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 350px;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  ${ButtonGroup} {
+    justify-content: center;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  position: relative;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  text-align: left;
+`;
+
+const ModalDescription = styled.p`
   font-size: 0.875rem;
-  margin-top: 8px;
+  color: #6B7280;
+  text-align: left;
+  margin: 8px 0 0;
+  line-height: 1.5;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: 0;
+  top: 0;
+  
+  &:hover {
+    color: #111827;
+  }
+`;
+
+const ImagePreview = styled.div`
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background-color: #f3f4f6;
+  margin: 0 auto 24px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const PreviewImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+`;
+
+const FileInput = styled.input`
+  display: none;
+`;
+
+const EditButton = styled.button`
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+
+  &:hover {
+    color: #374151;
+  }
 `;
 
 const SuccessMessage = styled.div`
   color: #059669;
   font-size: 0.875rem;
-  margin-top: 8px;
+  margin-top: 0;
+`;
+
+const ErrorMessage = styled.div`
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0;
+`;
+
+const PasswordChangeForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+`;
+
+const PasswordInputContainer = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const PasswordInput = styled(Input)`
+  padding-right: 40px;
+  width: 100%;
+`;
+
+const ViewPasswordButton = styled.button`
+  position: absolute;
+  right: .5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #374151;
+  }
+`;
+
+const PasswordRow = styled.div`
+  display: flex;
+  gap: 16px;
+  width: 100%;
+`;
+
+const PasswordColumn = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
+  font-size: 0.75rem;
+  color: ${props => props.$matches ? '#059669' : '#dc2626'};
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const RequiredAsterisk = styled.span`
+  color: #EF4444;
+  margin-left: 4px;
+`;
+
+const PasswordValidations = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 `;
 
 interface UserProfileData {
@@ -174,12 +430,17 @@ interface UserProfileData {
   phone: string;
   gender: string;
   profile_picture: string;
+  last_password_change: string;
   username: string;
 }
 
 interface UserProfileProps {
   onProfilePictureChange?: (newPictureUrl: string) => void;
 }
+
+const capitalizeFirstLetter = (string: string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
 
 const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => {
   const [profileData, setProfileData] = useState<UserProfileData>({
@@ -189,19 +450,32 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     phone: '',
     gender: '',
     profile_picture: '',
+    last_password_change: '',
     username: ''
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingContact, setIsEditingContact] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [basicInfoError, setBasicInfoError] = useState<string | null>(null);
+  const [basicInfoSuccess, setBasicInfoSuccess] = useState<string | null>(null);
+  const [contactError, setContactError] = useState<string | null>(null);
+  const [contactSuccess, setContactSuccess] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
+  const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
+  const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
+  const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetchProfileData();
@@ -220,21 +494,34 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
 
       if (error) throw error;
 
-      setProfileData({
+      const profileData = {
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         email: user.email || '',
         phone: profile.phone || '',
         gender: profile.gender || '',
         profile_picture: profile.profile_picture || '',
-        username: profile.username || '',
-      });
+        last_password_change: profile.last_password_change || '',
+        username: profile.username || ''
+      };
+
+      setProfileData(profileData);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      setError('Failed to load profile data');
       setLoading(false);
     }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setIsEditingContact(false);
+    setIsEditingPassword(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordsMatch(null);
+    setCurrentPasswordValid(null);
   };
 
   const handleProfileUpdate = async () => {
@@ -242,7 +529,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('user_profiles')
         .update({
           first_name: profileData.first_name,
@@ -250,206 +537,686 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
           phone: profileData.phone,
           gender: profileData.gender,
           username: profileData.username,
+          updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      setSuccess('Profile updated successfully');
-      setIsEditing(false);
+      if (isEditing) {
+        setBasicInfoSuccess('Profile updated successfully');
+        setIsEditing(false);
+        setTimeout(() => setBasicInfoSuccess(null), 500);
+      }
+      if (isEditingContact) {
+        setContactSuccess('Profile updated successfully');
+        setIsEditingContact(false);
+        setTimeout(() => setContactSuccess(null), 500);
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
-      setError('Failed to update profile');
+      const errorMessage = 'Failed to update profile';
+      if (isEditing) {
+        setBasicInfoError(errorMessage);
+      }
+      if (isEditingContact) {
+        setContactError(errorMessage);
+      }
     }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
+      setPasswordError('New passwords do not match');
       return;
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      // First verify the current password
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: profileData.email,
+        password: currentPassword
+      });
+
+      if (signInError) {
+        setPasswordError('Current password is incorrect');
+        return;
+      }
+
+      // Update the password
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Password update error:', updateError);
+        setPasswordError(updateError.message);
+        return;
+      }
 
-      setSuccess('Password updated successfully');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setPasswordError('User not found');
+        return;
+      }
+
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({
+          last_password_change: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (profileError) {
+        console.error('Profile update error:', profileError);
+        setPasswordError('Failed to update profile');
+        return;
+      }
+
+      setPasswordSuccess('Password updated successfully');
       setIsEditingPassword(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setTimeout(() => setPasswordSuccess(null), 500);
     } catch (error) {
-      console.error('Error updating password:', error);
-      setError('Failed to update password');
+      console.error('Error changing password:', error);
+      setPasswordError(error instanceof Error ? error.message : 'Failed to change password');
     }
   };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setBasicInfoError('Please select an image file');
+        setTimeout(() => setBasicInfoError(null), 3000);
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setBasicInfoError('Image size should be less than 5MB');
+        setTimeout(() => setBasicInfoError(null), 3000);
+        return;
+      }
+
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  useEffect(() => {
+    if (isProfileModalOpen && profileData.profile_picture) {
+      setPreviewImage(profileData.profile_picture);
+    } else if (isProfileModalOpen) {
+      setPreviewImage(null);
+    }
+  }, [isProfileModalOpen, profileData.profile_picture]);
+
+  const handleProfilePictureUpload = async () => {
+    if (!selectedFile) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Create a more secure file path structure
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // First, try to delete any existing profile picture
+      if (profileData.profile_picture) {
+        const existingPath = profileData.profile_picture.split('/').pop();
+        if (existingPath) {
+          await supabase.storage
+            .from('profile-pictures')
+            .remove([`${user.id}/${existingPath}`]);
+        }
+      }
+
+      // Upload the new profile picture
+      const { error: uploadError, data } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, selectedFile, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath);
+
+      // Update the user profile with the new picture URL
+      const { error: updateError } = await supabase
+        .from('user_profiles')
+        .update({ 
+          profile_picture: publicUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        throw new Error(`Profile update failed: ${updateError.message}`);
+      }
+
+      // Update local state
+      setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));
+      setIsProfileModalOpen(false);
+      setPreviewImage(null);
+      setSelectedFile(null);
+      
+      // Notify parent component of the change
+      if (onProfilePictureChange) {
+        onProfilePictureChange(publicUrl);
+      }
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      setBasicInfoError(error instanceof Error ? error.message : 'Failed to update profile picture');
+      setTimeout(() => setBasicInfoError(null), 3000);
+    }
+  };
+
+  const isPasswordFormValid = () => {
+    return currentPassword.trim() !== '' && 
+           newPassword.trim() !== '' && 
+           confirmPassword.trim() !== '' &&
+           passwordLength === true;
+  };
+
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewPassword(value);
+    setPasswordLength(value.length >= 8);
+    if (confirmPassword) {
+      setPasswordsMatch(value === confirmPassword);
+    }
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setConfirmPassword(value);
+    if (newPassword) {
+      setPasswordsMatch(value === newPassword);
+    }
+  };
+
+  const validateCurrentPassword = async (password: string) => {
+    if (!password) {
+      setCurrentPasswordValid(null);
+      return;
+    }
+
+    setValidatingCurrentPassword(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: profileData.email,
+        password: password
+      });
+      setCurrentPasswordValid(!error);
+    } catch (error) {
+      setCurrentPasswordValid(false);
+    } finally {
+      setValidatingCurrentPassword(false);
+    }
+  };
+
+  const handleCurrentPasswordChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setCurrentPassword(value);
+    await validateCurrentPassword(value);
+  };
+
+  const isBasicInfoValid = () => {
+    return profileData.first_name.trim() !== '' && 
+           profileData.last_name.trim() !== '';
+  };
+
+  const handleModalClose = () => {
+    setIsProfileModalOpen(false);
+    setPreviewImage(null);
+    setSelectedFile(null);
+    setBasicInfoError(null);
+    setBasicInfoSuccess(null);
+    setContactError(null);
+    setContactSuccess(null);
+    setPasswordError(null);
+    setPasswordSuccess(null);
+  };
+
+  if (loading) {
+    return <Container>Loading...</Container>;
+  }
 
   return (
     <Container>
       <ProfileSection>
         <ProfileInfo>
-          <SectionTitle>Profile Information</SectionTitle>
-          <FormGroup>
-            <InputWrapper>
-              <Label>First Name</Label>
-              <Input
-                type="text"
-                value={profileData.first_name}
-                onChange={(e) => setProfileData({ ...profileData, first_name: e.target.value })}
-                disabled={!isEditing}
-              />
-            </InputWrapper>
-            <InputWrapper>
-              <Label>Last Name</Label>
-              <Input
-                type="text"
-                value={profileData.last_name}
-                onChange={(e) => setProfileData({ ...profileData, last_name: e.target.value })}
-                disabled={!isEditing}
-              />
-            </InputWrapper>
-          </FormGroup>
-          <FormGroup>
-            <InputWrapper>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={profileData.email}
-                disabled
-              />
-            </InputWrapper>
-            <InputWrapper>
-              <Label>Phone</Label>
-              <Input
-                type="tel"
-                value={profileData.phone}
-                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                disabled={!isEditing}
-              />
-            </InputWrapper>
-          </FormGroup>
-          <FormGroup>
-            <InputWrapper>
-              <Label>Username</Label>
-              <Input
-                type="text"
-                value={profileData.username}
-                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
-                disabled={!isEditing}
-              />
-            </InputWrapper>
-            <InputWrapper>
-              <Label>Gender</Label>
-              <Input
-                type="text"
-                value={profileData.gender}
-                onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
-                disabled={!isEditing}
-              />
-            </InputWrapper>
-          </FormGroup>
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-          {success && <SuccessMessage>{success}</SuccessMessage>}
-          <FormGroup>
-            {!isEditing ? (
-              <PrimaryButton onClick={() => setIsEditing(true)}>
-                <FiEdit2 /> Edit Profile
-              </PrimaryButton>
-            ) : (
-              <>
-                <PrimaryButton onClick={handleProfileUpdate}>
-                  <FiSave /> Save Changes
-                </PrimaryButton>
-                <SecondaryButton onClick={() => setIsEditing(false)}>
-                  <FiX /> Cancel
-                </SecondaryButton>
-              </>
-            )}
-          </FormGroup>
+          <SectionTitle>
+            Basic Info
+          </SectionTitle>
+          {isEditing ? (
+            <>
+              <FormGroup>
+                <Label>
+                  Username
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <Input
+                  type="text"
+                  pattern="[a-zA-Z0-9._-]*"
+                  value={profileData.username}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setProfileData({ ...profileData, username: e.target.value });
+                    }
+                  }}
+                  placeholder="Enter username"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>
+                  First Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <Input
+                  type="text"
+                  pattern="[A-Za-z ]+"
+                  value={profileData.first_name}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setProfileData({ ...profileData, first_name: e.target.value });
+                    }
+                  }}
+                  placeholder="Enter your first name"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>
+                  Last Name
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <Input
+                  type="text"
+                  pattern="[A-Za-z ]+"
+                  value={profileData.last_name}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setProfileData({ ...profileData, last_name: e.target.value });
+                    }
+                  }}
+                  placeholder="Enter your last name"
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label>Gender</Label>
+                <GenderSelectContainer>
+                  <GenderSelect
+                    value={profileData.gender}
+                    onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                  >
+                    <option value="">Select your gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </GenderSelect>
+                  <GenderIcon>
+                    {profileData.gender === 'male' ? <FaMale size={18} /> :
+                     profileData.gender === 'female' ? <FaFemale size={18} /> :
+                     profileData.gender === 'other' ? <FaTransgender size={18} /> :
+                     profileData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
+                     <FaQuestion size={18} />}
+                  </GenderIcon>
+                </GenderSelectContainer>
+              </FormGroup>
+              <ButtonGroup>
+                <ChooseImageButton
+                  type="button"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </ChooseImageButton>
+                <SaveButton 
+                  onClick={handleProfileUpdate}
+                  disabled={!isBasicInfoValid()}
+                >
+                  Save Changes
+                </SaveButton>
+              </ButtonGroup>
+              {basicInfoError && <ErrorMessage>{basicInfoError}</ErrorMessage>}
+              {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
+            </>
+          ) : (
+            <>
+              <FormGroup>
+                <Label>Username</Label>
+                <div>{profileData.username || '-'}</div>
+              </FormGroup>
+              <FormGroup>
+                <Label>First Name</Label>
+                <div>{profileData.first_name || '-'}</div>
+              </FormGroup>
+              <FormGroup>
+                <Label>Last Name</Label>
+                <div>{profileData.last_name || '-'}</div>
+              </FormGroup>
+              <FormGroup>
+                <Label>Gender</Label>
+                <div>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</div>
+              </FormGroup>
+              <div style={{ marginTop: '16px' }}>
+                <EditButton onClick={() => setIsEditing(true)}>
+                  <FiEdit2 />
+                  Edit Basic Info
+                </EditButton>
+              </div>
+              {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
+            </>
+          )}
         </ProfileInfo>
         <ProfilePicture>
           {profileData.profile_picture ? (
             <ProfileImage src={profileData.profile_picture} alt="Profile" />
           ) : (
-            <FiUser size={64} color="#6B7280" />
+            <FiUser size={80} color="#6b7280" />
           )}
           {isEditing && (
-            <UploadButton>
-              <FiCamera />
+            <UploadButton onClick={() => setIsProfileModalOpen(true)}>
+              <FiEdit2 size={16} />
             </UploadButton>
           )}
         </ProfilePicture>
       </ProfileSection>
 
       <Section>
-        <SectionTitle>Change Password</SectionTitle>
-        {!isEditingPassword ? (
-          <PrimaryButton onClick={() => setIsEditingPassword(true)}>
-            <FiLock /> Change Password
-          </PrimaryButton>
-        ) : (
-          <form onSubmit={handlePasswordChange}>
+        <SectionTitle>
+          Contact Info
+        </SectionTitle>
+        {isEditingContact ? (
+          <>
             <FormGroup>
+              <Label>Email</Label>
               <InputWrapper>
-                <Label>Current Password</Label>
-                <Input
-                  type={showCurrentPassword ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
+                <Input 
+                  value={profileData.email}
+                  disabled
+                  style={{ 
+                    backgroundColor: '#f9fafb',
+                    color: '#6b7280'
+                  }}
                 />
-                <Button
+                <HelperText>
+                  Email cannot be changed
+                </HelperText>
+              </InputWrapper>
+            </FormGroup>
+            <FormGroup>
+              <Label>Phone</Label>
+              <InputWrapper>
+                <Input
+                  type="tel"
+                  pattern="[0-9]*"
+                  value={profileData.phone}
+                  onChange={(e) => {
+                    if (e.target.validity.valid) {
+                      setProfileData({ ...profileData, phone: e.target.value });
+                    }
+                  }}
+                  placeholder="Enter your phone number"
+                />
+              </InputWrapper>
+            </FormGroup>
+            <ButtonGroup>
+              <ChooseImageButton
+                type="button"
+                onClick={handleCancel}
+              >
+                Cancel
+              </ChooseImageButton>
+              <SaveButton onClick={handleProfileUpdate}>
+                Save Changes
+              </SaveButton>
+            </ButtonGroup>
+            {contactError && <ErrorMessage>{contactError}</ErrorMessage>}
+            {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+          </>
+        ) : (
+          <>
+            <FormGroup>
+              <Label>Email</Label>
+              <div>{profileData.email}</div>
+            </FormGroup>
+            <FormGroup>
+              <Label>Phone</Label>
+              <div>{profileData.phone || '-'}</div>
+            </FormGroup>
+            <div style={{ marginTop: '16px' }}>
+              <EditButton onClick={() => setIsEditingContact(true)}>
+                <FiEdit2 />
+                Edit Contact Info
+              </EditButton>
+            </div>
+            {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+          </>
+        )}
+      </Section>
+
+      <Section>
+        <SectionTitle>
+          Password
+        </SectionTitle>
+        {isEditingPassword ? (
+          <PasswordChangeForm onSubmit={handlePasswordChange}>
+            <PasswordColumn>
+              <Label>
+                Current Password
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
+              <PasswordInputContainer>
+                <PasswordInput
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={handleCurrentPasswordChange}
+                  placeholder="Enter your current password"
+                />
+                <ViewPasswordButton
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                 >
-                  {showCurrentPassword ? <FiEyeOff /> : <FiEye />}
-                </Button>
-              </InputWrapper>
-            </FormGroup>
+                  {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </ViewPasswordButton>
+              </PasswordInputContainer>
+              {validatingCurrentPassword ? (
+                <PasswordMatchIndicator $matches={true}>
+                  <FiLoader size={14} />
+                  Verifying...
+                </PasswordMatchIndicator>
+              ) : currentPasswordValid !== null && (
+                <PasswordMatchIndicator $matches={currentPasswordValid}>
+                  {currentPasswordValid ? (
+                    <>
+                      <FiCheck size={14} />
+                      Current password is correct
+                    </>
+                  ) : (
+                    <>
+                      <FiX size={14} />
+                      Current password is incorrect
+                    </>
+                  )}
+                </PasswordMatchIndicator>
+              )}
+            </PasswordColumn>
+
+            <PasswordRow>
+              <PasswordColumn>
+                <Label>
+                  New Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={handleNewPasswordChange}
+                    placeholder="Enter your new password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+                <PasswordValidations>
+                  {newPassword && (
+                    <PasswordMatchIndicator $matches={passwordLength === true}>
+                      {passwordLength ? (
+                        <>
+                          <FiCheck size={14} />
+                          Password length is valid
+                        </>
+                      ) : (
+                        <>
+                          <FiX size={14} />
+                          Password must be at least 8 characters
+                        </>
+                      )}
+                    </PasswordMatchIndicator>
+                  )}
+                  {passwordsMatch !== null && (
+                    <PasswordMatchIndicator $matches={passwordsMatch}>
+                      {passwordsMatch ? (
+                        <>
+                          <FiCheck size={14} />
+                          Passwords match
+                        </>
+                      ) : (
+                        <>
+                          <FiX size={14} />
+                          Passwords do not match
+                        </>
+                      )}
+                    </PasswordMatchIndicator>
+                  )}
+                </PasswordValidations>
+              </PasswordColumn>
+
+              <PasswordColumn>
+                <Label>
+                  Confirm New Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={handleConfirmPasswordChange}
+                    placeholder="Confirm your new password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+              </PasswordColumn>
+            </PasswordRow>
+
+            <ButtonGroup>
+              <ChooseImageButton
+                type="button"
+                onClick={handleCancel}
+              >
+                Cancel
+              </ChooseImageButton>
+              <SaveButton 
+                type="submit"
+                disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
+              >
+                Save Changes
+              </SaveButton>
+            </ButtonGroup>
+          </PasswordChangeForm>
+        ) : (
+          <>
             <FormGroup>
-              <InputWrapper>
-                <Label>New Password</Label>
-                <Input
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                >
-                  {showNewPassword ? <FiEyeOff /> : <FiEye />}
-                </Button>
-              </InputWrapper>
-              <InputWrapper>
-                <Label>Confirm New Password</Label>
-                <Input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-                <Button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
-                </Button>
-              </InputWrapper>
+              <Label>Last Changed</Label>
+              <div>
+                {profileData.last_password_change
+                  ? new Date(profileData.last_password_change).toLocaleDateString()
+                  : 'Never'}
+              </div>
             </FormGroup>
-            <FormGroup>
-              <PrimaryButton type="submit">
-                <FiSave /> Update Password
-              </PrimaryButton>
-              <SecondaryButton type="button" onClick={() => setIsEditingPassword(false)}>
-                <FiX /> Cancel
-              </SecondaryButton>
-            </FormGroup>
-          </form>
+            <div style={{ marginTop: '16px' }}>
+              <EditButton onClick={() => setIsEditingPassword(true)}>
+                <FiEdit2 />
+                Change Password
+              </EditButton>
+            </div>
+            {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
+          </>
         )}
       </Section>
+
+      <ProfileModal $isOpen={isProfileModalOpen}>
+        <ProfileModalContent>
+          <ModalHeader>
+            <ModalTitle>Profile Picture</ModalTitle>
+            <ModalDescription>
+              A picture helps people recognize you and lets you know when you're signed in to your account.
+            </ModalDescription>
+            <CloseButton onClick={handleModalClose}>
+              <FiX size={20} />
+            </CloseButton>
+          </ModalHeader>
+
+          <ImagePreview>
+            {previewImage ? (
+              <PreviewImage src={previewImage} alt="Preview" />
+            ) : (
+              <FiUser size={80} color="#6b7280" />
+            )}
+          </ImagePreview>
+
+          <FileInput
+            type="file"
+            id="profile-picture"
+            accept="image/*"
+            onChange={handleFileSelect}
+          />
+
+          <ButtonGroup>
+            <ChooseImageButton
+              onClick={() => document.getElementById('profile-picture')?.click()}
+            >
+              Choose Image
+            </ChooseImageButton>
+            <SaveButton
+              onClick={handleProfilePictureUpload}
+              disabled={!selectedFile}
+            >
+              Update
+            </SaveButton>
+          </ButtonGroup>
+        </ProfileModalContent>
+      </ProfileModal>
     </Container>
   );
 };
