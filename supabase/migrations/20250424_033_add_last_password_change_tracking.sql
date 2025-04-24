@@ -11,4 +11,4 @@ USING (auth.uid() = user_id)
 WITH CHECK (auth.uid() = user_id);
 
 -- Notify PostgREST to reload the schema
-NOTIFY pgrst, 'reload schema';         
+NOTIFY pgrst, 'reload schema'; 
