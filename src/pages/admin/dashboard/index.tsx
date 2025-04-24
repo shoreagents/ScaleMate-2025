@@ -668,6 +668,7 @@ const AdminDashboard: React.FC = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [hasAdminPermissions, setHasAdminPermissions] = useState<boolean>(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [databaseStatus, setDatabaseStatus] = useState<'up' | 'down' | 'warning'>('down');
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -689,45 +690,45 @@ const AdminDashboard: React.FC = () => {
       try {
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         
-        if (authError || !authUser) {
-          router.push('/login');
+        if (authError) {
+          console.error('Error fetching auth user:', authError);
+          router.push('/admin');
           return;
         }
 
-        // Get user roles
-        const { data: roles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', authUser.id);
-
-        if (rolesError) {
-          router.push('/login');
+        if (!authUser) {
+          console.error('No authenticated user found');
+          router.push('/admin');
           return;
         }
 
-        // Check if user has admin role
-        const isAdmin = roles.some(role => role.role === 'admin');
-        if (!isAdmin) {
-          router.push('/login');
+        // Type assertion after null check
+        const user = authUser as { id: string };
+
+        // Get user profile
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          router.push('/admin');
           return;
         }
 
         setUser(authUser);
-        setUserRole('admin');
-        setHasAdminPermissions(true);
+        setProfilePicture(profile.profile_picture);
+        setLoading(false);
 
-        // Fetch profile picture
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('profile_picture')
-          .eq('user_id', authUser.id)
-          .single();
-
-        if (profile?.profile_picture) {
-          setProfilePicture(profile.profile_picture);
+        // Only redirect to username-based route if not in admin dashboard
+        if (profile.username && !router.pathname.startsWith('/admin')) {
+          router.push(`/${profile.username}`);
         }
       } catch (error) {
-        router.push('/login');
+        console.error('Error in fetchUserData:', error);
+        router.push('/admin');
       }
     };
 
@@ -939,7 +940,159 @@ const AdminDashboard: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardTab />;
+        return (
+          <>
+            <Grid>
+              <MetricCard>
+                <MetricIcon $color="#3B82F6">
+                  <FaChartBar />
+                </MetricIcon>
+                <MetricValue>{metrics.totalLeads}</MetricValue>
+                <MetricLabel>Total Leads</MetricLabel>
+                <MetricTrend $isPositive={true}>
+                  ↑ 12% vs last week
+                </MetricTrend>
+              </MetricCard>
+              <MetricCard>
+                <MetricIcon $color="#EC297B">
+                  <FaUsers />
+                </MetricIcon>
+                <MetricValue>{metrics.activeUsers}</MetricValue>
+                <MetricLabel>Active Users</MetricLabel>
+                <MetricTrend $isPositive={true}>
+                  ↑ 8% vs last week
+                </MetricTrend>
+              </MetricCard>
+              <MetricCard>
+                <MetricIcon $color="#00E915">
+                  <FaChartLine />
+                </MetricIcon>
+                <MetricValue>{metrics.newRolesGenerated}</MetricValue>
+                <MetricLabel>New Roles Generated</MetricLabel>
+                <MetricTrend $isPositive={true}>
+                  ↑ 15% vs last week
+                </MetricTrend>
+              </MetricCard>
+              <MetricCard>
+                <MetricIcon $color="#8B5CF6">
+                  <FaStar />
+                </MetricIcon>
+                <MetricValue>{metrics.topRoles}</MetricValue>
+                <MetricLabel>Top Roles</MetricLabel>
+                <MetricTrend $isPositive={true}>
+                  ↑ 5% vs last week
+                </MetricTrend>
+              </MetricCard>
+            </Grid>
+            <Grid style={{ marginTop: '1.5rem', gridTemplateColumns: '2fr 1fr' }}>
+              <Card>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardContent>
+                  <ActivityItem>
+                    <ActivityIcon $color="#3B82F6">
+                      <FaUserPlus />
+                    </ActivityIcon>
+                    <ActivityContent>
+                      <ActivityTitle>New Lead Created</ActivityTitle>
+                      <ActivityTime>2 minutes ago</ActivityTime>
+                    </ActivityContent>
+                  </ActivityItem>
+                  <ActivityItem>
+                    <ActivityIcon $color="#00E915">
+                      <FaBriefcase />
+                    </ActivityIcon>
+                    <ActivityContent>
+                      <ActivityTitle>Role Template Generated</ActivityTitle>
+                      <ActivityTime>1 hour ago</ActivityTime>
+                    </ActivityContent>
+                  </ActivityItem>
+                  <ActivityItem>
+                    <ActivityIcon $color="#EC297B">
+                      <FaUsers />
+                    </ActivityIcon>
+                    <ActivityContent>
+                      <ActivityTitle>New User Registration</ActivityTitle>
+                      <ActivityTime>3 hours ago</ActivityTime>
+                    </ActivityContent>
+                  </ActivityItem>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardContent>
+                  <QuickAction>
+                    <ActionIcon>
+                      <FaUserPlus />
+                    </ActionIcon>
+                    <ActionText>Add New Lead</ActionText>
+                  </QuickAction>
+                  <QuickAction>
+                    <ActionIcon>
+                      <FaBriefcase />
+                    </ActionIcon>
+                    <ActionText>Create Role Template</ActionText>
+                  </QuickAction>
+                  <QuickAction>
+                    <ActionIcon>
+                      <FaPen />
+                    </ActionIcon>
+                    <ActionText>Write Blog Post</ActionText>
+                  </QuickAction>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid style={{ marginTop: '1.5rem', gridTemplateColumns: '1fr' }}>
+              <SystemStatusCard>
+                <CardTitle>System Health</CardTitle>
+                <CardContent>
+                  <div className="status-row">
+                    <StatusDot $status={databaseStatus} />
+                    <div style={{ flex: 1 }}>
+                      Database
+                      {connectionError && (
+                        <div style={{ 
+                          fontSize: '0.75rem', 
+                          color: '#EF4444',
+                          marginTop: '0.5rem' 
+                        }}>
+                          {connectionError}
+                        </div>
+                      )}
+                    </div>
+                    <StatusText $status={databaseStatus}>
+                      {databaseStatus === 'up' ? 'Connected' : 
+                       databaseStatus === 'warning' ? 'Policy Issue' : 'Disconnected'}
+                    </StatusText>
+                    <div style={{ 
+                      fontSize: '0.75rem', 
+                      color: '#6B7280', 
+                      marginLeft: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem' 
+                    }}>
+                      {lastChecked.toLocaleTimeString()}
+                      <button 
+                        onClick={handleDatabaseCheck}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: '0.25rem',
+                          cursor: 'pointer',
+                          color: '#6B7280',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <FaRotate size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+              </SystemStatusCard>
+            </Grid>
+          </>
+        );
       case 'admin-management':
         return <AdminManagementTab />;
       case 'user-management':
@@ -1127,7 +1280,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  if (!user || !hasAdminPermissions) {
+  if (!user) {
     return null;
   }
 

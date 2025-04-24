@@ -323,15 +323,10 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
       
       // If it's not an email, try to find the user by username
       if (!isEmail) {
-        console.log('Attempting username login for:', loginIdentifier);
-        
-        if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
-          throw new Error('Service role key is not configured. Please contact support.');
-        }
-
+        // Create a client with service role key for admin access
         const serviceRoleClient = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY,
+          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
           {
             auth: {
               autoRefreshToken: false,
@@ -340,53 +335,48 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
           }
         );
 
+        // First, get the user_id from user_profiles
         const { data: userProfile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .select('user_id')
           .eq('username', loginIdentifier)
-          .maybeSingle();
+          .single();
 
         if (profileError) {
-          console.error('Error looking up username:', profileError);
-          throw new Error('Error looking up username');
+          throw new Error('Account does not exist');
         }
 
         if (!userProfile) {
-          console.log('No user found with username:', loginIdentifier);
-          throw new Error('Invalid username or password');
+          throw new Error('Account does not exist');
         }
 
-        const { data: { user }, error: adminError } = await serviceRoleClient.auth.admin.getUserById(userProfile.user_id);
+        // Then, get the user's email from the users table
+        const { data: userData, error: userError } = await serviceRoleClient
+          .from('users')
+          .select('email')
+          .eq('id', userProfile.user_id)
+          .single();
 
-        if (adminError || !user?.email) {
-          console.error('Error getting user email:', adminError);
-          throw new Error('Invalid username or password');
+        if (userError || !userData?.email) {
+          throw new Error('Account does not exist');
         }
 
-        loginEmail = user.email;
-        console.log('Found email for username:', loginEmail);
+        loginEmail = userData.email;
       }
 
-      console.log('Attempting login with email:', loginEmail);
       const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password,
       });
 
       if (error) {
-        console.error('Login error:', error);
-        if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Invalid username/email or password');
-        }
         throw error;
       }
 
       if (!user?.id) {
-        console.error('No user ID after login');
         throw new Error('User ID not found after login');
       }
 
-      console.log('Login successful, fetching roles for user:', user.id);
       // Get user's role from user_roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
@@ -394,17 +384,14 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
         .eq('user_id', user.id);
 
       if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
         throw new Error('Error fetching user roles');
       }
 
       if (!roles || roles.length === 0) {
-        console.error('No roles found for user:', user.id);
         throw new Error('User has no roles assigned. Please contact support.');
       }
 
       const userRoles = roles.map(r => r.role);
-      console.log('User roles:', userRoles);
 
       setSuccess('Successfully signed in!');
       onSuccess?.('Successfully signed in!');
@@ -488,6 +475,15 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
     }
   };
 
+  // Add this function to check if the form is valid
+  const isFormValid = () => {
+    return (
+      loginIdentifier &&
+      password &&
+      password.length >= 8
+    );
+  };
+
   return (
     <FormContainer>
       {showResetForm ? (
@@ -514,7 +510,10 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
                   <SecondaryButton type="button" onClick={() => setShowResetForm(false)}>
                     Back to Sign In
                   </SecondaryButton>
-                  <Button type="submit" disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || !loginIdentifier}
+                  >
                     {isLoading ? 'Sending Reset Link...' : 'Send Reset Link'}
                   </Button>
                 </ButtonContainer>
@@ -575,7 +574,10 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
               </FormFields>
               <FormActions>
                 <ButtonContainer>
-                  <Button type="submit" disabled={isLoading}>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || !isFormValid()}
+                  >
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </ButtonContainer>
