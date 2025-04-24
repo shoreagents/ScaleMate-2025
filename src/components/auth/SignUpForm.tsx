@@ -129,9 +129,11 @@ const PasswordInputWrapper = styled.div`
   width: 100%;
   display: flex;
   align-items: center;
+  gap: 8px;
 `;
 
 const Input = styled.input`
+  width: 100%;
   padding: 0.875rem 1rem;
   border: 1.5px solid ${props => props.theme.colors.border};
   border-radius: 8px;
@@ -425,12 +427,7 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
 
       // Check if email exists
       if (emailExists) {
-        setAccountExists(true);
         onError?.('An account with this email already exists');
-        setTimeout(() => {
-          setAccountExists(false);
-          onError?.(null);
-        }, 2000);
         return;
       }
 
@@ -481,7 +478,20 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
         throw new Error('Failed to create user account');
       }
 
-      // 2. Create user record in users table
+      // 2. Check if user already exists in users table
+      const { data: existingUser, error: checkError } = await serviceRoleClient
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error checking existing user:', checkError);
+        throw new Error('Failed to check existing user');
+      }
+
+      // Only insert if user doesn't exist
+      if (!existingUser) {
       const { error: userError } = await serviceRoleClient
         .from('users')
         .insert({
@@ -497,8 +507,22 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
         await supabase.auth.admin.deleteUser(user.id);
         throw new Error('Failed to create user record: ' + userError.message);
       }
+      }
 
-      // 3. Create user profile
+      // 3. Check if profile exists
+      const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+        console.error('Error checking existing profile:', profileCheckError);
+        throw new Error('Failed to check existing profile');
+      }
+
+      // Only insert if profile doesn't exist
+      if (!existingProfile) {
       const { error: profileError } = await serviceRoleClient
         .from('user_profiles')
         .insert({
@@ -517,8 +541,22 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
         await supabase.auth.admin.deleteUser(user.id);
         throw new Error('Failed to create user profile: ' + profileError.message);
       }
+      }
 
-      // 4. Assign default user role
+      // 4. Check if role exists
+      const { data: existingRole, error: roleCheckError } = await serviceRoleClient
+        .from('user_roles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (roleCheckError && roleCheckError.code !== 'PGRST116') {
+        console.error('Error checking existing role:', roleCheckError);
+        throw new Error('Failed to check existing role');
+      }
+
+      // Only insert if role doesn't exist
+      if (!existingRole) {
       const { error: roleError } = await serviceRoleClient
         .from('user_roles')
         .insert({
@@ -533,6 +571,7 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
         await serviceRoleClient.from('users').delete().eq('id', user.id);
         await supabase.auth.admin.deleteUser(user.id);
         throw new Error('Failed to assign user role: ' + roleError.message);
+        }
       }
 
       setSuccess('Account created successfully!');
@@ -620,7 +659,6 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
       formData.lastName &&
       !usernameError &&
       !usernameExists &&
-      !emailExists &&
       !passwordError &&
       formData.password.length >= 8 &&
       formData.password === formData.confirmPassword

@@ -11,7 +11,8 @@
     "test:integration": "jest --config jest.integration.config.js",
     "test:e2e": "cypress run",
     "test:clean": "rm -rf .next",
-    "test:reset": "npm run test:clean && npm run test:env"
+    "test:reset": "npm run test:clean && npm run test:env",
+    "setup:storage": "ts-node scripts/setup-storage.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",
