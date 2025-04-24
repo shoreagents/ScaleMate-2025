@@ -119,7 +119,6 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
-  pointer-events: none;
 
   img {
     width: 100%;

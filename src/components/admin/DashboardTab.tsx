@@ -5,7 +5,6 @@ import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPl
 const DashboardContainer = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
   background-color: #F9FAFB;
 `;
 

@@ -1,57 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
-import { createClient } from '@supabase/supabase-js';
-import Link from 'next/link';
-import DashboardTab from '@/components/admin/DashboardTab';
-import UserManagementTab from '@/components/admin/UserManagementTab';
-import AdminManagementTab from '@/components/admin/AdminManagementTab';
-import GenericTab from '@/components/admin/GenericTab';
+import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
 import DashboardHeader from '@/components/layout/DashboardHeader';
 import DashboardSidebar, { NavItem } from '@/components/layout/DashboardSidebar';
+import { supabase } from '@/lib/supabase';
 import { 
-  FaHouse, 
-  FaUsers, 
-  FaChartPie, 
-  FaFileLines, 
-  FaBook, 
-  FaFolder, 
-  FaFile, 
-  FaScrewdriverWrench, 
-  FaCircleQuestion, 
-  FaGrip, 
-  FaGear,
-  FaUserPlus,
+  FaGripVertical,
+  FaUsers,
+  FaUserShield,
   FaChartLine,
-  FaBriefcase,
+  FaGear,
+  FaFile,
+  FaBook,
+  FaGraduationCap,
+  FaRobot,
+  FaLayerGroup,
+  FaTrophy,
+  FaBell,
+  FaCircleQuestion,
+  FaDatabase,
+  FaHouse,
+  FaChartPie,
+  FaFileLines,
   FaBookOpen,
   FaBoxArchive,
   FaPen,
   FaMicrochip,
   FaCircleCheck,
-  FaLayerGroup,
-  FaServer,
-  FaChartBar,
-  FaTrophy,
   FaStar,
-  FaUser,
   FaRotate,
   FaXmark,
-  FaGripVertical,
-  FaRobot
+  FaGrip,
+  FaUserPlus,
+  FaChartBar,
+  FaBriefcase
 } from 'react-icons/fa6';
-import AdminManagement from '@/components/admin/AdminManagementTab';
+import DashboardTab from '@/components/admin/DashboardTab';
+import UserManagementTab from '@/components/admin/UserManagementTab';
+import AdminManagementTab from '@/components/admin/AdminManagementTab';
+import GenericTab from '@/components/admin/GenericTab';
+import Link from 'next/link';
 import AdminProfile from '@/components/admin/AdminProfile';
 import LeadManagementTab from '@/components/admin/LeadManagementTab';
 import QuoteAnalyticsTab from '@/components/admin/QuoteAnalyticsTab';
 import RolesBlueprintTab from '@/components/admin/RolesBlueprintTab';
 import CourseManagerTab from '@/components/admin/CourseManagerTab';
 import ResourceManagerTab from '@/components/admin/ResourceManagerTab';
-
-// Initialize Supabase client properly
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -666,228 +661,24 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   }
 `;
 
-const AdminDashboard: React.FC = () => {
+const DashboardPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [user, setUser] = useState<any>(null);
-  const [userRole, setUserRole] = useState<string | null>(null);
-  const [hasAdminPermissions, setHasAdminPermissions] = useState<boolean>(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [databaseStatus, setDatabaseStatus] = useState<'up' | 'down' | 'warning'>('down');
-  const [lastChecked, setLastChecked] = useState<Date>(new Date());
-  const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-      router.push('/');
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
-  };
-
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError) {
-          console.error('Error fetching auth user:', authError);
-          router.push('/admin');
-          return;
-        }
-
-        if (!authUser) {
-          console.error('No authenticated user found');
-          router.push('/admin');
-          return;
-        }
-
-        // Type assertion after null check
-        const user = authUser as { id: string };
-
-        // Get user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          router.push('/admin');
-          return;
-        }
-
-        setUser(authUser);
-        setProfilePicture(profile.profile_picture);
-        setLoading(false);
-
-        // Only redirect to username-based route if not in admin dashboard
-        if (profile.username && !router.pathname.startsWith('/admin')) {
-          router.push(`/${profile.username}`);
-        }
-      } catch (error) {
-        console.error('Error in fetchUserData:', error);
-        router.push('/admin');
-      }
-    };
-
-    fetchUserData();
-  }, [router]);
-
-  // Improved database connection check with simpler query
-  useEffect(() => {
-    const checkDatabaseConnection = async () => {
-      try {
-        // First verify Supabase configuration
-        if (!supabaseUrl || !supabaseKey) {
-          console.error('Supabase configuration missing');
-          setDatabaseStatus('down');
-          setConnectionError('Supabase configuration missing');
-          return;
-        }
-
-        // Use a simple health check query that doesn't involve policies
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('count')
-          .single();
-
-        if (error) {
-          console.error('Database connection error:', error.message);
-          // Check specifically for recursion error
-          if (error.message.includes('infinite recursion')) {
-            setDatabaseStatus('warning');
-            setConnectionError('Policy configuration issue - contact administrator');
-          } else {
-            setDatabaseStatus('down');
-            setConnectionError(error.message);
-          }
-        } else {
-          console.log('Database connection successful');
-          setDatabaseStatus('up');
-          setConnectionError(null);
-        }
-      } catch (error) {
-        console.error('Database connection error:', error);
-        setDatabaseStatus('down');
-        setConnectionError(error instanceof Error ? error.message : 'Unknown error');
-      }
-      setLastChecked(new Date());
-    };
-
-    // Check immediately
-    checkDatabaseConnection();
-
-    // Check every 15 seconds
-    const interval = setInterval(checkDatabaseConnection, 15000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Make checkDatabaseConnection available to the component
-  const handleDatabaseCheck = () => {
-    const checkDatabaseConnection = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('count')
-          .single();
-
-        if (error) {
-          if (error.message.includes('infinite recursion')) {
-            setDatabaseStatus('warning');
-            setConnectionError('Policy configuration issue - contact administrator');
-          } else {
-            setDatabaseStatus('down');
-            setConnectionError(error.message);
-          }
-        } else {
-          setDatabaseStatus('up');
-          setConnectionError(null);
-        }
-      } catch (error) {
-        setDatabaseStatus('down');
-        setConnectionError(error instanceof Error ? error.message : 'Unknown error');
-      }
-      setLastChecked(new Date());
-    };
-    
-    checkDatabaseConnection();
-  };
-
-  // Update metrics state to include new fields
-  const [metrics, setMetrics] = useState({
-    totalLeads: 0,
-    activeUsers: 0,
-    newRolesGenerated: 0,
-    topRoles: 0
-  });
-
-  useEffect(() => {
-    // Update mock data with new metrics
-    setMetrics({
-      totalLeads: 1250,
-      activeUsers: 850,
-      newRolesGenerated: 45,
-      topRoles: 12
-    });
-
-    setRecentUsers([
-      { email: 'user1@example.com', role: 'admin' },
-      { email: 'user2@example.com', role: 'user' },
-      { email: 'user3@example.com', role: 'premium' },
-    ]);
-  }, []);
-
-  const [recentUsers, setRecentUsers] = useState<any[]>([]);
-  const [services, setServices] = useState([
-    { name: 'API', status: 'up' as const, lastChecked: new Date() },
-    { name: 'Database', status: 'up' as const, lastChecked: new Date() },
-    { name: 'Auth Service', status: 'up' as const, lastChecked: new Date() }
-  ]);
-
-  const navItems: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: <FaGripVertical /> },
-    { id: 'lead-management', label: 'Lead Management', icon: <FaChartLine /> },
-    { id: 'user-management', label: 'User Management', icon: <FaUsers /> },
-    { id: 'quote-analytics', label: 'Quote Analytics', icon: <FaChartPie /> },
-    { id: 'role-blueprints', label: 'Role Blueprints', icon: <FaFileLines /> },
-    { id: 'course-manager', label: 'Course Manager', icon: <FaBook /> },
-    { id: 'resource-library', label: 'Resource Library', icon: <FaFolder /> },
-    { id: 'blog-management', label: 'Blog Management', icon: <FaFile /> },
-    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FaRobot /> },
-    { id: 'quiz-management', label: 'Quiz Management', icon: <FaCircleQuestion /> },
-    { id: 'content-blocks', label: 'Content Blocks', icon: <FaGrip /> },
-    { id: 'admin-management', label: 'Admin Management', icon: <FaUserPlus /> },
-    { id: 'system-settings', label: 'System Settings', icon: <FaGear /> }
-  ];
-
-  // Add click outside handler
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('#profile-menu')) {
-        setIsProfileOpen(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const fetchProfilePicture = async () => {
+    const checkUserRole = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
+        
+        if (!user) {
+          router.push('/login');
+          return;
+        }
 
-        const { data: profile } = await supabase
+        // Fetch user profile to get profile picture
+        const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('profile_picture')
           .eq('user_id', user.id)
@@ -896,180 +687,155 @@ const AdminDashboard: React.FC = () => {
         if (profile?.profile_picture) {
           setProfilePicture(profile.profile_picture);
         }
+
+        const { data: roles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+
+        if (rolesError) {
+          console.error('Error fetching user roles:', rolesError);
+          router.push('/login');
+          return;
+        }
+
+        if (!roles || !roles.some(r => r.role === 'admin')) {
+          console.error('User does not have admin role:', roles);
+          router.push('/login');
+          return;
+        }
+
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error fetching profile picture:', error);
+        console.error('Error checking user role:', error);
+        router.push('/login');
       }
     };
 
-    fetchProfilePicture();
-  }, []);
+    checkUserRole();
+  }, [router]);
 
-  const handleTabClick = (tab: string) => {
-    setActiveTab(tab);
-    setShowProfile(false);
-    if (tab === 'dashboard') {
-      router.push('/admin/dashboard', undefined, { shallow: true });
-    } else {
-      router.push(`/admin/dashboard?tab=${tab}`, undefined, { shallow: true });
-    }
-  };
-
-  // Add new useEffect to handle profile URL updates
-  useEffect(() => {
-    if (showProfile) {
-      router.push('/admin/dashboard?tab=profile', undefined, { shallow: true });
-    }
-  }, [showProfile]);
-
-  // Update the existing useEffect to handle profile tab
   useEffect(() => {
     const { tab } = router.query;
-    if (tab && typeof tab === 'string') {
-      if (tab === 'profile') {
-        setShowProfile(true);
-        setActiveTab('dashboard');
-      } else if (navItems.some(item => item.id === tab)) {
-        setActiveTab(tab);
-        setShowProfile(false);
-      }
+    if (tab && typeof tab === 'string' && [
+      'dashboard',
+      'user-management',
+      'role-management',
+      'admin-management',
+      'analytics',
+      'system-settings',
+      'content-management',
+      'resource-library',
+      'course-management',
+      'ai-tools',
+      'tool-stacks',
+      'achievements',
+      'notifications',
+      'help-center',
+      'database'
+    ].includes(tab)) {
+      setActiveTab(tab);
     }
   }, [router.query]);
 
-  const renderTabContent = () => {
-    if (showProfile) {
-      return <AdminProfile onProfilePictureChange={(newPictureUrl) => setProfilePicture(newPictureUrl)} />;
-    }
+  if (isLoading) {
+    return null; // Or a loading spinner
+  }
 
-    const currentTab = navItems.find(item => item.id === activeTab);
-    if (!currentTab) return null;
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
+  };
 
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+    router.push(`/admin/dashboard?tab=${tab}`, undefined, { shallow: true });
+  };
+
+  const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return <DashboardTab />;
-      case 'admin-management':
-        return <AdminManagementTab />;
       case 'user-management':
         return <UserManagementTab />;
-      case 'lead-management':
-        return <LeadManagementTab />;
-      case 'quote-analytics':
-        return <QuoteAnalyticsTab />;
-      case 'role-blueprints':
+      case 'role-management':
         return <RolesBlueprintTab />;
-      case 'course-manager':
-        return <CourseManagerTab />;
+      case 'admin-management':
+        return <AdminManagementTab />;
+      case 'analytics':
+        return <QuoteAnalyticsTab />;
+      case 'system-settings':
+        return <GenericTab title="System Settings" />;
+      case 'content-management':
+        return <GenericTab title="Content Management" />;
       case 'resource-library':
         return <ResourceManagerTab />;
-      case 'blog-management':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Blog Statistics</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Posts</MetricLabel>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardTitle>Blog Performance</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Average Views</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      case 'ai-tool-library':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>AI Tools</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Available Tools</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      case 'quiz-management':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Quiz Overview</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Quizzes</MetricLabel>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardTitle>Quiz Performance</CardTitle>
-              <CardContent>
-                <MetricValue>0%</MetricValue>
-                <MetricLabel>Average Score</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      case 'content-blocks':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Content Blocks</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Available Blocks</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
-      case 'system-settings':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>System Status</CardTitle>
-              <CardContent>
-                {services.map((service, index) => (
-                  <ServiceStatus key={index}>
-                    <ServiceName>{service.name}</ServiceName>
-                    <StatusIndicator $status={service.status} />
-                    <LastChecked>
-                      Last checked: {service.lastChecked.toLocaleTimeString()}
-                    </LastChecked>
-                  </ServiceStatus>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+      case 'course-management':
+        return <CourseManagerTab />;
+      case 'ai-tools':
+        return <GenericTab title="AI Tools Management" />;
+      case 'tool-stacks':
+        return <GenericTab title="Tool Stacks Management" />;
+      case 'achievements':
+        return <GenericTab title="Achievements Management" />;
+      case 'notifications':
+        return <GenericTab title="Notifications Management" />;
+      case 'help-center':
+        return <GenericTab title="Help Center Management" />;
+      case 'database':
+        return <GenericTab title="Database Management" />;
+      case 'profile':
+        return <AdminProfile />;
       default:
-        return null;
+        return <DashboardTab />;
     }
   };
 
-  if (!user) {
-    return null;
-  }
+  const navItems: NavItem[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: <FaGripVertical /> },
+    { id: 'user-management', label: 'User Management', icon: <FaUsers /> },
+    { id: 'role-management', label: 'Role Management', icon: <FaUserShield /> },
+    { id: 'admin-management', label: 'Admin Management', icon: <FaUserShield /> },
+    { id: 'analytics', label: 'Analytics', icon: <FaChartLine /> },
+    { id: 'system-settings', label: 'System Settings', icon: <FaGear /> },
+    { id: 'content-management', label: 'Content Management', icon: <FaFile /> },
+    { id: 'resource-library', label: 'Resource Library', icon: <FaBook /> },
+    { id: 'course-management', label: 'Course Management', icon: <FaGraduationCap /> },
+    { id: 'ai-tools', label: 'AI Tools', icon: <FaRobot /> },
+    { id: 'tool-stacks', label: 'Tool Stacks', icon: <FaLayerGroup /> },
+    { id: 'achievements', label: 'Achievements', icon: <FaTrophy /> },
+    { id: 'notifications', label: 'Notifications', icon: <FaBell /> },
+    { id: 'help-center', label: 'Help Center', icon: <FaCircleQuestion /> },
+    { id: 'database', label: 'Database', icon: <FaDatabase /> }
+  ];
+
+  const getTabTitle = (tab: string) => {
+    const tabItem = navItems.find(item => item.id === tab);
+    return tabItem ? tabItem.label : 'Dashboard';
+  };
 
   return (
-    <DashboardContainer>
-      <DashboardSidebar
-        logoText="ScaleMate"
-        navItems={navItems}
-        activeTab={activeTab}
-        onTabClick={handleTabClick}
-      />
-      <MainContent>
-        <DashboardHeader
-          title={showProfile ? 'Profile' : navItems.find(item => item.id === activeTab)?.label || ''}
-          profilePicture={profilePicture}
-          onLogout={handleLogout}
-          onProfileClick={() => setShowProfile(true)}
-          showProfile={showProfile}
+    <NoNavbarLayout>
+      <DashboardContainer>
+        <DashboardSidebar
+          logoText="ScaleMate Admin"
+          navItems={navItems}
+          activeTab={activeTab}
+          onTabClick={handleTabClick}
         />
-        {renderTabContent()}
-      </MainContent>
-    </DashboardContainer>
+        <MainContent>
+          <DashboardHeader
+            title={getTabTitle(activeTab)}
+            profilePicture={profilePicture}
+            onLogout={handleLogout}
+            onProfileClick={() => setActiveTab('profile')}
+            showProfile={activeTab === 'profile'}
+          />
+          {renderContent()}
+        </MainContent>
+      </DashboardContainer>
+    </NoNavbarLayout>
   );
 };
 
-export default AdminDashboard; 
+export default DashboardPage; 
