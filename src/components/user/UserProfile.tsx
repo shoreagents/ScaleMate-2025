@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEdit2, FiX, FiUser, FiEye, FiEyeOff, FiCheck, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const Container = styled.div`
   max-width: 700px;
@@ -221,6 +222,8 @@ const ChooseImageButton = styled(ModalButton)`
 const SaveButton = styled(ModalButton)`
   background-color: #3B82F6;
   color: white;
+  min-width: 100px;
+  justify-content: center;
 
   &:hover {
     background-color: #2563EB;
@@ -423,6 +426,19 @@ const PasswordValidations = styled.div`
   gap: 0;
 `;
 
+const SpinningIcon = styled(FiLoader)`
+  animation: spin 3s linear infinite;
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
+
 interface UserProfileData {
   first_name: string;
   last_name: string;
@@ -476,6 +492,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
   const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
   const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
   const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
+  const [isUpdatingProfilePicture, setIsUpdatingProfilePicture] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
@@ -664,6 +681,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     if (!selectedFile) return;
 
     try {
+      setIsUpdatingProfilePicture(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
@@ -714,20 +732,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
-      // Update local state
+      // Update local state and notify parent component
       setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));
-      setIsProfileModalOpen(false);
-      setPreviewImage(null);
-      setSelectedFile(null);
       
-      // Notify parent component of the change
+      // Call the callback before closing the modal
       if (onProfilePictureChange) {
         onProfilePictureChange(publicUrl);
       }
+
+      // Close modal and reset states
+      setIsProfileModalOpen(false);
+      setPreviewImage(null);
+      setSelectedFile(null);
     } catch (error) {
       console.error('Error updating profile picture:', error);
       setBasicInfoError(error instanceof Error ? error.message : 'Failed to update profile picture');
       setTimeout(() => setBasicInfoError(null), 3000);
+    } finally {
+      setIsUpdatingProfilePicture(false);
     }
   };
 
@@ -799,7 +821,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
   };
 
   if (loading) {
-    return <Container>Loading...</Container>;
+    return <LoadingSpinner />;
   }
 
   return (
@@ -1205,14 +1227,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
           <ButtonGroup>
             <ChooseImageButton
               onClick={() => document.getElementById('profile-picture')?.click()}
+              disabled={isUpdatingProfilePicture}
             >
               Choose Image
             </ChooseImageButton>
             <SaveButton
               onClick={handleProfilePictureUpload}
-              disabled={!selectedFile}
+              disabled={!selectedFile || isUpdatingProfilePicture}
             >
-              Update
+              {isUpdatingProfilePicture ? (
+                <SpinningIcon size={16} />
+              ) : (
+                'Update'
+              )}
             </SaveButton>
           </ButtonGroup>
         </ProfileModalContent>

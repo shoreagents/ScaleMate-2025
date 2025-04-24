@@ -1,140 +1,204 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
-import styled from 'styled-components';
+import { createClient } from '@supabase/supabase-js';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #F9FAFB;
-`;
-
-const LoadingCard = styled.div`
-  text-align: center;
-  padding: 2rem;
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
-  max-width: 400px;
-  width: 90%;
-`;
-
-const Title = styled.h1`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 1rem;
-`;
-
-const Message = styled.p`
-  color: #6B7280;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-`;
-
-const ErrorMessage = styled.p`
-  color: #DC2626;
-  font-size: 0.875rem;
-  margin-top: 1rem;
-`;
+// Create a client with service role key for admin operations
+const serviceRoleClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  }
+);
 
 export default function AuthCallback() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<string>('Completing sign in...');
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
+    const handleCallback = async () => {
       try {
-        setStatus('Verifying authentication...');
-        const { data: { user }, error } = await supabase.auth.getUser();
+        // Get the current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) {
-          throw error;
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          throw sessionError;
+        }
+        
+        if (!session) {
+          console.error('No session found');
+          setError('Authentication failed');
+          return;
         }
 
-        if (!user) {
-          throw new Error('No user found after authentication');
-        }
+        console.log('Session found:', session.user.id);
 
-        setStatus('Checking user profile...');
-        // Check if user profile exists
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+        try {
+          // Get user's role using service role client
+          const { data: roles, error: rolesError } = await serviceRoleClient
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id);
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          throw profileError;
-        }
-
-        // If profile doesn't exist, create one
-        if (!profile) {
-          setStatus('Creating user profile...');
-          const { error: createProfileError } = await supabase.rpc('update_user_profile_v2', {
-            p_user_id: user.id,
-            p_username: user.email?.split('@')[0] || '',
-            p_first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-            p_last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-            p_phone: null,
-            p_gender: null
-          });
-
-          if (createProfileError) {
-            throw createProfileError;
+          if (rolesError) {
+            console.error('Roles error:', rolesError);
+            throw rolesError;
           }
-        }
 
-        setStatus('Checking user roles...');
-        // Get user's role
-        const { data: roles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
+          console.log('Roles check:', roles);
 
-        if (rolesError) {
-          throw rolesError;
-        }
+          // Check if user profile exists using service role client
+          const { data: profile, error: profileError } = await serviceRoleClient
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .single();
 
-        setStatus('Redirecting to dashboard...');
-        // Redirect based on role
-        if (roles && roles.length > 0) {
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error('Profile error:', profileError);
+            throw profileError;
+          }
+
+          console.log('Profile check:', profile);
+
+          // Check if user exists in users table using service role client
+          const { data: existingUser, error: userCheckError } = await serviceRoleClient
+            .from('users')
+            .select('id')
+            .eq('id', session.user.id)
+            .single();
+
+          if (userCheckError && userCheckError.code !== 'PGRST116') {
+            console.error('User check error:', userCheckError);
+            throw userCheckError;
+          }
+
+          console.log('User check:', existingUser);
+
+          // Create user in users table if doesn't exist
+          if (!existingUser) {
+            console.log('Creating new user');
+            const { error: createUserError } = await serviceRoleClient
+              .from('users')
+              .insert({
+                id: session.user.id,
+                email: session.user.email,
+                full_name: session.user.user_metadata.full_name || '',
+                is_active: true
+              });
+
+            if (createUserError) {
+              console.error('Create user error:', createUserError);
+              throw createUserError;
+            }
+            console.log('User created successfully');
+          }
+
+          // Only create profile if it doesn't exist
+          if (!profile) {
+            console.log('Creating new profile');
+            const { error: createProfileError } = await serviceRoleClient
+              .from('user_profiles')
+              .insert({
+                user_id: session.user.id,
+                username: session.user.email?.split('@')[0],
+                first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
+                last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || ''
+              });
+
+            if (createProfileError) {
+              console.error('Create profile error:', createProfileError);
+              throw createProfileError;
+            }
+            console.log('Profile created successfully');
+          }
+
+          // If roles don't exist, create default user role
+          if (!roles || roles.length === 0) {
+            console.log('Creating new role');
+            const { error: createRoleError } = await serviceRoleClient
+              .from('user_roles')
+              .insert({
+                user_id: session.user.id,
+                role: 'user'
+              });
+
+            if (createRoleError) {
+              console.error('Create role error:', createRoleError);
+              throw createRoleError;
+            }
+
+            // Verify the role was created
+            const { data: verifyRoles, error: verifyError } = await serviceRoleClient
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', session.user.id);
+
+            if (verifyError || !verifyRoles || verifyRoles.length === 0) {
+              console.error('Verify role error:', verifyError);
+              throw new Error('Failed to verify role creation');
+            }
+
+            console.log('Role created and verified successfully');
+            router.push('/user/dashboard');
+            return;
+          }
+
+          // Redirect based on role
           const userRoles = roles.map(r => r.role);
+          console.log('User roles for redirect:', userRoles);
           if (userRoles.includes('admin') || userRoles.includes('moderator')) {
+            console.log('Redirecting to admin dashboard');
             router.push('/admin/dashboard');
-          } else if (userRoles.includes('user')) {
-            router.push('/user/dashboard');
           } else {
+            console.log('Redirecting to user dashboard');
             router.push('/user/dashboard');
           }
-        } else {
-          router.push('/user/dashboard');
+        } catch (innerError) {
+          console.error('Inner operation error:', innerError);
+          throw innerError;
         }
       } catch (error) {
-        console.error('Auth callback error:', error);
-        setError(error instanceof Error ? error.message : 'Authentication failed');
-        setStatus('Authentication failed');
+        console.error('Callback error:', error);
+        // Log more detailed error information
+        if (error instanceof Error) {
+          console.error('Error name:', error.name);
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+        }
         
-        // Wait 3 seconds before redirecting to login
-        setTimeout(() => {
-          router.push('/login?error=Authentication failed');
-        }, 3000);
+        // Only redirect to login for critical errors
+        if (error instanceof Error && error.message.includes('duplicate key')) {
+          setError('Account already exists. Please sign in with your password.');
+        } else if (error instanceof Error && error.message.includes('network')) {
+          setError('Network error. Please try again.');
+        } else {
+          setError('Something went wrong. Please try again.');
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    handleAuthCallback();
+    handleCallback();
   }, [router]);
 
-  return (
-    <LoadingContainer>
-      <LoadingCard>
-        <Title>{status}</Title>
-        <Message>Please wait while we set up your account.</Message>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-      </LoadingCard>
-    </LoadingContainer>
-  );
+  // If there's an error, show it and redirect to login after a delay
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        router.push(`/login?error=${encodeURIComponent(error)}`);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, router]);
+
+  return <LoadingSpinner />;
 } 
