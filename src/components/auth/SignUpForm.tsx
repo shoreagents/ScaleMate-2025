@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiLoader, FiCheck, FiX } from 'react-icons/fi';
+import { createClient } from '@supabase/supabase-js';
 
 const FormContainer = styled.div`
   max-width: 420px;
@@ -24,8 +25,64 @@ const Subtitle = styled.p`
   font-size: 0.875rem;
   color: ${props => props.theme.colors.text.secondary};
   text-align: left;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
   line-height: 1.2;
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 3rem ;
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: 0.875rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid ${props => props.theme.colors.border};
+  }
+
+  &::before {
+    margin-right: 1rem;
+  }
+
+  &::after {
+    margin-left: 1rem;
+  }
+`;
+
+const GoogleButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem;
+  background: white;
+  border: 1.5px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+
+  &:hover {
+    background: #F9FAFB;
+    border-color: ${props => props.theme.colors.text.primary};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
 `;
 
 const Form = styled.form`
@@ -210,6 +267,7 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
@@ -249,10 +307,22 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
     try {
       setCheckingUsername(true);
       
-      // Query the user_details view
-      const { data, error } = await supabase
-        .from('user_details')
-        .select('username, user_id')
+      // Create a client with service role key for admin access
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+      
+      // Query the user_profiles table with service role
+      const { data, error } = await serviceRoleClient
+        .from('user_profiles')
+        .select('username')
         .eq('username', username)
         .limit(1);
 
@@ -295,9 +365,21 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
     try {
       setCheckingEmail(true);
       
-      // Query the user_details view
-      const { data, error } = await supabase
-        .from('user_details')
+      // Create a client with service role key for admin access
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+      
+      // Query the users table with service role
+      const { data, error } = await serviceRoleClient
+        .from('users')
         .select('email')
         .eq('email', email)
         .limit(1);
@@ -365,10 +447,29 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
         throw new Error('Last name is required');
       }
 
-      // Sign up with Supabase
+      // Create a client with service role key for admin operations
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+
+      // 1. Sign up with Supabase Auth
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim()
+          }
+        }
       });
 
       if (signUpError) {
@@ -380,21 +481,58 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
         throw new Error('Failed to create user account');
       }
 
-      // Create user profile using the update_user_profile_v2 function
-      const { error: profileError } = await supabase.rpc('update_user_profile_v2', {
-        p_user_id: user.id,
-        p_username: formData.username,
-        p_first_name: formData.firstName.trim(),
-        p_last_name: formData.lastName.trim(),
-        p_phone: null,
-        p_gender: null
-      });
+      // 2. Create user record in users table
+      const { error: userError } = await serviceRoleClient
+        .from('users')
+        .insert({
+          id: user.id,
+          email: formData.email,
+          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          is_active: true
+        });
+
+      if (userError) {
+        console.error('User creation error:', userError);
+        // If user creation fails, try to delete the auth user to maintain consistency
+        await supabase.auth.admin.deleteUser(user.id);
+        throw new Error('Failed to create user record: ' + userError.message);
+      }
+
+      // 3. Create user profile
+      const { error: profileError } = await serviceRoleClient
+        .from('user_profiles')
+        .insert({
+          user_id: user.id,
+          username: formData.username,
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          phone: null,
+          gender: null
+        });
 
       if (profileError) {
         console.error('Profile creation error:', profileError);
-        // If profile creation fails, try to delete the auth user to maintain consistency
+        // If profile creation fails, try to delete the auth user and user record
+        await serviceRoleClient.from('users').delete().eq('id', user.id);
         await supabase.auth.admin.deleteUser(user.id);
         throw new Error('Failed to create user profile: ' + profileError.message);
+      }
+
+      // 4. Assign default user role
+      const { error: roleError } = await serviceRoleClient
+        .from('user_roles')
+        .insert({
+          user_id: user.id,
+          role: 'user'
+        });
+
+      if (roleError) {
+        console.error('Role assignment error:', roleError);
+        // If role assignment fails, try to clean up
+        await serviceRoleClient.from('user_profiles').delete().eq('user_id', user.id);
+        await serviceRoleClient.from('users').delete().eq('id', user.id);
+        await supabase.auth.admin.deleteUser(user.id);
+        throw new Error('Failed to assign user role: ' + roleError.message);
       }
 
       setSuccess('Account created successfully!');
@@ -438,10 +576,69 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          scopes: 'email profile',
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // The user will be redirected to Google's OAuth page
+      // After successful authentication, they'll be redirected back to the callback URL
+      // The callback will handle the user creation and profile setup
+    } catch (err) {
+      console.error('Google sign in error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during Google sign in';
+      setError(errorMessage);
+      onError?.(errorMessage);
+      setIsGoogleLoading(false);
+    }
+  };
+
+  // Add this function to check if the form is valid
+  const isFormValid = () => {
+    return (
+      formData.email &&
+      formData.password &&
+      formData.confirmPassword &&
+      formData.username &&
+      formData.firstName &&
+      formData.lastName &&
+      !usernameError &&
+      !usernameExists &&
+      !emailExists &&
+      !passwordError &&
+      formData.password.length >= 8 &&
+      formData.password === formData.confirmPassword
+    );
+  };
+
   return (
     <FormContainer>
       <Title>Create Account</Title>
       <Subtitle>Sign up to get started with ScaleMate</Subtitle>
+      <GoogleButton 
+        onClick={handleGoogleSignIn}
+        disabled={isGoogleLoading}
+      >
+        <img src="/google-icon.svg" alt="Google" width={20} height={20} />
+        {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
+      </GoogleButton>
+      <Divider>or</Divider>
       <Form onSubmit={handleSubmit}>
         <FormRow>
           <FormGroup>
@@ -631,7 +828,10 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
           </div>
         )}
         <ButtonContainer>
-          <Button type="submit" disabled={isLoading || !!passwordError}>
+          <Button 
+            type="submit" 
+            disabled={isLoading || !isFormValid()}
+          >
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </ButtonContainer>
