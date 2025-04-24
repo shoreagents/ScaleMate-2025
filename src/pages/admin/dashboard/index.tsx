@@ -42,6 +42,11 @@ import {
 } from 'react-icons/fa6';
 import AdminManagement from '@/components/admin/AdminManagementTab';
 import AdminProfile from '@/components/admin/AdminProfile';
+import LeadManagementTab from '@/components/admin/LeadManagementTab';
+import QuoteAnalyticsTab from '@/components/admin/QuoteAnalyticsTab';
+import RolesBlueprintTab from '@/components/admin/RolesBlueprintTab';
+import CourseManagerTab from '@/components/admin/CourseManagerTab';
+import ResourceManagerTab from '@/components/admin/ResourceManagerTab';
 
 // Initialize Supabase client properly
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -940,260 +945,21 @@ const AdminDashboard: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return (
-          <>
-            <Grid>
-              <MetricCard>
-                <MetricIcon $color="#3B82F6">
-                  <FaChartBar />
-                </MetricIcon>
-                <MetricValue>{metrics.totalLeads}</MetricValue>
-                <MetricLabel>Total Leads</MetricLabel>
-                <MetricTrend $isPositive={true}>
-                  ↑ 12% vs last week
-                </MetricTrend>
-              </MetricCard>
-              <MetricCard>
-                <MetricIcon $color="#EC297B">
-                  <FaUsers />
-                </MetricIcon>
-                <MetricValue>{metrics.activeUsers}</MetricValue>
-                <MetricLabel>Active Users</MetricLabel>
-                <MetricTrend $isPositive={true}>
-                  ↑ 8% vs last week
-                </MetricTrend>
-              </MetricCard>
-              <MetricCard>
-                <MetricIcon $color="#00E915">
-                  <FaChartLine />
-                </MetricIcon>
-                <MetricValue>{metrics.newRolesGenerated}</MetricValue>
-                <MetricLabel>New Roles Generated</MetricLabel>
-                <MetricTrend $isPositive={true}>
-                  ↑ 15% vs last week
-                </MetricTrend>
-              </MetricCard>
-              <MetricCard>
-                <MetricIcon $color="#8B5CF6">
-                  <FaStar />
-                </MetricIcon>
-                <MetricValue>{metrics.topRoles}</MetricValue>
-                <MetricLabel>Top Roles</MetricLabel>
-                <MetricTrend $isPositive={true}>
-                  ↑ 5% vs last week
-                </MetricTrend>
-              </MetricCard>
-            </Grid>
-            <Grid style={{ marginTop: '1.5rem', gridTemplateColumns: '2fr 1fr' }}>
-              <Card>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardContent>
-                  <ActivityItem>
-                    <ActivityIcon $color="#3B82F6">
-                      <FaUserPlus />
-                    </ActivityIcon>
-                    <ActivityContent>
-                      <ActivityTitle>New Lead Created</ActivityTitle>
-                      <ActivityTime>2 minutes ago</ActivityTime>
-                    </ActivityContent>
-                  </ActivityItem>
-                  <ActivityItem>
-                    <ActivityIcon $color="#00E915">
-                      <FaBriefcase />
-                    </ActivityIcon>
-                    <ActivityContent>
-                      <ActivityTitle>Role Template Generated</ActivityTitle>
-                      <ActivityTime>1 hour ago</ActivityTime>
-                    </ActivityContent>
-                  </ActivityItem>
-                  <ActivityItem>
-                    <ActivityIcon $color="#EC297B">
-                      <FaUsers />
-                    </ActivityIcon>
-                    <ActivityContent>
-                      <ActivityTitle>New User Registration</ActivityTitle>
-                      <ActivityTime>3 hours ago</ActivityTime>
-                    </ActivityContent>
-                  </ActivityItem>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardContent>
-                  <QuickAction>
-                    <ActionIcon>
-                      <FaUserPlus />
-                    </ActionIcon>
-                    <ActionText>Add New Lead</ActionText>
-                  </QuickAction>
-                  <QuickAction>
-                    <ActionIcon>
-                      <FaBriefcase />
-                    </ActionIcon>
-                    <ActionText>Create Role Template</ActionText>
-                  </QuickAction>
-                  <QuickAction>
-                    <ActionIcon>
-                      <FaPen />
-                    </ActionIcon>
-                    <ActionText>Write Blog Post</ActionText>
-                  </QuickAction>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid style={{ marginTop: '1.5rem', gridTemplateColumns: '1fr' }}>
-              <SystemStatusCard>
-                <CardTitle>System Health</CardTitle>
-                <CardContent>
-                  <div className="status-row">
-                    <StatusDot $status={databaseStatus} />
-                    <div style={{ flex: 1 }}>
-                      Database
-                      {connectionError && (
-                        <div style={{ 
-                          fontSize: '0.75rem', 
-                          color: '#EF4444',
-                          marginTop: '0.5rem' 
-                        }}>
-                          {connectionError}
-                        </div>
-                      )}
-                    </div>
-                    <StatusText $status={databaseStatus}>
-                      {databaseStatus === 'up' ? 'Connected' : 
-                       databaseStatus === 'warning' ? 'Policy Issue' : 'Disconnected'}
-                    </StatusText>
-                    <div style={{ 
-                      fontSize: '0.75rem', 
-                      color: '#6B7280', 
-                      marginLeft: '0.5rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem' 
-                    }}>
-                      {lastChecked.toLocaleTimeString()}
-                      <button 
-                        onClick={handleDatabaseCheck}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: '0.25rem',
-                          cursor: 'pointer',
-                          color: '#6B7280',
-                          display: 'flex',
-                          alignItems: 'center'
-                        }}
-                      >
-                        <FaRotate size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </CardContent>
-              </SystemStatusCard>
-            </Grid>
-          </>
-        );
+        return <DashboardTab />;
       case 'admin-management':
         return <AdminManagementTab />;
       case 'user-management':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>User List</CardTitle>
-              <CardContent>
-                {recentUsers.map((user, index) => (
-                  <UserItem key={index}>
-                    <UserInfo>
-                      <UserEmail>{user.email}</UserEmail>
-                      <UserRole>{user.role}</UserRole>
-                    </UserInfo>
-                  </UserItem>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <UserManagementTab />;
       case 'lead-management':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Lead Overview</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Leads</MetricLabel>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardTitle>Lead Sources</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Active Sources</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <LeadManagementTab />;
       case 'quote-analytics':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Quote Statistics</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Quotes</MetricLabel>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardTitle>Average Quote Value</CardTitle>
-              <CardContent>
-                <MetricValue>$0</MetricValue>
-                <MetricLabel>Per Quote</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <QuoteAnalyticsTab />;
       case 'role-blueprints':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Role Templates</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Available Templates</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <RolesBlueprintTab />;
       case 'course-manager':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Course Overview</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Courses</MetricLabel>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardTitle>Course Progress</CardTitle>
-              <CardContent>
-                <MetricValue>0%</MetricValue>
-                <MetricLabel>Average Completion</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <CourseManagerTab />;
       case 'resource-library':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Resource Overview</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Resources</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <ResourceManagerTab />;
       case 'blog-management':
         return (
           <Grid>
