@@ -1,3 +1,6 @@
+-- Start transaction
+BEGIN;
+
 -- First, drop ALL existing policies to ensure clean slate
 DROP POLICY IF EXISTS "Allow authenticated users to view roles" ON user_roles;
 DROP POLICY IF EXISTS "Allow admins to manage roles" ON user_roles;
@@ -11,9 +14,17 @@ DROP POLICY IF EXISTS "Users can view their own roles" ON user_roles;
 DROP POLICY IF EXISTS "Allow authenticated users to insert their own roles" ON user_roles;
 DROP POLICY IF EXISTS "Admins can manage all roles" ON user_roles;
 
+-- Revoke permissions that might be using the function
+DO $$
+BEGIN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.is_admin() FROM authenticated';
+EXCEPTION
+    WHEN undefined_function THEN NULL;
+END $$;
+
 -- Drop any existing admin check function
-DROP FUNCTION IF EXISTS public.is_admin();
-DROP FUNCTION IF EXISTS is_admin(uuid);
+DROP FUNCTION IF EXISTS public.is_admin() CASCADE;
+DROP FUNCTION IF EXISTS is_admin(uuid) CASCADE;
 
 -- Create a simpler admin check function that doesn't use recursion
 CREATE OR REPLACE FUNCTION public.is_admin()
@@ -68,6 +79,8 @@ GRANT ALL ON TABLE user_roles TO authenticated;
 -- Create an index to improve performance of role checks
 DROP INDEX IF EXISTS idx_user_roles_user_id_role;
 CREATE INDEX idx_user_roles_user_id_role ON user_roles(user_id, role);
+
+COMMIT;
 
 -- Verify the changes
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check 
