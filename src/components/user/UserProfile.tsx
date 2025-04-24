@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEdit2, FiX, FiUser, FiEye, FiEyeOff, FiCheck, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const Container = styled.div`
   max-width: 700px;
@@ -799,7 +800,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
   };
 
   if (loading) {
-    return <Container>Loading...</Container>;
+    return <LoadingSpinner />;
   }
 
   return (

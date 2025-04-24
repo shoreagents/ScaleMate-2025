@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const Container = styled.div`
   max-width: 700px;
@@ -977,7 +978,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   };
 
   if (loading) {
-    return <Container>Loading...</Container>;
+    return <LoadingSpinner />;
   }
 
   return (
