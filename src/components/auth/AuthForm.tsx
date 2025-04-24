@@ -323,6 +323,8 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
       
       // If it's not an email, try to find the user by username
       if (!isEmail) {
+        console.log('Attempting username login for:', loginIdentifier);
+        
         if (!process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY) {
           throw new Error('Service role key is not configured. Please contact support.');
         }
@@ -345,35 +347,46 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
           .maybeSingle();
 
         if (profileError) {
+          console.error('Error looking up username:', profileError);
           throw new Error('Error looking up username');
         }
 
         if (!userProfile) {
-          throw new Error('Account does not exist');
+          console.log('No user found with username:', loginIdentifier);
+          throw new Error('Invalid username or password');
         }
 
         const { data: { user }, error: adminError } = await serviceRoleClient.auth.admin.getUserById(userProfile.user_id);
 
         if (adminError || !user?.email) {
-          throw new Error('Account does not exist');
+          console.error('Error getting user email:', adminError);
+          throw new Error('Invalid username or password');
         }
 
         loginEmail = user.email;
+        console.log('Found email for username:', loginEmail);
       }
 
+      console.log('Attempting login with email:', loginEmail);
       const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password,
       });
 
       if (error) {
+        console.error('Login error:', error);
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Invalid username/email or password');
+        }
         throw error;
       }
 
       if (!user?.id) {
+        console.error('No user ID after login');
         throw new Error('User ID not found after login');
       }
 
+      console.log('Login successful, fetching roles for user:', user.id);
       // Get user's role from user_roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
@@ -381,14 +394,17 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
         .eq('user_id', user.id);
 
       if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
         throw new Error('Error fetching user roles');
       }
 
       if (!roles || roles.length === 0) {
+        console.error('No roles found for user:', user.id);
         throw new Error('User has no roles assigned. Please contact support.');
       }
 
       const userRoles = roles.map(r => r.role);
+      console.log('User roles:', userRoles);
 
       setSuccess('Successfully signed in!');
       onSuccess?.('Successfully signed in!');
