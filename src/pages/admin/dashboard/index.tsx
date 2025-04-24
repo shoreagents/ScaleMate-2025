@@ -42,6 +42,11 @@ import {
 } from 'react-icons/fa6';
 import AdminManagement from '@/components/admin/AdminManagementTab';
 import AdminProfile from '@/components/admin/AdminProfile';
+import LeadManagementTab from '@/components/admin/LeadManagementTab';
+import QuoteAnalyticsTab from '@/components/admin/QuoteAnalyticsTab';
+import RolesBlueprintTab from '@/components/admin/RolesBlueprintTab';
+import CourseManagerTab from '@/components/admin/CourseManagerTab';
+import ResourceManagerTab from '@/components/admin/ResourceManagerTab';
 
 // Initialize Supabase client properly
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -944,104 +949,17 @@ const AdminDashboard: React.FC = () => {
       case 'admin-management':
         return <AdminManagementTab />;
       case 'user-management':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>User List</CardTitle>
-              <CardContent>
-                {recentUsers.map((user, index) => (
-                  <UserItem key={index}>
-                    <UserInfo>
-                      <UserEmail>{user.email}</UserEmail>
-                      <UserRole>{user.role}</UserRole>
-                    </UserInfo>
-                  </UserItem>
-                ))}
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <UserManagementTab />;
       case 'lead-management':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Lead Overview</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Leads</MetricLabel>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardTitle>Lead Sources</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Active Sources</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <LeadManagementTab />;
       case 'quote-analytics':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Quote Statistics</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Quotes</MetricLabel>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardTitle>Average Quote Value</CardTitle>
-              <CardContent>
-                <MetricValue>$0</MetricValue>
-                <MetricLabel>Per Quote</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <QuoteAnalyticsTab />;
       case 'role-blueprints':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Role Templates</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Available Templates</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <RolesBlueprintTab />;
       case 'course-manager':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Course Overview</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Courses</MetricLabel>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardTitle>Course Progress</CardTitle>
-              <CardContent>
-                <MetricValue>0%</MetricValue>
-                <MetricLabel>Average Completion</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <CourseManagerTab />;
       case 'resource-library':
-        return (
-          <Grid>
-            <Card>
-              <CardTitle>Resource Overview</CardTitle>
-              <CardContent>
-                <MetricValue>0</MetricValue>
-                <MetricLabel>Total Resources</MetricLabel>
-              </CardContent>
-            </Card>
-          </Grid>
-        );
+        return <ResourceManagerTab />;
       case 'blog-management':
         return (
           <Grid>
