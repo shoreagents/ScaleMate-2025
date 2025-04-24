@@ -57,7 +57,6 @@ const Logo = styled(Link)`
   font-weight: 700;
   color: #0F172A;
   text-decoration: none;
-  margin-bottom: 2rem;
   padding-left: 1rem;
 
   @media (min-width: 1024px) {
