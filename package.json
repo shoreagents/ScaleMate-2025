@@ -29,6 +29,7 @@
     "framer-motion": "^12.7.4",
     "lucide-react": "^0.488.0",
     "next": "latest",
+    "node-fetch": "^3.3.2",
     "openai": "latest",
     "react": "latest",
     "react-dom": "latest",
