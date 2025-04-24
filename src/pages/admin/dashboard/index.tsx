@@ -668,7 +668,6 @@ const AdminDashboard: React.FC = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [hasAdminPermissions, setHasAdminPermissions] = useState<boolean>(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [databaseStatus, setDatabaseStatus] = useState<'up' | 'down' | 'warning'>('down');
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
   const [connectionError, setConnectionError] = useState<string | null>(null);
@@ -690,45 +689,45 @@ const AdminDashboard: React.FC = () => {
       try {
         const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
         
-        if (authError) {
-          console.error('Error fetching auth user:', authError);
-          router.push('/admin');
+        if (authError || !authUser) {
+          router.push('/login');
           return;
         }
 
-        if (!authUser) {
-          console.error('No authenticated user found');
-          router.push('/admin');
+        // Get user roles
+        const { data: roles, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', authUser.id);
+
+        if (rolesError) {
+          router.push('/login');
           return;
         }
 
-        // Type assertion after null check
-        const user = authUser as { id: string };
-
-        // Get user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          router.push('/admin');
+        // Check if user has admin role
+        const isAdmin = roles.some(role => role.role === 'admin');
+        if (!isAdmin) {
+          router.push('/login');
           return;
         }
 
         setUser(authUser);
-        setProfilePicture(profile.profile_picture);
-        setLoading(false);
+        setUserRole('admin');
+        setHasAdminPermissions(true);
 
-        // Only redirect to username-based route if not in admin dashboard
-        if (profile.username && !router.pathname.startsWith('/admin')) {
-          router.push(`/${profile.username}`);
+        // Fetch profile picture
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('profile_picture')
+          .eq('user_id', authUser.id)
+          .single();
+
+        if (profile?.profile_picture) {
+          setProfilePicture(profile.profile_picture);
         }
       } catch (error) {
-        console.error('Error in fetchUserData:', error);
-        router.push('/admin');
+        router.push('/login');
       }
     };
 
@@ -1280,7 +1279,7 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  if (!user) {
+  if (!user || !hasAdminPermissions) {
     return null;
   }
 
