@@ -744,7 +744,7 @@ const DashboardPage = () => {
       case 'database':
         return <GenericTab title="Database Management" />;
       default:
-        return <AdminDashboardTab user={userData} />;
+        return <DashboardTab />;
     }
   };
 
