@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
+import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const Container = styled.div`
   padding: 24px;
@@ -1517,7 +1518,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <PageLoadingSpinner />;
   }
 
   return (
