@@ -32,6 +32,7 @@ import CourseDashboardTab from '@/components/user/CourseDashboardTab';
 import AIToolLibraryTab from '@/components/user/AIToolLibraryTab';
 import SavedToolStackTab from '@/components/user/SavedToolStackTab';
 import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
+import UserProfile from '@/components/user/UserProfile';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -48,48 +49,55 @@ const MainContent = styled.main`
   min-height: 100vh;
 `;
 
+interface UserProfileData {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  gender: string;
+  profile_picture: string | null;
+  last_password_change: string | null;
+  username: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface DashboardUserData {
+  name: string;
+  email: string;
+  avatar?: string;
+}
+
 const DashboardPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isLoading, setIsLoading] = useState(true);
-  const [profilePicture, setProfilePicture] = useState('https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg');
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [userData, setUserData] = useState<UserProfileData | null>(null);
 
   useEffect(() => {
-    const checkUserRole = async () => {
+    const fetchUserData = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          router.push('/login');
-          return;
+        if (user) {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+          if (profile) {
+            setUserData(profile);
+            setProfilePicture(profile.profile_picture);
+          }
         }
-
-        const { data: roles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-
-        if (rolesError) {
-          console.error('Error fetching user roles:', rolesError);
-          router.push('/login');
-          return;
-        }
-
-        if (!roles || !roles.some(r => r.role === 'user')) {
-          console.error('User does not have user role:', roles);
-          router.push('/login');
-          return;
-        }
-
-        setIsLoading(false);
       } catch (error) {
-        console.error('Error checking user role:', error);
-        router.push('/login');
+        console.error('Error fetching user data:', error);
       }
     };
 
-    checkUserRole();
-  }, [router]);
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const { tab } = router.query;
@@ -98,9 +106,14 @@ const DashboardPage = () => {
     }
   }, [router.query]);
 
-  if (isLoading) {
-    return null; // Or a loading spinner
-  }
+  const handleProfilePictureChange = (newPictureUrl: string) => {
+    setProfilePicture(newPictureUrl);
+    setUserData(prev => prev ? {
+      ...prev,
+      profile_picture: newPictureUrl,
+      updated_at: new Date().toISOString()
+    } : null);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -109,11 +122,26 @@ const DashboardPage = () => {
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
-    router.push(`/user/dashboard?tab=${tab}`, undefined, { shallow: true });
+  };
+
+  const getTabTitle = (tab: string) => {
+    const tabItem = navItems.find(item => item.id === tab);
+    return tabItem ? tabItem.label : 'Dashboard';
+  };
+
+  const transformUserData = (data: UserProfileData | null): DashboardUserData | undefined => {
+    if (!data) return undefined;
+    return {
+      name: `${data.first_name} ${data.last_name}`,
+      email: data.email,
+      avatar: data.profile_picture || undefined
+    };
   };
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'profile':
+        return <UserProfile onProfilePictureChange={handleProfilePictureChange} />;
       case 'role-builder':
         return <RoleBuilderTab />;
       case 'quote-calculator':
@@ -135,15 +163,7 @@ const DashboardPage = () => {
       case 'gamified-tracker':
         return <GamifiedTrackerTab />;
       default:
-        return (
-          <DashboardTab 
-            user={{
-              name: "Alex",
-              email: "alex@example.com",
-              avatar: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
-            }}
-          />
-        );
+        return <DashboardTab user={transformUserData(userData)} />;
     }
   };
 
@@ -162,11 +182,6 @@ const DashboardPage = () => {
     { id: 'gamified-tracker', label: 'Gamified Tracker', icon: <FaTrophy /> },
     { id: 'account-settings', label: 'System Settings', icon: <FaGear /> }
   ];
-
-  const getTabTitle = (tab: string) => {
-    const tabItem = navItems.find(item => item.id === tab);
-    return tabItem ? tabItem.label : 'Dashboard';
-  };
 
   return (
     <NoNavbarLayout>
