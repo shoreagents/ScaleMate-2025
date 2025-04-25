@@ -92,10 +92,10 @@ export const auth = {
   updateProfile: async (updates: Partial<User>): Promise<{ user: User | null; error: Error | null }> => {
     try {
       if (!currentUser) {
-        return { user: null, error: new Error('Not authenticated') };
+        return { user: null, error: new Error('No user found') };
       }
 
-      const userIndex = mockUsers.findIndex(u => u.id === currentUser.id);
+      const userIndex = mockUsers.findIndex(u => u.id === currentUser!.id);
       if (userIndex === -1) {
         return { user: null, error: new Error('User not found') };
       }

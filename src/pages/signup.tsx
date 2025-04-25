@@ -132,12 +132,11 @@ const ErrorMessage = styled.div`
   color: #DC2626;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.3s ease-out;
   z-index: 10;
 
@@ -167,12 +166,11 @@ const SuccessMessage = styled.div`
   color: #059669;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.3s ease-out;
   z-index: 10;
 
@@ -264,8 +262,8 @@ const SignUpPage = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
         router.push('/user/dashboard');
       }
     };
@@ -286,21 +284,38 @@ const SignUpPage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleError = (message: string | null) => {
+    setError(message);
+    if (message?.includes('already exists')) {
+      setAccountExists(true);
+      setTimeout(() => {
+        setAccountExists(false);
+      }, 3000);
+    }
+  };
+
+  const handleSuccess = (message: string | null) => {
+    setSuccess(message);
+    setTimeout(() => {
+      setSuccess(null);
+    }, 3000);
+  };
+
   return (
     <SignUpContainer>
       <AuthColumn>
         <Logo href="/">ScaleMate</Logo>
         <AuthFormContainer>
           <SignUpForm 
-            onSuccess={(message) => setSuccess(message)}
-            onError={(error) => setError(error)}
+            onError={handleError}
+            onSuccess={handleSuccess}
           />
         </AuthFormContainer>
       </AuthColumn>
       <TestimonialsColumn>
         {error && <ErrorMessage>{error}</ErrorMessage>}
         {success && <SuccessMessage>{success}</SuccessMessage>}
-        {accountExists && <AccountExistsMessage>An account with this email already exists</AccountExistsMessage>}
+       
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <QuoteIcon>
             <FaQuoteLeft />

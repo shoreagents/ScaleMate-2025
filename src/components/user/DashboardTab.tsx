@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
 import DashboardHeader from '@/components/layout/DashboardHeader';
@@ -21,7 +21,7 @@ import {
 import UserProfile from '@/components/user/UserProfile';
 
 interface DashboardTabProps {
-  user: {
+  user?: {
     name: string;
     email: string;
     avatar?: string;
@@ -381,8 +381,38 @@ const LinkText = styled.span`
 
 const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
   const router = useRouter();
+  const [userData, setUserData] = useState(user);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProfile, setShowProfile] = useState(false);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!userData) {
+        try {
+          const { data: { user: authUser } } = await supabase.auth.getUser();
+          if (authUser) {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('*')
+              .eq('user_id', authUser.id)
+              .single();
+
+            if (profile) {
+              setUserData({
+                name: `${profile.first_name} ${profile.last_name}`,
+                email: authUser.email || '',
+                avatar: profile.profile_picture
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [userData]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -393,7 +423,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
     <DashboardContainer>
       <DashboardHeader
         title="Dashboard"
-        profilePicture={user.avatar}
+        profilePicture={userData?.avatar}
         onLogout={handleLogout}
         onProfileClick={() => setShowProfile(true)}
         showProfile={showProfile}
@@ -405,7 +435,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
           <WelcomeSection>
             <WelcomeContent>
               <WelcomeText>
-                <WelcomeTitle>Welcome back, {user.name}!</WelcomeTitle>
+                <WelcomeTitle>Welcome back, {userData?.name}!</WelcomeTitle>
                 <WelcomeSubtitle>Ready to scale your team today?</WelcomeSubtitle>
               </WelcomeText>
               <TipBox>

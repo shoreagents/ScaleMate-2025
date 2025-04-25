@@ -132,15 +132,13 @@ const ErrorMessage = styled.div`
   color: #DC2626;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.3s ease-out;
   z-index: 10;
-
   &::before {
     content: "✕";
     font-size: 1rem;
@@ -160,22 +158,20 @@ const ErrorMessage = styled.div`
 `;
 
 const SuccessMessage = styled.div`
-  position: absolute;
+  position: fixed;
   top: 2rem;
   right: 2rem;
   background-color: #D1FAE5;
   color: #059669;
   padding: 0.75rem 1rem;
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   animation: slideIn 0.3s ease-out;
   z-index: 10;
-
   &::before {
     content: "✓";
     font-size: 1rem;
