@@ -152,6 +152,8 @@ const ActionButton = styled.button<{ $color?: string }>`
   padding: 0.25rem;
   border-radius: 0.25rem;
   transition: all 0.2s;
+  background: none;
+  border: none;
 
   &:hover {
     color: ${props => props.$color || '#0F172A'};

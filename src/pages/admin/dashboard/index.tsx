@@ -47,6 +47,11 @@ import QuoteAnalyticsTab from '@/components/admin/QuoteAnalyticsTab';
 import RolesBlueprintTab from '@/components/admin/RolesBlueprintTab';
 import CourseManagerTab from '@/components/admin/CourseManagerTab';
 import ResourceManagerTab from '@/components/admin/ResourceManagerTab';
+import BlogTab from '@/components/admin/BlogTab';
+import AIToolsTab from '@/components/admin/AIToolsTab';
+import QuizManagerTab from '@/components/admin/QuizManagerTab';
+import ContentBlocksTab from '@/components/admin/ContentBlocksTab';
+import SystemSettingsTab from '@/components/admin/SystemSettingsTab';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -715,6 +720,8 @@ const DashboardPage = () => {
         return <AdminProfile onProfilePictureChange={handleProfilePictureChange} />;
       case 'dashboard':
         return <DashboardTab />;
+      case 'lead-management':
+        return <LeadManagementTab />;
       case 'user-management':
         return <UserManagementTab />;
       case 'role-management':
@@ -724,17 +731,19 @@ const DashboardPage = () => {
       case 'analytics':
         return <QuoteAnalyticsTab />;
       case 'system-settings':
-        return <GenericTab title="System Settings" />;
+        return <SystemSettingsTab />;
       case 'content-management':
-        return <GenericTab title="Content Management" />;
+        return <BlogTab />;
       case 'resource-library':
         return <ResourceManagerTab />;
       case 'course-management':
         return <CourseManagerTab />;
       case 'ai-tools':
-        return <GenericTab title="AI Tools Management" />;
-      case 'tool-stacks':
-        return <GenericTab title="Tool Stacks Management" />;
+        return <AIToolsTab />;
+      case 'quiz-management':
+        return <QuizManagerTab />;
+      case 'content-blocks':
+        return <ContentBlocksTab />;
       case 'achievements':
         return <GenericTab title="Achievements Management" />;
       case 'notifications':
@@ -750,20 +759,20 @@ const DashboardPage = () => {
 
   const navItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <FaGripVertical /> },
+    { id: 'lead-management', label: 'Lead Management', icon: <FaUserPlus /> },
     { id: 'user-management', label: 'User Management', icon: <FaUsers /> },
-    { id: 'role-management', label: 'Role Management', icon: <FaUserShield /> },
-    { id: 'admin-management', label: 'Admin Management', icon: <FaUserShield /> },
-    { id: 'analytics', label: 'Analytics', icon: <FaChartLine /> },
-    { id: 'system-settings', label: 'System Settings', icon: <FaGear /> },
-    { id: 'content-management', label: 'Content Management', icon: <FaFile /> },
+    { id: 'analytics', label: 'Quote Analytics', icon: <FaChartLine /> },
+    { id: 'role-management', label: 'Role Blueprints', icon: <FaUserShield /> },
+    { id: 'course-management', label: 'Course Manager', icon: <FaGraduationCap /> },
     { id: 'resource-library', label: 'Resource Library', icon: <FaBook /> },
-    { id: 'course-management', label: 'Course Management', icon: <FaGraduationCap /> },
-    { id: 'ai-tools', label: 'AI Tools', icon: <FaRobot /> },
-    { id: 'tool-stacks', label: 'Tool Stacks', icon: <FaLayerGroup /> },
-    { id: 'achievements', label: 'Achievements', icon: <FaTrophy /> },
-    { id: 'notifications', label: 'Notifications', icon: <FaBell /> },
+    { id: 'content-management', label: 'Blog Management', icon: <FaFile /> },
+    { id: 'ai-tools', label: 'AI Tool Library', icon: <FaRobot /> },
+    { id: 'quiz-management', label: 'Quiz Management', icon: <FaCircleQuestion /> },
+    { id: 'content-blocks', label: 'Content Blocks', icon: <FaFileLines /> },
+    { id: 'database', label: 'Database', icon: <FaDatabase /> },
     { id: 'help-center', label: 'Help Center', icon: <FaCircleQuestion /> },
-    { id: 'database', label: 'Database', icon: <FaDatabase /> }
+    { id: 'admin-management', label: 'Admin Management', icon: <FaUserShield /> },
+    { id: 'system-settings', label: 'System Settings', icon: <FaGear /> }
   ];
 
   return (
