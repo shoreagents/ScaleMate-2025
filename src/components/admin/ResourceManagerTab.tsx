@@ -166,6 +166,8 @@ const IconButton = styled.button<{ $color?: string }>`
   color: rgba(15, 23, 42, 0.7);
   border-radius: 0.25rem;
   transition: all 0.2s;
+  background: none;
+  border: none;
 
   &:hover {
     color: ${props => props.$color || '#0F172A'};
