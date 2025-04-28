@@ -172,6 +172,20 @@ export default function AuthCallback() {
               setIsLoading(false);
               return;
             }
+          } else {
+            // Check if user has set their password
+            const { data: authUser, error: authError } = await supabase.auth.getUser();
+            if (authError) {
+              console.error('Auth error:', authError);
+              throw authError;
+            }
+
+            // If user is a Google user and hasn't set their password, show the modal
+            if (profile.is_google_user && !authUser.user?.app_metadata?.has_set_password) {
+              setShowFirstLoginModal(true);
+              setIsLoading(false);
+              return;
+            }
           }
 
           // If roles don't exist, create default user role
