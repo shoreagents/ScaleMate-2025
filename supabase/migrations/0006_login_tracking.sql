@@ -28,9 +28,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create trigger for updating last_password_change
-DROP TRIGGER IF EXISTS update_last_password_change_trigger ON auth.users;
-CREATE TRIGGER update_last_password_change_trigger
+-- Create trigger for updating last_password_change on INSERT
+DROP TRIGGER IF EXISTS update_last_password_change_insert_trigger ON auth.users;
+CREATE TRIGGER update_last_password_change_insert_trigger
+    AFTER INSERT
+    ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_last_password_change();
+
+-- Create trigger for updating last_password_change on UPDATE
+DROP TRIGGER IF EXISTS update_last_password_change_update_trigger ON auth.users;
+CREATE TRIGGER update_last_password_change_update_trigger
     AFTER UPDATE OF encrypted_password
     ON auth.users
     FOR EACH ROW
@@ -44,4 +52,4 @@ WHERE last_password_change IS NULL;
 
 -- Add comments to explain the functions
 COMMENT ON FUNCTION update_last_login() IS 'Updates the last_login timestamp in the users table when a user signs in';
-COMMENT ON FUNCTION update_last_password_change() IS 'Updates the last_password_change timestamp in the user_profiles table when a user changes their password'; 
+COMMENT ON FUNCTION update_last_password_change() IS 'Updates the last_password_change timestamp in the user_profiles table when a user changes their password or is first created'; 
