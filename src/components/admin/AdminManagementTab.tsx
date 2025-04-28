@@ -20,10 +20,11 @@ const Header = styled.div`
 const Title = styled.h2`
   font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const Button = styled.button`
+  font-size: 0.875rem;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -59,7 +60,7 @@ const Th = styled.th<{ $sortable?: boolean }>`
   color: rgb(107, 114, 128);
   font-weight: 500;
   border-bottom: 1px solid #E5E7EB;
-  font-size: 16px;
+  font-size: 0.875rem;
   cursor: ${props => props.$sortable ? 'pointer' : 'default'};
   user-select: none;
   
@@ -77,7 +78,7 @@ const Th = styled.th<{ $sortable?: boolean }>`
 const SortIcon = styled.span<{ $active: boolean; $direction: 'asc' | 'desc' }>`
   display: inline-block;
   margin-left: 4px;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
   transform: ${props => props.$direction === 'desc' ? 'rotate(180deg)' : 'none'};
   transition: all 0.3s ease;
   opacity: ${props => props.$active ? 1 : 0};
@@ -87,11 +88,12 @@ const SortIcon = styled.span<{ $active: boolean; $direction: 'asc' | 'desc' }>`
 const Td = styled.td`
   padding: 12px 16px;
   border-bottom: 1px solid #e5e7eb;
-  color: #111827;
-  font-size: 16px;
+  color: ${props => props.theme.colors.text.primary};
+  font-size: 0.875rem;
 `;
 
 const ActionButton = styled.button<{ $variant?: 'danger' | 'success' }>`
+  font-size: 0.875rem;
   padding: 6px;
   background: none;
   border: none;
@@ -136,9 +138,9 @@ const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed
       case 'pending':
         return '#D97706';
       case 'not-confirmed':
-        return '#1F2937';
+        return props.theme.colors.text.primary;
       default:
-        return '#1F2937';
+        return props.theme.colors.text.primary;
     }
   }};
   text-transform: capitalize;
@@ -179,7 +181,7 @@ const ModalHeader = styled.div`
 const ModalTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const CloseButton = styled.button`
@@ -190,7 +192,7 @@ const CloseButton = styled.button`
   padding: 4px;
   
   &:hover {
-    color: #111827;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -221,9 +223,8 @@ const RequiredAsterisk = styled.span`
 const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151;
-  display: flex;
-  align-items: center;
+  color: ${props => props.theme.colors.text.primary};
+  min-width: 120px;
 `;
 
 const Input = styled.input`
@@ -325,6 +326,7 @@ const RoleSelect = styled.select`
 `;
 
 const ButtonGroup = styled.div`
+  font-size: 0.875rem;
   display: flex;
   gap: 12px;
   justify-content: flex-end;
@@ -332,7 +334,8 @@ const ButtonGroup = styled.div`
 `;
 
 const ModalButton = styled.button`
-  padding: 8px 16px;
+font-size: 0.875rem;  
+padding: 8px 16px;
   border: none;
   border-radius: 8px;
   font-weight: 500;
@@ -2885,6 +2888,7 @@ const TabContainer = styled.div`
 `;
 
 const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator' | 'user' | 'all' }>`
+  font-size: 0.875rem;
   display: flex;
   align-items: center;
   justify-content: center;

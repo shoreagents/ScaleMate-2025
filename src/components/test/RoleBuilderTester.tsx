@@ -127,6 +127,17 @@ const ResultPre = styled.pre`
   color: var(--text-secondary, #6B7280);
 `;
 
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const Subtitle = styled.p`
+  font-size: 1rem;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 // --- Mock Data ---
 const MOCK_DEPARTMENTS = ['Engineering', 'Marketing', 'Sales', 'Support', 'Operations', 'HR'];
 const MOCK_TASK_SETS: Record<string, string[]> = {

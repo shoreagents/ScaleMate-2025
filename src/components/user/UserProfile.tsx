@@ -83,14 +83,14 @@ const UploadButton = styled.button`
 
   &:hover {
     background: #f3f4f6;
-    color: #111827;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
 const SectionTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 600;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
   display: flex;
   align-items: center;
   gap: 8px;
@@ -122,7 +122,7 @@ const HelperText = styled.div`
 
 const Label = styled.label`
   font-weight: 500;
-  color: #374151;
+  color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
   width: 120px;
 `;
@@ -133,7 +133,7 @@ const Input = styled.input`
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
   background: white;
   width: 100%;
   
@@ -145,7 +145,7 @@ const Input = styled.input`
 
   &:disabled {
     background: #f9fafb;
-    color: #111827;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -276,7 +276,7 @@ const ModalHeader = styled.div`
 const ModalTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
   margin: 0;
   text-align: left;
 `;
@@ -303,7 +303,7 @@ const CloseButton = styled.button`
   top: 0;
   
   &:hover {
-    color: #111827;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 

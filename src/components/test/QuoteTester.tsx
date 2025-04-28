@@ -126,6 +126,17 @@ const ResultPre = styled.pre`
   color: var(--text-secondary, #6B7280);
 `;
 
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const Subtitle = styled.p`
+  font-size: 1rem;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 const MOCK_ROLES = ['Developer', 'Designer', 'QA Tester', 'Project Manager', 'Business Analyst', 'Data Scientist'];
 
 export default function QuoteTester({ onTest }: QuoteTesterProps) {

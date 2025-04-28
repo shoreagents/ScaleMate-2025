@@ -22,14 +22,26 @@ interface StyledButtonProps {
 // Design system colors from design.md
 const colors = {
   primary: '#3B82F6',
-  primaryHover: '#2563EB',
-  secondary: '#22C55E',
-  secondaryHover: '#16A34A',
+  primaryDark: '#2563EB',
+  secondary: '#6B7280',
+  secondaryDark: '#4B5563',
+  success: '#10B981',
+  successDark: '#059669',
+  danger: '#EF4444',
+  dangerDark: '#DC2626',
+  warning: '#F59E0B',
+  warningDark: '#D97706',
+  info: '#3B82F6',
+  infoDark: '#2563EB',
+  light: '#F3F4F6',
+  dark: '#1F2937',
+  textLight: '#F9FAFB',
+  textDark: (props: { theme: { colors: { text: { primary: string } } } }) => props.theme.colors.text.primary,
+  border: '#E5E7EB',
+  disabled: '#9CA3AF',
   accent: '#8B5CF6',
-  accentHover: '#7C3AED',
-  textLight: '#FFFFFF',
-  textDark: '#1F2937',
-} as const;
+  accentHover: '#7C3AED'
+};
 
 const getButtonStyles = (variant: ButtonVariant) => {
   switch (variant) {
@@ -38,7 +50,7 @@ const getButtonStyles = (variant: ButtonVariant) => {
         background-color: ${colors.primary};
         color: ${colors.textLight};
         &:hover:not(:disabled) {
-          background-color: ${colors.primaryHover};
+          background-color: ${colors.primaryDark};
           transform: translateY(-2px);
         }
       `;
@@ -47,7 +59,7 @@ const getButtonStyles = (variant: ButtonVariant) => {
         background-color: ${colors.secondary};
         color: ${colors.textLight};
         &:hover:not(:disabled) {
-          background-color: ${colors.secondaryHover};
+          background-color: ${colors.secondaryDark};
           transform: translateY(-2px);
         }
       `;
