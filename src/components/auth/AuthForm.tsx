@@ -15,10 +15,6 @@ const FormContainer = styled.div`
   position: relative;
 `;
 
-const LogoContainer = styled.div`
-  text-align: center;
-  margin-bottom: 2.5rem;
-`;
 
 const Title = styled.h1`
   font-size: 1.75rem;

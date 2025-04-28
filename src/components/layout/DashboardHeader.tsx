@@ -181,7 +181,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <ProfileDropdown isOpen={isProfileOpen}>
             <DropdownItem onClick={handleProfileClick}>
               <FiUser size={16} />
-              View Profile
+              Profile
             </DropdownItem>
             <DropdownItem onClick={onLogout}>
               <FiLogOut size={16} />
