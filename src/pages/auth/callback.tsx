@@ -111,9 +111,15 @@ export default function AuthCallback() {
             throw roleError;
           }
           console.log('Role assigned successfully');
+
+          // After creating profile and assigning role, show setup modal
+          setUserId(session.user.id);
+          setCurrentUsername(session.user.email?.split('@')[0] || '');
+          setShowSetupModal(true);
+          return; // Exit early to prevent further checks
         }
 
-        // Check if we need to show the setup modal
+        // Check if we need to show the setup modal for existing profiles
         if (!profile?.last_password_change) {
           setUserId(session.user.id);
           setCurrentUsername(profile?.username || session.user.email?.split('@')[0] || '');
