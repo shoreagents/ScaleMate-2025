@@ -110,8 +110,7 @@ export default function AuthCallback() {
                 user_id: session.user.id,
                 username: session.user.email?.split('@')[0],
                 first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
-                last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
-                last_password_change: new Date().toISOString()
+                last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || ''
               });
 
             if (createProfileError) {
