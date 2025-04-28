@@ -226,16 +226,16 @@ const Header = () => {
   const handleDashboardClick = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      // Check if user has set their password
+      // Check if user has completed setup
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('last_password_change')
+        .select('username, last_password_change')
         .eq('user_id', user.id)
         .single();
 
-      if (!profile?.last_password_change) {
-        // If password not set, redirect to setup page
-        router.push('/auth/setup');
+      // If username is not set or last_password_change is null, user hasn't completed setup
+      if (!profile?.username || !profile?.last_password_change) {
+        router.push('/');
         return;
       }
 
