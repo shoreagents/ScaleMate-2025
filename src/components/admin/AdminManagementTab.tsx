@@ -269,7 +269,8 @@ const ErrorMessage = styled.div`
   }
 `;
 
-const SuccessMessage = styled.div`
+// Rename the first SuccessMessage to SuccessAlert
+const SuccessAlert = styled.div`
   color: #059669;
   font-size: 0.875rem;
   margin-top: 8px;
@@ -589,7 +590,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserToDelete | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<{ title: string; description: string }>({ title: '', description: '' });
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showSortIcon, setShowSortIcon] = useState(false);
   const [activeSortColumn, setActiveSortColumn] = useState<SortField | null>(null);
@@ -615,7 +616,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   // Add ref for timeout
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  // Add back the showSuccessModal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     checkCurrentUserRole();
@@ -1038,9 +1040,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           return;
         }
 
-        setSuccessMessage('User created successfully');
-      setIsModalOpen(false);
-        setIsSuccessModalOpen(true);
+        showSuccess(
+          'User Created',
+          'The user has been successfully created and can now log in with their credentials.'
+        );
+        setIsModalOpen(false);
+        setModalSuccess('User created successfully');
         setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
         setRetryCount(0);
         setUsernameError(null);
@@ -1077,7 +1082,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
       // Refresh the admin list
       await fetchAdmins();
-      setSuccessMessage('Admin removed successfully');
+      showSuccess(
+        'Admin Removed',
+        'The admin role has been successfully removed from the user.'
+      );
     } catch (error) {
       console.error('Error deleting admin:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete admin');
@@ -1153,12 +1161,34 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         throw new Error('Failed to delete user');
       }
 
-      // Set success message and refresh the user list
-      setSuccessMessage('User deleted successfully');
+      // Close the delete modal first
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+      setErrorMessage('');
+
+      // Then show success message
+      showSuccess(
+        'User Deleted',
+        'The user has been successfully deleted from the system.'
+      );
       await fetchAllUsers();
     } catch (error) {
       console.error('Error in handleDeleteUser:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Failed to delete user');
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+    
+    try {
+      if (userToDelete.role === 'user') {
+        await handleDeleteUser(userToDelete);
+      } else if (userToDelete.role === 'admin') {
+        await handleDeleteAdmin(userToDelete.id);
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
     }
   };
 
@@ -1190,10 +1220,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       // Update role if changed
       if (editFormData.role !== selectedUser.roles[0]) {
         const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-        p_action: 'update',
-        p_new_role: editFormData.role,
-        p_target_user_id: selectedUser.id
-      });
+          p_action: 'update',
+          p_new_role: editFormData.role,
+          p_target_user_id: selectedUser.id
+        });
 
         if (roleError) {
           throw new Error(`Failed to update role: ${roleError.message}`);
@@ -1235,18 +1265,22 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         );
       }
 
-      // Set success message and show success modal
-      setSuccessMessage('User profile updated successfully');
-      setIsSuccessModalOpen(true);
-      
-      // Clear username validation states
+      // First close the edit modal
+      setIsEditModalOpen(false);
+      setSelectedUser(null);
+      setModalError(null);
       setUsernameError(null);
       setUsernameExists(null);
       setCheckingUsername(false);
       setCurrentUsername('');
-      
-      // Close the edit modal
-      handleModalClose();
+      setPasswordsMatch(null);
+      setPasswordLength(false);
+
+      // Then show the success modal
+      showSuccess(
+        'User Updated',
+        'The user profile has been successfully updated with the new information.'
+      );
     } catch (error) {
       console.error('Error in handleEditSubmit:', error);
       setModalError(error instanceof Error ? error.message : 'Failed to update user profile');
@@ -1256,7 +1290,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const handleModalClose = () => {
     setIsEditModalOpen(false);
     setSelectedUser(null);
-    setModalSuccess(null);
+    hideSuccess();
     setModalError(null);
     setUsernameError(null);
     setUsernameExists(null);
@@ -1269,21 +1303,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const handleDeleteClick = (user: UserRole) => {
     setUserToDelete(user);
     setIsDeleteModalOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!userToDelete) return;
-    
-    try {
-      if (userToDelete.role === 'user') {
-        await handleDeleteUser(userToDelete);
-      } else if (userToDelete.role === 'admin') {
-        await handleDeleteAdmin(userToDelete.id);
-      }
-      // The modal will now only close when OK is clicked in the success message
-    } catch (error) {
-      console.error('Error deleting user:', error);
-    }
   };
 
   // Update the handleSort function
@@ -1520,6 +1539,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
     }
   };
 
+  // Update the showSuccess function
+  const showSuccess = (title: string, message: string) => {
+    setSuccessMessage({
+      title,
+      description: message
+    });
+    setShowSuccessModal(true);
+  };
+
+  // Update the hideSuccess function
+  const hideSuccess = () => {
+    setShowSuccessModal(false);
+    setSuccessMessage({ title: '', description: '' });
+  };
+
   if (loading) {
     return <PageLoadingSpinner />;
   }
@@ -1570,7 +1604,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
       {success && (
         <SuccessMessage>
-          <FiCheck />
+          <FiCheck size={16} />
           {success}
         </SuccessMessage>
       )}
@@ -2390,12 +2424,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               </ErrorMessage>
             )}
 
-            {modalSuccess && (
-              <SuccessMessage>
-                <FiCheck />
-                {modalSuccess}
-              </SuccessMessage>
-            )}
+     
 
             <ButtonGroup>
               <CancelButton 
@@ -2656,7 +2685,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
             {modalSuccess && (
               <SuccessMessage>
-                <FiCheck />
+                <FiCheck size={16} />
                 {modalSuccess}
               </SuccessMessage>
             )}
@@ -2727,152 +2756,52 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
       {/* Delete User Confirmation Modal */}
       {isDeleteModalOpen && userToDelete && (
-        <Modal $isOpen={isDeleteModalOpen}>
-          <ModalContent style={{ maxWidth: '400px', textAlign: 'center', padding: '32px' }}>
-            {successMessage ? (
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                gap: '16px' 
-              }}>
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: '#D1FAE5',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '8px'
-                }}>
-                  <FiCheck size={32} color="#059669" />
-                </div>
-                <p style={{ 
-                  color: '#059669', 
-                  fontSize: '1.125rem',
-                  fontWeight: 500,
-                  margin: 0,
-                  lineHeight: '1.5'
-                }}>
-                  {successMessage}
-                </p>
-                <div style={{ marginTop: '8px' }}>
-                  <SaveButton 
-                    onClick={() => {
-                      setIsDeleteModalOpen(false);
-                      setUserToDelete(null);
-                      setSuccessMessage('');
-                    }}
-                  >
-                    OK
-                  </SaveButton>
-                </div>
-              </div>
-            ) : (
-              <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                gap: '16px' 
-              }}>
-                <div style={{
-                  width: '64px',
-                  height: '64px',
-                  borderRadius: '50%',
-                  backgroundColor: '#FEE2E2',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '8px'
-                }}>
-                  <FiTrash2 size={32} color="#DC2626" />
-                </div>
-                <p style={{ 
-                  color: '#1F2937', 
-                  fontSize: '1.125rem',
-                  fontWeight: 500,
-                  margin: 0,
-                  lineHeight: '1.5'
-                }}>
-                  Are you sure you want to delete {userToDelete.username || userToDelete.email}? This action cannot be undone.
-                </p>
-                {errorMessage && (
-                  <p style={{ 
-                    color: '#DC2626', 
-                    fontSize: '1rem',
-                    margin: 0,
-                    lineHeight: '1.5'
-                  }}>
-                    {errorMessage}
-                  </p>
-                )}
-                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '8px' }}>
-                  <CancelButton 
-                    onClick={() => {
-                      setIsDeleteModalOpen(false);
-                      setUserToDelete(null);
-                      setErrorMessage('');
-                    }}
-                  >
-                    Cancel
-                  </CancelButton>
-                  <DeleteButton 
-                    onClick={handleDeleteConfirm}
-                  >
-                    Delete
-                  </DeleteButton>
-                </div>
-              </div>
+        <DeleteModal $isOpen={isDeleteModalOpen}>
+          <DeleteModalContent>
+            <DeleteIcon>
+              <FiTrash2 size={24} />
+            </DeleteIcon>
+            <DeleteTitle>Delete User</DeleteTitle>
+            <DeleteMessage>
+              Are you sure you want to delete {userToDelete.username || userToDelete.email}? This action cannot be undone.
+            </DeleteMessage>
+            {errorMessage && (
+              <ErrorMessage>
+                <FiAlertCircle />
+                {errorMessage}
+              </ErrorMessage>
             )}
-          </ModalContent>
-        </Modal>
+            <DeleteButtonGroup>
+              <DeleteCancelButton onClick={() => {
+                setIsDeleteModalOpen(false);
+                setUserToDelete(null);
+                setErrorMessage('');
+              }}>
+                Cancel
+              </DeleteCancelButton>
+              <DeleteConfirmButton onClick={handleDeleteConfirm}>
+                Delete
+              </DeleteConfirmButton>
+            </DeleteButtonGroup>
+          </DeleteModalContent>
+        </DeleteModal>
       )}
 
-      {/* Success Modal */}
-      {isSuccessModalOpen && (
-        <Modal $isOpen={isSuccessModalOpen}>
-          <ModalContent style={{ maxWidth: '400px', textAlign: 'center', padding: '32px' }}>
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              gap: '16px' 
-            }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                backgroundColor: '#D1FAE5',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '8px'
-              }}>
-                <FiCheck size={32} color="#059669" />
-              </div>
-              <p style={{ 
-                color: '#059669', 
-                fontSize: '1.125rem',
-                fontWeight: 500,
-                margin: 0,
-                lineHeight: '1.5'
-              }}>
-                {successMessage}
-              </p>
-              <div style={{ marginTop: '8px' }}>
-                <SaveButton 
-                  onClick={() => {
-                    setIsSuccessModalOpen(false);
-                    setSuccessMessage('');
-                  }}
-                >
-                  OK
-                </SaveButton>
-              </div>
-            </div>
-          </ModalContent>
-        </Modal>
+      {showSuccessModal && (
+        <SuccessModal $isOpen={showSuccessModal}>
+          <SuccessModalContent>
+            <SuccessIcon>
+              <FiCheck size={24} />
+            </SuccessIcon>
+            <SuccessTitle>{successMessage.title}</SuccessTitle>
+            <SuccessMessage>
+              {successMessage.description}
+            </SuccessMessage>
+            <SuccessButton onClick={hideSuccess}>
+              Continue
+            </SuccessButton>
+          </SuccessModalContent>
+        </SuccessModal>
       )}
     </Container>
   );
@@ -3148,6 +3077,174 @@ const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
   display: flex;
   align-items: center;
   gap: 4px;
+`;
+
+const SuccessModal = styled.div<{ $isOpen: boolean }>`
+  display: ${props => props.$isOpen ? 'flex' : 'none'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+`;
+
+const SuccessModalContent = styled.div`
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const SuccessIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  background-color: ${props => props.theme.colors.success}15;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: ${props => props.theme.colors.success};
+`;
+
+const SuccessTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 0.5rem;
+`;
+
+const SuccessMessage = styled.p`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 1.5rem;
+`;
+
+const SuccessButton = styled.button`
+  padding: 0.875rem 1.5rem;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+
+  &:hover {
+    background: ${props => props.theme.colors.primaryDark};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+// Add new styled components for delete modal
+const DeleteModal = styled.div<{ $isOpen: boolean }>`
+  display: ${props => props.$isOpen ? 'flex' : 'none'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+`;
+
+const DeleteModalContent = styled.div`
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const DeleteIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  background-color: ${props => props.theme.colors.error}15;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: ${props => props.theme.colors.error};
+`;
+
+const DeleteTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 0.5rem;
+`;
+
+const DeleteMessage = styled.p`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 1.5rem;
+`;
+
+const DeleteButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+`;
+
+const DeleteConfirmButton = styled.button`
+  padding: 0.875rem 1.5rem;
+  background: ${props => props.theme.colors.error};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+
+  &:hover {
+    background: ${props => props.theme.colors.error};
+    opacity: 0.9;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+const DeleteCancelButton = styled.button`
+  padding: 0.875rem 1.5rem;
+  background: ${props => props.theme.colors.background.secondary};
+  color: ${props => props.theme.colors.text.primary};
+  border: 1.5px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+
+  &:hover {
+    background: ${props => props.theme.colors.background.primary};
+    border-color: ${props => props.theme.colors.text.primary};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
 `;
 
 export default AdminManagementTab; 
