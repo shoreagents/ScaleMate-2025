@@ -1,222 +1,7 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
 import { Dialog } from '@headlessui/react';
-
-const Modal = styled.div<{ $isOpen: boolean }>`
-  display: ${props => props.$isOpen ? 'block' : 'none'};
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  padding: 20px;
-  overflow-y: auto;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  max-width: 500px;
-  margin: 0;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 24px;
-  position: relative;
-`;
-
-const ModalTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-  text-align: left;
-`;
-
-const ModalDescription = styled.p`
-  font-size: 0.875rem;
-  color: #6B7280;
-  text-align: left;
-  margin: 8px 0 0;
-  line-height: 1.5;
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  color: #6B7280;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  right: 0;
-  top: 0;
-  
-  &:hover {
-    color: #111827;
-  }
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const Label = styled.label`
-  font-weight: 500;
-  color: #374151;
-  font-size: 0.875rem;
-`;
-
-const RequiredAsterisk = styled.span`
-  color: #EF4444;
-  margin-left: 4px;
-`;
-
-const Input = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  color: #111827;
-  background: white;
-  width: 100%;
-  
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-  }
-`;
-
-const PasswordInputContainer = styled.div`
-  position: relative;
-  width: 100%;
-`;
-
-const PasswordInput = styled(Input)`
-  padding-right: 40px;
-`;
-
-const ViewPasswordButton = styled.button`
-  position: absolute;
-  right: .5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #6b7280;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    color: #374151;
-  }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 8px;
-`;
-
-const Button = styled.button`
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const CancelButton = styled(Button)`
-  background: transparent;
-  border: 1.5px solid #9aa2b3;
-  color: ${props => props.theme.colors.text.primary};
-
-  &:hover {
-    background: ${props => props.theme.colors.background.secondary};
-    border-color: ${props => props.theme.colors.text.primary};
-  }
-`;
-
-const SaveButton = styled(Button)`
-  background-color: #3B82F6;
-  color: white;
-  min-width: 100px;
-  justify-content: center;
-
-  &:hover {
-    background-color: #2563EB;
-  }
-
-  &:disabled {
-    background-color: #93C5FD;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-`;
-
-const ErrorMessage = styled.div`
-  color: #dc2626;
-  font-size: 0.875rem;
-  margin-top: 4px;
-`;
-
-const SuccessMessage = styled.div`
-  color: #059669;
-  font-size: 0.875rem;
-  margin-top: 4px;
-`;
-
-const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
-  font-size: 0.75rem;
-  color: ${props => props.$matches ? '#059669' : '#dc2626'};
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const SpinningIcon = styled(FiLoader)`
-  animation: spin 3s linear infinite;
-  
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
 
 interface FirstLoginModalProps {
   isOpen: boolean;
@@ -435,33 +220,81 @@ export default function FirstLoginModal({ isOpen, onClose, onComplete, email }: 
             </div>
 
             <div>
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={handleUsernameChange}
+                required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="Choose a username"
+              />
+              {usernameError && (
+                <p className="mt-1 text-sm text-red-600">{usernameError}</p>
+              )}
+              {checkingUsername && (
+                <p className="mt-1 text-sm text-gray-500">Checking username...</p>
+              )}
+              {usernameExists && (
+                <p className="mt-1 text-sm text-red-600">Username is already taken</p>
+              )}
+            </div>
+
+            <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 New Password
               </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="Enter your new password"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pr-10"
+                  placeholder="Enter your new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showPassword ? <FiEyeOff className="h-5 w-5 text-gray-400" /> : <FiEye className="h-5 w-5 text-gray-400" />}
+                </button>
+              </div>
+              {passwordLength === false && (
+                <p className="mt-1 text-sm text-red-600">Password must be at least 8 characters long</p>
+              )}
             </div>
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="Confirm your new password"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  id="confirmPassword"
+                  value={confirmPassword}
+                  onChange={handleConfirmPasswordChange}
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm pr-10"
+                  placeholder="Confirm your new password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  {showConfirmPassword ? <FiEyeOff className="h-5 w-5 text-gray-400" /> : <FiEye className="h-5 w-5 text-gray-400" />}
+                </button>
+              </div>
+              {passwordsMatch === false && (
+                <p className="mt-1 text-sm text-red-600">Passwords do not match</p>
+              )}
             </div>
 
             {error && (
@@ -470,13 +303,23 @@ export default function FirstLoginModal({ isOpen, onClose, onComplete, email }: 
               </div>
             )}
 
+            {success && (
+              <div className="text-sm text-green-600">
+                {success}
+              </div>
+            )}
+
             <div className="mt-5">
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !isFormValid()}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
-                {isLoading ? 'Updating...' : 'Set Password'}
+                {isLoading ? (
+                  <FiLoader className="animate-spin h-5 w-5" />
+                ) : (
+                  'Set Password'
+                )}
               </button>
             </div>
           </form>
