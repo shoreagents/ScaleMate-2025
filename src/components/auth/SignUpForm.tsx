@@ -531,7 +531,8 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
           first_name: formData.firstName.trim(),
           last_name: formData.lastName.trim(),
           phone: null,
-          gender: null
+          gender: null,
+          last_password_change: new Date().toISOString()
         });
 
       if (profileError) {
