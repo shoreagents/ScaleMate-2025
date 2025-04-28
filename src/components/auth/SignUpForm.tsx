@@ -469,10 +469,29 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
         }
       });
 
-      if (signUpError) throw signUpError;
-      if (!user) throw new Error('User creation failed');
+      if (signUpError) {
+        console.error('Sign up error:', signUpError);
+        throw new Error(signUpError.message || 'Failed to create account');
+      }
 
-      // 2. Create user record in users table
+      if (!user) {
+        throw new Error('Failed to create user account');
+      }
+
+      // 2. Check if user already exists in users table
+      const { data: existingUser, error: checkError } = await serviceRoleClient
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        console.error('Error checking existing user:', checkError);
+        throw new Error('Failed to check existing user');
+      }
+
+      // Only insert if user doesn't exist
+      if (!existingUser) {
       const { error: userError } = await serviceRoleClient
         .from('users')
         .insert({
@@ -482,9 +501,28 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
           is_active: true
         });
 
-      if (userError) throw userError;
+      if (userError) {
+        console.error('User creation error:', userError);
+        // If user creation fails, try to delete the auth user to maintain consistency
+        await supabase.auth.admin.deleteUser(user.id);
+        throw new Error('Failed to create user record: ' + userError.message);
+      }
+      }
 
-      // 3. Create user profile with last_password_change
+      // 3. Check if profile exists
+      const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
+        .from('user_profiles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+        console.error('Error checking existing profile:', profileCheckError);
+        throw new Error('Failed to check existing profile');
+      }
+
+      // Only insert if profile doesn't exist
+      if (!existingProfile) {
       const { error: profileError } = await serviceRoleClient
         .from('user_profiles')
         .insert({
@@ -492,12 +530,33 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
           username: formData.username,
           first_name: formData.firstName.trim(),
           last_name: formData.lastName.trim(),
-          last_password_change: new Date().toISOString() // Set last_password_change
+          phone: null,
+          gender: null
         });
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // If profile creation fails, try to delete the auth user and user record
+        await serviceRoleClient.from('users').delete().eq('id', user.id);
+        await supabase.auth.admin.deleteUser(user.id);
+        throw new Error('Failed to create user profile: ' + profileError.message);
+      }
+      }
 
-      // 4. Assign user role
+      // 4. Check if role exists
+      const { data: existingRole, error: roleCheckError } = await serviceRoleClient
+        .from('user_roles')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (roleCheckError && roleCheckError.code !== 'PGRST116') {
+        console.error('Error checking existing role:', roleCheckError);
+        throw new Error('Failed to check existing role');
+      }
+
+      // Only insert if role doesn't exist
+      if (!existingRole) {
       const { error: roleError } = await serviceRoleClient
         .from('user_roles')
         .insert({
@@ -505,11 +564,18 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
           role: 'user'
         });
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error('Role assignment error:', roleError);
+        // If role assignment fails, try to clean up
+        await serviceRoleClient.from('user_profiles').delete().eq('user_id', user.id);
+        await serviceRoleClient.from('users').delete().eq('id', user.id);
+        await supabase.auth.admin.deleteUser(user.id);
+        throw new Error('Failed to assign user role: ' + roleError.message);
+        }
+      }
 
       setSuccess('Account created successfully!');
       onSuccess?.('Account created successfully!');
-      
       // Wait for 1 second before redirecting to login page
       setTimeout(() => {
         router.push('/login');
