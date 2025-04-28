@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faToolbox } from '@fortawesome/free-solid-svg-icons';
+import { FaToolbox } from 'react-icons/fa6';
 
 const Section = styled.section`
   padding-top: 8rem;
@@ -18,12 +19,16 @@ const Container = styled.div`
 const Badge = styled.div`
   display: inline-flex;
   align-items: center;
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  background-color: #4ADE80;
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   margin-bottom: 1.5rem;
-  font-size: 1rem;
+`;
+
+const BadgeIcon = styled(FaToolbox)`
+  margin-right: 0.5rem;
+  color: white;
 `;
 
 const Title = styled.h1`
@@ -49,7 +54,7 @@ export default function HeroSection() {
     <Section id="tools-hero">
       <Container>
         <Badge>
-          <Icon icon={faToolbox} />
+          <BadgeIcon />
           Tool Library
         </Badge>
         <Title>Your Business Scaling Toolbox</Title>
