@@ -141,6 +141,17 @@ const ResultPre = styled.pre` /* Reusing */
   color: var(--text-secondary, #6B7280);
 `;
 
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const Subtitle = styled.p`
+  font-size: 1rem;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 // Mock user state (replace with actual state management later)
 let mockUserState = {
     userId: 'user-123',

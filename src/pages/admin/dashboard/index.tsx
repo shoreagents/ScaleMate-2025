@@ -162,7 +162,7 @@ const Card = styled.div`
 const CardTitle = styled.h2`
   font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
   margin-bottom: 1rem;
 `;
 
@@ -175,7 +175,7 @@ const CardContent = styled.div`
 const MetricValue = styled.div`
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const MetricLabel = styled.div`
@@ -481,7 +481,7 @@ const ActivityContent = styled.div`
 
 const ActivityTitle = styled.div`
   font-weight: 500;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const ActivityTime = styled.div`
@@ -512,7 +512,7 @@ const ActionIcon = styled.div`
 
 const ActionText = styled.div`
   font-weight: 500;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
   text-align: left;
 `;
 
@@ -571,7 +571,7 @@ const IconButton = styled.button`
 
   &:hover {
     background-color: #F3F4F6;
-    color: #111827;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 
@@ -644,7 +644,7 @@ const CloseButton = styled.button`
   padding: 8px;
   
   &:hover {
-    color: #111827;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 

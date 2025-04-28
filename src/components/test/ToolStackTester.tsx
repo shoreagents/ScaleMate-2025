@@ -182,6 +182,17 @@ const ResultPre = styled.pre` /* Reusing */
   color: var(--text-secondary, #6B7280);
 `;
 
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const Subtitle = styled.p`
+  font-size: 1rem;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 export default function ToolStackTester({ onTest }: ToolStackTesterProps) {
   const [lastResult, setLastResult] = useState<TestResult | null>(null);
   const [isLoading, setIsLoading] = useState<string | null>(null); // Track type of test loading
