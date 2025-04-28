@@ -26,7 +26,6 @@ const Title = styled.h1`
   color: ${props => props.theme.colors.text.primary};
   text-align: left;
   margin: 0;
-  line-height: 1.2;
 `;
 
 const Subtitle = styled.p`
@@ -34,7 +33,6 @@ const Subtitle = styled.p`
   color: ${props => props.theme.colors.text.secondary};
   text-align: left;
   margin-bottom: 3rem;
-  line-height: 1.2;
 `;
 
 const Form = styled.form`
