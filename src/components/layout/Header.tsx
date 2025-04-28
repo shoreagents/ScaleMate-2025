@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 import { FiUser, FiLogOut } from 'react-icons/fi';
 import { supabase } from '@/lib/supabase';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 const HeaderContainer = styled.header`
   position: fixed;
