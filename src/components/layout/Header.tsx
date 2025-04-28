@@ -224,37 +224,45 @@ const Header = () => {
   };
 
   const handleDashboardClick = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      // Check if user has completed setup
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('username, last_password_change')
-        .eq('user_id', user.id)
-        .single();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Check if user has completed setup
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('username, last_password_change')
+          .eq('user_id', user.id)
+          .single();
 
-      // If username is not set or last_password_change is null, user hasn't completed setup
-      if (!profile?.username || !profile?.last_password_change) {
-        router.push('/');
-        return;
-      }
-
-      // Get user's role
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
-
-      if (roles && roles.length > 0) {
-        const userRoles = roles.map(r => r.role);
-        if (userRoles.includes('admin') || userRoles.includes('moderator')) {
-          router.push('/admin/dashboard');
-        } else if (userRoles.includes('user')) {
-          router.push('/user/dashboard');
+        // If username is not set or last_password_change is null, user hasn't completed setup
+        if (!profile?.username || !profile?.last_password_change) {
+          router.push('/');
+          return;
         }
+
+        // Get user's role
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+
+        if (roles && roles.length > 0) {
+          const userRoles = roles.map(r => r.role);
+          if (userRoles.includes('admin') || userRoles.includes('moderator')) {
+            router.push('/admin/dashboard');
+          } else if (userRoles.includes('user')) {
+            router.push('/user/dashboard');
+          }
+        } else {
+          // If no role is found, redirect to home page
+          router.push('/');
+        }
+      } else {
+        router.push('/login');
       }
-    } else {
-      router.push('/login');
+    } catch (error) {
+      console.error('Error in handleDashboardClick:', error);
+      router.push('/');
     }
   };
 
