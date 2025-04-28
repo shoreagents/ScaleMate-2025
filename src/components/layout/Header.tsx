@@ -342,6 +342,19 @@ const Header = () => {
   const handleDashboardClick = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
+      // Check if user has set their password
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('last_password_change')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.last_password_change) {
+        // If password not set, redirect to setup page
+        router.push('/auth/setup');
+        return;
+      }
+
       // Get user's role
       const { data: roles } = await supabase
         .from('user_roles')
