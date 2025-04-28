@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
+import { Dialog } from '@headlessui/react';
 
 const Modal = styled.div<{ $isOpen: boolean }>`
   display: ${props => props.$isOpen ? 'block' : 'none'};
@@ -401,145 +402,83 @@ export default function FirstLoginModal({ isOpen, onClose, onComplete, email }: 
   };
 
   return (
-    <Modal $isOpen={isOpen}>
-      <ModalContent>
-        <ModalHeader>
-          <ModalTitle>Complete Your Profile</ModalTitle>
-          <ModalDescription>
-            Please set your username and password to complete your profile setup.
-          </ModalDescription>
-          <CloseButton onClick={onClose}>
-            <FiX size={20} />
-          </CloseButton>
-        </ModalHeader>
+    <Dialog
+      open={isOpen}
+      onClose={() => {}}
+      className="relative z-50"
+    >
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
-        <Form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label>
-              Username
-              <RequiredAsterisk>*</RequiredAsterisk>
-            </Label>
-            <Input
-              type="text"
-              value={username}
-              onChange={handleUsernameChange}
-              placeholder="Choose a username"
-              required
-            />
-            {checkingUsername ? (
-              <PasswordMatchIndicator $matches={true}>
-                <FiLoader size={14} />
-                Checking availability...
-              </PasswordMatchIndicator>
-            ) : usernameExists !== null && (
-              <PasswordMatchIndicator $matches={!usernameExists}>
-                {usernameExists ? (
-                  <>
-                    <FiX size={14} />
-                    Username is already taken
-                  </>
-                ) : (
-                  <>
-                    <FiCheck size={14} />
-                    Username is available
-                  </>
-                )}
-              </PasswordMatchIndicator>
-            )}
-            {usernameError && <ErrorMessage>{usernameError}</ErrorMessage>}
-          </FormGroup>
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="mx-auto max-w-sm rounded-lg bg-white p-6 shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog.Title className="text-lg font-medium text-gray-900">
+              Set Your Password
+            </Dialog.Title>
+          </div>
 
-          <FormGroup>
-            <Label>
-              Password
-              <RequiredAsterisk>*</RequiredAsterisk>
-            </Label>
-            <PasswordInputContainer>
-              <PasswordInput
-                type={showPassword ? "text" : "password"}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                disabled
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm bg-gray-50"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                New Password
+              </label>
+              <input
+                type="password"
+                id="password"
                 value={password}
-                onChange={handlePasswordChange}
-                placeholder="Set a password"
+                onChange={(e) => setPassword(e.target.value)}
                 required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="Enter your new password"
               />
-              <ViewPasswordButton
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-              </ViewPasswordButton>
-            </PasswordInputContainer>
-            {password && (
-              <PasswordMatchIndicator $matches={passwordLength === true}>
-                {passwordLength ? (
-                  <>
-                    <FiCheck size={14} />
-                    Password length is valid
-                  </>
-                ) : (
-                  <>
-                    <FiX size={14} />
-                    Password must be at least 8 characters
-                  </>
-                )}
-              </PasswordMatchIndicator>
-            )}
-          </FormGroup>
+            </div>
 
-          <FormGroup>
-            <Label>
-              Confirm Password
-              <RequiredAsterisk>*</RequiredAsterisk>
-            </Label>
-            <PasswordInputContainer>
-              <PasswordInput
-                type={showConfirmPassword ? "text" : "password"}
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                id="confirmPassword"
                 value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                placeholder="Confirm your password"
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="Confirm your new password"
               />
-              <ViewPasswordButton
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-              </ViewPasswordButton>
-            </PasswordInputContainer>
-            {passwordsMatch !== null && (
-              <PasswordMatchIndicator $matches={passwordsMatch}>
-                {passwordsMatch ? (
-                  <>
-                    <FiCheck size={14} />
-                    Passwords match
-                  </>
-                ) : (
-                  <>
-                    <FiX size={14} />
-                    Passwords do not match
-                  </>
-                )}
-              </PasswordMatchIndicator>
+            </div>
+
+            {error && (
+              <div className="text-sm text-red-600">
+                {error}
+              </div>
             )}
-          </FormGroup>
 
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-          {success && <SuccessMessage>{success}</SuccessMessage>}
-
-          <ButtonGroup>
-            <CancelButton type="button" onClick={onClose}>
-              Cancel
-            </CancelButton>
-            <SaveButton type="submit" disabled={!isFormValid() || isLoading}>
-              {isLoading ? (
-                <SpinningIcon size={16} />
-              ) : (
-                'Save'
-              )}
-            </SaveButton>
-          </ButtonGroup>
-        </Form>
-      </ModalContent>
-    </Modal>
+            <div className="mt-5">
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+              >
+                {isLoading ? 'Updating...' : 'Set Password'}
+              </button>
+            </div>
+          </form>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
   );
 } 
