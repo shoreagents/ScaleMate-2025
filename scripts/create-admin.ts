@@ -50,14 +50,15 @@ async function createAdminUser(email: string, password: string, fullName: string
     const userId = authData.user.id;
     console.log('✅ User created in Auth:', userId);
 
-    // 2. Create user record in users table
+    // 2. Create user record in users table with last_login
     const { error: userError } = await supabase
       .from('users')
       .insert({
         id: userId,
         email,
         full_name: fullName,
-        is_active: true
+        is_active: true,
+        last_login: new Date().toISOString()
       });
 
     if (userError) {
@@ -67,14 +68,15 @@ async function createAdminUser(email: string, password: string, fullName: string
 
     console.log('✅ User record created');
 
-    // 3. Create user profile
+    // 3. Create user profile with last_password_change
     const { error: profileError } = await supabase
       .from('user_profiles')
       .insert({
         user_id: userId,
         username: email.split('@')[0],
         first_name: fullName.split(' ')[0],
-        last_name: fullName.split(' ').slice(1).join(' ')
+        last_name: fullName.split(' ').slice(1).join(' '),
+        last_password_change: new Date().toISOString()
       });
 
     if (profileError) {
@@ -108,13 +110,13 @@ async function createAdminUser(email: string, password: string, fullName: string
   }
 }
 
-// Get admin details from command line arguments
+// Get email and new password from command line arguments
 const email = process.argv[2];
 const password = process.argv[3];
 const fullName = process.argv[4];
 
 if (!email || !password || !fullName) {
-  console.error('Usage: npx ts-node scripts/create-admin.ts <email> <password> <fullName>');
+  console.error('Usage: npx ts-node scripts/create-admin.ts <email> <password> <full-name>');
   process.exit(1);
 }
 

@@ -41,17 +41,6 @@ export default function AuthCallback() {
         console.log('Session found:', session.user.id);
 
         try {
-          // Update last_login in users table
-          const { error: updateLoginError } = await serviceRoleClient
-            .from('users')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', session.user.id);
-
-          if (updateLoginError) {
-            console.error('Error updating last_login:', updateLoginError);
-            // Don't throw error here, continue with the flow
-          }
-
           // Get user's role using service role client
           const { data: roles, error: rolesError } = await serviceRoleClient
             .from('user_roles')
@@ -75,13 +64,6 @@ export default function AuthCallback() {
           if (profileError && profileError.code !== 'PGRST116') {
             console.error('Profile error:', profileError);
             throw profileError;
-          }
-
-          // Check if user needs to set up password
-          if (!profile?.last_password_change) {
-            console.log('User needs to set up password');
-            router.push('/auth/setup-password');
-            return;
           }
 
           console.log('Profile check:', profile);
