@@ -109,7 +109,7 @@ const DropdownItem = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 3px;
+  margin: 4px;
   width: calc(100% - 8px);
   border-radius: 6px;
 
