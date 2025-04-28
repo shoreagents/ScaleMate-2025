@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
+import { createClient } from '@supabase/supabase-js';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -301,21 +302,32 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     // Check if username exists
     setCheckingUsername(true);
     try {
-      const { data, error } = await supabase
+      // Create a client with service role key for admin access
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+      
+      // Query the user_profiles table with service role
+      const { data, error } = await serviceRoleClient
         .from('user_profiles')
         .select('username')
         .eq('username', username)
-        .single();
+        .limit(1);
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No rows found - username is available
-          return true;
-        }
-        throw error;
+        console.error('Error checking username:', error);
+        setUsernameError('Error checking username availability');
+        return false;
       }
 
-      if (data) {
+      if (data && data.length > 0) {
         setUsernameError('Username is already taken');
         return false;
       }
