@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import FirstLoginModal from '@/components/auth/FirstLoginModal';
 
 // Create a client with service role key for admin operations
 const serviceRoleClient = createClient(
@@ -17,49 +16,10 @@ const serviceRoleClient = createClient(
   }
 );
 
-// Add this function at the top level
-async function generateUniqueUsername(baseUsername: string, serviceRoleClient: any): Promise<string> {
-  // Clean the base username
-  const cleanBase = baseUsername
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]/g, '') // Remove invalid characters
-    .substring(0, 20); // Limit length
-
-  let username = cleanBase;
-  let counter = 1;
-  const maxAttempts = 100; // Prevent infinite loops
-  
-  while (counter <= maxAttempts) {
-    const { data, error } = await serviceRoleClient
-      .from('user_profiles')
-      .select('username')
-      .eq('username', username)
-      .single();
-
-    if (error && error.code === 'PGRST116') {
-      // Username is available
-      return username;
-    }
-
-    // Username exists, try with a number
-    // Format: base123 (max 20 chars total)
-    const numberStr = counter.toString();
-    const maxBaseLength = 20 - numberStr.length;
-    username = `${cleanBase.substring(0, maxBaseLength)}${numberStr}`;
-    counter++;
-  }
-
-  // If we've tried 100 times, generate a random string
-  const randomStr = Math.random().toString(36).substring(2, 8);
-  return `${cleanBase.substring(0, 12)}${randomStr}`;
-}
-
 export default function AuthCallback() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showFirstLoginModal, setShowFirstLoginModal] = useState(false);
-  const [userEmail, setUserEmail] = useState<string>('');
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -79,7 +39,6 @@ export default function AuthCallback() {
         }
 
         console.log('Session found:', session.user.id);
-        setUserEmail(session.user.email || '');
 
         try {
           // Get user's role using service role client
@@ -105,6 +64,13 @@ export default function AuthCallback() {
           if (profileError && profileError.code !== 'PGRST116') {
             console.error('Profile error:', profileError);
             throw profileError;
+          }
+
+          // Check if user needs to set up password
+          if (!profile?.last_password_change) {
+            console.log('User needs to set up password');
+            router.push('/auth/setup-password');
+            return;
           }
 
           console.log('Profile check:', profile);
@@ -145,19 +111,13 @@ export default function AuthCallback() {
           // Only create profile if it doesn't exist
           if (!profile) {
             console.log('Creating new profile');
-            const baseUsername = session.user.email?.split('@')[0] || '';
-            const username = await generateUniqueUsername(baseUsername, serviceRoleClient);
-            
             const { error: createProfileError } = await serviceRoleClient
               .from('user_profiles')
               .insert({
                 user_id: session.user.id,
-                username: username,
+                username: session.user.email?.split('@')[0],
                 first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
-                last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
-                is_google_user: true,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || ''
               });
 
             if (createProfileError) {
@@ -165,27 +125,6 @@ export default function AuthCallback() {
               throw createProfileError;
             }
             console.log('Profile created successfully');
-
-            // Show first login modal for Google users
-            if (session.user.app_metadata.provider === 'google') {
-              setShowFirstLoginModal(true);
-              setIsLoading(false);
-              return;
-            }
-          } else {
-            // Check if user has set their password
-            const { data: authUser, error: authError } = await supabase.auth.getUser();
-            if (authError) {
-              console.error('Auth error:', authError);
-              throw authError;
-            }
-
-            // If user is a Google user and hasn't set their password, show the modal
-            if (profile.is_google_user && !authUser.user?.app_metadata?.has_set_password) {
-              setShowFirstLoginModal(true);
-              setIsLoading(false);
-              return;
-            }
           }
 
           // If roles don't exist, create default user role
@@ -258,11 +197,6 @@ export default function AuthCallback() {
     handleCallback();
   }, [router]);
 
-  const handleFirstLoginComplete = () => {
-    setShowFirstLoginModal(false);
-    router.push('/user/dashboard');
-  };
-
   // If there's an error, show it and redirect to login after a delay
   useEffect(() => {
     if (error) {
@@ -273,15 +207,5 @@ export default function AuthCallback() {
     }
   }, [error, router]);
 
-  return (
-    <>
-      {isLoading && <LoadingSpinner />}
-      <FirstLoginModal
-        isOpen={showFirstLoginModal}
-        onClose={() => {}} // Disable closing
-        onComplete={handleFirstLoginComplete}
-        email={userEmail}
-      />
-    </>
-  );
+  return <LoadingSpinner />;
 } 
