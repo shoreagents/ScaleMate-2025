@@ -108,6 +108,12 @@ const ResultPre = styled.pre`
   color: var(--text-secondary, #6B7280);
 `;
 
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 export default function QuizTester({ onTest }: QuizTesterProps) {
   const [lastResult, setLastResult] = useState<TestResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);

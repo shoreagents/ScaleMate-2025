@@ -24,7 +24,7 @@ const Header = styled.div`
 const Title = styled.h2`
   font-size: 1.5rem;
   font-weight: 600;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const Actions = styled.div`
@@ -122,7 +122,7 @@ const Th = styled.th`
 const Td = styled.td`
   padding: 1rem;
   border-bottom: 1px solid #E5E7EB;
-  color: #111827;
+  color: ${props => props.theme.colors.text.primary};
 `;
 
 const Tr = styled.tr`
@@ -149,7 +149,7 @@ const ActionButton = styled.button`
   transition: color 0.2s;
 
   &:hover {
-    color: #111827;
+    color: ${props => props.theme.colors.text.primary};
   }
 
   &.delete:hover {

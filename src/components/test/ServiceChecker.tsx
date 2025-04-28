@@ -82,6 +82,12 @@ const Spinner = styled.div`
   }
 `;
 
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 // Mock connection check function
 const checkServiceConnection = async (serviceName: string): Promise<Partial<ServiceStatus>> => {
   await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000)); // Simulate network delay
