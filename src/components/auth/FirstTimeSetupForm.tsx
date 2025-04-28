@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
@@ -277,6 +277,35 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  // Add effect to check if setup is needed
+  useEffect(() => {
+    const checkSetupStatus = async () => {
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('last_password_change')
+          .eq('user_id', userId)
+          .single();
+
+        if (profileError) {
+          console.error('Error checking setup status:', profileError);
+          return;
+        }
+
+        // If no last_password_change, setup is needed
+        if (!profile?.last_password_change) {
+          setShowSuccessModal(false);
+        }
+      } catch (err) {
+        console.error('Error in checkSetupStatus:', err);
+      }
+    };
+
+    if (isOpen) {
+      checkSetupStatus();
+    }
+  }, [isOpen, userId]);
+
   const validateUsername = async (username: string) => {
     // Clear previous errors
     setUsernameError(null);
@@ -382,6 +411,10 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Failed to update profile: ' + profileError.message);
       }
 
+      // Close the setup modal first
+      onClose();
+      
+      // Then show success modal
       setShowSuccessModal(true);
     } catch (err) {
       console.error('Setup error:', err);
@@ -523,7 +556,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
           <SuccessIcon>
             <FiCheck size={24} />
           </SuccessIcon>
-          <SuccessTitle>Setup Complete!</SuccessTitle>
+          <SuccessTitle>Setup Completed</SuccessTitle>
           <SuccessMessage>
             Your account has been successfully set up. You can now use your new credentials to log in.
           </SuccessMessage>
