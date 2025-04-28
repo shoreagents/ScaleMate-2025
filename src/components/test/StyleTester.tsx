@@ -68,6 +68,12 @@ const PreviewContent = styled.div`
   gap: 1rem;
 `;
 
+const Title = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 export default function StyleTester({ onTest }: StyleTesterProps) {
   const [result, setResult] = useState<TestResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);

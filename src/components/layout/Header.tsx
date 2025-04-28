@@ -157,7 +157,7 @@ const IconButton = styled.button`
 
   &:hover {
     background-color: #F3F4F6;
-    color: #111827;
+    color: ${props => props.theme.colors.text.primary};
   }
 `;
 

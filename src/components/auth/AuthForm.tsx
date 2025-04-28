@@ -17,7 +17,7 @@ const FormContainer = styled.div`
 
 
 const Title = styled.h1`
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: ${props => props.theme.colors.text.primary};
   text-align: left;
@@ -34,13 +34,13 @@ const Subtitle = styled.p`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.875rem;
 `;
 
 const FormContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.875rem;
 `;
 
 const FormFields = styled.div`
@@ -48,7 +48,7 @@ const FormFields = styled.div`
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.875rem;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -67,7 +67,7 @@ const FormFields = styled.div`
 const FormActions = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.875rem;
 `;
 
 const InputGroup = styled.div`
