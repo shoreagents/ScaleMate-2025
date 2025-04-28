@@ -275,7 +275,7 @@ export default function AuthCallback() {
 
   return (
     <>
-      <LoadingSpinner />
+      {isLoading && <LoadingSpinner />}
       <FirstLoginModal
         isOpen={showFirstLoginModal}
         onClose={() => {}} // Disable closing
