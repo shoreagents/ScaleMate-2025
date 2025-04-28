@@ -97,6 +97,20 @@ export default function AuthCallback() {
             throw createProfileError;
           }
           console.log('Profile created successfully');
+
+          // Assign default 'user' role
+          const { error: roleError } = await serviceRoleClient
+            .from('user_roles')
+            .insert({
+              user_id: session.user.id,
+              role: 'user'
+            });
+
+          if (roleError) {
+            console.error('Role assignment error:', roleError);
+            throw roleError;
+          }
+          console.log('Role assigned successfully');
         }
 
         // Check if we need to show the setup modal
