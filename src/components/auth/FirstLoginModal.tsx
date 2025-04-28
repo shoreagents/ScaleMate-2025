@@ -360,7 +360,10 @@ export default function FirstLoginModal({ isOpen, onClose, onComplete, email }: 
 
       // Set password
       const { error: passwordError } = await supabase.auth.updateUser({
-        password: password
+        password: password,
+        data: {
+          has_set_password: true
+        }
       });
 
       if (passwordError) {
