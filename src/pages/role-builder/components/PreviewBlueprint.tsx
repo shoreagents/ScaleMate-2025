@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 
 const slideUp = keyframes`
   from {
@@ -162,6 +162,10 @@ export default function PreviewBlueprint() {
     return () => observer.disconnect();
   }, []);
 
+  const handleExportPDF = () => {
+    // Implementation of handleExportPDF function
+  };
+
   return (
     <Section id="preview-output">
       <Container>
@@ -198,9 +202,26 @@ export default function PreviewBlueprint() {
                   <SectionTitle>Experience Level</SectionTitle>
                   <ExperienceLevel>3-5 years</ExperienceLevel>
                 </Section2>
-                <Button>
+                <Button
+                  onClick={handleExportPDF}
+                  style={{
+                    backgroundColor: '#3B82F6',
+                    color: 'white',
+                    padding: '1rem 2rem',
+                    borderRadius: '0.5rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    textDecoration: 'none',
+                    transition: 'background-color 0.2s',
+                    border: 'none',
+                  }}
+                  onMouseOver={e => (e.currentTarget.style.backgroundColor = '#2563EB')}
+                  onMouseOut={e => (e.currentTarget.style.backgroundColor = '#3B82F6')}
+                >
                   Export as PDF
-                  <ButtonIcon icon={faDownload} />
+                  <FontAwesomeIcon icon={faFilePdf} />
                 </Button>
               </RightColumn>
             </Grid>

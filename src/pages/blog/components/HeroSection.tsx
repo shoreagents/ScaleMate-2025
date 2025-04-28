@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBookOpen } from '@fortawesome/free-solid-svg-icons';
+import { FaRegNewspaper } from 'react-icons/fa6';
 
 const Section = styled.section`
   padding-top: 8rem;
@@ -19,11 +20,16 @@ const Container = styled.div`
 const Badge = styled.div`
   display: inline-flex;
   align-items: center;
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  background-color: #3B82F6;
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   margin-bottom: 1.5rem;
+`;
+
+const BadgeIcon = styled(FaRegNewspaper)`
+  margin-right: 0.5rem;
+  color: white;
 `;
 
 const Title = styled.h1`
@@ -50,7 +56,7 @@ export default function BlogHeroSection() {
     <Section id="blog-hero">
       <Container>
         <Badge>
-          <Icon icon={faBookOpen} />
+          <BadgeIcon />
           Blog & Insights
         </Badge>
         <Title>Explore Smart Scaling Insights</Title>

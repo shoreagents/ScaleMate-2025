@@ -1,7 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faRobot, faArrowsSpin, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faRobot, faArrowsSpin, faUsers, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -88,16 +89,22 @@ const CardFooterText = styled.span`
   color: rgba(15, 23, 42, 0.6);
 `;
 
-const LearnMore = styled.button`
-  background: none;
-  border: none;
-  color: #3B82F6;
-  font-size: 1rem;
-  cursor: pointer;
+const LearnMoreLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
+  text-decoration: none;
+
   &:hover {
-    color: #2563EB;
-    text-decoration: underline;
+    color: ${({ theme }) => theme.colors.primaryDark};
   }
+`;
+
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
 `;
 
 export default function ToolGrid() {
@@ -120,7 +127,10 @@ export default function ToolGrid() {
             <CardDesc>AI-powered chat assistant for content creation and analysis.</CardDesc>
             <CardFooter>
               <CardFooterText>Best for: Content & Support</CardFooterText>
-              <LearnMore>Learn More →</LearnMore>
+              <LearnMoreLink href="#">
+                Learn More
+                <ArrowIcon icon={faArrowRight} />
+              </LearnMoreLink>
             </CardFooter>
           </Card>
           {/* Tool Card 2 */}
@@ -137,7 +147,10 @@ export default function ToolGrid() {
             <CardDesc>Connect apps and automate workflows without coding.</CardDesc>
             <CardFooter>
               <CardFooterText>Best for: Integration</CardFooterText>
-              <LearnMore>Learn More →</LearnMore>
+              <LearnMoreLink href="#">
+                Learn More
+                <ArrowIcon icon={faArrowRight} />
+              </LearnMoreLink>
             </CardFooter>
           </Card>
           {/* Tool Card 3 */}
@@ -154,7 +167,10 @@ export default function ToolGrid() {
             <CardDesc>Create and manage team training documentation.</CardDesc>
             <CardFooter>
               <CardFooterText>Best for: Training</CardFooterText>
-              <LearnMore>Learn More →</LearnMore>
+              <LearnMoreLink href="#">
+                Learn More
+                <ArrowIcon icon={faArrowRight} />
+              </LearnMoreLink>
             </CardFooter>
           </Card>
         </Grid>
