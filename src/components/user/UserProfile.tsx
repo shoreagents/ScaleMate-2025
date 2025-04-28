@@ -448,7 +448,6 @@ interface UserProfileData {
   profile_picture: string;
   last_password_change: string;
   username: string;
-  is_google_user: boolean;
 }
 
 interface UserProfileProps {
@@ -468,8 +467,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     gender: '',
     profile_picture: '',
     last_password_change: '',
-    username: '',
-    is_google_user: false
+    username: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
@@ -521,8 +519,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
         gender: profile.gender || '',
         profile_picture: profile.profile_picture || '',
         last_password_change: profile.last_password_change || '',
-        username: profile.username || '',
-        is_google_user: profile.is_google_user || false
+        username: profile.username || ''
       };
 
       setProfileData(profileData);
@@ -1042,166 +1039,160 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
       </Section>
 
       <Section>
-        <SectionTitle>Password</SectionTitle>
-        {profileData.is_google_user ? (
-          <p style={{ marginBottom: '1rem', color: '#6B7280' }}>
-            You signed up with Google. You can set a password to enable email/password login.
-          </p>
-        ) : (
-          <>
-            {isEditingPassword ? (
-              <PasswordChangeForm onSubmit={handlePasswordChange}>
-                <PasswordColumn>
-                  <Label>
-                    Current Password
-                    <RequiredAsterisk>*</RequiredAsterisk>
-                  </Label>
-                  <PasswordInputContainer>
-                    <PasswordInput
-                      type={showCurrentPassword ? "text" : "password"}
-                      value={currentPassword}
-                      onChange={handleCurrentPasswordChange}
-                      placeholder="Enter your current password"
-                    />
-                    <ViewPasswordButton
-                      type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                    >
-                      {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </ViewPasswordButton>
-                  </PasswordInputContainer>
-                  {validatingCurrentPassword ? (
-                    <PasswordMatchIndicator $matches={true}>
-                      <FiLoader size={14} />
-                      Verifying...
-                    </PasswordMatchIndicator>
-                  ) : currentPasswordValid !== null && (
-                    <PasswordMatchIndicator $matches={currentPasswordValid}>
-                      {currentPasswordValid ? (
+        <SectionTitle>
+          Password
+        </SectionTitle>
+        {isEditingPassword ? (
+          <PasswordChangeForm onSubmit={handlePasswordChange}>
+            <PasswordColumn>
+              <Label>
+                Current Password
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
+              <PasswordInputContainer>
+                <PasswordInput
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={handleCurrentPasswordChange}
+                  placeholder="Enter your current password"
+                />
+                <ViewPasswordButton
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                >
+                  {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </ViewPasswordButton>
+              </PasswordInputContainer>
+              {validatingCurrentPassword ? (
+                <PasswordMatchIndicator $matches={true}>
+                  <FiLoader size={14} />
+                  Verifying...
+                </PasswordMatchIndicator>
+              ) : currentPasswordValid !== null && (
+                <PasswordMatchIndicator $matches={currentPasswordValid}>
+                  {currentPasswordValid ? (
+                    <>
+                      <FiCheck size={14} />
+                      Current password is correct
+                    </>
+                  ) : (
+                    <>
+                      <FiX size={14} />
+                      Current password is incorrect
+                    </>
+                  )}
+                </PasswordMatchIndicator>
+              )}
+            </PasswordColumn>
+
+            <PasswordRow>
+              <PasswordColumn>
+                <Label>
+                  New Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={handleNewPasswordChange}
+                    placeholder="Enter your new password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+                <PasswordValidations>
+                  {newPassword && (
+                    <PasswordMatchIndicator $matches={passwordLength === true}>
+                      {passwordLength ? (
                         <>
                           <FiCheck size={14} />
-                          Current password is correct
+                          Password length is valid
                         </>
                       ) : (
                         <>
                           <FiX size={14} />
-                          Current password is incorrect
+                          Password must be at least 8 characters
                         </>
                       )}
                     </PasswordMatchIndicator>
                   )}
-                </PasswordColumn>
-
-                <PasswordRow>
-                  <PasswordColumn>
-                    <Label>
-                      New Password
-                      <RequiredAsterisk>*</RequiredAsterisk>
-                    </Label>
-                    <PasswordInputContainer>
-                      <PasswordInput
-                        type={showNewPassword ? "text" : "password"}
-                        value={newPassword}
-                        onChange={handleNewPasswordChange}
-                        placeholder="Enter your new password"
-                      />
-                      <ViewPasswordButton
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                      >
-                        {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                      </ViewPasswordButton>
-                    </PasswordInputContainer>
-                    <PasswordValidations>
-                      {newPassword && (
-                        <PasswordMatchIndicator $matches={passwordLength === true}>
-                          {passwordLength ? (
-                            <>
-                              <FiCheck size={14} />
-                              Password length is valid
-                            </>
-                          ) : (
-                            <>
-                              <FiX size={14} />
-                              Password must be at least 8 characters
-                            </>
-                          )}
-                        </PasswordMatchIndicator>
+                  {passwordsMatch !== null && (
+                    <PasswordMatchIndicator $matches={passwordsMatch}>
+                      {passwordsMatch ? (
+                        <>
+                          <FiCheck size={14} />
+                          Passwords match
+                        </>
+                      ) : (
+                        <>
+                          <FiX size={14} />
+                          Passwords do not match
+                        </>
                       )}
-                      {passwordsMatch !== null && (
-                        <PasswordMatchIndicator $matches={passwordsMatch}>
-                          {passwordsMatch ? (
-                            <>
-                              <FiCheck size={14} />
-                              Passwords match
-                            </>
-                          ) : (
-                            <>
-                              <FiX size={14} />
-                              Passwords do not match
-                            </>
-                          )}
-                        </PasswordMatchIndicator>
-                      )}
-                    </PasswordValidations>
-                  </PasswordColumn>
+                    </PasswordMatchIndicator>
+                  )}
+                </PasswordValidations>
+              </PasswordColumn>
 
-                  <PasswordColumn>
-                    <Label>
-                      Confirm New Password
-                      <RequiredAsterisk>*</RequiredAsterisk>
-                    </Label>
-                    <PasswordInputContainer>
-                      <PasswordInput
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={confirmPassword}
-                        onChange={handleConfirmPasswordChange}
-                        placeholder="Confirm your new password"
-                      />
-                      <ViewPasswordButton
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                      </ViewPasswordButton>
-                    </PasswordInputContainer>
-                  </PasswordColumn>
-                </PasswordRow>
-
-                <ButtonGroup>
-                  <ChooseImageButton
+              <PasswordColumn>
+                <Label>
+                  Confirm New Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={handleConfirmPasswordChange}
+                    placeholder="Confirm your new password"
+                  />
+                  <ViewPasswordButton
                     type="button"
-                    onClick={handleCancel}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    Cancel
-                  </ChooseImageButton>
-                  <SaveButton 
-                    type="submit"
-                    disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
-                  >
-                    Save Changes
-                  </SaveButton>
-                </ButtonGroup>
-              </PasswordChangeForm>
-            ) : (
-              <>
-                <FormGroup>
-                  <Label>Last Changed</Label>
-                  <div>
-                    {profileData.last_password_change
-                      ? new Date(profileData.last_password_change).toLocaleDateString()
-                      : 'Never'}
-                  </div>
-                </FormGroup>
-                <div style={{ marginTop: '16px' }}>
-                  <EditButton onClick={() => setIsEditingPassword(true)}>
-                    <FiEdit2 />
-                    Change Password
-                  </EditButton>
-                </div>
-                {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
-              </>
-            )}
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+              </PasswordColumn>
+            </PasswordRow>
+
+            <ButtonGroup>
+              <ChooseImageButton
+                type="button"
+                onClick={handleCancel}
+              >
+                Cancel
+              </ChooseImageButton>
+              <SaveButton 
+                type="submit"
+                disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
+              >
+                Save Changes
+              </SaveButton>
+            </ButtonGroup>
+          </PasswordChangeForm>
+        ) : (
+          <>
+            <FormGroup>
+              <Label>Last Changed</Label>
+              <div>
+                {profileData.last_password_change
+                  ? new Date(profileData.last_password_change).toLocaleDateString()
+                  : 'Never'}
+              </div>
+            </FormGroup>
+            <div style={{ marginTop: '16px' }}>
+              <EditButton onClick={() => setIsEditingPassword(true)}>
+                <FiEdit2 />
+                Change Password
+              </EditButton>
+            </div>
+            {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
           </>
         )}
       </Section>
