@@ -128,7 +128,10 @@ export default function Footer() {
                 <Link onClick={() => window.location.href = '/cost-savings'}>Cost Savings Calculator</Link>
               </LinkItem>
               <LinkItem>
-                <Link onClick={() => window.location.href = '/role-builder'}>Role Builder</Link>
+                <Link onClick={() => window.location.href = '/role-builder'}>AI-Powered Role Builder</Link>
+              </LinkItem>
+              <LinkItem>
+                <Link onClick={() => window.location.href = '/readiness'}>Readiness Quiz</Link>
               </LinkItem>
             </LinkList>
           </Column>
@@ -136,16 +139,16 @@ export default function Footer() {
             <ColumnTitle>Learn</ColumnTitle>
             <LinkList>
               <LinkItem>
-                <Link onClick={() => window.location.href = '/courses'}>Courses</Link>
+                <Link onClick={() => window.location.href = '/courses'}>Course Library</Link>
               </LinkItem>
               <LinkItem>
-                <Link onClick={() => window.location.href = '/resources'}>Resource Downloads</Link>
+                <Link onClick={() => window.location.href = '/resources'}>Resource Library</Link>
               </LinkItem>
               <LinkItem>
                 <Link onClick={() => window.location.href = '/tools'}>Tool Library</Link>
               </LinkItem>
               <LinkItem>
-                <Link onClick={() => window.location.href = '/blog'}>Blog</Link>
+                <Link onClick={() => window.location.href = '/blog'}>Blog & Insights</Link>
               </LinkItem>
             </LinkList>
           </Column>

@@ -312,3 +312,9 @@ Before adding a new feature, confirm:
 - **Status:** ✅ Completed
 - **Reference:** See `progress.md` entry for details
 - **Next Steps:** Continue with planned updates to the Cursor rules 
+
+### 2024-06-10: Export as PDF Button Restyle
+- **Task:** Restyle "Export as PDF" button in PreviewBlueprint.tsx to match SecondaryButton from FormSection.tsx
+- **Status:** ✅ Completed
+- **Details:** Backup created as PreviewBlueprint.tsx.backup
+- **Next Steps:** Continue with planned updates to the Export as PDF button 

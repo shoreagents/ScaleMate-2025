@@ -121,27 +121,44 @@ const CTACard = styled.div`
   color: white;
 `;
 
-const Button = styled.button<{ variant: 'primary' | 'secondary' }>`
-  width: 100%;
-  padding: 0.75rem;
+const PrimaryButton = styled.button`
+  background-color: white;
+  color: #3B82F6;
+  padding: 1rem 2rem;
   border-radius: 0.5rem;
   font-weight: 600;
-  margin-bottom: 0.75rem;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
   border: none;
-  
-  ${props => props.variant === 'primary' && `
-    background-color: white;
-    color: #EC297B;
-  `}
-  
-  ${props => props.variant === 'secondary' && `
-    background-color: transparent;
-    border: 1px solid white;
-    color: white;
-  `}
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  &:hover {
+    background-color: #F9FAFB;
+  }
+`;
+
+const SecondaryButton = styled.button`
+  background-color: #3B82F6;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  border: none;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  &:hover {
+    background-color: #2563EB;
+  }
 `;
 
 const SummaryContainer = styled.div`
@@ -256,14 +273,8 @@ export default function FormSection() {
             <CTACard>
               <h3 className="text-xl font-bold mb-4">Want the Complete Blueprint?</h3>
               <p className="mb-6">Get our detailed guide on how to successfully transition this role offshore.</p>
-              <Button variant="primary">
-                Download Blueprint
-                <FontAwesomeIcon icon={faLock} className="ml-2" />
-              </Button>
-              <Button variant="secondary">
-                View Sample Kit
-                <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
-              </Button>
+              <PrimaryButton>Download Blueprint <FontAwesomeIcon icon={faLock} style={{ marginLeft: '0.5rem' }} /></PrimaryButton>
+              <SecondaryButton>View Sample Kit <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '0.5rem' }} /></SecondaryButton>
             </CTACard>
           </SummaryContainer>
         </Grid>

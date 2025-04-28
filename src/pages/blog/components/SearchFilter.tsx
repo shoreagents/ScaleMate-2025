@@ -37,13 +37,16 @@ const SearchWrapper = styled.div`
 
 const SearchInput = styled.input`
   width: 100%;
-  padding: 0.75rem 1rem 0.75rem 3rem;
+  background: #fff;
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  font-size: 1rem;
   outline: none;
-
+  transition: box-shadow 0.2s;
   &:focus {
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 2px #3B82F6;
+    border-color: #3B82F6;
   }
 `;
 
@@ -52,26 +55,32 @@ const SearchIcon = styled(FontAwesomeIcon)`
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(30, 41, 59, 0.5);
+  color: rgba(15, 23, 42, 0.4);
+  font-size: 1.1rem;
 `;
 
 const FilterButtons = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.75rem;
 `;
 
 const FilterButton = styled.button<{ active?: boolean }>`
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  background-color: ${props => props.active ? '#3B82F6' : 'transparent'};
-  color: ${props => props.active ? '#fff' : '#0F172A'};
+  font-size: 1rem;
   border: 1px solid #E5E7EB;
-  transition: all 0.2s;
-
+  background: ${({active}) => (active ? '#3B82F6' : '#fff')};
+  color: ${({active}) => (active ? '#fff' : '#0F172A')};
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.2s, color 0.2s;
   &:hover {
-    background-color: ${props => props.active ? '#2563EB' : '#3B82F6'};
-    color: #fff;
+    background: ${({active}) => (active ? '#2563EB' : '#F9FAFB')};
+    color: ${({active}) => (active ? '#fff' : '#0F172A')};
   }
 `;
 

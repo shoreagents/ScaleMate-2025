@@ -2,6 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClock } from '@fortawesome/free-regular-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -94,13 +96,22 @@ const CardFooterText = styled.span`
   color: rgba(15, 23, 42, 0.6);
 `;
 
-const CardFooterLink = styled.span`
-  color: #3B82F6;
-  font-size: 1rem;
-  cursor: pointer;
+const CourseLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
+  text-decoration: none;
+
   &:hover {
-    text-decoration: underline;
+    color: ${({ theme }) => theme.colors.primaryDark};
   }
+`;
+
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
 `;
 
 export default function CourseGrid() {
@@ -125,7 +136,10 @@ export default function CourseGrid() {
                   <FontAwesomeIcon icon={faClock} style={{marginRight: '0.5rem'}} />
                   <CardFooterText>2.5 hours</CardFooterText>
                 </CardFooterLeft>
-                <CardFooterLink>Start Course →</CardFooterLink>
+                <CourseLink href="#">
+                  Start Course
+                  <ArrowIcon icon={faArrowRight} />
+                </CourseLink>
               </CardFooter>
             </CardContent>
           </Card>
@@ -146,7 +160,10 @@ export default function CourseGrid() {
                   <FontAwesomeIcon icon={faClock} style={{marginRight: '0.5rem'}} />
                   <CardFooterText>4 hours</CardFooterText>
                 </CardFooterLeft>
-                <CardFooterLink>Preview →</CardFooterLink>
+                <CourseLink href="#">
+                  Preview
+                  <ArrowIcon icon={faArrowRight} />
+                </CourseLink>
               </CardFooter>
             </CardContent>
           </Card>
@@ -167,7 +184,10 @@ export default function CourseGrid() {
                   <FontAwesomeIcon icon={faClock} style={{marginRight: '0.5rem'}} />
                   <CardFooterText>3 hours</CardFooterText>
                 </CardFooterLeft>
-                <CardFooterLink>Start Course →</CardFooterLink>
+                <CourseLink href="#">
+                  Start Course
+                  <ArrowIcon icon={faArrowRight} />
+                </CourseLink>
               </CardFooter>
             </CardContent>
           </Card>

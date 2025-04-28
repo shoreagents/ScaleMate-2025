@@ -1,5 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
+import Link from 'next/link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPenNib } from '@fortawesome/free-solid-svg-icons';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -11,40 +14,48 @@ const Container = styled.div`
   padding: 0 1rem;
 `;
 
-const CTABox = styled.div`
+const CTAWrapper = styled.div`
   background-color: #3B82F6;
   border-radius: 1rem;
-  padding: 2rem;
+  padding: 3rem;
   text-align: center;
-
-  @media (min-width: 768px) {
-    padding: 3rem;
-  }
+  color: white;
 `;
 
 const Title = styled.h2`
-  font-size: 1.875rem;
+  font-size: 2.25rem;
   font-weight: 700;
-  color: white;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 `;
 
 const Description = styled.p`
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
   margin-bottom: 2rem;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
 `;
 
-const Button = styled.button`
+const ButtonGroup = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+`;
+
+const PrimaryButton = styled(Link)`
   background-color: white;
   color: #3B82F6;
-  padding: 0.75rem 2rem;
+  padding: 1rem 2rem;
   border-radius: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
-  border: none;
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: #F9FAFB;
   }
 `;
 
@@ -52,11 +63,16 @@ export default function FinalCTA() {
   return (
     <Section id="blog-cta">
       <Container>
-        <CTABox>
+        <CTAWrapper>
           <Title>Ready to Start Your Scaling Journey?</Title>
           <Description>Try our Role Builder tool and create your perfect offshore team structure.</Description>
-          <Button>Try Role Builder Free</Button>
-        </CTABox>
+          <ButtonGroup>
+            <PrimaryButton href="/role-builder">
+              Try Role Builder Free
+              <FontAwesomeIcon icon={faPenNib} style={{ marginLeft: '0.5rem' }} />
+            </PrimaryButton>
+          </ButtonGroup>
+        </CTAWrapper>
       </Container>
     </Section>
   );

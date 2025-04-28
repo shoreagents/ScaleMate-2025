@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 import { FiUser, FiLogOut, FiChevronDown } from 'react-icons/fi';
 import { FaCalculator, FaChartLine, FaUsers, FaGraduationCap, FaDownload, FaToolbox, FaRegNewspaper, FaRegCircle } from 'react-icons/fa6';
 import { supabase } from '@/lib/supabase';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -248,15 +250,23 @@ const SolutionSubtitle = styled.div`
   margin-bottom: 0.5rem;
 `;
 const SolutionLink = styled.a`
-  color: #2563EB;
-  font-weight: 500;
-  font-size: 0.98rem;
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
+  transition: color 0.2s;
+  font-size: 0.98rem;
   cursor: pointer;
   &:hover {
-    text-decoration: underline;
-    color: #1D4ED8;
+    color: ${({ theme }) => theme.colors.primaryDark};
+    text-decoration: none;
   }
+`;
+
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
 `;
 
 const SolutionsDropdownWrapper = styled.div`
@@ -270,7 +280,7 @@ const LearnDropdown = styled(SolutionsDropdown)``;
 const DropdownContent = styled.div`
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: 0.5rem;
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
@@ -391,25 +401,25 @@ const Header = () => {
                       <SolutionIcon bg="#3B82F6"><FaCalculator /></SolutionIcon>
                       <SolutionTitle>Quick Quote Calculator</SolutionTitle>
                       <SolutionSubtitle>Instantly estimate offshore staff costs</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/quote')}>Get a Quick Quote &rarr;</SolutionLink>
+                      <SolutionLink onClick={() => router.push('/quote')}>Get a Quick Quote <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
                       <SolutionIcon bg="#F472B6"><FaChartLine /></SolutionIcon>
                       <SolutionTitle>Cost Savings Calculator</SolutionTitle>
                       <SolutionSubtitle>Compare local vs offshore teams</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/cost-savings')}>Compare Savings &rarr;</SolutionLink>
+                      <SolutionLink onClick={() => router.push('/cost-savings')}>Compare Savings <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
                       <SolutionIcon bg="#4ADE80"><FaUsers /></SolutionIcon>
                       <SolutionTitle>AI-Powered Role Builder</SolutionTitle>
                       <SolutionSubtitle>Build offshore job blueprints with AI</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/role-builder')}>Build a Role &rarr;</SolutionLink>
+                      <SolutionLink onClick={() => router.push('/role-builder')}>Build a Role <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
                       <SolutionIcon bg="#6366F1"><FaRegCircle /></SolutionIcon>
                       <SolutionTitle>Readiness Quiz</SolutionTitle>
                       <SolutionSubtitle>Assess your offshore and AI readiness</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/readiness')}>Take the Quiz &rarr;</SolutionLink>
+                      <SolutionLink onClick={() => router.push('/readiness')}>Take the Quiz <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                   </DropdownContent>
                 </SolutionsDropdown>
@@ -430,27 +440,27 @@ const Header = () => {
                   <DropdownContent>
                     <SolutionCard>
                       <SolutionIcon bg="#3B82F6"><FaGraduationCap /></SolutionIcon>
-                      <SolutionTitle>Courses</SolutionTitle>
+                      <SolutionTitle>Course Library</SolutionTitle>
                       <SolutionSubtitle>Build skills with free and premium training.</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/courses')}>Browse Courses &rarr;</SolutionLink>
+                      <SolutionLink onClick={() => router.push('/courses')}>Browse Courses <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
                       <SolutionIcon bg="#F472B6"><FaDownload /></SolutionIcon>
-                      <SolutionTitle>Resource Downloads</SolutionTitle>
+                      <SolutionTitle>Resource Library</SolutionTitle>
                       <SolutionSubtitle>Access checklists, templates, and guides.</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/resources')}>View Resources &rarr;</SolutionLink>
+                      <SolutionLink onClick={() => router.push('/resources')}>View Resources <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
                       <SolutionIcon bg="#4ADE80"><FaToolbox /></SolutionIcon>
                       <SolutionTitle>Tool Library</SolutionTitle>
                       <SolutionSubtitle>Discover top AI and automation tools.</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/tools')}>Explore Tools &rarr;</SolutionLink>
+                      <SolutionLink onClick={() => router.push('/tools')}>Explore Tools <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
                       <SolutionIcon bg="#3B82F6"><FaRegNewspaper /></SolutionIcon>
-                      <SolutionTitle>Blog</SolutionTitle>
+                      <SolutionTitle>Blog & Insights</SolutionTitle>
                       <SolutionSubtitle>Read insights, strategies, and scaling tips.</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/blog')}>Read the Blog &rarr;</SolutionLink>
+                      <SolutionLink onClick={() => router.push('/blog')}>Read the Blog <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                   </DropdownContent>
                 </LearnDropdown>

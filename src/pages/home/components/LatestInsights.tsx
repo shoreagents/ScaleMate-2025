@@ -1,5 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -66,11 +68,22 @@ const CardDescription = styled.p`
 `;
 
 const ReadMore = styled.span`
-  display: inline-block;
-  margin-top: 1rem;
-  color: #3B82F6;
+  color: ${({ theme }) => theme.colors.primary};
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
   cursor: pointer;
+  margin-top: 1rem;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primaryDark};
+  }
+`;
+
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
 `;
 
 export default function LatestInsights() {
@@ -90,7 +103,7 @@ export default function LatestInsights() {
               <CardDescription>
                 Learn how artificial intelligence is transforming remote team management...
               </CardDescription>
-              <ReadMore>Read More →</ReadMore>
+              <ReadMore>Read More <ArrowIcon icon={faArrowRight} /></ReadMore>
             </CardContent>
           </Card>
           <Card>
@@ -104,7 +117,7 @@ export default function LatestInsights() {
               <CardDescription>
                 Discover how a tech startup scaled their operations while cutting costs...
               </CardDescription>
-              <ReadMore>Read More →</ReadMore>
+              <ReadMore>Read More <ArrowIcon icon={faArrowRight} /></ReadMore>
             </CardContent>
           </Card>
           <Card>
@@ -118,7 +131,7 @@ export default function LatestInsights() {
               <CardDescription>
                 Step-by-step guide to building and managing successful offshore teams...
               </CardDescription>
-              <ReadMore>Read More →</ReadMore>
+              <ReadMore>Read More <ArrowIcon icon={faArrowRight} /></ReadMore>
             </CardContent>
           </Card>
         </Grid>

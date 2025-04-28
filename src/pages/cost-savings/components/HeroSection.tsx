@@ -1,7 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalculator } from '@fortawesome/free-solid-svg-icons';
+import { FaChartLine } from 'react-icons/fa6';
 
 const Section = styled.section`
   padding-top: 8rem;
@@ -18,8 +17,8 @@ const Container = styled.div`
 const Badge = styled.div`
   display: inline-flex;
   align-items: center;
-  background-color: rgba(132, 204, 22, 0.1);
-  color: #84CC16;
+  background-color: #F472B6;
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   margin-bottom: 1.5rem;
@@ -39,8 +38,9 @@ const Description = styled.p`
   margin: 0 auto 2rem;
 `;
 
-const Icon = styled(FontAwesomeIcon)`
+const Icon = styled(FaChartLine)`
   margin-right: 0.5rem;
+  color: white;
 `;
 
 export default function HeroSection() {
@@ -48,7 +48,7 @@ export default function HeroSection() {
     <Section id="savings-hero">
       <Container>
         <Badge>
-          <Icon icon={faCalculator} />
+          <Icon />
           Cost Savings Calculator
         </Badge>
         <Title>See How Much You Could Save</Title>
