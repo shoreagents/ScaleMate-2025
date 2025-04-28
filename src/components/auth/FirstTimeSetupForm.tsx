@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
-import { createClient } from '@supabase/supabase-js';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -257,12 +256,6 @@ const SuccessButton = styled.button`
   }
 `;
 
-const PasswordHelperText = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-`;
-
 interface FirstTimeSetupFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -308,32 +301,21 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     // Check if username exists
     setCheckingUsername(true);
     try {
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-      
-      // Query the user_profiles table with service role
-      const { data, error } = await serviceRoleClient
+      const { data, error } = await supabase
         .from('user_profiles')
         .select('username')
         .eq('username', username)
-        .limit(1);
+        .single();
 
       if (error) {
-        console.error('Error checking username:', error);
-        setUsernameError('Error checking username availability');
-        return false;
+        if (error.code === 'PGRST116') {
+          // No rows found - username is available
+          return true;
+        }
+        throw error;
       }
 
-      if (data && data.length > 0) {
+      if (data) {
         setUsernameError('Username is already taken');
         return false;
       }
@@ -462,7 +444,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                   Password
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <InputWrapper>
+                <PasswordInputGroup>
                   <PasswordInputWrapper>
                     <Input
                       id="password"
@@ -479,7 +461,13 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                       {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                     </PasswordToggle>
                   </PasswordInputWrapper>
-                </InputWrapper>
+                  {formData.password && (
+                    <MessageContainer $isSuccess={formData.password.length >= 8}>
+                      {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
+                      Password must be at least 8 characters
+                    </MessageContainer>
+                  )}
+                </PasswordInputGroup>
               </FormGroup>
 
               <FormGroup>
@@ -487,7 +475,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                   Confirm Password
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <InputWrapper>
+                <PasswordInputGroup>
                   <PasswordInputWrapper>
                     <Input
                       id="confirmPassword"
@@ -504,33 +492,13 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                       {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                     </PasswordToggle>
                   </PasswordInputWrapper>
-                </InputWrapper>
-              </FormGroup>
-            </FormRow>
-
-            <FormRow>
-              <FormGroup>
-                <PasswordHelperText>
-                  {formData.password && (
-                    <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#dc2626' }}>
-                      {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
-                      {formData.password.length >= 8 ? 'Password length is valid' : 'Password must be at least 8 characters'}
-                    </HelperText>
-                  )}
                   {formData.confirmPassword && (
-                    formData.password === formData.confirmPassword ? (
-                      <HelperText style={{ color: '#059669' }}>
-                        <FiCheck size={14} />
-                        Passwords match
-                      </HelperText>
-                    ) : (
-                      <HelperText style={{ color: '#dc2626' }}>
-                        <FiX size={14} />
-                        Passwords do not match
-                      </HelperText>
-                    )
+                    <MessageContainer $isSuccess={formData.password === formData.confirmPassword}>
+                      {formData.password === formData.confirmPassword ? <FiCheck size={14} /> : <FiX size={14} />}
+                      Passwords {formData.password === formData.confirmPassword ? 'match' : 'do not match'}
+                    </MessageContainer>
                   )}
-                </PasswordHelperText>
+                </PasswordInputGroup>
               </FormGroup>
             </FormRow>
 

@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FiUser, FiLogOut, FiChevronDown } from 'react-icons/fi';
-import { FaCalculator, FaChartLine, FaUsers, FaGraduationCap, FaDownload, FaToolbox, FaRegNewspaper, FaRegCircle } from 'react-icons/fa6';
+import { FiUser, FiLogOut } from 'react-icons/fi';
 import { supabase } from '@/lib/supabase';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -187,10 +184,6 @@ const Header = () => {
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
-  const [showSolutions, setShowSolutions] = useState(false);
-  const [showLearn, setShowLearn] = useState(false);
-  let closeTimeout: NodeJS.Timeout | null = null;
-  let learnCloseTimeout: NodeJS.Timeout | null = null;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -282,24 +275,6 @@ const Header = () => {
   const handleSetupComplete = () => {
     setShowSetupModal(false);
     router.push('/user/dashboard');
-  };
-
-  const handleSolutionsEnter = () => {
-    if (closeTimeout) clearTimeout(closeTimeout);
-    setShowSolutions(true);
-  };
-
-  const handleSolutionsLeave = () => {
-    closeTimeout = setTimeout(() => setShowSolutions(false), 120);
-  };
-
-  const handleLearnEnter = () => {
-    if (learnCloseTimeout) clearTimeout(learnCloseTimeout);
-    setShowLearn(true);
-  };
-
-  const handleLearnLeave = () => {
-    learnCloseTimeout = setTimeout(() => setShowLearn(false), 120);
   };
 
   return (
