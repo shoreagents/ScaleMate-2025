@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import FirstTimeSetupModal from '@/components/auth/FirstTimeSetupModal';
+import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 
 // Create a client with service role key for admin operations
 const serviceRoleClient = createClient(
@@ -148,7 +148,7 @@ export default function AuthCallback() {
   return (
     <>
       {showSetupModal && userId && currentUsername && (
-        <FirstTimeSetupModal
+        <FirstTimeSetupForm
           isOpen={showSetupModal}
           onClose={handleSetupComplete}
           userId={userId}
