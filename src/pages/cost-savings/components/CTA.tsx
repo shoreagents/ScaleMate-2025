@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faPhone } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -44,40 +45,38 @@ const ButtonGroup = styled.div`
   flex-wrap: wrap;
 `;
 
-const PrimaryButton = styled.button`
+const PrimaryButton = styled(Link)`
   background-color: white;
   color: #3B82F6;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
   font-weight: 600;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
-  border: none;
 
   &:hover {
     background-color: #F9FAFB;
   }
 `;
 
-const SecondaryButton = styled.button`
+const SecondaryButton = styled(Link)`
   background-color: #EC297B;
   color: white;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
   font-weight: 600;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
-  border: none;
 
   &:hover {
     background-color: #D91A6B;
   }
-`;
-
-const ButtonIcon = styled(FontAwesomeIcon)`
-  margin-right: 0.5rem;
 `;
 
 export default function CTA() {
@@ -90,13 +89,13 @@ export default function CTA() {
             Download your savings report or schedule a call to discuss your needs
           </Description>
           <ButtonGroup>
-            <PrimaryButton>
-              <ButtonIcon icon={faDownload} />
+            <PrimaryButton href="#">
               Download Report
+              <FontAwesomeIcon icon={faDownload} style={{ marginLeft: '0.5rem' }} />
             </PrimaryButton>
-            <SecondaryButton>
-              <ButtonIcon icon={faPhone} />
+            <SecondaryButton href="#">
               Book Strategy Call
+              <FontAwesomeIcon icon={faPhone} style={{ marginLeft: '0.5rem' }} />
             </SecondaryButton>
           </ButtonGroup>
         </CTAWrapper>

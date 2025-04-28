@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { FaDownload } from 'react-icons/fa6';
 
 const Section = styled.section`
   padding-top: 8rem;
@@ -19,11 +20,16 @@ const Container = styled.div`
 const Badge = styled.div`
   display: inline-flex;
   align-items: center;
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  background-color: #F472B6;
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   margin-bottom: 1.5rem;
+`;
+
+const BadgeIcon = styled(FaDownload)`
+  margin-right: 0.5rem;
+  color: white;
 `;
 
 const Title = styled.h1`
@@ -49,7 +55,7 @@ export default function ResourcesHeroSection() {
     <Section id="resources-hero">
       <Container>
         <Badge>
-          <Icon icon={faFileArrowDown} />
+          <BadgeIcon />
           Resource Library
         </Badge>
         <Title>Download Templates to Delegate Smarter</Title>

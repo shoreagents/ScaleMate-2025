@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FiUser, FiLogOut } from 'react-icons/fi';
+import { FiUser, FiLogOut, FiChevronDown } from 'react-icons/fi';
+import { FaCalculator, FaChartLine, FaUsers, FaGraduationCap, FaDownload, FaToolbox, FaRegNewspaper, FaRegCircle } from 'react-icons/fa6';
 import { supabase } from '@/lib/supabase';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -16,7 +19,10 @@ const HeaderContainer = styled.header`
 
 const Container = styled.div`
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 12vw;
+  @media (min-width: 1200px) {
+    padding: 0 14rem;
+  }
 `;
 
 const HeaderContent = styled.div`
@@ -174,12 +180,122 @@ const Spinner = styled.div`
   }
 `;
 
+const SolutionsDropdown = styled.div`
+  position: fixed;
+  top: 4rem;
+  left: 0;
+  right: 0;
+  width: 100vw;
+  min-width: unset;
+  background: #fff;
+  border: 1px solid #E5E7EB;
+  border-radius: 0 0 1rem 1rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 2rem 0;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+`;
+
+const SolutionsNavItem = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  &:hover > div {
+    display: flex;
+  }
+`;
+
+const SolutionCard = styled.div`
+  background: #fff;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  padding: 1.5rem 1.25rem 1.25rem 1.25rem;
+  min-width: 300px;
+  max-width: 380px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 0 0.5vw;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.04);
+  @media (min-width: 1200px) {
+    min-width: 360px;
+    max-width: 480px;
+    margin: 0 1vw;
+  }
+`;
+const SolutionIcon = styled.div<{ bg: string }>`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: ${props => props.bg};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  color: #fff;
+  font-size: 1.5rem;
+`;
+const SolutionTitle = styled.div`
+  font-weight: 600;
+  color: #0F172A;
+  margin-bottom: 0.25rem;
+`;
+const SolutionSubtitle = styled.div`
+  font-size: 0.95rem;
+  color: #64748B;
+  margin-bottom: 0.5rem;
+`;
+const SolutionLink = styled.a`
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  transition: color 0.2s;
+  font-size: 0.98rem;
+  cursor: pointer;
+  &:hover {
+    color: ${({ theme }) => theme.colors.primaryDark};
+    text-decoration: none;
+  }
+`;
+
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
+`;
+
+const SolutionsDropdownWrapper = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+`;
+
+const LearnDropdown = styled(SolutionsDropdown)``;
+
+const DropdownContent = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+`;
+
 const Header = () => {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSolutions, setShowSolutions] = useState(false);
+  const [showLearn, setShowLearn] = useState(false);
+  let closeTimeout: NodeJS.Timeout | null = null;
+  let learnCloseTimeout: NodeJS.Timeout | null = null;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -245,16 +361,113 @@ const Header = () => {
     }
   };
 
+  const handleSolutionsEnter = () => {
+    if (closeTimeout) clearTimeout(closeTimeout);
+    setShowSolutions(true);
+  };
+  const handleSolutionsLeave = () => {
+    closeTimeout = setTimeout(() => setShowSolutions(false), 120);
+  };
+
+  const handleLearnEnter = () => {
+    if (learnCloseTimeout) clearTimeout(learnCloseTimeout);
+    setShowLearn(true);
+  };
+  const handleLearnLeave = () => {
+    learnCloseTimeout = setTimeout(() => setShowLearn(false), 120);
+  };
+
   return (
     <HeaderContainer>
       <Container>
         <HeaderContent>
           <Logo href="/">ScaleMate</Logo>
           <Nav>
-            <NavItem>Solutions</NavItem>
-            <NavItem>Tools</NavItem>
-            <NavItem>Pricing</NavItem>
-            <NavItem>Resources</NavItem>
+            <NavItem onClick={() => router.push('/')}>Home</NavItem>
+            <SolutionsDropdownWrapper
+              onMouseEnter={handleSolutionsEnter}
+              onMouseLeave={handleSolutionsLeave}
+              tabIndex={0}
+              aria-haspopup="true"
+              aria-expanded={showSolutions}
+            >
+              <SolutionsNavItem>
+                Solutions <FiChevronDown style={{ marginLeft: 4 }} />
+              </SolutionsNavItem>
+              {showSolutions && (
+                <SolutionsDropdown>
+                  <DropdownContent>
+                    <SolutionCard>
+                      <SolutionIcon bg="#3B82F6"><FaCalculator /></SolutionIcon>
+                      <SolutionTitle>Quick Quote Calculator</SolutionTitle>
+                      <SolutionSubtitle>Instantly estimate offshore staff costs</SolutionSubtitle>
+                      <SolutionLink onClick={() => router.push('/quote')}>Get a Quick Quote <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    </SolutionCard>
+                    <SolutionCard>
+                      <SolutionIcon bg="#F472B6"><FaChartLine /></SolutionIcon>
+                      <SolutionTitle>Cost Savings Calculator</SolutionTitle>
+                      <SolutionSubtitle>Compare local vs offshore teams</SolutionSubtitle>
+                      <SolutionLink onClick={() => router.push('/cost-savings')}>Compare Savings <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    </SolutionCard>
+                    <SolutionCard>
+                      <SolutionIcon bg="#4ADE80"><FaUsers /></SolutionIcon>
+                      <SolutionTitle>AI-Powered Role Builder</SolutionTitle>
+                      <SolutionSubtitle>Build offshore job blueprints with AI</SolutionSubtitle>
+                      <SolutionLink onClick={() => router.push('/role-builder')}>Build a Role <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    </SolutionCard>
+                    <SolutionCard>
+                      <SolutionIcon bg="#6366F1"><FaRegCircle /></SolutionIcon>
+                      <SolutionTitle>Readiness Quiz</SolutionTitle>
+                      <SolutionSubtitle>Assess your offshore and AI readiness</SolutionSubtitle>
+                      <SolutionLink onClick={() => router.push('/readiness')}>Take the Quiz <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    </SolutionCard>
+                  </DropdownContent>
+                </SolutionsDropdown>
+              )}
+            </SolutionsDropdownWrapper>
+            <SolutionsDropdownWrapper
+              onMouseEnter={handleLearnEnter}
+              onMouseLeave={handleLearnLeave}
+              tabIndex={0}
+              aria-haspopup="true"
+              aria-expanded={showLearn}
+            >
+              <SolutionsNavItem>
+                Learn <FiChevronDown style={{ marginLeft: 4 }} />
+              </SolutionsNavItem>
+              {showLearn && (
+                <LearnDropdown>
+                  <DropdownContent>
+                    <SolutionCard>
+                      <SolutionIcon bg="#3B82F6"><FaGraduationCap /></SolutionIcon>
+                      <SolutionTitle>Course Library</SolutionTitle>
+                      <SolutionSubtitle>Build skills with free and premium training.</SolutionSubtitle>
+                      <SolutionLink onClick={() => router.push('/courses')}>Browse Courses <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    </SolutionCard>
+                    <SolutionCard>
+                      <SolutionIcon bg="#F472B6"><FaDownload /></SolutionIcon>
+                      <SolutionTitle>Resource Library</SolutionTitle>
+                      <SolutionSubtitle>Access checklists, templates, and guides.</SolutionSubtitle>
+                      <SolutionLink onClick={() => router.push('/resources')}>View Resources <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    </SolutionCard>
+                    <SolutionCard>
+                      <SolutionIcon bg="#4ADE80"><FaToolbox /></SolutionIcon>
+                      <SolutionTitle>Tool Library</SolutionTitle>
+                      <SolutionSubtitle>Discover top AI and automation tools.</SolutionSubtitle>
+                      <SolutionLink onClick={() => router.push('/tools')}>Explore Tools <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    </SolutionCard>
+                    <SolutionCard>
+                      <SolutionIcon bg="#3B82F6"><FaRegNewspaper /></SolutionIcon>
+                      <SolutionTitle>Blog & Insights</SolutionTitle>
+                      <SolutionSubtitle>Read insights, strategies, and scaling tips.</SolutionSubtitle>
+                      <SolutionLink onClick={() => router.push('/blog')}>Read the Blog <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    </SolutionCard>
+                  </DropdownContent>
+                </LearnDropdown>
+              )}
+            </SolutionsDropdownWrapper>
+            <NavItem onClick={() => router.push('/about')}>About</NavItem>
+            <NavItem onClick={() => router.push('/contact')}>Contact</NavItem>
           </Nav>
           <AuthSection>
             {isLoading ? (

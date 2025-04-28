@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWandMagicSparkles, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { FaUsers } from 'react-icons/fa6';
 
 const Section = styled.section`
   padding: 8rem 0 4rem;
@@ -17,16 +18,16 @@ const Container = styled.div`
 const Badge = styled.div`
   display: inline-flex;
   align-items: center;
-  background-color: rgba(99, 102, 241, 0.1);
-  color: #6366F1;
+  background-color: #4ADE80;
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   margin-bottom: 1.5rem;
-  font-size: 1rem;
 `;
 
-const BadgeIcon = styled(FontAwesomeIcon)`
+const BadgeIcon = styled(FaUsers)`
   margin-right: 0.5rem;
+  color: white;
 `;
 
 const Title = styled.h1`
@@ -49,13 +50,15 @@ const Button = styled.button`
   color: white;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
-  font-size: 1.125rem;
   font-weight: 600;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
   border: none;
-
+  font-size: 1.125rem;
+  margin: 0 auto;
   &:hover {
     background-color: #2563EB;
   }
@@ -70,7 +73,7 @@ export default function RoleBuilderHeroSection() {
     <Section id="role-builder-hero">
       <Container>
         <Badge>
-          <BadgeIcon icon={faWandMagicSparkles} />
+          <BadgeIcon />
           AI-Powered Role Builder
         </Badge>
         <Title>Build the Perfect Offshore Role with AI</Title>

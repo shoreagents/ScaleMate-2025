@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWandMagicSparkles, faEye } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -44,32 +45,34 @@ const ButtonGroup = styled.div`
   flex-wrap: wrap;
 `;
 
-const PrimaryButton = styled.button`
+const PrimaryButton = styled(Link)`
   background-color: white;
   color: #3B82F6;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
   font-weight: 600;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
-  border: none;
 
   &:hover {
     background-color: #F9FAFB;
   }
 `;
 
-const SecondaryButton = styled.button`
+const SecondaryButton = styled(Link)`
   background-color: #EC297B;
   color: white;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
   font-weight: 600;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
-  border: none;
 
   &:hover {
     background-color: #D91A6B;
@@ -90,13 +93,13 @@ export default function FinalCTA() {
             Start with our AI-powered Role Builder or explore sample templates to get inspired.
           </Description>
           <ButtonGroup>
-            <PrimaryButton>
+            <PrimaryButton href="#">
               Try Role Builder
-              <ButtonIcon icon={faWandMagicSparkles} />
+              <FontAwesomeIcon icon={faWandMagicSparkles} />
             </PrimaryButton>
-            <SecondaryButton>
+            <SecondaryButton href="#">
               See Sample Role
-              <ButtonIcon icon={faEye} />
+              <FontAwesomeIcon icon={faEye} />
             </SecondaryButton>
           </ButtonGroup>
         </CTAWrapper>

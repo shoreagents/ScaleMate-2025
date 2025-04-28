@@ -1,7 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPuzzlePiece, faTools, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faPuzzlePiece, faTools, faGraduationCap, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 4rem 0;
@@ -75,20 +76,22 @@ const CardDescription = styled.p`
   margin-bottom: 1rem;
 `;
 
-interface ActionLinkProps {
-  color: string;
-  hoverColor: string;
-}
-
-const ActionLink = styled.span<ActionLinkProps>`
-  color: ${props => props.color};
+const ActionLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
   font-weight: 600;
-  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
   transition: color 0.2s;
+  text-decoration: none;
 
   &:hover {
-    color: ${props => props.hoverColor};
+    color: ${({ theme }) => theme.colors.primaryDark};
   }
+`;
+
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
 `;
 
 export default function NextSteps() {
@@ -99,35 +102,38 @@ export default function NextSteps() {
           <Title>Recommended Next Steps</Title>
           <Grid>
             <Card>
-              <IconContainer color="#3B82F6">
+              <IconContainer color="#4ADE80">
                 <FontAwesomeIcon icon={faPuzzlePiece} className="icon" />
               </IconContainer>
               <CardTitle>Try Role Builder</CardTitle>
               <CardDescription>Create detailed role templates for your offshore team.</CardDescription>
-              <ActionLink color="#3B82F6" hoverColor="#2563EB">
-                Start Building →
+              <ActionLink href="#" style={{ color: '#3B82F6' }}>
+                Start Building
+                <ArrowIcon icon={faArrowRight} />
               </ActionLink>
             </Card>
 
             <Card>
-              <IconContainer color="#84CC16">
+              <IconContainer color="#4ADE80">
                 <FontAwesomeIcon icon={faTools} className="icon" />
               </IconContainer>
               <CardTitle>Tool Stack</CardTitle>
               <CardDescription>Explore recommended tools for remote team management.</CardDescription>
-              <ActionLink color="#84CC16" hoverColor="#65A30D">
-                View Tools →
+              <ActionLink href="#" style={{ color: '#3B82F6' }}>
+                View Tools
+                <ArrowIcon icon={faArrowRight} />
               </ActionLink>
             </Card>
 
             <Card>
-              <IconContainer color="#EC297B">
+              <IconContainer color="#3B82F6">
                 <FontAwesomeIcon icon={faGraduationCap} className="icon" />
               </IconContainer>
               <CardTitle>Free Course</CardTitle>
               <CardDescription>Learn the basics of managing offshore teams effectively.</CardDescription>
-              <ActionLink color="#EC297B" hoverColor="#BE185D">
-                Start Learning →
+              <ActionLink href="#" style={{ color: '#3B82F6' }}>
+                Start Learning
+                <ArrowIcon icon={faArrowRight} />
               </ActionLink>
             </Card>
           </Grid>

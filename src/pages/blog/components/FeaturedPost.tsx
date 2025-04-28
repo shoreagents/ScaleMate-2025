@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -96,26 +97,22 @@ const PostMeta = styled.p`
   color: #1E293B;
 `;
 
-const ReadMoreButton = styled.button`
+const ReadMoreLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  color: #0098FF;
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.2s;
+  text-decoration: none;
 
   &:hover {
-    color: #2563EB;
-    text-decoration: underline;
+    color: ${({ theme }) => theme.colors.primaryDark};
   }
 `;
 
 const ArrowIcon = styled(FontAwesomeIcon)`
-  margin-left: 0.5rem;
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
 `;
 
 export default function FeaturedPost() {
@@ -155,10 +152,10 @@ export default function FeaturedPost() {
                   <PostMeta>Feb 15, 2025 • 8 min read</PostMeta>
                 </AuthorDetails>
               </AuthorInfo>
-              <ReadMoreButton>
+              <ReadMoreLink href="#">
                 Read Article
                 <ArrowIcon icon={faArrowRight} />
-              </ReadMoreButton>
+              </ReadMoreLink>
             </ContentWrapper>
           </CardContent>
         </Card>
