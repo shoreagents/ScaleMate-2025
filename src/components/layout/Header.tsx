@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FiUser, FiLogOut } from 'react-icons/fi';
 import { supabase } from '@/lib/supabase';
+import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -180,6 +181,9 @@ const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [currentUsername, setCurrentUsername] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -236,7 +240,9 @@ const Header = () => {
 
         // If username is not set or last_password_change is null, user hasn't completed setup
         if (!profile?.username || !profile?.last_password_change) {
-          router.push('/');
+          setUserId(user.id);
+          setCurrentUsername(profile?.username || user.email?.split('@')[0] || '');
+          setShowSetupModal(true);
           return;
         }
 
@@ -264,6 +270,11 @@ const Header = () => {
       console.error('Error in handleDashboardClick:', error);
       router.push('/');
     }
+  };
+
+  const handleSetupComplete = () => {
+    setShowSetupModal(false);
+    router.push('/user/dashboard');
   };
 
   return (
@@ -311,6 +322,15 @@ const Header = () => {
           </AuthSection>
         </HeaderContent>
       </Container>
+
+      {showSetupModal && userId && currentUsername && (
+        <FirstTimeSetupForm
+          isOpen={showSetupModal}
+          onClose={handleSetupComplete}
+          userId={userId}
+          currentUsername={currentUsername}
+        />
+      )}
     </HeaderContainer>
   );
 };
