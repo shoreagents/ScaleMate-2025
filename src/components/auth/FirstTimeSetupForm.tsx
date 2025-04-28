@@ -26,7 +26,7 @@ const ModalContent = styled.div`
 `;
 
 const ModalHeader = styled.div`
-  margin-bottom: 2.5rem;
+  margin-bottom: 3rem;
 `;
 
 const Title = styled.h2`
@@ -39,7 +39,7 @@ const Title = styled.h2`
 const Description = styled.p`
   font-size: 0.875rem;
   color: #6B7280;
-  margin: 0;
+  margin-bottom: 3rem;
 `;
 
 const Form = styled.form`
@@ -167,6 +167,13 @@ const Button = styled.button`
 const RequiredAsterisk = styled.span`
   color: #DC2626;
   margin-left: 4px;
+`;
+
+const PasswordHelperText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 `;
 
 interface FirstTimeSetupFormProps {
@@ -375,12 +382,6 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                   {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </PasswordToggle>
               </PasswordInputWrapper>
-              {formData.password && (
-                <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#DC2626' }}>
-                  {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
-                  Password must be at least 8 characters
-                </HelperText>
-              )}
             </FormGroup>
 
             <FormGroup>
@@ -404,14 +405,23 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                   {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </PasswordToggle>
               </PasswordInputWrapper>
-              {formData.confirmPassword && (
-                <HelperText style={{ color: formData.password === formData.confirmPassword ? '#059669' : '#DC2626' }}>
-                  {formData.password === formData.confirmPassword ? <FiCheck size={14} /> : <FiX size={14} />}
-                  Passwords {formData.password === formData.confirmPassword ? 'match' : 'do not match'}
-                </HelperText>
-              )}
             </FormGroup>
           </FormRow>
+
+          <PasswordHelperText>
+            {formData.password && (
+              <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#DC2626' }}>
+                {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
+                Password must be at least 8 characters
+              </HelperText>
+            )}
+            {formData.confirmPassword && (
+              <HelperText style={{ color: formData.password === formData.confirmPassword ? '#059669' : '#DC2626' }}>
+                {formData.password === formData.confirmPassword ? <FiCheck size={14} /> : <FiX size={14} />}
+                Passwords {formData.password === formData.confirmPassword ? 'match' : 'do not match'}
+              </HelperText>
+            )}
+          </PasswordHelperText>
 
           {error && (
             <ErrorMessage>
