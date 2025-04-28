@@ -41,6 +41,17 @@ export default function AuthCallback() {
         console.log('Session found:', session.user.id);
 
         try {
+          // Update last_login in users table
+          const { error: updateLoginError } = await serviceRoleClient
+            .from('users')
+            .update({ last_login: new Date().toISOString() })
+            .eq('id', session.user.id);
+
+          if (updateLoginError) {
+            console.error('Error updating last_login:', updateLoginError);
+            // Don't throw error here, continue with the flow
+          }
+
           // Get user's role using service role client
           const { data: roles, error: rolesError } = await serviceRoleClient
             .from('user_roles')
