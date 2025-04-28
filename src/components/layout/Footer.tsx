@@ -10,28 +10,27 @@ const FooterWrapper = styled.footer`
 `;
 
 const Container = styled.div`
-  max-width: 72rem;
+  width: 100vw;
+  max-width: 120rem;
   margin: 0 auto;
-  padding: 0 ${({ theme }) => theme.spacing.md};
+  padding: 0 12vw;
+  @media (min-width: 1200px) {
+    padding: 0 14rem;
+  }
 `;
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 2rem;
   margin-bottom: 2rem;
-
   @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 `;
 
 const BrandSection = styled.div`
-  grid-column: span 2;
-
-  @media (min-width: ${({ theme }) => theme.breakpoints.md}) {
-    grid-column: span 2;
-  }
+  text-align: left;
 `;
 
 const BrandTitle = styled.h3`
@@ -62,7 +61,9 @@ const SocialIcon = styled.span`
   }
 `;
 
-const Column = styled.div``;
+const Column = styled.div`
+  text-align: left;
+`;
 
 const ColumnTitle = styled.h4`
   font-weight: 700;
@@ -121,13 +122,30 @@ export default function Footer() {
             <ColumnTitle>Solutions</ColumnTitle>
             <LinkList>
               <LinkItem>
-                <Link>Offshore Teams</Link>
+                <Link onClick={() => window.location.href = '/quote'}>Quick Quote Calculator</Link>
               </LinkItem>
               <LinkItem>
-                <Link>AI Tools</Link>
+                <Link onClick={() => window.location.href = '/cost-savings'}>Cost Savings Calculator</Link>
               </LinkItem>
               <LinkItem>
-                <Link>Training</Link>
+                <Link onClick={() => window.location.href = '/role-builder'}>Role Builder</Link>
+              </LinkItem>
+            </LinkList>
+          </Column>
+          <Column>
+            <ColumnTitle>Learn</ColumnTitle>
+            <LinkList>
+              <LinkItem>
+                <Link onClick={() => window.location.href = '/courses'}>Courses</Link>
+              </LinkItem>
+              <LinkItem>
+                <Link onClick={() => window.location.href = '/resources'}>Resource Downloads</Link>
+              </LinkItem>
+              <LinkItem>
+                <Link onClick={() => window.location.href = '/tools'}>Tool Library</Link>
+              </LinkItem>
+              <LinkItem>
+                <Link onClick={() => window.location.href = '/blog'}>Blog</Link>
               </LinkItem>
             </LinkList>
           </Column>
@@ -135,27 +153,13 @@ export default function Footer() {
             <ColumnTitle>Company</ColumnTitle>
             <LinkList>
               <LinkItem>
-                <Link>About</Link>
+                <Link onClick={() => window.location.href = '/about'}>About</Link>
               </LinkItem>
               <LinkItem>
-                <Link>Careers</Link>
+                <Link onClick={() => window.location.href = '/careers'}>Careers</Link>
               </LinkItem>
               <LinkItem>
-                <Link>Contact</Link>
-              </LinkItem>
-            </LinkList>
-          </Column>
-          <Column>
-            <ColumnTitle>Resources</ColumnTitle>
-            <LinkList>
-              <LinkItem>
-                <Link>Blog</Link>
-              </LinkItem>
-              <LinkItem>
-                <Link>Case Studies</Link>
-              </LinkItem>
-              <LinkItem>
-                <Link>Help Center</Link>
+                <Link onClick={() => window.location.href = '/contact'}>Contact</Link>
               </LinkItem>
             </LinkList>
           </Column>
