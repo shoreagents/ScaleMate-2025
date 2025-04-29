@@ -157,7 +157,7 @@ const Modal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: #d9d9d9cc;
   justify-content: center;
   align-items: center;
   z-index: 1000;
@@ -3086,7 +3086,7 @@ const SuccessModal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: #d9d9d9cc;
   justify-content: center;
   align-items: center;
   z-index: 1001;
