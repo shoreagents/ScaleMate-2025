@@ -473,6 +473,11 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     setIsLoading(false);
   };
 
+  const handleSuccessContinue = () => {
+    setShowSuccessModal(false);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
