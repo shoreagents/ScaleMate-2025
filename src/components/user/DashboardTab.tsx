@@ -20,6 +20,7 @@ import {
 } from 'react-icons/fa6';
 import { FiCheck } from 'react-icons/fi';
 import UserProfile from '@/components/user/UserProfile';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface DashboardTabProps {
   user?: {
@@ -455,6 +456,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProfile, setShowProfile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -481,12 +483,17 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
                 new Date(profile.last_password_change).getTime() > Date.now() - 30000; // Within last 30 seconds
 
               if (isNewSignup || justCompletedSetup) {
-                setShowSuccessModal(true);
+                // Add a small delay before showing the success modal
+                setTimeout(() => {
+                  setShowSuccessModal(true);
+                }, 500);
               }
             }
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
+        } finally {
+          setIsLoading(false);
         }
       }
     };
@@ -502,6 +509,10 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
     await supabase.auth.signOut();
     router.push('/');
   };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <>
