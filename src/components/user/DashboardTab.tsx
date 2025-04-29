@@ -475,9 +475,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
                 avatar: profile.profile_picture
               });
 
-              // Check if this is a newly signed-up user
+              // Check if this is a newly signed-up user or just completed setup
               const isNewSignup = profile.last_password_change === null;
-              if (isNewSignup) {
+              const justCompletedSetup = profile.last_password_change && 
+                new Date(profile.last_password_change).getTime() > Date.now() - 30000; // Within last 30 seconds
+
+              if (isNewSignup || justCompletedSetup) {
                 setShowSuccessModal(true);
               }
             }
