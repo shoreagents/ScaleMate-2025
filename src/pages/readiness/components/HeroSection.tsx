@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartSimple, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import QuizInterface from './QuizInterface';
+import { FaRegCircle } from 'react-icons/fa6';
 
 const Section = styled.section`
   padding-top: 8rem;
@@ -38,15 +39,16 @@ const ContentContainer = styled.div`
 const Badge = styled.div`
   display: inline-flex;
   align-items: center;
-  background-color: rgba(132, 204, 22, 0.1);
-  color: #84CC16;
+  background-color: #6366F1;
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   margin-bottom: 1.5rem;
 `;
 
-const BadgeIcon = styled(FontAwesomeIcon)`
+const BadgeIcon = styled(FaRegCircle)`
   margin-right: 0.5rem;
+  color: white;
 `;
 
 const Title = styled.h1`
@@ -114,8 +116,8 @@ export default function ReadinessHeroSection() {
       <Container>
         <ContentContainer>
           <Badge>
-            <BadgeIcon icon={faChartSimple} />
-            Readiness Assessment
+            <BadgeIcon />
+            Readiness Quiz
           </Badge>
           <Title>How Ready Are You to Scale Offshore?</Title>
           <Description>

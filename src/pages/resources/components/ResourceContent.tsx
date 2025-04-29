@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -6,8 +6,10 @@ import {
   faFileLines, 
   faFileExcel,
   faLock,
-  faCheck
+  faCheck,
+  faArrowRight
 } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -41,21 +43,23 @@ const Sidebar = styled.div`
 const Filters = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-bottom: 2rem;
 `;
 
 const FilterButton = styled.button<{ active?: boolean }>`
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  background-color: ${props => props.active ? '#3B82F6' : '#fff'};
-  color: ${props => props.active ? '#fff' : '#0F172A'};
-  border: ${props => props.active ? 'none' : '1px solid #E5E7EB'};
+  font-size: 1rem;
+  border: 1px solid #E5E7EB;
+  background: ${({active}) => (active ? '#3B82F6' : '#fff')};
+  color: ${({active}) => (active ? '#fff' : '#0F172A')};
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-
+  transition: background 0.2s, color 0.2s;
   &:hover {
-    background-color: ${props => props.active ? '#2563EB' : '#F9FAFB'};
+    background: ${({active}) => (active ? '#2563EB' : '#F9FAFB')};
+    color: ${({active}) => (active ? '#fff' : '#0F172A')};
   }
 `;
 
@@ -70,16 +74,10 @@ const ResourceGrid = styled.div`
 `;
 
 const ResourceCard = styled.div`
-  background-color: #fff;
+  background: #F9FAFB;
+  border-radius: 1rem;
   border: 1px solid #E5E7EB;
-  border-radius: 0.75rem;
   overflow: hidden;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s;
-
-  &:hover {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  }
 `;
 
 const CardContent = styled.div`
@@ -179,17 +177,23 @@ const SidebarDescription = styled.p`
   margin-bottom: 1.5rem;
 `;
 
-const SignUpButton = styled.button`
+const CreateAccountButton = styled.button`
   width: 100%;
-  background-color: #EC297B;
-  color: #fff;
-  padding: 0.75rem;
+  background-color: #3B82F6;
+  color: white;
+  padding: 1rem 2rem;
   border-radius: 0.5rem;
-  margin-bottom: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
-
+  border: none;
+  justify-content: center;
+  margin-bottom: 1.5rem;
   &:hover {
-    background-color: #D1206A;
+    background-color: #2563EB;
   }
 `;
 
@@ -213,18 +217,57 @@ const FeatureText = styled.span`
   font-size: 0.875rem;
 `;
 
+const ResourceLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
+  text-decoration: none;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primaryDark};
+  }
+`;
+
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
+`;
+
 export default function ResourceContent() {
+  const [activeFilter, setActiveFilter] = useState('all');
+
   return (
     <Section id="resources-content">
       <Container>
         <ContentWrapper>
           <MainContent>
             <Filters>
-              <FilterButton active>All Resources</FilterButton>
-              <FilterButton>Delegation</FilterButton>
-              <FilterButton>Onboarding</FilterButton>
-              <FilterButton>Operations</FilterButton>
-              <FilterButton>AI</FilterButton>
+              <FilterButton 
+                active={activeFilter === 'all'} 
+                onClick={() => setActiveFilter('all')}
+              >
+                All Resources
+              </FilterButton>
+              <FilterButton 
+                active={activeFilter === 'checklists'} 
+                onClick={() => setActiveFilter('checklists')}
+              >
+                Checklists
+              </FilterButton>
+              <FilterButton 
+                active={activeFilter === 'templates'} 
+                onClick={() => setActiveFilter('templates')}
+              >
+                Templates
+              </FilterButton>
+              <FilterButton 
+                active={activeFilter === 'guides'} 
+                onClick={() => setActiveFilter('guides')}
+              >
+                Guides
+              </FilterButton>
             </Filters>
 
             <ResourceGrid>
@@ -239,7 +282,10 @@ export default function ResourceContent() {
                   <CardDescription>
                     Complete checklist for delegating tasks effectively to your offshore team.
                   </CardDescription>
-                  <DownloadButton>Download Now</DownloadButton>
+                  <ResourceLink href="#">
+                    Download Template
+                    <ArrowIcon icon={faArrowRight} />
+                  </ResourceLink>
                 </CardContent>
               </ResourceCard>
 
@@ -260,7 +306,10 @@ export default function ResourceContent() {
                   <CardDescription>
                     Step-by-step guide to implementing AI tools in your workflow.
                   </CardDescription>
-                  <DownloadButton>Download Now</DownloadButton>
+                  <ResourceLink href="#">
+                    Download Template
+                    <ArrowIcon icon={faArrowRight} />
+                  </ResourceLink>
                 </CardContent>
               </ResourceCard>
 
@@ -275,7 +324,10 @@ export default function ResourceContent() {
                   <CardDescription>
                     Ready-to-use Excel template for tracking team performance.
                   </CardDescription>
-                  <DownloadButton>Download Now</DownloadButton>
+                  <ResourceLink href="#">
+                    Download Template
+                    <ArrowIcon icon={faArrowRight} />
+                  </ResourceLink>
                 </CardContent>
               </ResourceCard>
             </ResourceGrid>
@@ -287,7 +339,9 @@ export default function ResourceContent() {
               <SidebarDescription>
                 Create a free account to access premium templates and guides.
               </SidebarDescription>
-              <SignUpButton>Create Free Account</SignUpButton>
+              <CreateAccountButton>
+                Create Free Account
+              </CreateAccountButton>
               <FeatureList>
                 <FeatureItem>
                   <CheckIcon icon={faCheck} />

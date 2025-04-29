@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBook, faClipboardList, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 4rem 0;
@@ -63,28 +64,22 @@ const Description = styled.p`
   margin-bottom: 1rem;
 `;
 
-interface ButtonProps {
-  color: string;
-  hoverColor: string;
-}
-
-const Button = styled.button<ButtonProps>`
-  color: ${props => props.color};
+const ResourceLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   transition: color 0.2s;
-  background: none;
-  border: none;
-  padding: 0;
+  text-decoration: none;
 
   &:hover {
-    color: ${props => props.hoverColor};
+    color: ${({ theme }) => theme.colors.primaryDark};
   }
 `;
 
-const ButtonIcon = styled(FontAwesomeIcon)`
-  margin-left: 0.5rem;
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
 `;
 
 export default function ResourceBlock() {
@@ -101,10 +96,10 @@ export default function ResourceBlock() {
               <Description>
                 Complete guide to delegating and managing offshore teams effectively.
               </Description>
-              <Button color="#EC297B" hoverColor="#BE185D">
+              <ResourceLink href="#">
                 Download Free Guide
-                <ButtonIcon icon={faArrowRight} />
-              </Button>
+                <ArrowIcon icon={faArrowRight} />
+              </ResourceLink>
             </Card>
 
             <Card>
@@ -115,10 +110,10 @@ export default function ResourceBlock() {
               <Description>
                 Browse our library of pre-built role descriptions and KPIs.
               </Description>
-              <Button color="#6366F1" hoverColor="#4F46E5">
+              <ResourceLink href="#">
                 View Templates
-                <ButtonIcon icon={faArrowRight} />
-              </Button>
+                <ArrowIcon icon={faArrowRight} />
+              </ResourceLink>
             </Card>
           </Grid>
         </InnerContainer>

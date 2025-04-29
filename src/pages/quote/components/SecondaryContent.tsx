@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faGear, faGlobe, faBook, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 4rem 0;
@@ -101,12 +102,22 @@ const CardDescription = styled.p`
   margin-bottom: 1.5rem;
 `;
 
-const PreviewLink = styled.div`
-  display: flex;
-  align-items: center;
-  color: #3B82F6;
+const PreviewLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.2s;
   cursor: pointer;
+  text-decoration: none;
+  &:hover {
+    color: ${({ theme }) => theme.colors.primaryDark};
+  }
+`;
+
+const ArrowIcon = styled(FontAwesomeIcon)`
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
 `;
 
 export default function SecondaryContent() {
@@ -154,9 +165,8 @@ export default function SecondaryContent() {
             <CardDescription>
               Your complete guide to building and managing offshore teams. Includes role templates, training frameworks, and management best practices.
             </CardDescription>
-            <PreviewLink>
-              <span>Preview Sample</span>
-              <FontAwesomeIcon icon={faArrowRight} className="ml-2" />
+            <PreviewLink href="#">
+              Preview Sample <ArrowIcon icon={faArrowRight} />
             </PreviewLink>
           </InfoCard>
         </Grid>

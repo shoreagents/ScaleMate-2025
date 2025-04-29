@@ -18,8 +18,8 @@ const Container = styled.div`
 const Badge = styled.div`
   display: inline-flex;
   align-items: center;
-  background-color: rgba(59, 130, 246, 0.1);
-  color: #3B82F6;
+  background-color: #3B82F6;
+  color: white;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   margin-bottom: 1.5rem;
@@ -27,6 +27,7 @@ const Badge = styled.div`
 
 const BadgeIcon = styled(FontAwesomeIcon)`
   margin-right: 0.5rem;
+  color: white;
 `;
 
 const Title = styled.h1`
