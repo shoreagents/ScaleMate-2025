@@ -263,7 +263,6 @@ const PasswordHelperText = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-top: 8px;
 `;
 
 const PasswordSection = styled.div`
@@ -507,6 +506,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
               </InputWrapper>
             </FormGroup>
 
+            <PasswordSection>
             <FormRow>
               <FormGroup>
                 <Label htmlFor="password">
@@ -558,7 +558,6 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                 </InputWrapper>
               </FormGroup>
             </FormRow>
-            <PasswordSection>
               <FormRow>
                 <FormGroup>
                   <PasswordHelperText>
