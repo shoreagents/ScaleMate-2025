@@ -91,41 +91,11 @@ export default function AuthCallback() {
         if (!profile) {
           console.log('Creating new profile');
           try {
-            // Generate a unique username
-            const baseUsername = session.user.email?.split('@')[0] || '';
-            let username = baseUsername;
-            let attempts = 0;
-            let usernameExists = true;
-
-            while (usernameExists && attempts < 5) {
-              // Check if username exists
-              const { data: existingUsername, error: usernameCheckError } = await serviceRoleClient
-                .from('user_profiles')
-                .select('username')
-                .eq('username', username)
-                .single();
-
-              if (usernameCheckError && usernameCheckError.code === 'PGRST116') {
-                usernameExists = false;
-              } else if (usernameCheckError) {
-                console.error('Username check error:', usernameCheckError);
-                throw usernameCheckError;
-              } else {
-                // Username exists, try a different one
-                attempts++;
-                username = `${baseUsername}${attempts}`;
-              }
-            }
-
-            if (usernameExists) {
-              throw new Error('Could not generate a unique username');
-            }
-
             const { error: createProfileError } = await serviceRoleClient
               .from('user_profiles')
               .insert({
                 user_id: session.user.id,
-                username: username,
+                username: null, // Don't assign a username automatically
                 first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
                 last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
                 last_password_change: null
@@ -135,7 +105,7 @@ export default function AuthCallback() {
               console.error('Create profile error:', createProfileError);
               throw createProfileError;
             }
-            console.log('Profile created successfully with username:', username);
+            console.log('Profile created successfully');
 
             // Assign default 'user' role
             const { error: roleError } = await serviceRoleClient
@@ -154,7 +124,7 @@ export default function AuthCallback() {
             // After creating profile and assigning role, show setup modal for Google users
             if (isGoogleUser) {
               setUserId(session.user.id);
-              setCurrentUsername(username);
+              setCurrentUsername(''); // Start with empty username
               setShowSetupModal(true);
               return; // Exit early to prevent further checks
             }
@@ -167,7 +137,7 @@ export default function AuthCallback() {
         // Check if we need to show the setup modal for existing profiles
         if (isGoogleUser && !profile?.last_password_change) {
           setUserId(session.user.id);
-          setCurrentUsername(profile?.username || session.user.email?.split('@')[0] || '');
+          setCurrentUsername(profile?.username || ''); // Use existing username or empty string
           setShowSetupModal(true);
           return; // Exit early to prevent further checks
         }
