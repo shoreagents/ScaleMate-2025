@@ -52,6 +52,7 @@ import AIToolsTab from '@/components/admin/AIToolsTab';
 import QuizManagerTab from '@/components/admin/QuizManagerTab';
 import ContentBlocksTab from '@/components/admin/ContentBlocksTab';
 import SystemSettingsTab from '@/components/admin/SystemSettingsTab';
+import { withRoleProtection } from '@/components/auth/withRoleProtection';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -799,4 +800,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage; 
+export default withRoleProtection(DashboardPage, 'admin'); 

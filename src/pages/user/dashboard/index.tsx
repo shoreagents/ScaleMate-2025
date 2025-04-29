@@ -33,6 +33,7 @@ import AIToolLibraryTab from '@/components/user/AIToolLibraryTab';
 import SavedToolStackTab from '@/components/user/SavedToolStackTab';
 import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
 import UserProfile from '@/components/user/UserProfile';
+import { withRoleProtection } from '@/components/auth/withRoleProtection';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -207,4 +208,4 @@ const DashboardPage = () => {
   );
 };
 
-export default DashboardPage; 
+export default withRoleProtection(DashboardPage, 'user'); 
