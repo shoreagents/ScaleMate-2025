@@ -442,13 +442,13 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Failed to update profile: ' + profileError.message);
       }
 
-      // Close the setup modal first
-      onClose();
+      // Show success modal first
+      setShowSuccessModal(true);
       
-      // Then show success modal after a longer delay
+      // Then close the setup modal after a short delay
       setTimeout(() => {
-        setShowSuccessModal(true);
-      }, 300);
+        onClose();
+      }, 100);
     } catch (err) {
       console.error('Setup error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during setup');
