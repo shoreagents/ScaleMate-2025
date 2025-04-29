@@ -124,22 +124,23 @@ export default function AuthCallback() {
           setUserId(session.user.id);
           setCurrentUsername(profile?.username || session.user.email?.split('@')[0] || '');
           setShowSetupModal(true);
+          return; // Exit early to prevent further checks
+        }
+
+        // Only redirect if we don't need to show the setup modal
+        const { data: roles, error: rolesError } = await serviceRoleClient
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id);
+
+        if (rolesError) {
+          throw rolesError;
+        }
+
+        if (roles?.some(r => r.role === 'admin')) {
+          router.push('/admin/dashboard');
         } else {
-          // Redirect to appropriate dashboard based on role
-          const { data: roles, error: rolesError } = await serviceRoleClient
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', session.user.id);
-
-          if (rolesError) {
-            throw rolesError;
-          }
-
-          if (roles?.some(r => r.role === 'admin')) {
-            router.push('/admin/dashboard');
-          } else {
-            router.push('/user/dashboard');
-          }
+          router.push('/user/dashboard');
         }
       } catch (err) {
         console.error('Auth callback error:', err);
