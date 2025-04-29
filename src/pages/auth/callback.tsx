@@ -30,108 +30,89 @@ export default function AuthCallback() {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) throw sessionError;
-        if (!session) {
-          console.error('No session found');
-          router.push('/');
-          return;
-        }
+        if (!session) throw new Error('No session found');
 
-        const user = session.user;
-        console.log('User metadata:', user.user_metadata);
-        console.log('Avatar URL from metadata:', user.user_metadata.avatar_url);
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!user) throw new Error('No user found');
 
         // Check if user exists in users table
-        const { data: existingUser, error: userError } = await supabase
+        const { data: existingUser, error: userCheckError } = await supabase
           .from('users')
           .select('*')
           .eq('id', user.id)
           .single();
 
-        if (userError && userError.code !== 'PGRST116') {
-          console.error('Error checking user:', userError);
-          throw userError;
+        if (userCheckError && userCheckError.code !== 'PGRST116') {
+          throw userCheckError;
         }
 
+        // If user doesn't exist, create them
         if (!existingUser) {
-          console.log('Creating new user in users table');
-          // Create user in users table
           const { error: insertError } = await supabase
             .from('users')
-            .insert({
-              id: user.id,
-              email: user.email,
-              role: 'user'
-            });
-
-          if (insertError) {
-            console.error('Error creating user:', insertError);
-            throw insertError;
-          }
+            .insert([
+              {
+                id: user.id,
+                email: user.email,
+                created_at: new Date().toISOString(),
+                last_password_change: null
+              }
+            ]);
+          if (insertError) throw insertError;
         }
 
-        // Check if user has a profile
-        const { data: existingProfile, error: profileError } = await supabase
+        // Get user profile
+        const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('*')
           .eq('user_id', user.id)
           .single();
 
         if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error checking profile:', profileError);
           throw profileError;
         }
 
-        if (!existingProfile) {
-          console.log('Creating new profile with Google data');
-          // Create new profile with Google data
-          const { data: newProfile, error: insertError } = await supabase
+        // If profile doesn't exist, create it
+        if (!profile) {
+          const { error: insertError } = await supabase
             .from('user_profiles')
-            .insert({
-              user_id: user.id,
-              username: user.email?.split('@')[0] || '',
-              first_name: user.user_metadata.full_name?.split(' ')[0] || '',
-              last_name: user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
-              profile_picture: user.user_metadata.avatar_url || null,
-              last_password_change: null
-            })
-            .select()
-            .single();
+            .insert([
+              {
+                user_id: user.id,
+                email: user.email,
+                created_at: new Date().toISOString(),
+                profile_picture: user.user_metadata?.avatar_url || null
+              }
+            ]);
+          if (insertError) throw insertError;
+        } else if (user.user_metadata?.avatar_url && !profile.profile_picture) {
+          // Update profile picture if it's not set
+          const { error: updateError } = await supabase
+            .from('user_profiles')
+            .update({ profile_picture: user.user_metadata.avatar_url })
+            .eq('user_id', user.id);
+          if (updateError) throw updateError;
+        }
 
-          if (insertError) {
-            console.error('Error creating profile:', insertError);
-            throw insertError;
-          }
+        // Set current username for setup modal
+        setCurrentUsername(profile?.username || '');
 
-          console.log('New profile created:', newProfile);
-          setCurrentUsername(newProfile.username);
+        // Show setup modal if needed
+        if (!existingUser || !profile?.username) {
           setShowSetupModal(true);
         } else {
-          console.log('Existing profile found:', existingProfile);
-          // Update profile picture if it's missing
-          if (!existingProfile.profile_picture && user.user_metadata.avatar_url) {
-            console.log('Updating missing profile picture');
-            const { error: updateError } = await supabase
-              .from('user_profiles')
-              .update({ profile_picture: user.user_metadata.avatar_url })
-              .eq('user_id', user.id);
-
-            if (updateError) {
-              console.error('Error updating profile picture:', updateError);
-              throw updateError;
-            }
-            console.log('Profile picture updated successfully');
-          }
-
-          setCurrentUsername(existingProfile.username);
-          if (existingProfile.last_password_change === null) {
-            setShowSetupModal(true);
+          // Redirect to appropriate dashboard
+          const { data: { user: currentUser } } = await supabase.auth.getUser();
+          if (currentUser?.user_metadata?.role === 'admin') {
+            router.push('/admin/dashboard');
           } else {
             router.push('/user/dashboard');
           }
         }
       } catch (error) {
         console.error('Auth callback error:', error);
-        setError('An error occurred during authentication. Please try again.');
+        setError('Failed to complete authentication. Please try again.');
       } finally {
         setIsLoading(false);
       }
