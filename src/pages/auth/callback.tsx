@@ -49,6 +49,11 @@ export default function AuthCallback() {
         const googleProfilePicture = session.user.user_metadata?.avatar_url || null;
         console.log('Google profile picture:', googleProfilePicture);
 
+        // Get high quality version of Google profile picture
+        const highQualityProfilePicture = googleProfilePicture ? 
+          googleProfilePicture.replace('=s96-c', '=s400-c') : null;
+        console.log('High quality profile picture:', highQualityProfilePicture);
+
         // Check if user exists in users table
         const { data: existingUser, error: userError } = await serviceRoleClient
           .from('users')
@@ -83,7 +88,7 @@ export default function AuthCallback() {
         // Check if profile exists and get current username
         const { data: profile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
-          .select('username, last_password_change')
+          .select('username, last_password_change, profile_picture')
           .eq('user_id', session.user.id)
           .single();
 
@@ -101,7 +106,7 @@ export default function AuthCallback() {
             // First check if the profile was created in the meantime
             const { data: doubleCheckProfile, error: doubleCheckError } = await serviceRoleClient
               .from('user_profiles')
-              .select('username, last_password_change')
+              .select('username, last_password_change, profile_picture')
               .eq('user_id', session.user.id)
               .single();
 
@@ -120,7 +125,7 @@ export default function AuthCallback() {
                   first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
                   last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
                   last_password_change: null,
-                  profile_picture: googleProfilePicture
+                  profile_picture: highQualityProfilePicture // Store profile picture immediately
                 });
 
               if (createProfileError) {
@@ -163,6 +168,18 @@ export default function AuthCallback() {
           } catch (err) {
             console.error('Error during profile creation:', err);
             throw err;
+          }
+        } else if (isGoogleUser && !profile.profile_picture) {
+          // Update profile picture if it doesn't exist
+          const { error: updateError } = await serviceRoleClient
+            .from('user_profiles')
+            .update({ profile_picture: highQualityProfilePicture })
+            .eq('user_id', session.user.id);
+
+          if (updateError) {
+            console.error('Error updating profile picture:', updateError);
+          } else {
+            console.log('Profile picture updated successfully');
           }
         }
 
