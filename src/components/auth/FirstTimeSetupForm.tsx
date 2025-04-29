@@ -380,7 +380,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     try {
       // Validate username
       if (usernameExists && formData.username !== currentUsername) {
-        throw new Error('Username is already taken');
+        throw new Error('This is your current username');
       }
 
       // Validate password
