@@ -39,6 +39,9 @@ export default function AuthCallback() {
           return;
         }
 
+        // Check if this is a Google sign-up
+        const isGoogleUser = session.user.app_metadata?.provider === 'google';
+
         // Check if user exists in users table
         const { data: existingUser, error: userError } = await serviceRoleClient
           .from('users')
@@ -112,15 +115,17 @@ export default function AuthCallback() {
           }
           console.log('Role assigned successfully');
 
-          // After creating profile and assigning role, show setup modal
-          setUserId(session.user.id);
-          setCurrentUsername(session.user.email?.split('@')[0] || '');
-          setShowSetupModal(true);
-          return; // Exit early to prevent further checks
+          // After creating profile and assigning role, show setup modal for Google users
+          if (isGoogleUser) {
+            setUserId(session.user.id);
+            setCurrentUsername(session.user.email?.split('@')[0] || '');
+            setShowSetupModal(true);
+            return; // Exit early to prevent further checks
+          }
         }
 
         // Check if we need to show the setup modal for existing profiles
-        if (!profile?.last_password_change) {
+        if (isGoogleUser && !profile?.last_password_change) {
           setUserId(session.user.id);
           setCurrentUsername(profile?.username || session.user.email?.split('@')[0] || '');
           setShowSetupModal(true);
