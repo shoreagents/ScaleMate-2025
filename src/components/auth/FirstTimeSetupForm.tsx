@@ -265,6 +265,62 @@ const PasswordHelperText = styled.div`
   gap: 0;
 `;
 
+const GoogleButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.875rem;
+  background: white;
+  border: 1.5px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1.5rem;
+
+  &:hover {
+    background: #F9FAFB;
+    border-color: ${props => props.theme.colors.text.primary};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: ${props => props.theme.colors.text.secondary};
+  font-size: 0.875rem;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid ${props => props.theme.colors.border};
+  }
+
+  &::before {
+    margin-right: 1rem;
+  }
+
+  &::after {
+    margin-left: 1rem;
+  }
+`;
+
 interface FirstTimeSetupFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -291,6 +347,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
@@ -421,6 +478,38 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          scopes: 'email profile',
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      // The user will be redirected to Google's OAuth page
+      // After successful authentication, they'll be redirected back to the callback URL
+      // The callback will handle the user creation and profile setup
+    } catch (err) {
+      console.error('Google sign in error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during Google sign in';
+      setError(errorMessage);
+      setIsGoogleLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -435,6 +524,14 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
+            <GoogleButton 
+              onClick={handleGoogleSignIn}
+              disabled={isGoogleLoading}
+            >
+              <img src="/google-icon.svg" alt="Google" width={20} height={20} />
+              {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
+            </GoogleButton>
+            <Divider>or</Divider>
             <FormGroup>
               <Label htmlFor="username">
                 Username
@@ -484,6 +581,12 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                   <HelperText style={{ color: '#dc2626' }}>
                     <FiX size={14} />
                     Username is already taken
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && !usernameExists && formData.username === currentUsername && (
+                  <HelperText style={{ color: '#6b7280' }}>
+                    <FiCheck size={14} />
+                    This is your auto-generated username
                   </HelperText>
                 )}
               </InputWrapper>
