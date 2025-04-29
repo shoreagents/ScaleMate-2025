@@ -573,8 +573,8 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
         }
       }
 
-      setSuccess('Account created successfully!');
-      onSuccess?.('Account created successfully!');
+      setSuccess('An email confirmation has been sent!');
+      onSuccess?.('An email confirmation has been sent!');
       // Wait for 1 second before redirecting to login page
       setTimeout(() => {
         router.push('/login');
