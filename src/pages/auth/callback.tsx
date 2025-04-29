@@ -94,35 +94,58 @@ export default function AuthCallback() {
         if (!profile) {
           console.log('Creating new profile');
           try {
-            const { error: createProfileError } = await serviceRoleClient
+            // First check if the profile was created in the meantime
+            const { data: doubleCheckProfile, error: doubleCheckError } = await serviceRoleClient
               .from('user_profiles')
-              .insert({
-                user_id: session.user.id,
-                username: null,
-                first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
-                last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
-                last_password_change: null
-              });
+              .select('username, last_password_change')
+              .eq('user_id', session.user.id)
+              .single();
 
-            if (createProfileError) {
-              console.error('Create profile error:', createProfileError);
-              throw createProfileError;
+            if (doubleCheckError && doubleCheckError.code !== 'PGRST116') {
+              console.error('Double check profile error:', doubleCheckError);
+              throw doubleCheckError;
             }
-            console.log('Profile created successfully');
 
-            // Assign default 'user' role
-            const { error: roleError } = await serviceRoleClient
-              .from('user_roles')
-              .insert({
-                user_id: session.user.id,
-                role: 'user'
-              });
+            // If profile still doesn't exist, create it
+            if (!doubleCheckProfile) {
+              const { error: createProfileError } = await serviceRoleClient
+                .from('user_profiles')
+                .insert({
+                  user_id: session.user.id,
+                  username: null,
+                  first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
+                  last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
+                  last_password_change: null
+                });
 
-            if (roleError) {
-              console.error('Role assignment error:', roleError);
-              throw roleError;
+              if (createProfileError) {
+                // If the error is a duplicate key violation, the profile was created in the meantime
+                if (createProfileError.code === '23505') {
+                  console.log('Profile was created in the meantime, continuing...');
+                } else {
+                  console.error('Create profile error:', createProfileError);
+                  throw createProfileError;
+                }
+              } else {
+                console.log('Profile created successfully');
+
+                // Assign default 'user' role
+                const { error: roleError } = await serviceRoleClient
+                  .from('user_roles')
+                  .insert({
+                    user_id: session.user.id,
+                    role: 'user'
+                  });
+
+                if (roleError) {
+                  console.error('Role assignment error:', roleError);
+                  throw roleError;
+                }
+                console.log('Role assigned successfully');
+              }
+            } else {
+              console.log('Profile was created in the meantime, continuing...');
             }
-            console.log('Role assigned successfully');
 
             // After creating profile and assigning role, show setup modal for Google users
             if (isGoogleUser) {
