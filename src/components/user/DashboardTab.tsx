@@ -479,7 +479,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
               // Check if this is a Google sign-up user who just completed setup
               const isGoogleUser = authUser.app_metadata?.provider === 'google';
               const justCompletedSetup = profile.last_password_change && 
-                new Date(profile.last_password_change).getTime() > Date.now() - 30000; // Within last 30 seconds
+                new Date(profile.last_password_change).getTime() > Date.now() - 10000; // Within last 10 seconds
 
               if (isGoogleUser && justCompletedSetup) {
                 setShowSuccessModal(true);
