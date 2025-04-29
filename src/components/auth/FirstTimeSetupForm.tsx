@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
@@ -46,7 +46,7 @@ const Description = styled.p`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
 `;
 
 const FormGroup = styled.div`
@@ -58,7 +58,7 @@ const FormGroup = styled.div`
 
 const FormRow = styled.div`
   display: flex;
-  gap: 0.875rem;
+  gap: 1rem;
   width: 100%;
 `;
 
@@ -263,6 +263,7 @@ const PasswordHelperText = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0;
+  margin-top: 8px;
 `;
 
 interface FirstTimeSetupFormProps {
@@ -288,9 +289,15 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(true);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  useEffect(() => {
+    if (currentUsername) {
+      setUsernameExists(true);
+    }
+  }, [currentUsername]);
 
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
@@ -380,7 +387,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     try {
       // Validate username
       if (usernameExists && formData.username !== currentUsername) {
-        throw new Error('This is your current username');
+        throw new Error('Username is already taken');
       }
 
       // Validate password
@@ -411,7 +418,10 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Failed to update profile: ' + profileError.message);
       }
 
-      // Show success modal
+      // Close the setup modal first
+      onClose();
+      
+      // Then show success modal
       setShowSuccessModal(true);
     } catch (err) {
       console.error('Setup error:', err);
