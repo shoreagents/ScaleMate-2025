@@ -45,6 +45,10 @@ export default function AuthCallback() {
         console.log('Is Google user:', isGoogleUser);
         console.log('User metadata:', session.user.app_metadata);
 
+        // Get Google profile picture if available
+        const googleProfilePicture = session.user.user_metadata?.avatar_url || null;
+        console.log('Google profile picture:', googleProfilePicture);
+
         // Check if user exists in users table
         const { data: existingUser, error: userError } = await serviceRoleClient
           .from('users')
@@ -115,7 +119,8 @@ export default function AuthCallback() {
                   username: null,
                   first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
                   last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
-                  last_password_change: null
+                  last_password_change: null,
+                  profile_picture: googleProfilePicture
                 });
 
               if (createProfileError) {
