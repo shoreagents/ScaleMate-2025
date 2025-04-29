@@ -31,6 +31,7 @@ export default function AuthCallback() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
+          console.error('Session error:', sessionError);
           throw sessionError;
         }
 
@@ -41,6 +42,7 @@ export default function AuthCallback() {
 
         // Check if this is a Google sign-up
         const isGoogleUser = session.user.app_metadata?.provider === 'google';
+        console.log('Is Google user:', isGoogleUser);
 
         // Check if user exists in users table
         const { data: existingUser, error: userError } = await serviceRoleClient
@@ -50,6 +52,7 @@ export default function AuthCallback() {
           .single();
 
         if (userError && userError.code !== 'PGRST116') {
+          console.error('User check error:', userError);
           throw userError;
         }
 
@@ -80,47 +83,54 @@ export default function AuthCallback() {
           .single();
 
         if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Profile check error:', profileError);
           throw profileError;
         }
 
         // Only create profile if it doesn't exist
         if (!profile) {
           console.log('Creating new profile');
-          const { error: createProfileError } = await serviceRoleClient
-            .from('user_profiles')
-            .insert({
-              user_id: session.user.id,
-              username: session.user.email?.split('@')[0],
-              first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
-              last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || ''
-            });
+          try {
+            const { error: createProfileError } = await serviceRoleClient
+              .from('user_profiles')
+              .insert({
+                user_id: session.user.id,
+                username: session.user.email?.split('@')[0],
+                first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
+                last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
+                last_password_change: null
+              });
 
-          if (createProfileError) {
-            console.error('Create profile error:', createProfileError);
-            throw createProfileError;
-          }
-          console.log('Profile created successfully');
+            if (createProfileError) {
+              console.error('Create profile error:', createProfileError);
+              throw createProfileError;
+            }
+            console.log('Profile created successfully');
 
-          // Assign default 'user' role
-          const { error: roleError } = await serviceRoleClient
-            .from('user_roles')
-            .insert({
-              user_id: session.user.id,
-              role: 'user'
-            });
+            // Assign default 'user' role
+            const { error: roleError } = await serviceRoleClient
+              .from('user_roles')
+              .insert({
+                user_id: session.user.id,
+                role: 'user'
+              });
 
-          if (roleError) {
-            console.error('Role assignment error:', roleError);
-            throw roleError;
-          }
-          console.log('Role assigned successfully');
+            if (roleError) {
+              console.error('Role assignment error:', roleError);
+              throw roleError;
+            }
+            console.log('Role assigned successfully');
 
-          // After creating profile and assigning role, show setup modal for Google users
-          if (isGoogleUser) {
-            setUserId(session.user.id);
-            setCurrentUsername(session.user.email?.split('@')[0] || '');
-            setShowSetupModal(true);
-            return; // Exit early to prevent further checks
+            // After creating profile and assigning role, show setup modal for Google users
+            if (isGoogleUser) {
+              setUserId(session.user.id);
+              setCurrentUsername(session.user.email?.split('@')[0] || '');
+              setShowSetupModal(true);
+              return; // Exit early to prevent further checks
+            }
+          } catch (err) {
+            console.error('Error during profile creation:', err);
+            throw err;
           }
         }
 
@@ -139,6 +149,7 @@ export default function AuthCallback() {
           .eq('user_id', session.user.id);
 
         if (rolesError) {
+          console.error('Roles check error:', rolesError);
           throw rolesError;
         }
 
