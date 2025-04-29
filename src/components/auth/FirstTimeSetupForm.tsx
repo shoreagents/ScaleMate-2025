@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
 import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/router';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -284,6 +285,7 @@ interface UserProfile {
 }
 
 export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUsername }: FirstTimeSetupFormProps) {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     username: currentUsername,
     password: '',
@@ -410,8 +412,20 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Failed to update password: ' + passwordError.message);
       }
 
-      // Update username and last_password_change
-      const { error: profileError } = await supabase
+      // Create a client with service role key for admin operations
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+
+      // Update username and last_password_change using service role client
+      const { error: profileError } = await serviceRoleClient
         .from('user_profiles')
         .update({
           username: formData.username,
@@ -428,11 +442,13 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Failed to update profile: ' + profileError.message);
       }
 
-      // Only proceed with closing modals if there were no errors
-      onClose();
+      // Show success modal first
+      setShowSuccessModal(true);
+      
+      // Then close the setup modal after a short delay
       setTimeout(() => {
-        setShowSuccessModal(true);
-      }, 300);
+        onClose();
+      }, 100);
     } catch (err) {
       console.error('Setup error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during setup');
@@ -441,6 +457,34 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
       return;
     }
     setIsLoading(false);
+  };
+
+  const handleSuccessContinue = async () => {
+    try {
+      // Get user's role to determine which dashboard to redirect to
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (rolesError) {
+        throw new Error('Failed to get user role');
+      }
+
+      // Close the success modal
+      setShowSuccessModal(false);
+      
+      // Redirect based on role
+      if (roles?.some(r => r.role === 'admin')) {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/user/dashboard');
+      }
+    } catch (err) {
+      console.error('Error getting user role:', err);
+      // Fallback to user dashboard if there's an error
+      router.push('/user/dashboard');
+    }
   };
 
   if (!isOpen) return null;
@@ -616,10 +660,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
           <SuccessMessage>
             Your account has been successfully set up. You can now use your new credentials to log in.
           </SuccessMessage>
-          <SuccessButton onClick={() => {
-            setShowSuccessModal(false);
-            onClose();
-          }}>
+          <SuccessButton onClick={handleSuccessContinue}>
             Continue
           </SuccessButton>
         </SuccessModalContent>
