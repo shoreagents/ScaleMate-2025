@@ -73,22 +73,28 @@ interface DashboardUserData {
 const DashboardPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showProfile, setShowProfile] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [userData, setUserData] = useState<UserProfileData | null>(null);
+  const [userData, setUserData] = useState<any>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // Fetch user profile data including profile picture
           const { data: profile } = await supabase
             .from('user_profiles')
-            .select('*')
+            .select('username, first_name, last_name, profile_picture')
             .eq('user_id', user.id)
             .single();
 
           if (profile) {
-            setUserData(profile);
+            setUserData({
+              name: `${profile.first_name} ${profile.last_name}`.trim() || user.email,
+              email: user.email,
+              avatar: profile.profile_picture
+            });
             setProfilePicture(profile.profile_picture);
           }
         }
@@ -109,11 +115,12 @@ const DashboardPage = () => {
 
   const handleProfilePictureChange = (newPictureUrl: string) => {
     setProfilePicture(newPictureUrl);
-    setUserData(prev => prev ? {
-      ...prev,
-      profile_picture: newPictureUrl,
-      updated_at: new Date().toISOString()
-    } : null);
+    if (userData) {
+      setUserData({
+        ...userData,
+        avatar: newPictureUrl
+      });
+    }
   };
 
   const handleLogout = async () => {

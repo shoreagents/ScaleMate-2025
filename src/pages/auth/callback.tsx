@@ -29,188 +29,109 @@ export default function AuthCallback() {
     const handleCallback = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          throw sessionError;
-        }
-
+        if (sessionError) throw sessionError;
         if (!session) {
-          router.push('/login');
+          console.error('No session found');
+          router.push('/');
           return;
         }
 
-        // Check if this is a Google sign-up
-        const isGoogleUser = session.user.app_metadata?.provider === 'google';
-        console.log('Is Google user:', isGoogleUser);
-        console.log('User metadata:', session.user.app_metadata);
-
-        // Get Google profile picture if available
-        const googleProfilePicture = session.user.user_metadata?.avatar_url || null;
-        console.log('Google profile picture:', googleProfilePicture);
-
-        // Get high quality version of Google profile picture
-        const highQualityProfilePicture = googleProfilePicture ? 
-          googleProfilePicture.replace('=s96-c', '=s400-c') : null;
-        console.log('High quality profile picture:', highQualityProfilePicture);
+        const user = session.user;
+        console.log('User metadata:', user.user_metadata);
+        console.log('Avatar URL from metadata:', user.user_metadata.avatar_url);
 
         // Check if user exists in users table
-        const { data: existingUser, error: userError } = await serviceRoleClient
+        const { data: existingUser, error: userError } = await supabase
           .from('users')
-          .select('id')
-          .eq('id', session.user.id)
+          .select('*')
+          .eq('id', user.id)
           .single();
 
         if (userError && userError.code !== 'PGRST116') {
-          console.error('User check error:', userError);
+          console.error('Error checking user:', userError);
           throw userError;
         }
 
-        // Create user in users table if doesn't exist
         if (!existingUser) {
-          console.log('Creating new user');
-          const { error: createUserError } = await serviceRoleClient
+          console.log('Creating new user in users table');
+          // Create user in users table
+          const { error: insertError } = await supabase
             .from('users')
             .insert({
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata.full_name || '',
-              is_active: true
+              id: user.id,
+              email: user.email,
+              role: 'user'
             });
 
-          if (createUserError) {
-            console.error('Create user error:', createUserError);
-            throw createUserError;
+          if (insertError) {
+            console.error('Error creating user:', insertError);
+            throw insertError;
           }
-          console.log('User created successfully');
         }
 
-        // Check if profile exists and get current username
-        const { data: profile, error: profileError } = await serviceRoleClient
+        // Check if user has a profile
+        const { data: existingProfile, error: profileError } = await supabase
           .from('user_profiles')
-          .select('username, last_password_change, profile_picture')
-          .eq('user_id', session.user.id)
+          .select('*')
+          .eq('user_id', user.id)
           .single();
 
         if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Profile check error:', profileError);
+          console.error('Error checking profile:', profileError);
           throw profileError;
         }
 
-        console.log('Profile data:', profile);
-
-        // Only create profile if it doesn't exist
-        if (!profile) {
-          console.log('Creating new profile');
-          try {
-            // First check if the profile was created in the meantime
-            const { data: doubleCheckProfile, error: doubleCheckError } = await serviceRoleClient
-              .from('user_profiles')
-              .select('username, last_password_change, profile_picture')
-              .eq('user_id', session.user.id)
-              .single();
-
-            if (doubleCheckError && doubleCheckError.code !== 'PGRST116') {
-              console.error('Double check profile error:', doubleCheckError);
-              throw doubleCheckError;
-            }
-
-            // If profile still doesn't exist, create it
-            if (!doubleCheckProfile) {
-              const { error: createProfileError } = await serviceRoleClient
-                .from('user_profiles')
-                .insert({
-                  user_id: session.user.id,
-                  username: null,
-                  first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
-                  last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
-                  last_password_change: null,
-                  profile_picture: highQualityProfilePicture // Store profile picture immediately
-                });
-
-              if (createProfileError) {
-                // If the error is a duplicate key violation, the profile was created in the meantime
-                if (createProfileError.code === '23505') {
-                  console.log('Profile was created in the meantime, continuing...');
-                } else {
-                  console.error('Create profile error:', createProfileError);
-                  throw createProfileError;
-                }
-              } else {
-                console.log('Profile created successfully');
-
-                // Assign default 'user' role
-                const { error: roleError } = await serviceRoleClient
-                  .from('user_roles')
-                  .insert({
-                    user_id: session.user.id,
-                    role: 'user'
-                  });
-
-                if (roleError) {
-                  console.error('Role assignment error:', roleError);
-                  throw roleError;
-                }
-                console.log('Role assigned successfully');
-              }
-            } else {
-              console.log('Profile was created in the meantime, continuing...');
-            }
-
-            // After creating profile and assigning role, show setup modal for Google users
-            if (isGoogleUser) {
-              console.log('Showing setup modal for new Google user');
-              setUserId(session.user.id);
-              setCurrentUsername('');
-              setShowSetupModal(true);
-              return; // Exit early to prevent further checks
-            }
-          } catch (err) {
-            console.error('Error during profile creation:', err);
-            throw err;
-          }
-        } else if (isGoogleUser && !profile.profile_picture) {
-          // Update profile picture if it doesn't exist
-          const { error: updateError } = await serviceRoleClient
+        if (!existingProfile) {
+          console.log('Creating new profile with Google data');
+          // Create new profile with Google data
+          const { data: newProfile, error: insertError } = await supabase
             .from('user_profiles')
-            .update({ profile_picture: highQualityProfilePicture })
-            .eq('user_id', session.user.id);
+            .insert({
+              user_id: user.id,
+              username: user.email?.split('@')[0] || '',
+              first_name: user.user_metadata.full_name?.split(' ')[0] || '',
+              last_name: user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
+              profile_picture: user.user_metadata.avatar_url || null,
+              last_password_change: null
+            })
+            .select()
+            .single();
 
-          if (updateError) {
-            console.error('Error updating profile picture:', updateError);
-          } else {
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+            throw insertError;
+          }
+
+          console.log('New profile created:', newProfile);
+          setCurrentUsername(newProfile.username);
+          setShowSetupModal(true);
+        } else {
+          console.log('Existing profile found:', existingProfile);
+          // Update profile picture if it's missing
+          if (!existingProfile.profile_picture && user.user_metadata.avatar_url) {
+            console.log('Updating missing profile picture');
+            const { error: updateError } = await supabase
+              .from('user_profiles')
+              .update({ profile_picture: user.user_metadata.avatar_url })
+              .eq('user_id', user.id);
+
+            if (updateError) {
+              console.error('Error updating profile picture:', updateError);
+              throw updateError;
+            }
             console.log('Profile picture updated successfully');
           }
-        }
 
-        // Check if we need to show the setup modal for existing profiles
-        if (isGoogleUser && !profile?.last_password_change) {
-          console.log('Showing setup modal for existing Google user without password');
-          setUserId(session.user.id);
-          setCurrentUsername(profile?.username || '');
-          setShowSetupModal(true);
-          return; // Exit early to prevent further checks
+          setCurrentUsername(existingProfile.username);
+          if (existingProfile.last_password_change === null) {
+            setShowSetupModal(true);
+          } else {
+            router.push('/user/dashboard');
+          }
         }
-
-        // Only redirect if we don't need to show the setup modal
-        const { data: roles, error: rolesError } = await serviceRoleClient
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id);
-
-        if (rolesError) {
-          console.error('Roles check error:', rolesError);
-          throw rolesError;
-        }
-
-        if (roles?.some(r => r.role === 'admin')) {
-          router.push('/admin/dashboard');
-        } else {
-          router.push('/user/dashboard');
-        }
-      } catch (err) {
-        console.error('Auth callback error:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred during authentication');
+      } catch (error) {
+        console.error('Auth callback error:', error);
+        setError('An error occurred during authentication. Please try again.');
       } finally {
         setIsLoading(false);
       }
