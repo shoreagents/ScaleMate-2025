@@ -28,95 +28,26 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        // Get the session from the URL hash
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError) {
           throw sessionError;
         }
 
         if (!session) {
-          router.push('/login');
-          return;
+          throw new Error('No session found');
         }
 
-        // Check if user exists in users table
-        const { data: existingUser, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('id')
-          .eq('id', session.user.id)
-          .single();
-
-        if (userError && userError.code !== 'PGRST116') {
-          throw userError;
-        }
-
-        // Create user in users table if doesn't exist
-        if (!existingUser) {
-          console.log('Creating new user');
-          const { error: createUserError } = await serviceRoleClient
-            .from('users')
-            .insert({
-              id: session.user.id,
-              email: session.user.email,
-              full_name: session.user.user_metadata.full_name || '',
-              is_active: true
-            });
-
-          if (createUserError) {
-            console.error('Create user error:', createUserError);
-            throw createUserError;
-          }
-          console.log('User created successfully');
-        }
-
-        // Check if profile exists and get current username
+        // Get the user's profile
         const { data: profile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
-          .select('username, last_password_change')
+          .select('*')
           .eq('user_id', session.user.id)
           .single();
 
-        if (profileError && profileError.code !== 'PGRST116') {
+        if (profileError) {
           throw profileError;
-        }
-
-        // Only create profile if it doesn't exist
-        if (!profile) {
-          console.log('Creating new profile');
-          const { error: createProfileError } = await serviceRoleClient
-            .from('user_profiles')
-            .insert({
-              user_id: session.user.id,
-              username: session.user.email?.split('@')[0],
-              first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
-              last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || ''
-            });
-
-          if (createProfileError) {
-            console.error('Create profile error:', createProfileError);
-            throw createProfileError;
-          }
-          console.log('Profile created successfully');
-
-          // Assign default 'user' role
-          const { error: roleError } = await serviceRoleClient
-            .from('user_roles')
-            .insert({
-              user_id: session.user.id,
-              role: 'user'
-            });
-
-          if (roleError) {
-            console.error('Role assignment error:', roleError);
-            throw roleError;
-          }
-          console.log('Role assigned successfully');
-
-          // After creating profile and assigning role, show setup modal
-          setUserId(session.user.id);
-          setCurrentUsername(session.user.email?.split('@')[0] || '');
-          setShowSetupModal(true);
-          return; // Exit early to prevent further checks
         }
 
         // Check if we need to show the setup modal for existing profiles
