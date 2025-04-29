@@ -107,7 +107,7 @@ export default function NextSteps() {
               </IconContainer>
               <CardTitle>Try Role Builder</CardTitle>
               <CardDescription>Create detailed role templates for your offshore team.</CardDescription>
-              <ActionLink href="#" style={{ color: '#3B82F6' }}>
+              <ActionLink href="/role-builder" style={{ color: '#3B82F6' }}>
                 Start Building
                 <ArrowIcon icon={faArrowRight} />
               </ActionLink>
@@ -119,7 +119,7 @@ export default function NextSteps() {
               </IconContainer>
               <CardTitle>Tool Stack</CardTitle>
               <CardDescription>Explore recommended tools for remote team management.</CardDescription>
-              <ActionLink href="#" style={{ color: '#3B82F6' }}>
+              <ActionLink href="/tools" style={{ color: '#3B82F6' }}>
                 View Tools
                 <ArrowIcon icon={faArrowRight} />
               </ActionLink>
@@ -131,7 +131,7 @@ export default function NextSteps() {
               </IconContainer>
               <CardTitle>Free Course</CardTitle>
               <CardDescription>Learn the basics of managing offshore teams effectively.</CardDescription>
-              <ActionLink href="#" style={{ color: '#3B82F6' }}>
+              <ActionLink href="/courses" style={{ color: '#3B82F6' }}>
                 Start Learning
                 <ArrowIcon icon={faArrowRight} />
               </ActionLink>

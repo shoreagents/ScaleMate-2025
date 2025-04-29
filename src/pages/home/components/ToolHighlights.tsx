@@ -106,7 +106,7 @@ const tools = [
     title: 'Readiness Quiz',
     description: 'Assess your business\'s readiness for offshore scaling.',
     color: '#00E915',
-    link: '/readiness-quiz'
+    link: '/readiness'
   }
 ];
 

@@ -112,6 +112,24 @@ const CalendarWidget = styled.div`
   border-radius: 0.5rem;
   border: 1px solid #E5E7EB;
   margin-bottom: 2rem;
+  height: 650px;
+`;
+
+const CalendlyContainer = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 0.5rem;
+  overflow: hidden;
+
+  iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
 `;
 
 const CalendarPlaceholder = styled.div`
@@ -199,10 +217,13 @@ export default function MainContent() {
           <BookingSection>
             <SectionTitle>Book a Strategy Call</SectionTitle>
             <CalendarWidget>
-              <CalendarPlaceholder>
-                <CalendarIcon icon={faCalendar} />
-                <PlaceholderText>Calendly Widget Embed Here</PlaceholderText>
-              </CalendarPlaceholder>
+              <CalendlyContainer>
+                <iframe
+                  src="https://calendly.com/shoreagents-discovery-sessions-with-mark-nobleza/45min"
+                  title="Book a Strategy Call"
+                  style={{ width: '100%', height: '100%' }}
+                />
+              </CalendlyContainer>
             </CalendarWidget>
 
             <FAQ>
@@ -210,7 +231,7 @@ export default function MainContent() {
               <FAQList>
                 <FAQItem>
                   <FAQQuestion>How long is a strategy call?</FAQQuestion>
-                  <FAQAnswer>Our initial strategy sessions are 30 minutes long.</FAQAnswer>
+                  <FAQAnswer>Our initial strategy sessions are 45 minutes long.</FAQAnswer>
                 </FAQItem>
                 <FAQItem>
                   <FAQQuestion>What should I prepare?</FAQQuestion>
