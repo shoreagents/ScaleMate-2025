@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
@@ -291,6 +291,12 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
   const [usernameExists, setUsernameExists] = useState<boolean | null>(true);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  useEffect(() => {
+    if (currentUsername) {
+      setUsernameExists(true);
+    }
+  }, [currentUsername]);
 
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
