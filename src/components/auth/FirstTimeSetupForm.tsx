@@ -442,49 +442,15 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Failed to update profile: ' + profileError.message);
       }
 
-      // Show success modal first
-      setShowSuccessModal(true);
-      
-      // Then close the setup modal after a short delay
-      setTimeout(() => {
-        onClose();
-      }, 100);
+      // Close the setup modal
+      onClose();
     } catch (err) {
       console.error('Setup error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during setup');
-      // Don't close the modal if there was an error
       setIsLoading(false);
       return;
     }
     setIsLoading(false);
-  };
-
-  const handleSuccessContinue = async () => {
-    try {
-      // Get user's role to determine which dashboard to redirect to
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-
-      if (rolesError) {
-        throw new Error('Failed to get user role');
-      }
-
-      // Close the success modal
-      setShowSuccessModal(false);
-      
-      // Redirect based on role
-      if (roles?.some(r => r.role === 'admin')) {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/user/dashboard');
-      }
-    } catch (err) {
-      console.error('Error getting user role:', err);
-      // Fallback to user dashboard if there's an error
-      router.push('/user/dashboard');
-    }
   };
 
   if (!isOpen) return null;
@@ -651,23 +617,6 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
             </Form>
           </ModalContent>
         </ModalOverlay>
-      )}
-
-      {showSuccessModal && (
-        <SuccessModal $isOpen={showSuccessModal}>
-          <SuccessModalContent>
-            <SuccessIcon>
-              <FiCheck size={24} />
-            </SuccessIcon>
-            <SuccessTitle>Setup Completed</SuccessTitle>
-            <SuccessMessage>
-              Your account has been successfully set up. You can now use your new credentials to log in.
-            </SuccessMessage>
-            <SuccessButton onClick={handleSuccessContinue}>
-              Continue
-            </SuccessButton>
-          </SuccessModalContent>
-        </SuccessModal>
       )}
     </>
   );
