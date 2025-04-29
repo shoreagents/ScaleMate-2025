@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalculator, faFileLines } from '@fortawesome/free-solid-svg-icons';
 
@@ -40,36 +41,57 @@ const Description = styled.p`
 const ButtonGroup = styled.div`
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  width: 100%;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
 `;
 
-const PrimaryButton = styled.button`
+const PrimaryButton = styled(Link)`
   background-color: white;
   color: #3B82F6;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
   font-weight: 600;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
-  border: none;
+  justify-content: center;
+  width: 280px;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
 
   &:hover {
     background-color: #F9FAFB;
   }
 `;
 
-const SecondaryButton = styled.button`
+const SecondaryButton = styled(Link)`
   background-color: #EC297B;
   color: white;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
   font-weight: 600;
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
   transition: background-color 0.2s;
-  border: none;
+  justify-content: center;
+  width: 280px;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
 
   &:hover {
     background-color: #D91A6B;
@@ -90,13 +112,13 @@ export default function FinalCTA() {
             Try our Quick Quote calculator to see potential savings first.
           </Description>
           <ButtonGroup>
-            <PrimaryButton>
+            <PrimaryButton href="/quote">
               Get Quick Quote
-              <ButtonIcon icon={faCalculator} />
+              <FontAwesomeIcon icon={faCalculator} />
             </PrimaryButton>
-            <SecondaryButton>
+            <SecondaryButton href="#">
               View Blueprint
-              <ButtonIcon icon={faFileLines} />
+              <FontAwesomeIcon icon={faFileLines} />
             </SecondaryButton>
           </ButtonGroup>
         </CTAWrapper>

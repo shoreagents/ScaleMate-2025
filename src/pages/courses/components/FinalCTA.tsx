@@ -39,7 +39,15 @@ const Description = styled.p`
 const ButtonGroup = styled.div`
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 1rem;
+  flex-direction: column;
+  width: 100%;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
 `;
 
 const PrimaryButton = styled(Link)`
@@ -53,6 +61,12 @@ const PrimaryButton = styled(Link)`
   gap: 0.5rem;
   text-decoration: none;
   transition: background-color 0.2s;
+  justify-content: center;
+  width: 280px;
+
+  @media (min-width: 768px) {
+    width: auto;
+  }
 
   &:hover {
     background-color: #F9FAFB;

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { FiUser, FiLogOut, FiChevronDown } from 'react-icons/fi';
+import { FiUser, FiLogOut, FiChevronDown, FiMenu, FiX } from 'react-icons/fi';
 import { FaCalculator, FaChartLine, FaUsers, FaGraduationCap, FaDownload, FaToolbox, FaRegNewspaper, FaRegCircle } from 'react-icons/fa6';
 import { supabase } from '@/lib/supabase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -59,9 +59,13 @@ const NavItem = styled.span`
 `;
 
 const AuthSection = styled.div`
-  display: flex;
+  display: none;
   align-items: center;
   gap: 1rem;
+
+  @media (min-width: 1024px) {
+    display: flex;
+  }
 `;
 
 const LoginButton = styled(Link)`
@@ -196,6 +200,11 @@ const SolutionsDropdown = styled.div`
   display: flex;
   justify-content: center;
   gap: 2rem;
+
+  @media (max-width: 1280px) {
+    padding: 1.5rem 0;
+    gap: 1rem;
+  }
 `;
 
 const SolutionsNavItem = styled.div`
@@ -221,10 +230,16 @@ const SolutionCard = styled.div`
   align-items: flex-start;
   margin: 0 0.5vw;
   box-shadow: 0 2px 8px rgba(59,130,246,0.04);
-  @media (min-width: 1200px) {
-    min-width: 360px;
-    max-width: 480px;
-    margin: 0 1vw;
+
+  @media (max-width: 1280px) {
+    width: calc(50% - 1rem);
+    min-width: unset;
+    max-width: unset;
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
   }
 `;
 const SolutionIcon = styled.div<{ bg: string }>`
@@ -284,6 +299,126 @@ const DropdownContent = styled.div`
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
+  padding: 0 1rem;
+  flex-wrap: nowrap;
+
+  @media (max-width: 1280px) {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+`;
+
+const MobileMenuButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0F172A;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &:hover {
+    background-color: #F3F4F6;
+  }
+`;
+
+const MobileMenu = styled.div<{ isOpen: boolean }>`
+  display: none;
+  position: fixed;
+  top: 4rem;
+  left: 0;
+  right: 0;
+  background: white;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 1rem;
+  z-index: 40;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    display: ${props => props.isOpen ? 'block' : 'none'};
+  }
+`;
+
+const MobileNav = styled.nav`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const MobileNavItem = styled.div`
+  color: #0F172A;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #F3F4F6;
+  }
+`;
+
+const MobileAuthSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
+`;
+
+const MobileLoginButton = styled(Link)`
+  color: #0F172A;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  text-align: center;
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  background-color: #F9FAFB;
+
+  &:hover {
+    background-color: #F3F4F6;
+    border-color: #D1D5DB;
+  }
+`;
+
+const MobileSignUpButton = styled.span`
+  background-color: #3B82F6;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2563EB;
+  }
+`;
+
+const MobileMenuSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+`;
+
+const MobileMenuSectionTitle = styled.div`
+  font-weight: 600;
+  color: #6B7280;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
 const Header = () => {
@@ -294,6 +429,7 @@ const Header = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showSolutions, setShowSolutions] = useState(false);
   const [showLearn, setShowLearn] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   let closeTimeout: NodeJS.Timeout | null = null;
   let learnCloseTimeout: NodeJS.Timeout | null = null;
 
@@ -375,6 +511,15 @@ const Header = () => {
   };
   const handleLearnLeave = () => {
     learnCloseTimeout = setTimeout(() => setShowLearn(false), 120);
+  };
+
+  const handleMobileMenuToggle = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleMobileNavClick = (path: string) => {
+    router.push(path);
+    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -501,8 +646,54 @@ const Header = () => {
               </>
             )}
           </AuthSection>
+          <MobileMenuButton onClick={handleMobileMenuToggle}>
+            {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+          </MobileMenuButton>
         </HeaderContent>
       </Container>
+      <MobileMenu isOpen={isMobileMenuOpen}>
+        <MobileNav>
+          <MobileMenuSection>
+            <MobileNavItem onClick={() => handleMobileNavClick('/')}>Home</MobileNavItem>
+          </MobileMenuSection>
+
+          <MobileMenuSection>
+            <MobileMenuSectionTitle>Solutions</MobileMenuSectionTitle>
+            <MobileNavItem onClick={() => handleMobileNavClick('/quote')}>Quick Quote Calculator</MobileNavItem>
+            <MobileNavItem onClick={() => handleMobileNavClick('/cost-savings')}>Cost Savings Calculator</MobileNavItem>
+            <MobileNavItem onClick={() => handleMobileNavClick('/role-builder')}>AI-Powered Role Builder</MobileNavItem>
+            <MobileNavItem onClick={() => handleMobileNavClick('/readiness')}>Readiness Quiz</MobileNavItem>
+          </MobileMenuSection>
+
+          <MobileMenuSection>
+            <MobileMenuSectionTitle>Learn</MobileMenuSectionTitle>
+            <MobileNavItem onClick={() => handleMobileNavClick('/courses')}>Course Library</MobileNavItem>
+            <MobileNavItem onClick={() => handleMobileNavClick('/resources')}>Resource Library</MobileNavItem>
+            <MobileNavItem onClick={() => handleMobileNavClick('/tools')}>Tool Library</MobileNavItem>
+            <MobileNavItem onClick={() => handleMobileNavClick('/blog')}>Blog & Insights</MobileNavItem>
+          </MobileMenuSection>
+
+          <MobileMenuSection>
+            <MobileNavItem onClick={() => handleMobileNavClick('/about')}>About</MobileNavItem>
+            <MobileNavItem onClick={() => handleMobileNavClick('/contact')}>Contact</MobileNavItem>
+          </MobileMenuSection>
+        </MobileNav>
+        <MobileAuthSection>
+          {isLoading ? (
+            <Spinner />
+          ) : isLoggedIn ? (
+            <>
+              <MobileNavItem onClick={handleDashboardClick}>Dashboard</MobileNavItem>
+              <MobileNavItem onClick={handleLogout}>Logout</MobileNavItem>
+            </>
+          ) : (
+            <>
+              <MobileLoginButton href="/login">Login</MobileLoginButton>
+              <MobileSignUpButton onClick={() => handleMobileNavClick('/signup')}>Sign Up</MobileSignUpButton>
+            </>
+          )}
+        </MobileAuthSection>
+      </MobileMenu>
     </HeaderContainer>
   );
 };
