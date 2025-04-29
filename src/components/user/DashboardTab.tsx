@@ -476,12 +476,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
                 avatar: profile.profile_picture
               });
 
-              // Check if this is a newly signed-up user or just completed setup
-              const isNewSignup = profile.last_password_change === null;
+              // Check if this is a Google sign-up user who just completed setup
+              const isGoogleUser = authUser.app_metadata?.provider === 'google';
               const justCompletedSetup = profile.last_password_change && 
                 new Date(profile.last_password_change).getTime() > Date.now() - 30000; // Within last 30 seconds
 
-              if (isNewSignup || justCompletedSetup) {
+              if (isGoogleUser && justCompletedSetup) {
                 setShowSuccessModal(true);
               }
             }
