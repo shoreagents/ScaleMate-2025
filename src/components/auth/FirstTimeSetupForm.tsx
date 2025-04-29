@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEye, FiEyeOff, FiX, FiCheck, FiLoader } from 'react-icons/fi';
+import { createClient } from '@supabase/supabase-js';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -263,6 +264,11 @@ interface FirstTimeSetupFormProps {
   currentUsername: string;
 }
 
+interface UserProfile {
+  username: string;
+  user_id: string;
+}
+
 export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUsername }: FirstTimeSetupFormProps) {
   const [formData, setFormData] = useState({
     username: currentUsername,
@@ -274,57 +280,73 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const validateUsername = async (username: string) => {
-    // Clear previous errors
-    setUsernameError(null);
-
-    // Basic validation
-    if (!username) {
-      setUsernameError('Username is required');
+  const validateUsername = (value: string) => {
+    // Allow empty value for backspace
+    if (!value) {
+      setUsernameError(null);
+      setUsernameExists(null);
       return false;
     }
-
-    // Check for special characters
-    if (!/^[a-zA-Z0-9._-]*$/.test(username)) {
+    if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
       setUsernameError('Special characters are not allowed');
+      setUsernameExists(null);
       return false;
     }
+    setUsernameError(null);
+    checkUsernameExists(value);
+    return true;
+  };
 
-    // If username is the same as current, it's valid
-    if (username === currentUsername) {
-      return true;
+  const checkUsernameExists = async (username: string) => {
+    if (!username) {
+      setUsernameExists(null);
+      setCheckingUsername(false);
+      return;
     }
 
-    // Check if username exists
-    setCheckingUsername(true);
     try {
-      const { data, error } = await supabase
+      setCheckingUsername(true);
+      
+      // Create a client with service role key for admin access
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+      
+      // Query the user_profiles table with service role
+      const { data, error } = await serviceRoleClient
         .from('user_profiles')
-        .select('username')
+        .select('username, user_id')
         .eq('username', username)
-        .single();
+        .limit(1);
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          // No rows found - username is available
-          return true;
+        console.error('Error checking username:', error);
+        setUsernameExists(null);
+      } else if (data && data.length > 0) {
+        // If we found a user with this username, check if it's the same user we're editing
+        const foundUser = data[0] as UserProfile;
+        if (foundUser.user_id === userId) {
+          setUsernameExists(true); // It's the same user's current username
+        } else {
+          setUsernameExists(true); // Username is taken by another user
         }
-        throw error;
+      } else {
+        setUsernameExists(false); // Username is available
       }
-
-      if (data) {
-        setUsernameError('Username is already taken');
-        return false;
-      }
-
-      return true;
     } catch (error) {
       console.error('Error checking username:', error);
-      setUsernameError('Error checking username availability');
-      return false;
+      setUsernameExists(null);
     } finally {
       setCheckingUsername(false);
     }
@@ -349,9 +371,8 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
 
     try {
       // Validate username
-      const isUsernameValid = await validateUsername(formData.username);
-      if (!isUsernameValid) {
-        throw new Error('Please fix the username errors');
+      if (usernameExists && formData.username !== currentUsername) {
+        throw new Error('Username is already taken');
       }
 
       // Validate password
@@ -415,24 +436,46 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                 <Input
                   id="username"
                   type="text"
+                  pattern="[a-zA-Z0-9._-]*"
                   value={formData.username}
                   onChange={(e) => {
-                    setFormData(prev => ({ ...prev, username: e.target.value }));
-                    validateUsername(e.target.value);
+                    const value = e.target.value;
+                    validateUsername(value);
+                    if (value === '' || e.target.validity.valid) {
+                      setFormData(prev => ({ ...prev, username: value }));
+                    }
                   }}
                   placeholder="Choose a username"
                   required
                 />
+                {usernameError && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    {usernameError}
+                  </HelperText>
+                )}
                 {checkingUsername && (
-                  <HelperText>
+                  <HelperText style={{ color: '#6b7280' }}>
                     <FiLoader size={14} />
                     Checking username...
                   </HelperText>
                 )}
-                {usernameError && (
-                  <HelperText style={{ color: '#DC2626' }}>
+                {!checkingUsername && !usernameError && usernameExists === false && (
+                  <HelperText style={{ color: '#059669' }}>
+                    <FiCheck size={14} />
+                    Username is available
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && formData.username === currentUsername && (
+                  <HelperText style={{ color: '#6b7280' }}>
+                    <FiCheck size={14} />
+                    This is your current username
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && formData.username !== currentUsername && (
+                  <HelperText style={{ color: '#dc2626' }}>
                     <FiX size={14} />
-                    {usernameError}
+                    Username is already taken
                   </HelperText>
                 )}
               </InputWrapper>
