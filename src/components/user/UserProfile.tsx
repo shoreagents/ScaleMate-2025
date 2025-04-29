@@ -50,6 +50,7 @@ const ProfilePicture = styled.div`
   flex-shrink: 0;
   margin-left: auto;
   align-self: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
 const ProfileImage = styled.img`
@@ -61,6 +62,18 @@ const ProfileImage = styled.img`
   top: 0;
   left: 0;
   object-position: center;
+  transition: transform 0.2s ease-in-out;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+`;
+
+const DefaultProfileIcon = styled(FiUser)`
+  width: 80px;
+  height: 80px;
+  color: #6b7280;
+  opacity: 0.5;
 `;
 
 const UploadButton = styled.button`
@@ -953,9 +966,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
         </ProfileInfo>
         <ProfilePicture>
           {profileData.profile_picture ? (
-            <ProfileImage src={profileData.profile_picture} alt="Profile" />
+            <ProfileImage 
+              src={profileData.profile_picture} 
+              alt={`${profileData.first_name}'s profile`}
+              onError={(e) => {
+                // If image fails to load, show default icon
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.parentElement?.querySelector('svg')?.style.display = 'block';
+              }}
+            />
           ) : (
-            <FiUser size={80} color="#6b7280" />
+            <DefaultProfileIcon />
           )}
           {isEditing && (
             <UploadButton onClick={() => setIsProfileModalOpen(true)}>
