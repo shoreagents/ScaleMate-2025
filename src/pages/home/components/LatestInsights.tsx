@@ -103,7 +103,9 @@ export default function LatestInsights() {
               <CardDescription>
                 Learn how artificial intelligence is transforming remote team management...
               </CardDescription>
-              <ReadMore>Read More <ArrowIcon icon={faArrowRight} /></ReadMore>
+              <ReadMore onClick={() => window.location.href = '/blog/inner-blog'}>
+                Read More <ArrowIcon icon={faArrowRight} />
+              </ReadMore>
             </CardContent>
           </Card>
           <Card>
@@ -117,7 +119,9 @@ export default function LatestInsights() {
               <CardDescription>
                 Discover how a tech startup scaled their operations while cutting costs...
               </CardDescription>
-              <ReadMore>Read More <ArrowIcon icon={faArrowRight} /></ReadMore>
+              <ReadMore onClick={() => window.location.href = '/blog/inner-blog'}>
+                Read More <ArrowIcon icon={faArrowRight} />
+              </ReadMore>
             </CardContent>
           </Card>
           <Card>
@@ -131,7 +135,9 @@ export default function LatestInsights() {
               <CardDescription>
                 Step-by-step guide to building and managing successful offshore teams...
               </CardDescription>
-              <ReadMore>Read More <ArrowIcon icon={faArrowRight} /></ReadMore>
+              <ReadMore onClick={() => window.location.href = '/blog/inner-blog'}>
+                Read More <ArrowIcon icon={faArrowRight} />
+              </ReadMore>
             </CardContent>
           </Card>
         </Grid>

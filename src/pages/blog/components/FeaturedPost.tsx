@@ -6,13 +6,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 const Section = styled.section`
-  padding: 3rem 0;
+  padding: 2rem 0;
+  margin-bottom: 2rem;
 `;
 
 const Container = styled.div`
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0;
+
+  @media (min-width: 768px) {
+    padding: 0 1rem;
+  }
 `;
 
 const Card = styled.div`
@@ -50,35 +55,38 @@ const ContentWrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
+  gap: 1.5rem;
 
   @media (min-width: 768px) {
     width: 50%;
+    padding: 3rem;
   }
 `;
 
 const Badge = styled.span`
   color: #00E915;
   font-weight: 500;
-  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 `;
 
 const Title = styled.h2`
   font-size: 1.875rem;
   font-weight: 700;
   color: #0F172A;
-  margin-bottom: 1rem;
+  line-height: 1.3;
 `;
 
 const Description = styled.p`
   color: #1E293B;
-  margin-bottom: 1.5rem;
+  line-height: 1.6;
 `;
 
 const AuthorInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
 `;
 
 const AuthorImage = styled(Image)`
@@ -104,6 +112,7 @@ const ReadMoreLink = styled(Link)`
   align-items: center;
   transition: color 0.2s;
   text-decoration: none;
+  margin-top: auto;
 
   &:hover {
     color: ${({ theme }) => theme.colors.primaryDark};
@@ -152,7 +161,7 @@ export default function FeaturedPost() {
                   <PostMeta>Feb 15, 2025 • 8 min read</PostMeta>
                 </AuthorDetails>
               </AuthorInfo>
-              <ReadMoreLink href="#">
+              <ReadMoreLink href="/blog/inner-blog">
                 Read Article
                 <ArrowIcon icon={faArrowRight} />
               </ReadMoreLink>
