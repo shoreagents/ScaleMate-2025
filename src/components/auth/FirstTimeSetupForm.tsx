@@ -266,6 +266,12 @@ const PasswordHelperText = styled.div`
   margin-top: 8px;
 `;
 
+const PasswordSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
 interface FirstTimeSetupFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -550,31 +556,33 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
                 </InputWrapper>
               </FormGroup>
             </FormRow>
-            <FormRow>
-              <FormGroup>
-                <PasswordHelperText>
-                  {formData.password && (
-                    <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#dc2626' }}>
-                      {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
-                      {formData.password.length >= 8 ? 'Password length is valid' : 'Password must be at least 8 characters'}
-                    </HelperText>
-                  )}
-                  {formData.confirmPassword && (
-                    formData.password === formData.confirmPassword ? (
-                      <HelperText style={{ color: '#059669' }}>
-                        <FiCheck size={14} />
-                        Passwords match
+            <PasswordSection>
+              <FormRow>
+                <FormGroup>
+                  <PasswordHelperText>
+                    {formData.password && (
+                      <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#dc2626' }}>
+                        {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
+                        {formData.password.length >= 8 ? 'Password length is valid' : 'Password must be at least 8 characters'}
                       </HelperText>
-                    ) : (
-                      <HelperText style={{ color: '#dc2626' }}>
-                        <FiX size={14} />
-                        Passwords do not match
-                      </HelperText>
-                    )
-                  )}
-                </PasswordHelperText>
-              </FormGroup>
-            </FormRow>
+                    )}
+                    {formData.confirmPassword && (
+                      formData.password === formData.confirmPassword ? (
+                        <HelperText style={{ color: '#059669' }}>
+                          <FiCheck size={14} />
+                          Passwords match
+                        </HelperText>
+                      ) : (
+                        <HelperText style={{ color: '#dc2626' }}>
+                          <FiX size={14} />
+                          Passwords do not match
+                        </HelperText>
+                      )
+                    )}
+                  </PasswordHelperText>
+                </FormGroup>
+              </FormRow>
+            </PasswordSection>
 
             {error && (
               <ErrorMessage>
