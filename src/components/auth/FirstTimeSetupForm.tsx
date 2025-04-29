@@ -420,22 +420,27 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         .eq('user_id', userId);
 
       if (profileError) {
+        // Check for duplicate username error
+        if (profileError.code === '23505' && profileError.message.includes('username')) {
+          setUsernameExists(true);
+          throw new Error('Username is already taken');
+        }
         throw new Error('Failed to update profile: ' + profileError.message);
       }
 
-      // Show success modal first
-      setShowSuccessModal(true);
-      
-      // Then close the setup modal after a short delay
+      // Only proceed with closing modals if there were no errors
+      onClose();
       setTimeout(() => {
-        onClose();
-      }, 100);
+        setShowSuccessModal(true);
+      }, 300);
     } catch (err) {
       console.error('Setup error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during setup');
-    } finally {
+      // Don't close the modal if there was an error
       setIsLoading(false);
+      return;
     }
+    setIsLoading(false);
   };
 
   if (!isOpen) return null;
