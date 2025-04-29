@@ -445,10 +445,10 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
       // Close the setup modal first
       onClose();
       
-      // Then show success modal after a short delay
+      // Then show success modal after a longer delay
       setTimeout(() => {
         setShowSuccessModal(true);
-      }, 100);
+      }, 300);
     } catch (err) {
       console.error('Setup error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during setup');
