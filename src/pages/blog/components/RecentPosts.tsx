@@ -188,7 +188,7 @@ export default function RecentPosts() {
                   <PostMeta>{post.author.date} • {post.author.readTime}</PostMeta>
                 </AuthorDetails>
               </AuthorInfo>
-              <ReadMoreLink href="#">
+              <ReadMoreLink href="/blog/inner-blog">
                 Read Article
                 <ArrowIcon icon={faArrowRight} />
               </ReadMoreLink>
