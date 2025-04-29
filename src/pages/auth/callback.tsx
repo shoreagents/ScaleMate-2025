@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
+import styled from 'styled-components';
 
 // Create a client with service role key for admin operations
 const serviceRoleClient = createClient(
@@ -17,6 +18,43 @@ const serviceRoleClient = createClient(
   }
 );
 
+const Header = styled.div`
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  padding: 1rem 2rem;
+  background-color: white;
+  border-bottom: 1px solid #E5E7EB;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const Logo = styled.div`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1F2937;
+`;
+
+const ProfilePicture = styled.div<{ $imageUrl?: string | null }>`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: ${props => props.$imageUrl ? 'transparent' : '#f3f4f6'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
 export default function AuthCallback() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +62,7 @@ export default function AuthCallback() {
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -44,6 +83,18 @@ export default function AuthCallback() {
         const isGoogleUser = session.user.app_metadata?.provider === 'google';
         console.log('Is Google user:', isGoogleUser);
         console.log('User metadata:', session.user.app_metadata);
+
+        // Get Google profile picture if available
+        const googleProfilePicture = session.user.user_metadata?.avatar_url || null;
+        console.log('Google profile picture:', googleProfilePicture);
+
+        // Get high quality version of Google profile picture
+        const highQualityProfilePicture = googleProfilePicture ? 
+          googleProfilePicture.replace('=s96-c', '=s400-c') : null;
+        console.log('High quality profile picture:', highQualityProfilePicture);
+
+        // Set profile picture for header
+        setProfilePicture(highQualityProfilePicture);
 
         // Check if user exists in users table
         const { data: existingUser, error: userError } = await serviceRoleClient
@@ -115,7 +166,8 @@ export default function AuthCallback() {
                   username: null,
                   first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
                   last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
-                  last_password_change: null
+                  last_password_change: null,
+                  profile_picture: highQualityProfilePicture // Store profile picture immediately
                 });
 
               if (createProfileError) {
@@ -215,6 +267,16 @@ export default function AuthCallback() {
 
   return (
     <>
+      <Header>
+        <Logo>ScaleMate</Logo>
+        <ProfilePicture $imageUrl={profilePicture}>
+          {profilePicture ? (
+            <img src={profilePicture} alt="Profile" />
+          ) : (
+            <div>👤</div>
+          )}
+        </ProfilePicture>
+      </Header>
       {showSetupModal && userId && currentUsername !== null && (
         <FirstTimeSetupForm
           isOpen={showSetupModal}
