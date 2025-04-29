@@ -18,6 +18,7 @@ import {
   FaBook,
   FaCalendarDays
 } from 'react-icons/fa6';
+import { FiCheck } from 'react-icons/fi';
 import UserProfile from '@/components/user/UserProfile';
 
 interface DashboardTabProps {
@@ -379,11 +380,81 @@ const LinkText = styled.span`
   color: #0F172A;
 `;
 
+const SuccessModal = styled.div<{ $isOpen: boolean }>`
+  display: ${props => props.$isOpen ? 'flex' : 'none'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d9d9d9cc;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+`;
+
+const SuccessModalContent = styled.div`
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const SuccessIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  background-color: ${props => props.theme.colors.success}15;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: ${props => props.theme.colors.success};
+`;
+
+const SuccessTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 0.5rem;
+`;
+
+const SuccessMessage = styled.p`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 1.5rem;
+`;
+
+const SuccessButton = styled.button`
+  padding: 0.875rem 1.5rem;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+
+  &:hover {
+    background: ${props => props.theme.colors.primaryDark};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
 const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
   const router = useRouter();
   const [userData, setUserData] = useState(user);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showProfile, setShowProfile] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -403,6 +474,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
                 email: authUser.email || '',
                 avatar: profile.profile_picture
               });
+
+              // Check if this is a newly signed-up user
+              const isNewSignup = profile.last_password_change === null;
+              if (isNewSignup) {
+                setShowSuccessModal(true);
+              }
             }
           }
         } catch (error) {
@@ -414,210 +491,231 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
     fetchUserData();
   }, [userData]);
 
+  const handleSuccessContinue = () => {
+    setShowSuccessModal(false);
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/');
   };
 
   return (
-    <DashboardContainer>
-      <DashboardHeader
-        title="Dashboard"
-        profilePicture={userData?.avatar}
-        onLogout={handleLogout}
-        onProfileClick={() => setShowProfile(true)}
-        showProfile={showProfile}
-      />
-      {showProfile ? (
-        <UserProfile />
-      ) : (
-        <MainContent>
-          <WelcomeSection>
-            <WelcomeContent>
-              <WelcomeText>
-                <WelcomeTitle>Welcome back, {userData?.name}!</WelcomeTitle>
-                <WelcomeSubtitle>Ready to scale your team today?</WelcomeSubtitle>
-              </WelcomeText>
-              <TipBox>
-                <TipContent>
-                  <TipIcon>
-                    <FaLightbulb />
-                  </TipIcon>
-                  <TipText>
-                    <TipTitle>Today's Tip</TipTitle>
-                    <TipDescription>
-                      Use our AI-powered Role Builder to create custom job descriptions in minutes!
-                    </TipDescription>
-                  </TipText>
-                </TipContent>
-              </TipBox>
-            </WelcomeContent>
-          </WelcomeSection>
+    <>
+      <DashboardContainer>
+        <DashboardHeader
+          title="Dashboard"
+          profilePicture={userData?.avatar}
+          onLogout={handleLogout}
+          onProfileClick={() => setShowProfile(true)}
+          showProfile={showProfile}
+        />
+        {showProfile ? (
+          <UserProfile />
+        ) : (
+          <MainContent>
+            <WelcomeSection>
+              <WelcomeContent>
+                <WelcomeText>
+                  <WelcomeTitle>Welcome back, {userData?.name}!</WelcomeTitle>
+                  <WelcomeSubtitle>Ready to scale your team today?</WelcomeSubtitle>
+                </WelcomeText>
+                <TipBox>
+                  <TipContent>
+                    <TipIcon>
+                      <FaLightbulb />
+                    </TipIcon>
+                    <TipText>
+                      <TipTitle>Today's Tip</TipTitle>
+                      <TipDescription>
+                        Use our AI-powered Role Builder to create custom job descriptions in minutes!
+                      </TipDescription>
+                    </TipText>
+                  </TipContent>
+                </TipBox>
+              </WelcomeContent>
+            </WelcomeSection>
 
-          <ProgressGrid>
-            <ProgressCard>
-              <CardTitle>XP Progress</CardTitle>
-              <XPProgressContainer>
-                <XPProgressBar>
-                  <XPProgressHeader>
-                    <XPLevel>Level 3</XPLevel>
-                    <XPCount>2,450 / 3,000 XP</XPCount>
-                  </XPProgressHeader>
-                  <ProgressBarContainer>
-                    <ProgressBarFill $width="82%" />
-                  </ProgressBarContainer>
-                </XPProgressBar>
-                <XPInfo>
-                  <FaMedal />
-                  <span>550 XP until next level</span>
-                </XPInfo>
-              </XPProgressContainer>
-            </ProgressCard>
+            <ProgressGrid>
+              <ProgressCard>
+                <CardTitle>XP Progress</CardTitle>
+                <XPProgressContainer>
+                  <XPProgressBar>
+                    <XPProgressHeader>
+                      <XPLevel>Level 3</XPLevel>
+                      <XPCount>2,450 / 3,000 XP</XPCount>
+                    </XPProgressHeader>
+                    <ProgressBarContainer>
+                      <ProgressBarFill $width="82%" />
+                    </ProgressBarContainer>
+                  </XPProgressBar>
+                  <XPInfo>
+                    <FaMedal />
+                    <span>550 XP until next level</span>
+                  </XPInfo>
+                </XPProgressContainer>
+              </ProgressCard>
 
-            <ProgressCard>
-              <CardTitle>Badge Progress</CardTitle>
-              <BadgeContainer>
-                <Badge>
-                  <BadgeIcon $color="#3B82F6/10">
-                    <FaStar />
-                  </BadgeIcon>
-                  <BadgeLabel>Recruiter</BadgeLabel>
-                </Badge>
-                <Badge>
-                  <BadgeIcon $color="#84CC16/10">
-                    <FaTrophy />
-                  </BadgeIcon>
-                  <BadgeLabel>Scaling Pro</BadgeLabel>
-                </Badge>
-                <Badge $isLocked>
-                  <BadgeIcon $color="#E5E7EB">
-                    <FaCrown />
-                  </BadgeIcon>
-                  <BadgeLabel>Expert</BadgeLabel>
-                </Badge>
-              </BadgeContainer>
-            </ProgressCard>
-          </ProgressGrid>
+              <ProgressCard>
+                <CardTitle>Badge Progress</CardTitle>
+                <BadgeContainer>
+                  <Badge>
+                    <BadgeIcon $color="#3B82F6/10">
+                      <FaStar />
+                    </BadgeIcon>
+                    <BadgeLabel>Recruiter</BadgeLabel>
+                  </Badge>
+                  <Badge>
+                    <BadgeIcon $color="#84CC16/10">
+                      <FaTrophy />
+                    </BadgeIcon>
+                    <BadgeLabel>Scaling Pro</BadgeLabel>
+                  </Badge>
+                  <Badge $isLocked>
+                    <BadgeIcon $color="#E5E7EB">
+                      <FaCrown />
+                    </BadgeIcon>
+                    <BadgeLabel>Expert</BadgeLabel>
+                  </Badge>
+                </BadgeContainer>
+              </ProgressCard>
+            </ProgressGrid>
 
-          <ActivityGrid>
-            <ActivityCard>
-              <CardHeader>
-                <CardTitle>Recent Roles</CardTitle>
-                <ViewAllLink>View All</ViewAllLink>
-              </CardHeader>
-              <ActivityList>
-                <ActivityItem>
-                  <IconContainer $bgColor="rgba(59, 130, 246, 0.1)" $iconColor="#3B82F6">
-                    <FaUser />
-                  </IconContainer>
-                  <ItemContent>
-                    <ItemTitle>Senior VA</ItemTitle>
-                    <ItemSubtext>Created 2 days ago</ItemSubtext>
-                  </ItemContent>
-                </ActivityItem>
-                <ActivityItem>
-                  <IconContainer $bgColor="rgba(59, 130, 246, 0.1)" $iconColor="#3B82F6">
-                    <FaUser />
-                  </IconContainer>
-                  <ItemContent>
-                    <ItemTitle>Customer Support</ItemTitle>
-                    <ItemSubtext>Created 4 days ago</ItemSubtext>
-                  </ItemContent>
-                </ActivityItem>
-              </ActivityList>
-            </ActivityCard>
+            <ActivityGrid>
+              <ActivityCard>
+                <CardHeader>
+                  <CardTitle>Recent Roles</CardTitle>
+                  <ViewAllLink>View All</ViewAllLink>
+                </CardHeader>
+                <ActivityList>
+                  <ActivityItem>
+                    <IconContainer $bgColor="rgba(59, 130, 246, 0.1)" $iconColor="#3B82F6">
+                      <FaUser />
+                    </IconContainer>
+                    <ItemContent>
+                      <ItemTitle>Senior VA</ItemTitle>
+                      <ItemSubtext>Created 2 days ago</ItemSubtext>
+                    </ItemContent>
+                  </ActivityItem>
+                  <ActivityItem>
+                    <IconContainer $bgColor="rgba(59, 130, 246, 0.1)" $iconColor="#3B82F6">
+                      <FaUser />
+                    </IconContainer>
+                    <ItemContent>
+                      <ItemTitle>Customer Support</ItemTitle>
+                      <ItemSubtext>Created 4 days ago</ItemSubtext>
+                    </ItemContent>
+                  </ActivityItem>
+                </ActivityList>
+              </ActivityCard>
 
-            <ActivityCard>
-              <CardHeader>
-                <CardTitle>Recent Quotes</CardTitle>
-                <ViewAllLink>View All</ViewAllLink>
-              </CardHeader>
-              <ActivityList>
-                <ActivityItem>
-                  <IconContainer $bgColor="rgba(132, 204, 22, 0.1)" $iconColor="#84CC16">
-                    <FaFileInvoiceDollar />
-                  </IconContainer>
-                  <ItemContent>
-                    <ItemTitle>VA Team Quote</ItemTitle>
-                    <ItemSubtext>$2,400/month</ItemSubtext>
-                  </ItemContent>
-                </ActivityItem>
-              </ActivityList>
-            </ActivityCard>
+              <ActivityCard>
+                <CardHeader>
+                  <CardTitle>Recent Quotes</CardTitle>
+                  <ViewAllLink>View All</ViewAllLink>
+                </CardHeader>
+                <ActivityList>
+                  <ActivityItem>
+                    <IconContainer $bgColor="rgba(132, 204, 22, 0.1)" $iconColor="#84CC16">
+                      <FaFileInvoiceDollar />
+                    </IconContainer>
+                    <ItemContent>
+                      <ItemTitle>VA Team Quote</ItemTitle>
+                      <ItemSubtext>$2,400/month</ItemSubtext>
+                    </ItemContent>
+                  </ActivityItem>
+                </ActivityList>
+              </ActivityCard>
 
-            <ActivityCard>
-              <CardHeader>
-                <CardTitle>Active Courses</CardTitle>
-                <ViewAllLink>View All</ViewAllLink>
-              </CardHeader>
-              <ActivityList>
-                <ActivityItem>
-                  <IconContainer $bgColor="rgba(236, 41, 123, 0.1)" $iconColor="#EC297B">
-                    <FaGraduationCap />
-                  </IconContainer>
-                  <ItemContent>
-                    <ItemTitle>Hiring Mastery</ItemTitle>
-                    <ProgressBar>
-                      <ProgressFill $width="75%" $color="#EC297B" />
-                    </ProgressBar>
-                  </ItemContent>
-                </ActivityItem>
-              </ActivityList>
-            </ActivityCard>
-          </ActivityGrid>
+              <ActivityCard>
+                <CardHeader>
+                  <CardTitle>Active Courses</CardTitle>
+                  <ViewAllLink>View All</ViewAllLink>
+                </CardHeader>
+                <ActivityList>
+                  <ActivityItem>
+                    <IconContainer $bgColor="rgba(236, 41, 123, 0.1)" $iconColor="#EC297B">
+                      <FaGraduationCap />
+                    </IconContainer>
+                    <ItemContent>
+                      <ItemTitle>Hiring Mastery</ItemTitle>
+                      <ProgressBar>
+                        <ProgressFill $width="75%" $color="#EC297B" />
+                      </ProgressBar>
+                    </ItemContent>
+                  </ActivityItem>
+                </ActivityList>
+              </ActivityCard>
+            </ActivityGrid>
 
-          <BottomGrid>
-            <NextStepsCard>
-              <CardTitle>Suggested Next Steps</CardTitle>
-              <StepsGrid>
-                <StepItem>
-                  <StepHeader>
-                    <StepIcon>
-                      <FaClipboardCheck />
-                    </StepIcon>
-                    <StepTitle>Complete Readiness Quiz</StepTitle>
-                  </StepHeader>
-                  <StepDescription>Get personalized scaling recommendations</StepDescription>
-                </StepItem>
-                <StepItem>
-                  <StepHeader>
-                    <StepIcon>
-                      <FaUsers />
-                    </StepIcon>
-                    <StepTitle>Build Your First Role</StepTitle>
-                  </StepHeader>
-                  <StepDescription>Create a custom role description</StepDescription>
-                </StepItem>
-              </StepsGrid>
-            </NextStepsCard>
+            <BottomGrid>
+              <NextStepsCard>
+                <CardTitle>Suggested Next Steps</CardTitle>
+                <StepsGrid>
+                  <StepItem>
+                    <StepHeader>
+                      <StepIcon>
+                        <FaClipboardCheck />
+                      </StepIcon>
+                      <StepTitle>Complete Readiness Quiz</StepTitle>
+                    </StepHeader>
+                    <StepDescription>Get personalized scaling recommendations</StepDescription>
+                  </StepItem>
+                  <StepItem>
+                    <StepHeader>
+                      <StepIcon>
+                        <FaUsers />
+                      </StepIcon>
+                      <StepTitle>Build Your First Role</StepTitle>
+                    </StepHeader>
+                    <StepDescription>Create a custom role description</StepDescription>
+                  </StepItem>
+                </StepsGrid>
+              </NextStepsCard>
 
-            <QuickLinksCard>
-              <CardTitle>Quick Links</CardTitle>
-              <LinksList>
-                <LinkItem href="#">
-                  <LinkIcon>
-                    <FaScrewdriver />
-                  </LinkIcon>
-                  <LinkText>Tools Library</LinkText>
-                </LinkItem>
-                <LinkItem href="#">
-                  <LinkIcon>
-                    <FaBook />
-                  </LinkIcon>
-                  <LinkText>Resources</LinkText>
-                </LinkItem>
-                <LinkItem href="#">
-                  <LinkIcon>
-                    <FaCalendarDays />
-                  </LinkIcon>
-                  <LinkText>Book Strategy Call</LinkText>
-                </LinkItem>
-              </LinksList>
-            </QuickLinksCard>
-          </BottomGrid>
-        </MainContent>
-      )}
-    </DashboardContainer>
+              <QuickLinksCard>
+                <CardTitle>Quick Links</CardTitle>
+                <LinksList>
+                  <LinkItem href="#">
+                    <LinkIcon>
+                      <FaScrewdriver />
+                    </LinkIcon>
+                    <LinkText>Tools Library</LinkText>
+                  </LinkItem>
+                  <LinkItem href="#">
+                    <LinkIcon>
+                      <FaBook />
+                    </LinkIcon>
+                    <LinkText>Resources</LinkText>
+                  </LinkItem>
+                  <LinkItem href="#">
+                    <LinkIcon>
+                      <FaCalendarDays />
+                    </LinkIcon>
+                    <LinkText>Book Strategy Call</LinkText>
+                  </LinkItem>
+                </LinksList>
+              </QuickLinksCard>
+            </BottomGrid>
+          </MainContent>
+        )}
+      </DashboardContainer>
+
+      <SuccessModal $isOpen={showSuccessModal}>
+        <SuccessModalContent>
+          <SuccessIcon>
+            <FiCheck size={24} />
+          </SuccessIcon>
+          <SuccessTitle>Setup Completed</SuccessTitle>
+          <SuccessMessage>
+            Your account has been successfully set up. You can now use your new credentials to log in.
+          </SuccessMessage>
+          <SuccessButton onClick={handleSuccessContinue}>
+            Continue
+          </SuccessButton>
+        </SuccessModalContent>
+      </SuccessModal>
+    </>
   );
 };
 
