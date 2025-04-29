@@ -37,7 +37,7 @@ export default function AuthCallback() {
         if (!user) throw new Error('No user found');
 
         // Check if user exists in users table
-        const { data: existingUser, error: userCheckError } = await supabase
+        const { data: existingUser, error: userCheckError } = await serviceRoleClient
           .from('users')
           .select('*')
           .eq('id', user.id)
@@ -49,7 +49,7 @@ export default function AuthCallback() {
 
         // If user doesn't exist, create them
         if (!existingUser) {
-          const { error: insertError } = await supabase
+          const { error: insertError } = await serviceRoleClient
             .from('users')
             .insert([
               {
@@ -63,7 +63,7 @@ export default function AuthCallback() {
         }
 
         // Get user profile
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .select('*')
           .eq('user_id', user.id)
@@ -75,7 +75,7 @@ export default function AuthCallback() {
 
         // If profile doesn't exist, create it
         if (!profile) {
-          const { error: insertError } = await supabase
+          const { error: insertError } = await serviceRoleClient
             .from('user_profiles')
             .insert([
               {
@@ -88,7 +88,7 @@ export default function AuthCallback() {
           if (insertError) throw insertError;
         } else if (user.user_metadata?.avatar_url && !profile.profile_picture) {
           // Update profile picture if it's not set
-          const { error: updateError } = await supabase
+          const { error: updateError } = await serviceRoleClient
             .from('user_profiles')
             .update({ profile_picture: user.user_metadata.avatar_url })
             .eq('user_id', user.id);
@@ -97,6 +97,7 @@ export default function AuthCallback() {
 
         // Set current username for setup modal
         setCurrentUsername(profile?.username || '');
+        setUserId(user.id);
 
         // Show setup modal if needed
         if (!existingUser || !profile?.username) {
