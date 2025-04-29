@@ -43,6 +43,7 @@ export default function AuthCallback() {
         // Check if this is a Google sign-up
         const isGoogleUser = session.user.app_metadata?.provider === 'google';
         console.log('Is Google user:', isGoogleUser);
+        console.log('User metadata:', session.user.app_metadata);
 
         // Check if user exists in users table
         const { data: existingUser, error: userError } = await serviceRoleClient
@@ -87,6 +88,8 @@ export default function AuthCallback() {
           throw profileError;
         }
 
+        console.log('Profile data:', profile);
+
         // Only create profile if it doesn't exist
         if (!profile) {
           console.log('Creating new profile');
@@ -95,7 +98,7 @@ export default function AuthCallback() {
               .from('user_profiles')
               .insert({
                 user_id: session.user.id,
-                username: null, // Don't assign a username automatically
+                username: null,
                 first_name: session.user.user_metadata.full_name?.split(' ')[0] || '',
                 last_name: session.user.user_metadata.full_name?.split(' ').slice(1).join(' ') || '',
                 last_password_change: null
@@ -123,8 +126,9 @@ export default function AuthCallback() {
 
             // After creating profile and assigning role, show setup modal for Google users
             if (isGoogleUser) {
+              console.log('Showing setup modal for new Google user');
               setUserId(session.user.id);
-              setCurrentUsername(''); // Start with empty username
+              setCurrentUsername('');
               setShowSetupModal(true);
               return; // Exit early to prevent further checks
             }
@@ -136,8 +140,9 @@ export default function AuthCallback() {
 
         // Check if we need to show the setup modal for existing profiles
         if (isGoogleUser && !profile?.last_password_change) {
+          console.log('Showing setup modal for existing Google user without password');
           setUserId(session.user.id);
-          setCurrentUsername(profile?.username || ''); // Use existing username or empty string
+          setCurrentUsername(profile?.username || '');
           setShowSetupModal(true);
           return; // Exit early to prevent further checks
         }
@@ -170,6 +175,7 @@ export default function AuthCallback() {
   }, [router]);
 
   const handleSetupComplete = () => {
+    console.log('Setup completed, redirecting to dashboard');
     setShowSetupModal(false);
     router.push('/user/dashboard');
   };
@@ -182,9 +188,11 @@ export default function AuthCallback() {
     return <div>Error: {error}</div>;
   }
 
+  console.log('Render state:', { showSetupModal, userId, currentUsername });
+
   return (
     <>
-      {showSetupModal && userId && currentUsername && (
+      {showSetupModal && userId && currentUsername !== null && (
         <FirstTimeSetupForm
           isOpen={showSetupModal}
           onClose={handleSetupComplete}
