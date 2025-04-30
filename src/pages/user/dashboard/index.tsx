@@ -113,9 +113,9 @@ const DashboardPage = () => {
 
         // Get user's profile data
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
 
         if (profileError) {
@@ -124,15 +124,8 @@ const DashboardPage = () => {
           return;
         }
 
-        // Check if user needs setup
-        const needsSetup = !profile?.username || !profile?.password_set;
-        
-        if (needsSetup) {
-          setShowAuthCallback(true);
-        } else {
-          setUser(user);
-        }
-
+        // Set user and show dashboard
+        setUser(user);
         setLoading(false);
       } catch (err) {
         console.error('Auth check error:', err);
