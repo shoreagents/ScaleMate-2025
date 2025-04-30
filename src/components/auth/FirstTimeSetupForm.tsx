@@ -11,11 +11,13 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
+  overflow: hidden;
 `;
 
 const ModalContent = styled.div`
@@ -24,7 +26,9 @@ const ModalContent = styled.div`
   border-radius: 12px;
   width: 100%;
   max-width: 480px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  position: relative;
+  margin: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const ModalHeader = styled.div`
@@ -198,10 +202,11 @@ const SuccessModal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
   justify-content: center;
   align-items: center;
-  z-index: 1001;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
 `;
 
 const SuccessModalContent = styled.div`
@@ -277,6 +282,7 @@ interface FirstTimeSetupFormProps {
   onClose: () => void;
   userId: string;
   currentUsername: string;
+  onSetupComplete: () => void;
 }
 
 interface UserProfile {
@@ -284,12 +290,26 @@ interface UserProfile {
   user_id: string;
 }
 
-export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUsername }: FirstTimeSetupFormProps) {
+interface FormData {
+  username: string;
+  password: string;
+  confirmPassword: string;
+  fullName: string;
+}
+
+const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
+  isOpen,
+  onClose,
+  userId,
+  currentUsername,
+  onSetupComplete
+}) => {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     username: currentUsername,
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    fullName: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -315,6 +335,20 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     if (isOpen) {
       setShowSuccessModal(false);
     }
+  }, [isOpen]);
+
+  // Add effect to handle body scroll
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to ensure scroll is re-enabled when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
   const validateUsername = (value: string) => {
@@ -421,219 +455,235 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Please fix the password errors');
       }
 
-      // Update password
-      const { error: passwordError } = await supabase.auth.updateUser({
-        password: formData.password
-      });
-
-      if (passwordError) {
-        throw new Error('Failed to update password: ' + passwordError.message);
-      }
-
-      // Create a client with service role key for admin operations
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
-      // Update username and last_password_change using service role client
-      const { error: profileError } = await serviceRoleClient
-        .from('user_profiles')
+      // Update user profile
+      const { error: profileError } = await supabase
+        .from('users')
         .update({
+          full_name: formData.fullName,
           username: formData.username,
           last_password_change: new Date().toISOString()
         })
-        .eq('user_id', userId);
+        .eq('id', userId);
 
-      if (profileError) {
-        // Check for duplicate username error
-        if (profileError.code === '23505' && profileError.message.includes('username')) {
-          setUsernameExists(true);
-          setUsernameError('Username is already taken');
-          setIsLoading(false);
-          return;
-        }
-        throw new Error('Failed to update profile: ' + profileError.message);
-      }
+      if (profileError) throw profileError;
 
-      // Close the setup modal and redirect to dashboard
+      // Update auth password
+      const { error: authError } = await supabase.auth.updateUser({
+        password: formData.password
+      });
+
+      if (authError) throw authError;
+
+      // Close the setup form
       onClose();
+      // Call the setup complete callback
+      onSetupComplete();
     } catch (err) {
       console.error('Setup error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred during setup');
+      setError(err instanceof Error ? err.message : 'Failed to complete setup');
+    } finally {
       setIsLoading(false);
-      return;
     }
-    setIsLoading(false);
+  };
+
+  const handleSuccessContinue = () => {
+    setShowSuccessModal(false);
+    router.push('/user/dashboard');
   };
 
   if (!isOpen) return null;
 
   return (
-    <ModalOverlay>
-      <ModalContent>
-        <ModalHeader>
-          <Title>Complete Your Setup</Title>
-          <Description>
-            Set your password and update your username to complete your account setup.
-          </Description>
-        </ModalHeader>
+    <>
+      <ModalOverlay>
+        <ModalContent>
+          <ModalHeader>
+            <Title>Complete Your Setup</Title>
+            <Description>
+              Set your password and update your username to complete your account setup.
+            </Description>
+          </ModalHeader>
 
-        <Form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label htmlFor="username">
-              Username
-              <RequiredAsterisk>*</RequiredAsterisk>
-            </Label>
-            <InputWrapper>
+          <Form onSubmit={handleSubmit}>
+            <FormGroup>
+              <Label htmlFor="fullName">Full Name</Label>
               <Input
-                id="username"
+                id="fullName"
                 type="text"
-                pattern="[a-zA-Z0-9._-]*"
-                value={formData.username}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  validateUsername(value);
-                  if (value === '' || e.target.validity.valid) {
-                    setFormData(prev => ({ ...prev, username: value }));
-                  }
-                }}
-                placeholder="Choose a username"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                placeholder="Enter your full name"
                 required
               />
-              {usernameError && (
-                <HelperText style={{ color: '#dc2626' }}>
-                  <FiX size={14} />
-                  {usernameError}
-                </HelperText>
-              )}
-              {checkingUsername && (
-                <HelperText style={{ color: '#6b7280' }}>
-                  <FiLoader size={14} />
-                  Checking username...
-                </HelperText>
-              )}
-              {!checkingUsername && !usernameError && usernameExists === false && (
-                <HelperText style={{ color: '#059669' }}>
-                  <FiCheck size={14} />
-                  Username is available
-                </HelperText>
-              )}
-              {!checkingUsername && !usernameError && usernameExists === true && formData.username !== currentUsername && (
-                <HelperText style={{ color: '#dc2626' }}>
-                  <FiX size={14} />
-                  Username is already taken
-                </HelperText>
-              )}
-            </InputWrapper>
-          </FormGroup>
+            </FormGroup>
+            <FormGroup>
+              <Label htmlFor="username">
+                Username
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
+              <InputWrapper>
+                <Input
+                  id="username"
+                  type="text"
+                  pattern="[a-zA-Z0-9._-]*"
+                  value={formData.username}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    validateUsername(value);
+                    if (value === '' || e.target.validity.valid) {
+                      setFormData(prev => ({ ...prev, username: value }));
+                    }
+                  }}
+                  placeholder="Choose a username"
+                  required
+                />
+                {usernameError && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    {usernameError}
+                  </HelperText>
+                )}
+                {checkingUsername && (
+                  <HelperText style={{ color: '#6b7280' }}>
+                    <FiLoader size={14} />
+                    Checking username...
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === false && (
+                  <HelperText style={{ color: '#059669' }}>
+                    <FiCheck size={14} />
+                    Username is available
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && formData.username !== currentUsername && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    Username is already taken
+                  </HelperText>
+                )}
+              </InputWrapper>
+            </FormGroup>
 
-          <PasswordSection>
-            <FormRow>
-              <FormGroup>
-                <Label htmlFor="password">
-                  Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <InputWrapper>
-                  <PasswordInputWrapper>
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => {
-                        setFormData(prev => ({ ...prev, password: e.target.value }));
-                        validatePasswords(e.target.value, formData.confirmPassword);
-                      }}
-                      placeholder="Create a password"
-                      required
-                    />
-                    <PasswordToggle
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </PasswordToggle>
-                  </PasswordInputWrapper>
-                </InputWrapper>
-              </FormGroup>
+            <PasswordSection>
+              <FormRow>
+                <FormGroup>
+                  <Label htmlFor="password">
+                    Password
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <InputWrapper>
+                    <PasswordInputWrapper>
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, password: e.target.value }));
+                          validatePasswords(e.target.value, formData.confirmPassword);
+                        }}
+                        placeholder="Create a password"
+                        required
+                      />
+                      <PasswordToggle
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </PasswordToggle>
+                    </PasswordInputWrapper>
+                  </InputWrapper>
+                </FormGroup>
 
-              <FormGroup>
-                <Label htmlFor="confirmPassword">
-                  Confirm Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <InputWrapper>
-                  <PasswordInputWrapper>
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) => {
-                        setFormData(prev => ({ ...prev, confirmPassword: e.target.value }));
-                        validatePasswords(formData.password, e.target.value);
-                      }}
-                      placeholder="Confirm your password"
-                      required
-                    />
-                    <PasswordToggle
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </PasswordToggle>
-                  </PasswordInputWrapper>
-                </InputWrapper>
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup>
-                <PasswordHelperText>
-                  {formData.password && (
-                    <HelperText style={{ color: passwordValidation.length ? '#059669' : '#dc2626' }}>
-                      {passwordValidation.length ? <FiCheck size={14} /> : <FiX size={14} />}
-                      {passwordValidation.length ? 'Password length is valid' : 'Password must be at least 8 characters'}
-                    </HelperText>
-                  )}
-                  {formData.confirmPassword && (
-                    passwordValidation.match ? (
-                      <HelperText style={{ color: '#059669' }}>
-                        <FiCheck size={14} />
-                        Passwords match
+                <FormGroup>
+                  <Label htmlFor="confirmPassword">
+                    Confirm Password
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <InputWrapper>
+                    <PasswordInputWrapper>
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={formData.confirmPassword}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, confirmPassword: e.target.value }));
+                          validatePasswords(formData.password, e.target.value);
+                        }}
+                        placeholder="Confirm your password"
+                        required
+                      />
+                      <PasswordToggle
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </PasswordToggle>
+                    </PasswordInputWrapper>
+                  </InputWrapper>
+                </FormGroup>
+              </FormRow>
+              <FormRow>
+                <FormGroup>
+                  <PasswordHelperText>
+                    {formData.password && (
+                      <HelperText style={{ color: passwordValidation.length ? '#059669' : '#dc2626' }}>
+                        {passwordValidation.length ? <FiCheck size={14} /> : <FiX size={14} />}
+                        {passwordValidation.length ? 'Password length is valid' : 'Password must be at least 8 characters'}
                       </HelperText>
-                    ) : (
-                      <HelperText style={{ color: '#dc2626' }}>
-                        <FiX size={14} />
-                        Passwords do not match
-                      </HelperText>
-                    )
-                  )}
-                </PasswordHelperText>
-              </FormGroup>
-            </FormRow>
-          </PasswordSection>
+                    )}
+                    {formData.confirmPassword && (
+                      passwordValidation.match ? (
+                        <HelperText style={{ color: '#059669' }}>
+                          <FiCheck size={14} />
+                          Passwords match
+                        </HelperText>
+                      ) : (
+                        <HelperText style={{ color: '#dc2626' }}>
+                          <FiX size={14} />
+                          Passwords do not match
+                        </HelperText>
+                      )
+                    )}
+                  </PasswordHelperText>
+                </FormGroup>
+              </FormRow>
+            </PasswordSection>
 
-          {error && (
-            <ErrorMessage>
-              <FiX size={16} />
-              {error}
-            </ErrorMessage>
-          )}
+            {error && (
+              <ErrorMessage>
+                <FiX size={16} />
+                {error}
+              </ErrorMessage>
+            )}
 
-          <Button
-            type="submit"
-            disabled={isLoading || !isFormValid()}
-          >
-            {isLoading ? 'Saving...' : 'Complete Setup'}
-          </Button>
-        </Form>
-      </ModalContent>
-    </ModalOverlay>
+            <Button
+              type="submit"
+              disabled={isLoading || !isFormValid()}
+            >
+              {isLoading ? 'Saving...' : 'Complete Setup'}
+            </Button>
+          </Form>
+        </ModalContent>
+      </ModalOverlay>
+
+      {showSuccessModal && (
+        <SuccessModal $isOpen={showSuccessModal}>
+          <SuccessModalContent>
+            <SuccessIcon>
+              <FiCheck size={24} />
+            </SuccessIcon>
+            <SuccessTitle>Setup Complete!</SuccessTitle>
+            <SuccessMessage>
+              Your account has been successfully set up. You can now use your new credentials to log in.
+            </SuccessMessage>
+            <SuccessButton onClick={handleSuccessContinue}>
+              Continue
+            </SuccessButton>
+          </SuccessModalContent>
+        </SuccessModal>
+      )}
+    </>
   );
-} 
+};
+
+export default FirstTimeSetupForm; 

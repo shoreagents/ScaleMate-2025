@@ -615,34 +615,31 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
   };
 
   const handleGoogleSignIn = async () => {
-    try {
-      setIsGoogleLoading(true);
-      setError(null);
+    setIsGoogleLoading(true);
+    setError(null);
 
+    try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'consent'
           },
-          scopes: 'email profile',
+          scopes: 'email profile openid'
         }
       });
 
       if (error) {
         throw error;
       }
-
-      // The user will be redirected to Google's OAuth page
-      // After successful authentication, they'll be redirected back to the callback URL
-      // The callback will handle the user creation and profile setup
     } catch (err) {
       console.error('Google sign in error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during Google sign in';
       setError(errorMessage);
       onError?.(errorMessage);
+    } finally {
       setIsGoogleLoading(false);
     }
   };
