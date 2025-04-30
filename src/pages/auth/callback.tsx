@@ -121,15 +121,18 @@ export default function AuthCallback() {
 
           // Create profile if it doesn't exist
           if (!profile) {
+            const profileData = {
+              user_id: user.id,
+              username: null,
+              first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+              last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+              last_password_change: null,
+              profile_picture: user.user_metadata?.avatar_url || null
+            };
+
             const { error: profileError } = await serviceRoleClient
               .from('user_profiles')
-              .insert({
-                user_id: user.id,
-                username: null, // Don't set username until setup is completed
-                first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-                last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                last_password_change: null // Don't set last_password_change until setup is completed
-              });
+              .insert(profileData);
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
