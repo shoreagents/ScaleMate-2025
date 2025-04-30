@@ -34,6 +34,7 @@ export default function AuthCallbackOverlay() {
   const [error, setError] = useState<string | null>(null);
   const [showSetupModal, setShowSetupModal] = useState(false);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -66,6 +67,10 @@ export default function AuthCallbackOverlay() {
           return;
         }
 
+        // Check if this is a Google sign-up
+        const isGoogleUser = user.app_metadata?.provider === 'google';
+        console.log('Is Google user:', isGoogleUser);
+
         // Get user's profile data
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -83,12 +88,13 @@ export default function AuthCallbackOverlay() {
         const needsSetup = !profile?.username || !profile?.password_set;
         
         if (needsSetup) {
+          setUserId(user.id);
           setCurrentUsername(profile?.username || '');
           setShowSetupModal(true);
         } else {
-          // User is already set up, redirect to dashboard
+          // User is already set up
           setUser(user);
-          router.push('/user/dashboard');
+          setShowSetupModal(false);
         }
       } catch (err) {
         console.error('Auth callback error:', err);
@@ -107,15 +113,17 @@ export default function AuthCallbackOverlay() {
     );
   }
 
-  if (showSetupModal) {
+  if (showSetupModal && userId) {
     return (
       <OverlayContainer>
         <FirstTimeSetupForm
+          isOpen={showSetupModal}
           onClose={() => {
             setShowSetupModal(false);
-            router.push('/user/dashboard');
+            setUser(null); // Reset user to trigger a refresh
           }}
-          currentUsername={currentUsername}
+          userId={userId}
+          currentUsername={currentUsername || ''}
         />
       </OverlayContainer>
     );
