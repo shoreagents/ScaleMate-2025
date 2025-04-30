@@ -59,49 +59,68 @@ const SuccessModal = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
   justify-content: center;
   align-items: center;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
 `;
 
 const SuccessModalContent = styled.div`
   background-color: white;
   padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 300px;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
   text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const SuccessIcon = styled.div`
-  color: #4CAF50;
-  font-size: 2rem;
-  margin-bottom: 1rem;
+  width: 48px;
+  height: 48px;
+  background-color: ${props => props.theme.colors.success}15;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: ${props => props.theme.colors.success};
 `;
 
-const SuccessTitle = styled.h2`
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+const SuccessTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 0.5rem;
 `;
 
 const SuccessMessage = styled.p`
-  margin-bottom: 2rem;
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 1.5rem;
 `;
 
 const SuccessButton = styled.button`
-  background-color: #4CAF50;
+  padding: 0.875rem 1.5rem;
+  background: ${props => props.theme.colors.primary};
   color: white;
-  padding: 0.75rem 1rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s;
+  transition: all 0.2s ease;
+  width: 100%;
 
   &:hover {
-    background-color: #45a049;
+    background: ${props => props.theme.colors.primaryDark};
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 `;
 
