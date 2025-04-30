@@ -11,6 +11,7 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
+  display: flex;
   justify-content: center;
   align-items: center;
   background-color: rgba(15, 23, 42, 0.75);
@@ -25,6 +26,9 @@ const ModalContent = styled.div`
   border-radius: 12px;
   width: 100%;
   max-width: 480px;
+  position: relative;
+  margin: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const ModalHeader = styled.div`
@@ -460,7 +464,8 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
       const { error: profileError } = await serviceRoleClient
         .from('user_profiles')
         .update({
-          username: formData.username
+          username: formData.username,
+          last_password_change: new Date().toISOString()
         })
         .eq('user_id', userId);
 
@@ -475,8 +480,12 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Failed to update profile: ' + profileError.message);
       }
 
-      // Close the setup modal and redirect to dashboard
-      onClose();
+      // Show success message
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        onClose();
+        router.push('/user/dashboard');
+      }, 2000);
     } catch (err) {
       console.error('Setup error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during setup');
@@ -646,6 +655,20 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
             {isLoading ? 'Saving...' : 'Complete Setup'}
           </Button>
         </Form>
+
+        {showSuccessModal && (
+          <SuccessModal $isOpen={showSuccessModal}>
+            <SuccessModalContent>
+              <SuccessIcon>
+                <FiCheck size={24} />
+              </SuccessIcon>
+              <SuccessTitle>Setup Complete!</SuccessTitle>
+              <SuccessMessage>
+                Your account has been successfully set up. Redirecting to dashboard...
+              </SuccessMessage>
+            </SuccessModalContent>
+          </SuccessModal>
+        )}
       </ModalContent>
     </ModalOverlay>
   );
