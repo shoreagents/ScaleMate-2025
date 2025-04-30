@@ -36,6 +36,7 @@ import UserProfile from '@/components/user/UserProfile';
 import { withRoleProtection } from '@/components/auth/withRoleProtection';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -81,37 +82,44 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAuthCallback, setShowAuthCallback] = useState(false);
+  const [showSetupForm, setShowSetupForm] = useState(false);
+
+  const checkAuth = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return;
+      }
+
+      // Get user's profile data
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        return;
+      }
+
+      // Set user and show dashboard
+      setUser(user);
+      setUserData(profile);
+
+      // Check if username and last_password_change are null
+      if (!profile?.username && !profile?.last_password_change) {
+        setShowSetupForm(true);
+      }
+
+      setLoading(false);
+    } catch (err) {
+      console.error('Auth check error:', err);
+    }
+  };
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          return;
-        }
-
-        // Get user's profile data
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (profileError) {
-          console.error('Profile error:', profileError);
-          return;
-        }
-
-        // Set user and show dashboard
-        setUser(user);
-        setUserData(profile);
-        setLoading(false);
-      } catch (err) {
-        console.error('Auth check error:', err);
-      }
-    };
-
     checkAuth();
   }, [setUser]);
 
@@ -201,6 +209,23 @@ const DashboardPage = () => {
 
   if (loading) {
     return <LoadingSpinner />;
+  }
+
+  if (showSetupForm && user) {
+    return (
+      <NoNavbarLayout>
+        <FirstTimeSetupForm
+          isOpen={showSetupForm}
+          onClose={() => {
+            setShowSetupForm(false);
+            // Refresh user data after setup
+            checkAuth();
+          }}
+          userId={user.id}
+          currentUsername=""
+        />
+      </NoNavbarLayout>
+    );
   }
 
   return (
