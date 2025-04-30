@@ -63,6 +63,13 @@ const ProfileImage = styled.img`
   object-position: center;
 `;
 
+const DefaultProfileIcon = styled(FiUser)`
+  width: 80px;
+  height: 80px;
+  color: #6b7280;
+  opacity: 0.5;
+`;
+
 const UploadButton = styled.button`
   position: absolute;
   bottom: 0;
@@ -953,7 +960,21 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
         </ProfileInfo>
         <ProfilePicture>
           {profileData.profile_picture ? (
-            <ProfileImage src={profileData.profile_picture} alt="Profile" />
+            <ProfileImage 
+              src={profileData.profile_picture} 
+              alt={`${profileData.first_name}'s profile`}
+              onError={(e) => {
+                const target = e.currentTarget;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent) {
+                  const svg = parent.querySelector('svg');
+                  if (svg) {
+                    svg.style.display = 'block';
+                  }
+                }
+              }}
+            />
           ) : (
             <FiUser size={80} color="#6b7280" />
           )}
