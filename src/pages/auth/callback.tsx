@@ -33,13 +33,13 @@ export default function AuthCallback() {
         
         if (sessionError) {
           console.error('Session error:', sessionError);
-          setError('Failed to get session. Please try again.');
+          router.push('/login');
           return;
         }
 
         if (!session) {
           console.error('No session found');
-          setError('No session found. Please try again.');
+          router.push('/login');
           return;
         }
 
@@ -47,13 +47,13 @@ export default function AuthCallback() {
         
         if (userError) {
           console.error('User error:', userError);
-          setError('Failed to get user. Please try again.');
+          router.push('/login');
           return;
         }
 
         if (!user) {
           console.error('No user found');
-          setError('No user found. Please try again.');
+          router.push('/login');
           return;
         }
 
@@ -70,7 +70,7 @@ export default function AuthCallback() {
 
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile error:', profileError);
-          setError('Failed to get profile. Please try again.');
+          router.push('/login');
           return;
         }
 
@@ -97,7 +97,7 @@ export default function AuthCallback() {
 
           if (checkError && checkError.code !== 'PGRST116') {
             console.error('Error checking existing user:', checkError);
-            setError('Failed to check existing user');
+            router.push('/login');
             return;
           }
 
@@ -114,7 +114,7 @@ export default function AuthCallback() {
 
             if (userError) {
               console.error('User creation error:', userError);
-              setError('Failed to create user record');
+              router.push('/login');
               return;
             }
           }
@@ -133,7 +133,7 @@ export default function AuthCallback() {
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
-              setError('Failed to create user profile');
+              router.push('/login');
               return;
             }
           }
@@ -147,7 +147,7 @@ export default function AuthCallback() {
 
           if (roleCheckError && roleCheckError.code !== 'PGRST116') {
             console.error('Error checking existing role:', roleCheckError);
-            setError('Failed to check existing role');
+            router.push('/login');
             return;
           }
 
@@ -162,7 +162,7 @@ export default function AuthCallback() {
 
             if (roleError) {
               console.error('Role assignment error:', roleError);
-              setError('Failed to assign user role');
+              router.push('/login');
               return;
             }
           }
@@ -180,20 +180,12 @@ export default function AuthCallback() {
         }
       } catch (err) {
         console.error('Auth callback error:', err);
-        setError('An unexpected error occurred. Please try again.');
+        router.push('/login');
       }
     };
 
     handleCallback();
   }, [router]);
-
-  if (error) {
-    return (
-      <LoadingContainer>
-        <ErrorMessage>{error}</ErrorMessage>
-      </LoadingContainer>
-    );
-  }
 
   return (
     <LoadingContainer>
