@@ -446,8 +446,7 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
       const { error: profileError } = await serviceRoleClient
         .from('user_profiles')
         .update({
-          username: formData.username,
-          last_password_change: new Date().toISOString()
+          username: formData.username
         })
         .eq('user_id', userId);
 
