@@ -11,11 +11,12 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(20, 20, 20, 0.41);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  overflow: hidden;
 `;
 
 const ModalContent = styled.div`
@@ -315,6 +316,20 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     if (isOpen) {
       setShowSuccessModal(false);
     }
+  }, [isOpen]);
+
+  // Add effect to handle body scroll
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to ensure scroll is re-enabled when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
   const validateUsername = (value: string) => {
