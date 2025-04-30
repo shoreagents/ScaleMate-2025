@@ -36,7 +36,6 @@ import UserProfile from '@/components/user/UserProfile';
 import { withRoleProtection } from '@/components/auth/withRoleProtection';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import AuthCallbackOverlay from '@/components/auth/AuthCallbackOverlay';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -80,6 +79,7 @@ const DashboardPage = () => {
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAuthCallback, setShowAuthCallback] = useState(false);
 
   useEffect(() => {
@@ -251,7 +251,6 @@ const DashboardPage = () => {
           {renderContent()}
         </MainContent>
       </DashboardContainer>
-      {showAuthCallback && <AuthCallbackOverlay />}
     </NoNavbarLayout>
   );
 };
