@@ -4,7 +4,8 @@ import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
-import styled from 'styled-components';
+import DashboardHeader from '@/components/layout/DashboardHeader';
+import { useBeforeUnload } from '@/hooks/useBeforeUnload';
 
 // Create a client with service role key for admin operations
 const serviceRoleClient = createClient(
@@ -18,43 +19,6 @@ const serviceRoleClient = createClient(
   }
 );
 
-const Header = styled.div`
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: 0;
-  padding: 1rem 2rem;
-  background-color: white;
-  border-bottom: 1px solid #E5E7EB;
-  z-index: 10;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const Logo = styled.div`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1F2937;
-`;
-
-const ProfilePicture = styled.div<{ $imageUrl?: string | null }>`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: ${props => props.$imageUrl ? 'transparent' : '#f3f4f6'};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
 export default function AuthCallback() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -63,6 +27,33 @@ export default function AuthCallback() {
   const [userId, setUserId] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [isSetupComplete, setIsSetupComplete] = useState(false);
+
+  // Prevent navigation during setup
+  useBeforeUnload(
+    () => {
+      if (showSetupModal && !isSetupComplete) {
+        return 'You need to complete your setup before leaving. Are you sure you want to leave?';
+      }
+    },
+    [showSetupModal, isSetupComplete]
+  );
+
+  // Handle route changes
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      if (showSetupModal && !isSetupComplete && url !== '/auth/callback') {
+        router.events.emit('routeChangeError');
+        router.push('/auth/callback');
+        throw 'Please complete your setup first';
+      }
+    };
+
+    router.events.on('routeChangeStart', handleRouteChange);
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [router, showSetupModal, isSetupComplete]);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -251,6 +242,7 @@ export default function AuthCallback() {
 
   const handleSetupComplete = () => {
     console.log('Setup completed, redirecting to dashboard');
+    setIsSetupComplete(true);
     setShowSetupModal(false);
     router.push('/user/dashboard');
   };
@@ -267,16 +259,24 @@ export default function AuthCallback() {
 
   return (
     <>
-      <Header>
-        <Logo>ScaleMate</Logo>
-        <ProfilePicture $imageUrl={profilePicture}>
-          {profilePicture ? (
-            <img src={profilePicture} alt="Profile" />
-          ) : (
-            <div>👤</div>
-          )}
-        </ProfilePicture>
-      </Header>
+      <DashboardHeader
+        title="Complete Your Setup"
+        profilePicture={profilePicture}
+        onLogout={() => {
+          if (showSetupModal && !isSetupComplete) {
+            if (window.confirm('You need to complete your setup before logging out. Are you sure?')) {
+              router.push('/login');
+            }
+          } else {
+            router.push('/login');
+          }
+        }}
+        onProfileClick={() => {
+          if (!showSetupModal) {
+            setShowSetupModal(true);
+          }
+        }}
+      />
       {showSetupModal && userId && currentUsername !== null && (
         <FirstTimeSetupForm
           isOpen={showSetupModal}
