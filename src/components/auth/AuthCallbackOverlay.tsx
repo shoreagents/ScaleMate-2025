@@ -71,17 +71,36 @@ export default function AuthCallbackOverlay() {
         const isGoogleUser = user.app_metadata?.provider === 'google';
         console.log('Is Google user:', isGoogleUser);
 
-        // Get user's profile data
+        // Get user's profile data from the correct table
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+          .from('user_profiles')
           .select('*')
-          .eq('id', user.id)
+          .eq('user_id', user.id)
           .single();
 
-        if (profileError) {
+        if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
           console.error('Profile error:', profileError);
           setError('Failed to get profile. Please try again.');
           return;
+        }
+
+        // If no profile exists and this is a Google user, create one
+        if (!profile && isGoogleUser) {
+          const { error: createProfileError } = await supabase
+            .from('user_profiles')
+            .insert({
+              user_id: user.id,
+              username: user.email?.split('@')[0] || '',
+              first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+              last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+              last_password_change: new Date().toISOString()
+            });
+
+          if (createProfileError) {
+            console.error('Profile creation error:', createProfileError);
+            setError('Failed to create user profile. Please try again.');
+            return;
+          }
         }
 
         // Check if user has a role
@@ -114,7 +133,7 @@ export default function AuthCallbackOverlay() {
         }
 
         // Check if user needs setup
-        const needsSetup = !profile?.username || !profile?.password_set;
+        const needsSetup = !profile?.username || !profile?.last_password_change;
         
         if (needsSetup) {
           setUserId(user.id);
