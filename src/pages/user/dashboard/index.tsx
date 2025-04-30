@@ -211,23 +211,6 @@ const DashboardPage = () => {
     return <LoadingSpinner />;
   }
 
-  if (showSetupForm && user) {
-    return (
-      <NoNavbarLayout>
-        <FirstTimeSetupForm
-          isOpen={showSetupForm}
-          onClose={() => {
-            setShowSetupForm(false);
-            // Refresh user data after setup
-            checkAuth();
-          }}
-          userId={user.id}
-          currentUsername=""
-        />
-      </NoNavbarLayout>
-    );
-  }
-
   return (
     <NoNavbarLayout>
       <DashboardContainer>
@@ -248,6 +231,18 @@ const DashboardPage = () => {
           {renderContent()}
         </MainContent>
       </DashboardContainer>
+      {showSetupForm && user && (
+        <FirstTimeSetupForm
+          isOpen={showSetupForm}
+          onClose={() => {
+            setShowSetupForm(false);
+            // Refresh user data after setup
+            checkAuth();
+          }}
+          userId={user.id}
+          currentUsername=""
+        />
+      )}
     </NoNavbarLayout>
   );
 };

@@ -615,11 +615,11 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
   };
 
   const handleGoogleSignIn = async () => {
-    try {
-      setIsGoogleLoading(true);
-      setError(null);
+    setIsGoogleLoading(true);
+    setError(null);
 
-      // First, initiate Google OAuth
+    try {
+      // Initiate Google OAuth with additional scopes for profile picture
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -628,117 +628,12 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
             access_type: 'offline',
             prompt: 'consent',
           },
-          scopes: 'email profile',
-        }
+          scopes: 'email profile openid',
+        },
       });
 
       if (error) {
         throw error;
-      }
-
-      // Create a client with service role key for admin operations
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
-      // Get the current user after Google auth
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        throw new Error('Failed to get user after Google authentication');
-      }
-
-      // Check if user already exists in users table
-      const { data: existingUser, error: checkError } = await serviceRoleClient
-        .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-        console.error('Error checking existing user:', checkError);
-        throw new Error('Failed to check existing user');
-      }
-
-      // Only insert if user doesn't exist
-      if (!existingUser) {
-        const { error: userError } = await serviceRoleClient
-          .from('users')
-          .insert({
-            id: user.id,
-            email: user.email,
-            full_name: user.user_metadata?.full_name || '',
-            is_active: true
-          });
-
-        if (userError) {
-          console.error('User creation error:', userError);
-          throw new Error('Failed to create user record');
-        }
-      }
-
-      // Check if profile exists
-      const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
-        .from('user_profiles')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
-        console.error('Error checking existing profile:', profileCheckError);
-        throw new Error('Failed to check existing profile');
-      }
-
-      // Only insert if profile doesn't exist
-      if (!existingProfile) {
-        const { error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .insert({
-            user_id: user.id,
-            username: null, // Don't set username until setup is completed
-            first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-            last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-            last_password_change: null // Don't set last_password_change until setup is completed
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          throw new Error('Failed to create user profile');
-        }
-      }
-
-      // Check if role exists
-      const { data: existingRole, error: roleCheckError } = await serviceRoleClient
-        .from('user_roles')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (roleCheckError && roleCheckError.code !== 'PGRST116') {
-        console.error('Error checking existing role:', roleCheckError);
-        throw new Error('Failed to check existing role');
-      }
-
-      // Only insert if role doesn't exist
-      if (!existingRole) {
-        const { error: roleError } = await serviceRoleClient
-          .from('user_roles')
-          .insert({
-            user_id: user.id,
-            role: 'user'
-          });
-
-        if (roleError) {
-          console.error('Role assignment error:', roleError);
-          throw new Error('Failed to assign user role');
-        }
       }
 
       // The user will be redirected to the callback URL
