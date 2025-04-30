@@ -124,15 +124,8 @@ const DashboardPage = () => {
           return;
         }
 
-        // Check if user needs setup
-        const needsSetup = !profile?.username;
-        
-        if (needsSetup) {
-          router.push('/auth/setup');
-        } else {
-          setUser(user);
-        }
-
+        // Set user and show dashboard
+        setUser(user);
         setLoading(false);
       } catch (err) {
         console.error('Auth check error:', err);
