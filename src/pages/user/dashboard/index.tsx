@@ -34,6 +34,9 @@ import SavedToolStackTab from '@/components/user/SavedToolStackTab';
 import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
 import UserProfile from '@/components/user/UserProfile';
 import { withRoleProtection } from '@/components/auth/withRoleProtection';
+import { useAuth } from '@/contexts/AuthContext';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import AuthCallbackOverlay from '@/components/auth/AuthCallbackOverlay';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -72,33 +75,73 @@ interface DashboardUserData {
 
 const DashboardPage = () => {
   const router = useRouter();
+  const { user, setUser } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showAuthCallback, setShowAuthCallback] = useState(false);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-
-          if (profile) {
-            setUserData(profile);
-            setProfilePicture(profile.profile_picture);
-          }
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          router.push('/login');
+          return;
         }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
+
+        if (!session) {
+          router.push('/login');
+          return;
+        }
+
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error('User error:', userError);
+          router.push('/login');
+          return;
+        }
+
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        // Get user's profile data
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile error:', profileError);
+          router.push('/login');
+          return;
+        }
+
+        // Check if user needs setup
+        const needsSetup = !profile?.username || !profile?.password_set;
+        
+        if (needsSetup) {
+          setShowAuthCallback(true);
+        } else {
+          setUser(user);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Auth check error:', err);
+        router.push('/login');
       }
     };
 
-    fetchUserData();
-  }, []);
+    checkAuth();
+  }, [router, setUser]);
 
   useEffect(() => {
     const { tab } = router.query;
@@ -184,6 +227,10 @@ const DashboardPage = () => {
     { id: 'account-settings', label: 'System Settings', icon: <FaGear /> }
   ];
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
     <NoNavbarLayout>
       <DashboardContainer>
@@ -204,6 +251,7 @@ const DashboardPage = () => {
           {renderContent()}
         </MainContent>
       </DashboardContainer>
+      {showAuthCallback && <AuthCallbackOverlay />}
     </NoNavbarLayout>
   );
 };
