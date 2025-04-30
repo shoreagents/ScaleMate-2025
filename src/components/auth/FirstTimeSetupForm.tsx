@@ -11,11 +11,11 @@ const ModalOverlay = styled.div`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(20, 20, 20, 0.41);
-  display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
   overflow: hidden;
 `;
 
@@ -25,7 +25,6 @@ const ModalContent = styled.div`
   border-radius: 12px;
   width: 100%;
   max-width: 480px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 `;
 
 const ModalHeader = styled.div`

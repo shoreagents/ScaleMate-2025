@@ -33,13 +33,13 @@ export default function AuthCallback() {
         
         if (sessionError) {
           console.error('Session error:', sessionError);
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
         if (!session) {
           console.error('No session found');
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
@@ -47,13 +47,13 @@ export default function AuthCallback() {
         
         if (userError) {
           console.error('User error:', userError);
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
         if (!user) {
           console.error('No user found');
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
@@ -70,7 +70,7 @@ export default function AuthCallback() {
 
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile error:', profileError);
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
@@ -97,7 +97,7 @@ export default function AuthCallback() {
 
           if (checkError && checkError.code !== 'PGRST116') {
             console.error('Error checking existing user:', checkError);
-            router.push('/login');
+            window.location.reload();
             return;
           }
 
@@ -114,20 +114,24 @@ export default function AuthCallback() {
 
             if (userError) {
               console.error('User creation error:', userError);
-              router.push('/login');
+              window.location.reload();
               return;
             }
           }
 
           // Create profile if it doesn't exist
           if (!profile) {
+            // Get high-quality profile picture URL
+            const avatarUrl = user.user_metadata?.avatar_url;
+            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+
             const profileData = {
               user_id: user.id,
               username: null,
               first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
               last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
               last_password_change: null,
-              profile_picture: user.user_metadata?.avatar_url || null
+              profile_picture: highQualityAvatarUrl || null
             };
 
             const { error: profileError } = await serviceRoleClient
@@ -136,7 +140,7 @@ export default function AuthCallback() {
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
-              router.push('/login');
+              window.location.reload();
               return;
             }
           }
@@ -150,7 +154,7 @@ export default function AuthCallback() {
 
           if (roleCheckError && roleCheckError.code !== 'PGRST116') {
             console.error('Error checking existing role:', roleCheckError);
-            router.push('/login');
+            window.location.reload();
             return;
           }
 
@@ -165,7 +169,7 @@ export default function AuthCallback() {
 
             if (roleError) {
               console.error('Role assignment error:', roleError);
-              router.push('/login');
+              window.location.reload();
               return;
             }
           }
@@ -183,7 +187,7 @@ export default function AuthCallback() {
         }
       } catch (err) {
         console.error('Auth callback error:', err);
-        router.push('/login');
+        window.location.reload();
       }
     };
 

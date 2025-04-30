@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
+import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle, FaDatabase } from 'react-icons/fa';
 import { FiCheck } from 'react-icons/fi';
 import { useRouter } from 'next/router';
+import { testSupabaseConnection } from '@/lib/test-connection';
+import { supabase } from '@/lib/supabase';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -258,8 +260,106 @@ const WarningTime = styled.span`
   color: rgba(15, 23, 42, 0.6);
 `;
 
+interface DatabaseStatus {
+  success: boolean;
+  message: string;
+  lastChecked: Date;
+}
+
+interface ActiveUsersStats {
+  count: number;
+  trend: number;
+}
+
 const DashboardTab: React.FC = () => {
   const router = useRouter();
+  const [dbStatus, setDbStatus] = useState<DatabaseStatus | null>(null);
+  const [activeUsersStats, setActiveUsersStats] = useState<ActiveUsersStats>({ count: 0, trend: 0 });
+
+  useEffect(() => {
+    const checkDatabaseStatus = async () => {
+      const result = await testSupabaseConnection();
+      setDbStatus({
+        success: result.success,
+        message: result.message,
+        lastChecked: new Date()
+      });
+    };
+
+    // Initial check
+    checkDatabaseStatus();
+
+    // Check every 30 seconds
+    const interval = setInterval(checkDatabaseStatus, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const fetchActiveUsersStats = async () => {
+      try {
+        // Get today's count using a single query with join
+        const { data: todayData, error: todayError } = await supabase
+          .from('users')
+          .select(`
+            id,
+            user_roles!inner (
+              role
+            )
+          `)
+          .eq('is_active', true)
+          .eq('user_roles.role', 'user');
+
+        if (todayError) {
+          console.error('Today data error:', todayError);
+          throw todayError;
+        }
+
+        console.log('Today data:', todayData);
+
+        // Get yesterday's count
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const { data: yesterdayData, error: yesterdayError } = await supabase
+          .from('users')
+          .select(`
+            id,
+            user_roles!inner (
+              role
+            )
+          `)
+          .eq('is_active', true)
+          .eq('user_roles.role', 'user')
+          .lt('created_at', yesterday.toISOString());
+
+        if (yesterdayError) {
+          console.error('Yesterday data error:', yesterdayError);
+          throw yesterdayError;
+        }
+
+        console.log('Yesterday data:', yesterdayData);
+
+        // Calculate trend
+        const todayCount = todayData?.length || 0;
+        const yesterdayCount = yesterdayData?.length || 0;
+        const trend = yesterdayCount === 0 ? 0 : ((todayCount - yesterdayCount) / yesterdayCount) * 100;
+
+        console.log('Counts:', { todayCount, yesterdayCount, trend });
+
+        setActiveUsersStats({
+          count: todayCount,
+          trend: Math.round(trend)
+        });
+      } catch (error) {
+        console.error('Error fetching active users stats:', error);
+      }
+    };
+
+    fetchActiveUsersStats();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchActiveUsersStats, 300000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <DashboardContainer>
@@ -288,11 +388,11 @@ const DashboardTab: React.FC = () => {
                 </IconContainer>
                 <TimeLabel>Today</TimeLabel>
               </StatHeader>
-              <StatValue>1,893</StatValue>
+              <StatValue>{activeUsersStats.count.toLocaleString()}</StatValue>
               <StatLabel>Active Users</StatLabel>
-              <TrendIndicator $isPositive={true}>
+              <TrendIndicator $isPositive={activeUsersStats.trend >= 0}>
                 <FaUserPlus style={{ marginRight: '4px' }} />
-                <span>8% vs yesterday</span>
+                <span>{Math.abs(activeUsersStats.trend)}% vs yesterday</span>
               </TrendIndicator>
             </StatCard>
 
@@ -408,6 +508,28 @@ const DashboardTab: React.FC = () => {
                   </WarningText>
                 </WarningContent>
                 <WarningTime>1 hour ago</WarningTime>
+              </WarningItem>
+              <WarningItem $type={dbStatus?.success ? 'info' : 'error'}>
+                <WarningContent>
+                  <WarningIcon $type={dbStatus?.success ? 'info' : 'error'}>
+                    <FaDatabase />
+                  </WarningIcon>
+                  <WarningText>
+                    <WarningTitle $type={dbStatus?.success ? 'info' : 'error'}>
+                      Database Connection
+                    </WarningTitle>
+                    <WarningDescription>
+                      {dbStatus?.success 
+                        ? 'Connection healthy' 
+                        : `Connection issue: ${dbStatus?.message}`}
+                    </WarningDescription>
+                  </WarningText>
+                </WarningContent>
+                <WarningTime>
+                  {dbStatus?.lastChecked 
+                    ? `${Math.floor((new Date().getTime() - dbStatus.lastChecked.getTime()) / 1000 / 60)} mins ago`
+                    : 'Checking...'}
+                </WarningTime>
               </WarningItem>
             </WarningList>
           </SystemWarnings>

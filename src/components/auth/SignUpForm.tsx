@@ -619,30 +619,27 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
     setError(null);
 
     try {
-      // Initiate Google OAuth with additional scopes for profile picture
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
+            prompt: 'consent'
           },
-          scopes: 'email profile openid',
-        },
+          scopes: 'email profile openid'
+        }
       });
 
       if (error) {
         throw error;
       }
-
-      // The user will be redirected to the callback URL
-      // The callback will handle the setup flow
     } catch (err) {
       console.error('Google sign in error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during Google sign in';
       setError(errorMessage);
       onError?.(errorMessage);
+    } finally {
       setIsGoogleLoading(false);
     }
   };
