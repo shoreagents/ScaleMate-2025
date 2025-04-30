@@ -16,6 +16,7 @@ const ModalOverlay = styled.div`
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  overflow: hidden;
 `;
 
 const ModalContent = styled.div`
@@ -315,6 +316,20 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     if (isOpen) {
       setShowSuccessModal(false);
     }
+  }, [isOpen]);
+
+  // Add effect to handle body scroll
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to ensure scroll is re-enabled when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
   }, [isOpen]);
 
   const validateUsername = (value: string) => {
