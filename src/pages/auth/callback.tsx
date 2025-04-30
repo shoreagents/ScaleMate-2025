@@ -33,13 +33,13 @@ export default function AuthCallback() {
         
         if (sessionError) {
           console.error('Session error:', sessionError);
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
         if (!session) {
           console.error('No session found');
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
@@ -47,13 +47,13 @@ export default function AuthCallback() {
         
         if (userError) {
           console.error('User error:', userError);
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
         if (!user) {
           console.error('No user found');
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
@@ -70,7 +70,7 @@ export default function AuthCallback() {
 
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile error:', profileError);
-          router.push('/login');
+          window.location.reload();
           return;
         }
 
@@ -97,7 +97,7 @@ export default function AuthCallback() {
 
           if (checkError && checkError.code !== 'PGRST116') {
             console.error('Error checking existing user:', checkError);
-            router.push('/login');
+            window.location.reload();
             return;
           }
 
@@ -114,7 +114,7 @@ export default function AuthCallback() {
 
             if (userError) {
               console.error('User creation error:', userError);
-              router.push('/login');
+              window.location.reload();
               return;
             }
           }
@@ -140,7 +140,7 @@ export default function AuthCallback() {
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
-              router.push('/login');
+              window.location.reload();
               return;
             }
           }
@@ -154,7 +154,7 @@ export default function AuthCallback() {
 
           if (roleCheckError && roleCheckError.code !== 'PGRST116') {
             console.error('Error checking existing role:', roleCheckError);
-            router.push('/login');
+            window.location.reload();
             return;
           }
 
@@ -169,7 +169,7 @@ export default function AuthCallback() {
 
             if (roleError) {
               console.error('Role assignment error:', roleError);
-              router.push('/login');
+              window.location.reload();
               return;
             }
           }
@@ -187,7 +187,7 @@ export default function AuthCallback() {
         }
       } catch (err) {
         console.error('Auth callback error:', err);
-        router.push('/login');
+        window.location.reload();
       }
     };
 
