@@ -37,6 +37,7 @@ import { withRoleProtection } from '@/components/auth/withRoleProtection';
 import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
+import { FiCheck } from 'react-icons/fi';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -51,6 +52,57 @@ const MainContent = styled.main`
   padding-top: 5rem;
   background-color: #F9FAFB;
   min-height: 100vh;
+`;
+
+const SuccessModal = styled.div<{ $isOpen: boolean }>`
+  display: ${props => props.$isOpen ? 'flex' : 'none'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+`;
+
+const SuccessModalContent = styled.div`
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+  text-align: center;
+`;
+
+const SuccessIcon = styled.div`
+  color: #4CAF50;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+`;
+
+const SuccessTitle = styled.h2`
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+`;
+
+const SuccessMessage = styled.p`
+  margin-bottom: 2rem;
+`;
+
+const SuccessButton = styled.button`
+  background-color: #4CAF50;
+  color: white;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: #45a049;
+  }
 `;
 
 interface UserProfileData {
@@ -83,6 +135,7 @@ const DashboardPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showAuthCallback, setShowAuthCallback] = useState(false);
   const [showSetupForm, setShowSetupForm] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const checkAuth = async () => {
     try {
@@ -241,7 +294,26 @@ const DashboardPage = () => {
           }}
           userId={user.id}
           currentUsername=""
+          onSetupComplete={() => {
+            setShowSuccessModal(true);
+          }}
         />
+      )}
+      {showSuccessModal && (
+        <SuccessModal $isOpen={showSuccessModal}>
+          <SuccessModalContent>
+            <SuccessIcon>
+              <FiCheck size={24} />
+            </SuccessIcon>
+            <SuccessTitle>Setup Complete!</SuccessTitle>
+            <SuccessMessage>
+              Your account has been successfully set up. You can now use your new credentials to log in.
+            </SuccessMessage>
+            <SuccessButton onClick={() => setShowSuccessModal(false)}>
+              Continue
+            </SuccessButton>
+          </SuccessModalContent>
+        </SuccessModal>
       )}
     </NoNavbarLayout>
   );
