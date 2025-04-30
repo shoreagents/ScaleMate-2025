@@ -140,8 +140,8 @@ export default function AuthCallbackOverlay() {
           return;
         }
 
-        // For non-Google users, check if setup is needed
-        const needsSetup = !profile?.username || !profile?.last_password_change;
+        // For non-Google users, check if setup is needed based only on username
+        const needsSetup = !profile?.username;
         
         if (needsSetup) {
           setUserId(user.id);
