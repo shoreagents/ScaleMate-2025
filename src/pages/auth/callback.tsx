@@ -5,7 +5,6 @@ import { createClient } from '@supabase/supabase-js';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import DashboardHeader from '@/components/layout/DashboardHeader';
-import { useBeforeUnload } from '@/hooks/useBeforeUnload';
 
 // Create a client with service role key for admin operations
 const serviceRoleClient = createClient(
@@ -27,33 +26,6 @@ export default function AuthCallback() {
   const [userId, setUserId] = useState<string | null>(null);
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [isSetupComplete, setIsSetupComplete] = useState(false);
-
-  // Prevent navigation during setup
-  useBeforeUnload(
-    () => {
-      if (showSetupModal && !isSetupComplete) {
-        return 'You need to complete your setup before leaving. Are you sure you want to leave?';
-      }
-    },
-    [showSetupModal, isSetupComplete]
-  );
-
-  // Handle route changes
-  useEffect(() => {
-    const handleRouteChange = (url: string) => {
-      if (showSetupModal && !isSetupComplete && url !== '/auth/callback') {
-        router.events.emit('routeChangeError');
-        router.push('/auth/callback');
-        throw 'Please complete your setup first';
-      }
-    };
-
-    router.events.on('routeChangeStart', handleRouteChange);
-    return () => {
-      router.events.off('routeChangeStart', handleRouteChange);
-    };
-  }, [router, showSetupModal, isSetupComplete]);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -242,9 +214,13 @@ export default function AuthCallback() {
 
   const handleSetupComplete = () => {
     console.log('Setup completed, redirecting to dashboard');
-    setIsSetupComplete(true);
     setShowSetupModal(false);
     router.push('/user/dashboard');
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/');
   };
 
   if (isLoading) {
@@ -262,20 +238,8 @@ export default function AuthCallback() {
       <DashboardHeader
         title="Complete Your Setup"
         profilePicture={profilePicture}
-        onLogout={() => {
-          if (showSetupModal && !isSetupComplete) {
-            if (window.confirm('You need to complete your setup before logging out. Are you sure?')) {
-              router.push('/login');
-            }
-          } else {
-            router.push('/login');
-          }
-        }}
-        onProfileClick={() => {
-          if (!showSetupModal) {
-            setShowSetupModal(true);
-          }
-        }}
+        onLogout={handleLogout}
+        onProfileClick={() => {}}
       />
       {showSetupModal && userId && currentUsername !== null && (
         <FirstTimeSetupForm
