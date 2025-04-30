@@ -85,29 +85,9 @@ const DashboardPage = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { user } } = await supabase.auth.getUser();
         
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          router.push('/login');
-          return;
-        }
-
-        if (!session) {
-          router.push('/login');
-          return;
-        }
-
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError) {
-          console.error('User error:', userError);
-          router.push('/login');
-          return;
-        }
-
         if (!user) {
-          router.push('/login');
           return;
         }
 
@@ -120,21 +100,20 @@ const DashboardPage = () => {
 
         if (profileError) {
           console.error('Profile error:', profileError);
-          router.push('/login');
           return;
         }
 
         // Set user and show dashboard
         setUser(user);
+        setUserData(profile);
         setLoading(false);
       } catch (err) {
         console.error('Auth check error:', err);
-        router.push('/login');
       }
     };
 
     checkAuth();
-  }, [router, setUser]);
+  }, [setUser]);
 
   useEffect(() => {
     const { tab } = router.query;
