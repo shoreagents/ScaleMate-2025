@@ -202,10 +202,11 @@ const SuccessModal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
   justify-content: center;
   align-items: center;
-  z-index: 1001;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
 `;
 
 const SuccessModalContent = styled.div`
@@ -480,12 +481,13 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Failed to update profile: ' + profileError.message);
       }
 
-      // Show success message
-      setShowSuccessModal(true);
+      // Close the setup form first
+      onClose();
+      
+      // Then show success message after a short delay
       setTimeout(() => {
-        onClose();
-        router.push('/user/dashboard');
-      }, 2000);
+        setShowSuccessModal(true);
+      }, 300);
     } catch (err) {
       console.error('Setup error:', err);
       setError(err instanceof Error ? err.message : 'An error occurred during setup');
@@ -495,181 +497,191 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
     setIsLoading(false);
   };
 
+  const handleSuccessContinue = () => {
+    setShowSuccessModal(false);
+    router.push('/user/dashboard');
+  };
+
   if (!isOpen) return null;
 
   return (
-    <ModalOverlay>
-      <ModalContent>
-        <ModalHeader>
-          <Title>Complete Your Setup</Title>
-          <Description>
-            Set your password and update your username to complete your account setup.
-          </Description>
-        </ModalHeader>
+    <>
+      <ModalOverlay>
+        <ModalContent>
+          <ModalHeader>
+            <Title>Complete Your Setup</Title>
+            <Description>
+              Set your password and update your username to complete your account setup.
+            </Description>
+          </ModalHeader>
 
-        <Form onSubmit={handleSubmit}>
-          <FormGroup>
-            <Label htmlFor="username">
-              Username
-              <RequiredAsterisk>*</RequiredAsterisk>
-            </Label>
-            <InputWrapper>
-              <Input
-                id="username"
-                type="text"
-                pattern="[a-zA-Z0-9._-]*"
-                value={formData.username}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  validateUsername(value);
-                  if (value === '' || e.target.validity.valid) {
-                    setFormData(prev => ({ ...prev, username: value }));
-                  }
-                }}
-                placeholder="Choose a username"
-                required
-              />
-              {usernameError && (
-                <HelperText style={{ color: '#dc2626' }}>
-                  <FiX size={14} />
-                  {usernameError}
-                </HelperText>
-              )}
-              {checkingUsername && (
-                <HelperText style={{ color: '#6b7280' }}>
-                  <FiLoader size={14} />
-                  Checking username...
-                </HelperText>
-              )}
-              {!checkingUsername && !usernameError && usernameExists === false && (
-                <HelperText style={{ color: '#059669' }}>
-                  <FiCheck size={14} />
-                  Username is available
-                </HelperText>
-              )}
-              {!checkingUsername && !usernameError && usernameExists === true && formData.username !== currentUsername && (
-                <HelperText style={{ color: '#dc2626' }}>
-                  <FiX size={14} />
-                  Username is already taken
-                </HelperText>
-              )}
-            </InputWrapper>
-          </FormGroup>
+          <Form onSubmit={handleSubmit}>
+            <FormGroup>
+              <Label htmlFor="username">
+                Username
+                <RequiredAsterisk>*</RequiredAsterisk>
+              </Label>
+              <InputWrapper>
+                <Input
+                  id="username"
+                  type="text"
+                  pattern="[a-zA-Z0-9._-]*"
+                  value={formData.username}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    validateUsername(value);
+                    if (value === '' || e.target.validity.valid) {
+                      setFormData(prev => ({ ...prev, username: value }));
+                    }
+                  }}
+                  placeholder="Choose a username"
+                  required
+                />
+                {usernameError && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    {usernameError}
+                  </HelperText>
+                )}
+                {checkingUsername && (
+                  <HelperText style={{ color: '#6b7280' }}>
+                    <FiLoader size={14} />
+                    Checking username...
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === false && (
+                  <HelperText style={{ color: '#059669' }}>
+                    <FiCheck size={14} />
+                    Username is available
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && formData.username !== currentUsername && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    <FiX size={14} />
+                    Username is already taken
+                  </HelperText>
+                )}
+              </InputWrapper>
+            </FormGroup>
 
-          <PasswordSection>
-            <FormRow>
-              <FormGroup>
-                <Label htmlFor="password">
-                  Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <InputWrapper>
-                  <PasswordInputWrapper>
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => {
-                        setFormData(prev => ({ ...prev, password: e.target.value }));
-                        validatePasswords(e.target.value, formData.confirmPassword);
-                      }}
-                      placeholder="Create a password"
-                      required
-                    />
-                    <PasswordToggle
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </PasswordToggle>
-                  </PasswordInputWrapper>
-                </InputWrapper>
-              </FormGroup>
+            <PasswordSection>
+              <FormRow>
+                <FormGroup>
+                  <Label htmlFor="password">
+                    Password
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <InputWrapper>
+                    <PasswordInputWrapper>
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, password: e.target.value }));
+                          validatePasswords(e.target.value, formData.confirmPassword);
+                        }}
+                        placeholder="Create a password"
+                        required
+                      />
+                      <PasswordToggle
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </PasswordToggle>
+                    </PasswordInputWrapper>
+                  </InputWrapper>
+                </FormGroup>
 
-              <FormGroup>
-                <Label htmlFor="confirmPassword">
-                  Confirm Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <InputWrapper>
-                  <PasswordInputWrapper>
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) => {
-                        setFormData(prev => ({ ...prev, confirmPassword: e.target.value }));
-                        validatePasswords(formData.password, e.target.value);
-                      }}
-                      placeholder="Confirm your password"
-                      required
-                    />
-                    <PasswordToggle
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </PasswordToggle>
-                  </PasswordInputWrapper>
-                </InputWrapper>
-              </FormGroup>
-            </FormRow>
-            <FormRow>
-              <FormGroup>
-                <PasswordHelperText>
-                  {formData.password && (
-                    <HelperText style={{ color: passwordValidation.length ? '#059669' : '#dc2626' }}>
-                      {passwordValidation.length ? <FiCheck size={14} /> : <FiX size={14} />}
-                      {passwordValidation.length ? 'Password length is valid' : 'Password must be at least 8 characters'}
-                    </HelperText>
-                  )}
-                  {formData.confirmPassword && (
-                    passwordValidation.match ? (
-                      <HelperText style={{ color: '#059669' }}>
-                        <FiCheck size={14} />
-                        Passwords match
+                <FormGroup>
+                  <Label htmlFor="confirmPassword">
+                    Confirm Password
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <InputWrapper>
+                    <PasswordInputWrapper>
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={formData.confirmPassword}
+                        onChange={(e) => {
+                          setFormData(prev => ({ ...prev, confirmPassword: e.target.value }));
+                          validatePasswords(formData.password, e.target.value);
+                        }}
+                        placeholder="Confirm your password"
+                        required
+                      />
+                      <PasswordToggle
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </PasswordToggle>
+                    </PasswordInputWrapper>
+                  </InputWrapper>
+                </FormGroup>
+              </FormRow>
+              <FormRow>
+                <FormGroup>
+                  <PasswordHelperText>
+                    {formData.password && (
+                      <HelperText style={{ color: passwordValidation.length ? '#059669' : '#dc2626' }}>
+                        {passwordValidation.length ? <FiCheck size={14} /> : <FiX size={14} />}
+                        {passwordValidation.length ? 'Password length is valid' : 'Password must be at least 8 characters'}
                       </HelperText>
-                    ) : (
-                      <HelperText style={{ color: '#dc2626' }}>
-                        <FiX size={14} />
-                        Passwords do not match
-                      </HelperText>
-                    )
-                  )}
-                </PasswordHelperText>
-              </FormGroup>
-            </FormRow>
-          </PasswordSection>
+                    )}
+                    {formData.confirmPassword && (
+                      passwordValidation.match ? (
+                        <HelperText style={{ color: '#059669' }}>
+                          <FiCheck size={14} />
+                          Passwords match
+                        </HelperText>
+                      ) : (
+                        <HelperText style={{ color: '#dc2626' }}>
+                          <FiX size={14} />
+                          Passwords do not match
+                        </HelperText>
+                      )
+                    )}
+                  </PasswordHelperText>
+                </FormGroup>
+              </FormRow>
+            </PasswordSection>
 
-          {error && (
-            <ErrorMessage>
-              <FiX size={16} />
-              {error}
-            </ErrorMessage>
-          )}
+            {error && (
+              <ErrorMessage>
+                <FiX size={16} />
+                {error}
+              </ErrorMessage>
+            )}
 
-          <Button
-            type="submit"
-            disabled={isLoading || !isFormValid()}
-          >
-            {isLoading ? 'Saving...' : 'Complete Setup'}
-          </Button>
-        </Form>
+            <Button
+              type="submit"
+              disabled={isLoading || !isFormValid()}
+            >
+              {isLoading ? 'Saving...' : 'Complete Setup'}
+            </Button>
+          </Form>
+        </ModalContent>
+      </ModalOverlay>
 
-        {showSuccessModal && (
-          <SuccessModal $isOpen={showSuccessModal}>
-            <SuccessModalContent>
-              <SuccessIcon>
-                <FiCheck size={24} />
-              </SuccessIcon>
-              <SuccessTitle>Setup Complete!</SuccessTitle>
-              <SuccessMessage>
-                Your account has been successfully set up. Redirecting to dashboard...
-              </SuccessMessage>
-            </SuccessModalContent>
-          </SuccessModal>
-        )}
-      </ModalContent>
-    </ModalOverlay>
+      {showSuccessModal && (
+        <SuccessModal $isOpen={showSuccessModal}>
+          <SuccessModalContent>
+            <SuccessIcon>
+              <FiCheck size={24} />
+            </SuccessIcon>
+            <SuccessTitle>Setup Complete!</SuccessTitle>
+            <SuccessMessage>
+              Your account has been successfully set up. You can now use your new credentials to log in.
+            </SuccessMessage>
+            <SuccessButton onClick={handleSuccessContinue}>
+              Continue
+            </SuccessButton>
+          </SuccessModalContent>
+        </SuccessModal>
+      )}
+    </>
   );
 } 
