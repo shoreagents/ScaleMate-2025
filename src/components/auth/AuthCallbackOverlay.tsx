@@ -90,10 +90,10 @@ export default function AuthCallbackOverlay() {
             .from('user_profiles')
             .insert({
               user_id: user.id,
-              username: user.email?.split('@')[0] || '',
+              username: null, // Don't set username until setup is completed
               first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
               last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-              last_password_change: new Date().toISOString()
+              last_password_change: null // Don't set last_password_change until setup is completed
             });
 
           if (createProfileError) {
@@ -132,12 +132,20 @@ export default function AuthCallbackOverlay() {
           }
         }
 
-        // Check if user needs setup
+        // For Google users, always require setup
+        if (isGoogleUser) {
+          setUserId(user.id);
+          setCurrentUsername(null); // Always start with null username for Google users
+          setShowSetupModal(true);
+          return;
+        }
+
+        // For non-Google users, check if setup is needed
         const needsSetup = !profile?.username || !profile?.last_password_change;
         
         if (needsSetup) {
           setUserId(user.id);
-          setCurrentUsername(profile?.username || '');
+          setCurrentUsername(profile?.username || null);
           setShowSetupModal(true);
         } else {
           // User is already set up
