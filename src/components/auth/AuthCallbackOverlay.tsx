@@ -84,6 +84,35 @@ export default function AuthCallbackOverlay() {
           return;
         }
 
+        // Check if user has a role
+        const { data: userRole, error: roleError } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (roleError && roleError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+          console.error('Role check error:', roleError);
+          setError('Failed to check user role. Please try again.');
+          return;
+        }
+
+        // If no role exists, create a default 'user' role
+        if (!userRole) {
+          const { error: createRoleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: user.id,
+              role: 'user'
+            });
+
+          if (createRoleError) {
+            console.error('Role creation error:', createRoleError);
+            setError('Failed to create user role. Please try again.');
+            return;
+          }
+        }
+
         // Check if user needs setup
         const needsSetup = !profile?.username || !profile?.password_set;
         
