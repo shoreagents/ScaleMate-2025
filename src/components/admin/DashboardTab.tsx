@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle } from 'react-icons/fa';
+import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle, FaDatabase } from 'react-icons/fa';
 import { FiCheck } from 'react-icons/fi';
 import { useRouter } from 'next/router';
+import { testSupabaseConnection } from '@/lib/test-connection';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -258,8 +259,34 @@ const WarningTime = styled.span`
   color: rgba(15, 23, 42, 0.6);
 `;
 
+interface DatabaseStatus {
+  success: boolean;
+  message: string;
+  lastChecked: Date;
+}
+
 const DashboardTab: React.FC = () => {
   const router = useRouter();
+  const [dbStatus, setDbStatus] = useState<DatabaseStatus | null>(null);
+
+  useEffect(() => {
+    const checkDatabaseStatus = async () => {
+      const result = await testSupabaseConnection();
+      setDbStatus({
+        success: result.success,
+        message: result.message,
+        lastChecked: new Date()
+      });
+    };
+
+    // Initial check
+    checkDatabaseStatus();
+
+    // Check every 30 seconds
+    const interval = setInterval(checkDatabaseStatus, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <DashboardContainer>
@@ -408,6 +435,28 @@ const DashboardTab: React.FC = () => {
                   </WarningText>
                 </WarningContent>
                 <WarningTime>1 hour ago</WarningTime>
+              </WarningItem>
+              <WarningItem $type={dbStatus?.success ? 'info' : 'error'}>
+                <WarningContent>
+                  <WarningIcon $type={dbStatus?.success ? 'info' : 'error'}>
+                    <FaDatabase />
+                  </WarningIcon>
+                  <WarningText>
+                    <WarningTitle $type={dbStatus?.success ? 'info' : 'error'}>
+                      Database Connection
+                    </WarningTitle>
+                    <WarningDescription>
+                      {dbStatus?.success 
+                        ? 'Connection healthy' 
+                        : `Connection issue: ${dbStatus?.message}`}
+                    </WarningDescription>
+                  </WarningText>
+                </WarningContent>
+                <WarningTime>
+                  {dbStatus?.lastChecked 
+                    ? `${Math.floor((new Date().getTime() - dbStatus.lastChecked.getTime()) / 1000 / 60)} mins ago`
+                    : 'Checking...'}
+                </WarningTime>
               </WarningItem>
             </WarningList>
           </SystemWarnings>

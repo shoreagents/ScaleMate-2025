@@ -121,13 +121,17 @@ export default function AuthCallback() {
 
           // Create profile if it doesn't exist
           if (!profile) {
+            // Get high-quality profile picture URL
+            const avatarUrl = user.user_metadata?.avatar_url;
+            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+
             const profileData = {
               user_id: user.id,
               username: null,
               first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
               last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
               last_password_change: null,
-              profile_picture: user.user_metadata?.avatar_url || null
+              profile_picture: highQualityAvatarUrl || null
             };
 
             const { error: profileError } = await serviceRoleClient

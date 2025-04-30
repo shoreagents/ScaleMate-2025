@@ -627,6 +627,12 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
+            // Request high-quality profile picture
+            picture: 'high',
+            // Request additional user info
+            userinfo: {
+              picture: 'high'
+            }
           },
           scopes: 'email profile openid',
         },
