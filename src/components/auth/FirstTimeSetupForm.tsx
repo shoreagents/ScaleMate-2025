@@ -282,6 +282,7 @@ interface FirstTimeSetupFormProps {
   onClose: () => void;
   userId: string;
   currentUsername: string;
+  onSetupComplete: () => void;
 }
 
 interface UserProfile {
@@ -289,12 +290,26 @@ interface UserProfile {
   user_id: string;
 }
 
-export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUsername }: FirstTimeSetupFormProps) {
+interface FormData {
+  username: string;
+  password: string;
+  confirmPassword: string;
+  fullName: string;
+}
+
+const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
+  isOpen,
+  onClose,
+  userId,
+  currentUsername,
+  onSetupComplete
+}) => {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     username: currentUsername,
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    fullName: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -440,61 +455,35 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
         throw new Error('Please fix the password errors');
       }
 
-      // Update password
-      const { error: passwordError } = await supabase.auth.updateUser({
-        password: formData.password
-      });
-
-      if (passwordError) {
-        throw new Error('Failed to update password: ' + passwordError.message);
-      }
-
-      // Create a client with service role key for admin operations
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
-      // Update username and last_password_change using service role client
-      const { error: profileError } = await serviceRoleClient
-        .from('user_profiles')
+      // Update user profile
+      const { error: profileError } = await supabase
+        .from('users')
         .update({
+          full_name: formData.fullName,
           username: formData.username,
           last_password_change: new Date().toISOString()
         })
-        .eq('user_id', userId);
+        .eq('id', userId);
 
-      if (profileError) {
-        // Check for duplicate username error
-        if (profileError.code === '23505' && profileError.message.includes('username')) {
-          setUsernameExists(true);
-          setUsernameError('Username is already taken');
-          setIsLoading(false);
-          return;
-        }
-        throw new Error('Failed to update profile: ' + profileError.message);
-      }
+      if (profileError) throw profileError;
 
-      // Close the setup form first
+      // Update auth password
+      const { error: authError } = await supabase.auth.updateUser({
+        password: formData.password
+      });
+
+      if (authError) throw authError;
+
+      // Close the setup form
       onClose();
-      
-      // Then show success message after a short delay
-      setTimeout(() => {
-        setShowSuccessModal(true);
-      }, 300);
+      // Call the setup complete callback
+      onSetupComplete();
     } catch (err) {
       console.error('Setup error:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred during setup');
+      setError(err instanceof Error ? err.message : 'Failed to complete setup');
+    } finally {
       setIsLoading(false);
-      return;
     }
-    setIsLoading(false);
   };
 
   const handleSuccessContinue = () => {
@@ -516,6 +505,17 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
+            <FormGroup>
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                placeholder="Enter your full name"
+                required
+              />
+            </FormGroup>
             <FormGroup>
               <Label htmlFor="username">
                 Username
@@ -684,4 +684,6 @@ export default function FirstTimeSetupForm({ isOpen, onClose, userId, currentUse
       )}
     </>
   );
-} 
+};
+
+export default FirstTimeSetupForm; 
