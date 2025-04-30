@@ -486,9 +486,9 @@ const Header = () => {
           .eq('user_id', user.id)
           .single();
 
-        // If username is not set or last_password_change is null, user hasn't completed setup
+        // If username is not set or last_password_change is null, redirect to dashboard to show setup form
         if (!profile?.username || !profile?.last_password_change) {
-          router.push('/');
+          router.push('/user/dashboard');
           return;
         }
 
