@@ -157,7 +157,7 @@ const Modal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #d9d9d9cc;
+  background-color: rgba(20, 20, 20, 0.41);
   justify-content: center;
   align-items: center;
   z-index: 1000;
@@ -169,7 +169,6 @@ const ModalContent = styled.div`
   border-radius: 12px;
   width: 100%;
   max-width: 530px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const ModalHeader = styled.div`
@@ -236,7 +235,6 @@ const Input = styled.input`
   &:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 `;
 
@@ -250,7 +248,6 @@ const Select = styled.select`
   &:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 `;
 
@@ -322,7 +319,6 @@ const RoleSelect = styled.select`
   &:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 `;
 
@@ -439,7 +435,6 @@ const FilterInput = styled.input`
   &:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 1px #3B82F6;
   }
 `;
 
@@ -2895,7 +2890,7 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
 
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 2px ${props => {
+     ${props => {
       switch (props.$type) {
         case 'admin':
           return '#1E40AF';
@@ -2913,7 +2908,7 @@ const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px ${props => {
+     ${props => {
       switch (props.$type) {
         case 'admin':
           return '#1E40AF';
@@ -3059,7 +3054,6 @@ const GenderSelect = styled.select`
   &:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 `;
 
@@ -3086,7 +3080,7 @@ const SuccessModal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #d9d9d9cc;
+  background-color: rgba(20, 20, 20, 0.41);
   justify-content: center;
   align-items: center;
   z-index: 1001;
@@ -3099,7 +3093,6 @@ const SuccessModalContent = styled.div`
   width: 100%;
   max-width: 400px;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const SuccessIcon = styled.div`
@@ -3156,7 +3149,7 @@ const DeleteModal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(20, 20, 20, 0.41);
   justify-content: center;
   align-items: center;
   z-index: 1001;
@@ -3169,7 +3162,6 @@ const DeleteModalContent = styled.div`
   width: 100%;
   max-width: 400px;
   text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const DeleteIcon = styled.div`

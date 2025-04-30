@@ -131,7 +131,6 @@ const Input = styled.input`
   &:focus {
     outline: none;
     border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 
   &:disabled {
@@ -175,7 +174,6 @@ const GenderSelect = styled.select`
   &:focus {
     outline: none;
     border-color: #3B82F6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
 `;
 
