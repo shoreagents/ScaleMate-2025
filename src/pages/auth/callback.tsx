@@ -172,11 +172,11 @@ export default function AuthCallback() {
         const needsSetup = !profile?.username;
         
         if (needsSetup) {
-          // Redirect to setup page
-          router.push('/auth/setup');
+          // Redirect to dashboard instead of setup
+          router.push('/user/dashboard');
         } else {
           // Redirect to dashboard
-          router.push('/dashboard');
+          router.push('/user/dashboard');
         }
       } catch (err) {
         console.error('Auth callback error:', err);
