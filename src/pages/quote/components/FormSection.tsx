@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { BlueprintModal } from '../../../components/quote/BlueprintModal';
+import { DownloadBlueprintModal } from '../../../components/quote/DownloadBlueprintModal';
+import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabase';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -168,6 +172,63 @@ const SummaryContainer = styled.div`
 `;
 
 export default function FormSection() {
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const router = useRouter();
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return !!session;
+  };
+
+  const handleBlueprintClick = async () => {
+    const isAuthenticated = await checkAuth();
+    if (isAuthenticated) {
+      setIsDownloadModalOpen(true);
+      // Trigger the download
+      const downloadUrl = '/api/blueprints/download'; // Replace with actual API endpoint
+      fetch(downloadUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'job-blueprint.pdf';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          a.remove();
+        })
+        .catch(error => {
+          console.error('Error downloading blueprint:', error);
+        });
+    } else {
+      setIsLoginModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsLoginModalOpen(false);
+    setIsDownloadModalOpen(true);
+    // Trigger the download
+    const downloadUrl = '/api/blueprints/download'; // Replace with actual API endpoint
+    fetch(downloadUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'job-blueprint.pdf';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      })
+      .catch(error => {
+        console.error('Error downloading blueprint:', error);
+      });
+  };
+
   return (
     <Section id="quote-form">
       <Container>
@@ -273,12 +334,27 @@ export default function FormSection() {
             <CTACard>
               <h3 className="text-xl font-bold mb-4">Want the Complete Blueprint?</h3>
               <p className="mb-6">Get our detailed guide on how to successfully transition this role offshore.</p>
-              <PrimaryButton>Download Blueprint <FontAwesomeIcon icon={faLock} style={{ marginLeft: '0.5rem' }} /></PrimaryButton>
-              <SecondaryButton>View Sample Kit <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '0.5rem' }} /></SecondaryButton>
+              <PrimaryButton onClick={handleBlueprintClick}>
+                Download Blueprint <FontAwesomeIcon icon={faLock} style={{ marginLeft: '0.5rem' }} />
+              </PrimaryButton>
+              <SecondaryButton>
+                View Sample Kit <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '0.5rem' }} />
+              </SecondaryButton>
             </CTACard>
           </SummaryContainer>
         </Grid>
       </Container>
+
+      <BlueprintModal 
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      <DownloadBlueprintModal 
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+      />
     </Section>
   );
 } 

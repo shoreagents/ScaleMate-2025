@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js';
 const FormContainer = styled.div`
   max-width: 420px;
   width: 100%;
-  height: 500px;
+  min-height: 500px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -41,6 +41,8 @@ const FormContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
+  flex: 1;
+  min-height: 0;
 `;
 
 const FormFields = styled.div`
@@ -49,6 +51,7 @@ const FormFields = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
+  padding-bottom: 1rem;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -67,7 +70,13 @@ const FormFields = styled.div`
 const FormActions = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 1rem;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  z-index: 1;
 `;
 
 const InputGroup = styled.div`
@@ -104,8 +113,9 @@ const Input = styled.input`
 
 const ButtonContainer = styled.div`
   display: flex;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
   gap: 1rem;
+  width: 100%;
 `;
 
 const Button = styled.button`
