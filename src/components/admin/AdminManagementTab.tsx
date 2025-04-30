@@ -157,10 +157,11 @@ const Modal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(20, 20, 20, 0.41);
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
 `;
 
 const ModalContent = styled.div`
@@ -3080,10 +3081,11 @@ const SuccessModal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(20, 20, 20, 0.41);
   justify-content: center;
   align-items: center;
-  z-index: 1001;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
 `;
 
 const SuccessModalContent = styled.div`
@@ -3149,10 +3151,11 @@ const DeleteModal = styled.div<{ $isOpen: boolean }>`
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(20, 20, 20, 0.41);
   justify-content: center;
   align-items: center;
-  z-index: 1001;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
 `;
 
 const DeleteModalContent = styled.div`
