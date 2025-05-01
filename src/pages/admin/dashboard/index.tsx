@@ -672,9 +672,11 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setIsLoadingProfile(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
@@ -691,6 +693,8 @@ const DashboardPage = () => {
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+      } finally {
+        setIsLoadingProfile(false);
       }
     };
 
@@ -792,6 +796,7 @@ const DashboardPage = () => {
             onLogout={handleLogout}
             onProfileClick={() => setActiveTab('profile')}
             showProfile={activeTab === 'profile'}
+            isLoading={isLoadingProfile}
           />
           {renderContent()}
         </MainContent>

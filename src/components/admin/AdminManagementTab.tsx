@@ -575,16 +575,20 @@ const Avatar = styled.div<{ $imageUrl?: string; $isLoading?: boolean }>`
   flex-shrink: 0;
   position: relative;
 
-  ${props => props.$imageUrl && !props.$isLoading ? `
-    background-image: url(${props.$imageUrl});
-    background-size: cover;
-    background-position: center;
-  ` : ''}
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: ${props => props.$isLoading ? 0 : 1};
+    transition: opacity 0.2s ease;
+  }
 
   svg {
     width: 20px;
     height: 20px;
     color: #6B7280;
+    opacity: ${props => props.$isLoading ? 0 : 1};
+    transition: opacity 0.2s ease;
   }
 `;
 
@@ -594,10 +598,15 @@ const AvatarSpinner = styled.div`
   border: 2px solid rgba(59, 130, 246, 0.1);
   border-radius: 50%;
   border-top-color: #3B82F6;
-  animation: spin 1s ease-in-out infinite;
+  animation: spin 1s linear infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
   }
 `;
 
@@ -736,6 +745,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
   // Add back the showSuccessModal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [loadingProfilePictures, setLoadingProfilePictures] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     checkCurrentUserRole();
@@ -1674,6 +1685,54 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
     setSuccessMessage({ title: '', description: '' });
   };
 
+  // Update the handleImageLoad function to be more robust
+  const handleImageLoad = (userId: string) => {
+    console.log('Image loaded for user:', userId); // Debug log
+    setLoadingProfilePictures(prev => {
+      const newState = { ...prev };
+      delete newState[userId]; // Remove the loading state completely
+      return newState;
+    });
+  };
+
+  // Update the handleImageError function to be more robust
+  const handleImageError = (userId: string) => {
+    console.log('Image error for user:', userId); // Debug log
+    setLoadingProfilePictures(prev => {
+      const newState = { ...prev };
+      delete newState[userId]; // Remove the loading state completely
+      return newState;
+    });
+  };
+
+  // Update the initialization of loading states to be more precise
+  useEffect(() => {
+    const initializeLoadingStates = (users: (UserRole | Admin)[]) => {
+      const loadingStates: { [key: string]: boolean } = {};
+      users.forEach(user => {
+        if (user.profile_picture) {
+          // Create an image object to check if it's already cached
+          const img = new Image();
+          img.src = user.profile_picture;
+          
+          if (img.complete) {
+            // Image is already loaded/cached
+            console.log('Image already loaded for user:', user.id);
+          } else {
+            // Image needs to be loaded
+            console.log('Setting loading state for user:', user.id);
+            loadingStates[user.id] = true;
+          }
+        }
+      });
+      setLoadingProfilePictures(loadingStates);
+    };
+
+    if (allUsers.length > 0) {
+      initializeLoadingStates(allUsers);
+    }
+  }, [allUsers]);
+
   if (loading) {
     return <PageLoadingSpinner />;
   }
@@ -1855,8 +1914,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
-                          <Avatar $imageUrl={user.profile_picture} $isLoading={loading}>
-                            {loading ? <AvatarSpinner /> : !user.profile_picture && <FiUser />}
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
+                          >
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
                           </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
@@ -2041,8 +2113,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
-                          <Avatar $imageUrl={user.profile_picture} $isLoading={loading}>
-                            {loading ? <AvatarSpinner /> : !user.profile_picture && <FiUser />}
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
+                          >
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
                           </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
@@ -2227,8 +2312,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
-                          <Avatar $imageUrl={user.profile_picture} $isLoading={loading}>
-                            {loading ? <AvatarSpinner /> : !user.profile_picture && <FiUser />}
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
+                          >
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
                           </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
