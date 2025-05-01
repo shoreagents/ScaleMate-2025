@@ -208,7 +208,6 @@ const ActivityText = styled.p`
   white-space: normal;
   word-wrap: break-word;
   line-height: 1.4;
-  font-size: 0.9375rem;
   flex: 1;
 `;
 

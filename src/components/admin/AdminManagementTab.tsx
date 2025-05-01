@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
-import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
+import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
 import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -23,23 +23,31 @@ const Title = styled.h2`
   color: ${props => props.theme.colors.text.primary};
 `;
 
-const Button = styled.button`
-  font-size: 0.875rem;
+const Button = styled.button<{ $primary?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  ${props => props.$primary ? `
   background-color: #3B82F6;
   color: white;
   border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-
   &:hover {
     background-color: #2563EB;
   }
+  ` : `
+    background-color: white;
+    color: #0F172A;
+    border: 1px solid #E5E7EB;
+    &:hover {
+      background-color: #F9FAFB;
+    }
+  `}
 `;
 
 const TableContainer = styled.div`
@@ -125,12 +133,11 @@ const UserInfo = styled.div`
 
 const UserName = styled.span`
   font-weight: 500;
-  font-size: 0.875rem;
+  font-size: 1rem;
 `;
 
 const UserEmail = styled.span`
   color: rgba(15, 23, 42, 0.7);
-  font-size: 0.875rem;
   font-weight: 500;
 `;
 
@@ -138,7 +145,6 @@ const Th = styled.th<{ $sortable?: boolean }>`
   padding: 12px 16px;
   text-align: left;
   color: rgb(107, 114, 128);
-  font-weight: 500;
   border-bottom: 1px solid #E5E7EB;
   font-size: 0.875rem;
   cursor: ${props => props.$sortable ? 'pointer' : 'default'};
@@ -188,7 +194,6 @@ const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.875rem;
-  font-weight: 500;
   background-color: ${props => {
     switch (props.$status) {
       case 'active':
@@ -496,16 +501,23 @@ const FilterContainer = styled.div`
   justify-content: space-between;
 `;
 
-const FilterInput = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #E5E7EB;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  width: 400px;
+const SearchInput = styled.div`
+  position: relative;
+  width: 16rem;
 
-  &:focus {
-    outline: none;
-    border-color: #3B82F6;
+  input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+  border: 1px solid #E5E7EB;
+    border-radius: 0.5rem;
+  }
+
+  svg {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(15, 23, 42, 0.4);
   }
 `;
 
@@ -550,6 +562,31 @@ const ViewPasswordButton = styled.button`
   }
 `;
 
+// Add Avatar styled component
+const Avatar = styled.div<{ $imageUrl?: string }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+
+  ${props => props.$imageUrl ? `
+    background-image: url(${props.$imageUrl});
+    background-size: cover;
+    background-position: center;
+  ` : ''}
+
+  svg {
+    width: 20px;
+    height: 20px;
+    color: #6B7280;
+  }
+`;
+
 interface BaseUser {
   id: string;
   first_name: string;
@@ -557,6 +594,7 @@ interface BaseUser {
   email: string;
   created_at: string;
   last_login?: string;
+  profile_picture?: string;
 }
 
 interface Admin extends BaseUser {
@@ -634,7 +672,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('admins');
+  const [activeTab, setActiveTab] = useState<TabType>('users');
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRole | null>(null);
@@ -724,7 +762,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           created_at,
           last_sign_in_at,
           roles,
-          username
+          username,
+          profile_picture
         `)
         .order('created_at', { ascending: false });
 
@@ -742,6 +781,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         phone: user.phone || '',
         gender: user.gender || '',
         username: user.username || '',
+        profile_picture: user.profile_picture || '',
         role: 'user',
         status: 'active'
       }));
@@ -1685,14 +1725,17 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       {activeTab === 'admins' ? (
         <>
           <FilterContainer>
-            <FilterInput
+            <SearchInput>
+              <input
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
+              <FaSearch />
+            </SearchInput>
             {isCurrentUserAdmin && (
-            <Button onClick={handleAddAdmin}>
+            <Button $primary onClick={handleAddAdmin}>
               <FiUserPlus />
               Add User
             </Button>
@@ -1708,7 +1751,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           <Table>
               <TableHead>
               <tr>
-                  <TableHeader style={{ width: '50px' }}>#</TableHeader>
+                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
                   <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
@@ -1716,12 +1759,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Name</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'name'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
@@ -1731,27 +1774,27 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Email</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'email'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
-                  style={{ width: '200px' }}
+                  style={{ width: '150px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
                   <HeaderContent>
                     <span>Roles</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'roles'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
@@ -1761,12 +1804,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Last Activity</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'last_sign_in'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
@@ -1795,16 +1838,19 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 })
                 .map((user, index) => (
                   <tr key={user.id}>
-                      <TableCell style={{ width: '50px' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
+                          <Avatar $imageUrl={user.profile_picture}>
+                            {!user.profile_picture && <FiUser />}
+                          </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
                       </TableCell>
                       <TableCell style={{ width: '300px' }}>
                         <UserEmail>{user.email}</UserEmail>
                       </TableCell>
-                      <TableCell style={{ width: '200px' }}>
+                      <TableCell style={{ width: '150px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -1815,7 +1861,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       </TableCell>
                       <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
-                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                       </TableCell>
@@ -1865,14 +1911,17 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       ) : activeTab === 'moderators' ? (
         <>
           <FilterContainer>
-            <FilterInput
+            <SearchInput>
+              <input
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
+              <FaSearch />
+            </SearchInput>
             {isCurrentUserAdmin && (
-              <Button onClick={handleAddAdmin}>
+              <Button $primary onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
               </Button>
@@ -1888,7 +1937,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           <Table>
               <TableHead>
               <tr>
-                  <TableHeader style={{ width: '50px' }}>#</TableHeader>
+                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
                   <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
@@ -1896,12 +1945,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Name</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'name'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
@@ -1911,27 +1960,27 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Email</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'email'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
-                  style={{ width: '200px' }}
+                  style={{ width: '150px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
                   <HeaderContent>
                     <span>Roles</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'roles'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
@@ -1941,12 +1990,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Last Activity</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'last_sign_in'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
@@ -1975,16 +2024,19 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 })
                 .map((user, index) => (
                   <tr key={user.id}>
-                      <TableCell style={{ width: '50px' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
+                          <Avatar $imageUrl={user.profile_picture}>
+                            {!user.profile_picture && <FiUser />}
+                          </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
                       </TableCell>
                       <TableCell style={{ width: '300px' }}>
                         <UserEmail>{user.email}</UserEmail>
                       </TableCell>
-                      <TableCell style={{ width: '200px' }}>
+                      <TableCell style={{ width: '150px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -1995,7 +2047,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       </TableCell>
                       <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
-                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                       </TableCell>
@@ -2045,14 +2097,17 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       ) : (
         <>
           <FilterContainer>
-            <FilterInput
+            <SearchInput>
+              <input
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
+              <FaSearch />
+            </SearchInput>
             {isCurrentUserAdmin && (
-              <Button onClick={handleAddAdmin}>
+              <Button $primary onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
               </Button>
@@ -2068,7 +2123,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           <Table>
               <TableHead>
               <tr>
-                  <TableHeader style={{ width: '50px' }}>#</TableHeader>
+                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
                   <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
@@ -2076,12 +2131,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Name</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'name'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
@@ -2091,27 +2146,27 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Email</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'email'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
-                  style={{ width: '200px' }}
+                  style={{ width: '150px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
                   <HeaderContent>
                     <span>Roles</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'roles'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   <TableHeader 
@@ -2121,12 +2176,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 >
                   <HeaderContent>
                     <span>Last Activity</span>
-                    <SortIcon 
+                  <SortIcon 
                       $active={sortField === 'last_sign_in'} 
-                      $direction={sortDirection}
-                    >
-                      ↑
-                    </SortIcon>
+                    $direction={sortDirection}
+                  >
+                    ↑
+                  </SortIcon>
                   </HeaderContent>
                 </TableHeader>
                   {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
@@ -2155,16 +2210,19 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 })
                 .map((user, index) => (
                   <tr key={user.id}>
-                      <TableCell style={{ width: '50px' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
+                          <Avatar $imageUrl={user.profile_picture}>
+                            {!user.profile_picture && <FiUser />}
+                          </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
                       </TableCell>
                       <TableCell style={{ width: '300px' }}>
                         <UserEmail>{user.email}</UserEmail>
                       </TableCell>
-                      <TableCell style={{ width: '200px' }}>
+                      <TableCell style={{ width: '150px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -2175,7 +2233,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       </TableCell>
                       <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
-                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                       </TableCell>
@@ -2922,18 +2980,56 @@ const TabContainer = styled.div`
 `;
 
 const TabButton = styled.button<{ $active: boolean; $type: string }>`
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  background-color: ${props => {
+      switch (props.$type) {
+        case 'all':
+        return props.$active ? '#6B728010' : '#6B728010';
+        case 'admin':
+        return props.$active ? '#EC489910' : '#EC489910';
+        case 'moderator':
+        return props.$active ? '#00E91510' : '#00E91510';
+        case 'user':
+        return props.$active ? '#3B82F610' : '#3B82F610';
+        default:
+        return props.$active ? '#3B82F610' : '#3B82F610';
+    }
+  }};
+  color: ${props => {
+      switch (props.$type) {
+        case 'all':
+          return '#6B7280';
+        case 'admin':
+        return '#EC4899';
+        case 'moderator':
+        return '#00E915';
+        case 'user':
+        return '#3B82F6';
+        default:
+        return '#3B82F6';
+    }
+  }};
+  border: none;
+  border-radius: 9999px;
   font-size: 0.875rem;
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid #E5E7EB;
-  background-color: ${props => props.$active ? '#F1F5F9' : 'white'};
-  color: ${props => props.$active ? '#0F172A' : 'rgba(15, 23, 42, 0.7)'};
 
   &:hover {
-    background-color: ${props => props.$active ? '#F1F5F9' : '#F9FAFB'};
+    background-color: ${props => {
+      switch (props.$type) {
+        case 'all':
+          return '#6B728020';
+        case 'admin':
+          return '#EC489920';
+        case 'moderator':
+          return '#00E91520';
+        case 'user':
+          return '#3B82F620';
+        default:
+          return '#3B82F620';
+      }
+    }};
   }
 `;
 
