@@ -3,6 +3,9 @@ import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faPhone, faTimes } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
+import { CostSavingsAuthModal } from '../../../components/cost-savings/CostSavingsAuthModal';
+import { CostSavingsDownloadModal } from '../../../components/cost-savings/CostSavingsDownloadModal';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -162,10 +165,27 @@ const CalendlyContainer = styled.div`
 
 export default function CTA() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const { user } = useAuth();
 
   const handleBookStrategyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsModalOpen(true);
+  };
+
+  const handleDownloadClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (user) {
+      setIsDownloadModalOpen(true);
+    } else {
+      setIsLoginModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsLoginModalOpen(false);
+    setIsDownloadModalOpen(true);
   };
 
   return (
@@ -178,7 +198,7 @@ export default function CTA() {
               Download your savings report or schedule a call to discuss your needs
             </Description>
             <ButtonGroup>
-              <PrimaryButton href="#">
+              <PrimaryButton href="#" onClick={handleDownloadClick}>
                 Download Report
                 <FontAwesomeIcon icon={faDownload} style={{ marginLeft: '0.5rem' }} />
               </PrimaryButton>
@@ -207,6 +227,17 @@ export default function CTA() {
           </ModalContent>
         </ModalOverlay>
       )}
+
+      <CostSavingsAuthModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      <CostSavingsDownloadModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+      />
     </>
   );
 } 
