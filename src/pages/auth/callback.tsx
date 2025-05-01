@@ -15,6 +15,7 @@ const LoadingContainer = styled.div`
 
 const ErrorMessage = styled.div`
   color: #ff4d4f;
+
   text-align: center;
   margin-top: 1rem;
   padding: 1rem;
@@ -30,13 +31,11 @@ export default function AuthCallback() {
     const handleCallback = async () => {
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
         if (sessionError) {
           console.error('Session error:', sessionError);
           window.location.reload();
           return;
         }
-
         if (!session) {
           console.error('No session found');
           window.location.reload();
@@ -67,7 +66,6 @@ export default function AuthCallback() {
           .select('*')
           .eq('user_id', user.id)
           .single();
-
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile error:', profileError);
           window.location.reload();
@@ -134,6 +132,7 @@ export default function AuthCallback() {
               profile_picture: highQualityAvatarUrl || null
             };
 
+
             const { error: profileError } = await serviceRoleClient
               .from('user_profiles')
               .insert(profileData);
@@ -142,6 +141,7 @@ export default function AuthCallback() {
               console.error('Profile creation error:', profileError);
               window.location.reload();
               return;
+
             }
           }
 
@@ -190,13 +190,11 @@ export default function AuthCallback() {
         window.location.reload();
       }
     };
-
     handleCallback();
   }, [router]);
-
   return (
     <LoadingContainer>
       <LoadingSpinner />
     </LoadingContainer>
   );
-} 
+}
