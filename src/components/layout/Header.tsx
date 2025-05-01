@@ -11,7 +11,7 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 const HeaderContainer = styled.header`
   position: fixed;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: white;
   backdrop-filter: blur(4px);
   z-index: 50;
   border-bottom: 1px solid #E5E7EB;
@@ -92,6 +92,22 @@ const SignUpButton = styled.span`
   }
 `;
 
+const MenuItem = styled.div`
+  color: #0F172A;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+
+  &:hover {
+    color: #3B82F6;
+    background-color: #F3F4F6;
+  }
+`;
+
 const ProfileContainer = styled.div`
   position: relative;
 `;
@@ -133,38 +149,19 @@ const DropdownItem = styled.div`
   }
 `;
 
-const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
-  width: 36px;
-  height: 36px;
+const IconButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
   border-radius: 50%;
-  background-color: #E5E7EB;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-`;
-
-const IconButton = styled.button`
-     background: none;
-    border: none;
-    cursor: pointer;
-    color: #6B7280;
-    border-radius: 50%;
-    display: flex
-;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    padding: 0;
-    transition: all 0.2s ease;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  transition: all 0.2s ease;
 
   &:hover {
     background-color: #F3F4F6;
@@ -422,21 +419,51 @@ const MobileMenuSectionTitle = styled.div`
   letter-spacing: 0.05em;
 `;
 
+const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean }>`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #f1f1f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const AvatarSpinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  border-top-color: #3B82F6;
+  animation: spin 1s ease-in-out infinite;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
 const Header = () => {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [showSolutions, setShowSolutions] = useState(false);
   const [showLearn, setShowLearn] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   let closeTimeout: NodeJS.Timeout | null = null;
   let learnCloseTimeout: NodeJS.Timeout | null = null;
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      setIsLoading(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         setIsLoggedIn(!!user);
@@ -637,13 +664,13 @@ const Header = () => {
             <NavItem onClick={() => router.push('/contact')}>Contact</NavItem>
           </Nav>
           <AuthSection>
-            {isLoading ? (
-              <Spinner />
-            ) : isLoggedIn ? (
+            {isLoggedIn === null ? null : isLoggedIn ? (
               <ProfileContainer id="profile-menu">
                 <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                  <ProfileIcon $imageUrl={profilePicture}>
-                    {profilePicture ? (
+                  <ProfileIcon $imageUrl={profilePicture} $isLoading={isLoading}>
+                    {isLoading ? (
+                      <AvatarSpinner />
+                    ) : profilePicture ? (
                       <img src={profilePicture} alt="Profile" />
                     ) : (
                       <FiUser size={20} />
@@ -701,13 +728,30 @@ const Header = () => {
           </MobileMenuSection>
         </MobileNav>
         <MobileAuthSection>
-          {isLoading ? (
-            <Spinner />
-          ) : isLoggedIn ? (
-            <>
-              <MobileNavItem onClick={handleDashboardClick}>Dashboard</MobileNavItem>
-              <MobileNavItem onClick={handleLogout}>Logout</MobileNavItem>
-            </>
+          {isLoggedIn === null ? null : isLoggedIn ? (
+            <ProfileContainer id="profile-menu">
+              <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
+                <ProfileIcon $imageUrl={profilePicture} $isLoading={isLoading}>
+                  {isLoading ? (
+                    <AvatarSpinner />
+                  ) : profilePicture ? (
+                    <img src={profilePicture} alt="Profile" />
+                  ) : (
+                    <FiUser size={20} />
+                  )}
+                </ProfileIcon>
+              </IconButton>
+              <ProfileDropdown isOpen={isProfileOpen}>
+                <DropdownItem onClick={handleDashboardClick}>
+                  <FiUser size={16} />
+                  Dashboard
+                </DropdownItem>
+                <DropdownItem onClick={handleLogout}>
+                  <FiLogOut size={16} />
+                  Logout
+                </DropdownItem>
+              </ProfileDropdown>
+            </ProfileContainer>
           ) : (
             <>
               <MobileLoginButton href="/login">Login</MobileLoginButton>
