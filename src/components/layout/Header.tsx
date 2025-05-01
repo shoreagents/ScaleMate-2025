@@ -137,7 +137,7 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: ${props => props.$imageUrl ? 'transparent' : '#f3f4f6'};
+  background-color: #E5E7EB;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,18 +152,19 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
 `;
 
 const IconButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6B7280;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  transition: all 0.2s ease;
+     background: none;
+    border: none;
+    cursor: pointer;
+    color: #6B7280;
+    border-radius: 50%;
+    display: flex
+;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    transition: all 0.2s ease;
 
   &:hover {
     background-color: #F3F4F6;
