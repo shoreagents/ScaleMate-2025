@@ -563,7 +563,7 @@ const ViewPasswordButton = styled.button`
 `;
 
 // Add Avatar styled component
-const Avatar = styled.div<{ $imageUrl?: string }>`
+const Avatar = styled.div<{ $imageUrl?: string; $isLoading?: boolean }>`
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -573,8 +573,9 @@ const Avatar = styled.div<{ $imageUrl?: string }>`
   justify-content: center;
   overflow: hidden;
   flex-shrink: 0;
+  position: relative;
 
-  ${props => props.$imageUrl ? `
+  ${props => props.$imageUrl && !props.$isLoading ? `
     background-image: url(${props.$imageUrl});
     background-size: cover;
     background-position: center;
@@ -584,6 +585,19 @@ const Avatar = styled.div<{ $imageUrl?: string }>`
     width: 20px;
     height: 20px;
     color: #6B7280;
+  }
+`;
+
+const AvatarSpinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  border-top-color: #3B82F6;
+  animation: spin 1s ease-in-out infinite;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 `;
 
@@ -1841,8 +1855,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
-                          <Avatar $imageUrl={user.profile_picture}>
-                            {!user.profile_picture && <FiUser />}
+                          <Avatar $imageUrl={user.profile_picture} $isLoading={loading}>
+                            {loading ? <AvatarSpinner /> : !user.profile_picture && <FiUser />}
                           </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
@@ -2027,8 +2041,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
-                          <Avatar $imageUrl={user.profile_picture}>
-                            {!user.profile_picture && <FiUser />}
+                          <Avatar $imageUrl={user.profile_picture} $isLoading={loading}>
+                            {loading ? <AvatarSpinner /> : !user.profile_picture && <FiUser />}
                           </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
@@ -2213,8 +2227,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                       <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                       <TableCell style={{ width: '200px' }}>
                         <UserInfo>
-                          <Avatar $imageUrl={user.profile_picture}>
-                            {!user.profile_picture && <FiUser />}
+                          <Avatar $imageUrl={user.profile_picture} $isLoading={loading}>
+                            {loading ? <AvatarSpinner /> : !user.profile_picture && <FiUser />}
                           </Avatar>
                           <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
                         </UserInfo>
