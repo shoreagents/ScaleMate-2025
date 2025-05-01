@@ -113,7 +113,7 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: #E5E7EB;
+  background-color: #f1f1f1;
   display: flex;
   align-items: center;
   justify-content: center;

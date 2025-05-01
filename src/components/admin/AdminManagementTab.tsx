@@ -567,7 +567,7 @@ const Avatar = styled.div<{ $imageUrl?: string; $isLoading?: boolean }>`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #E5E7EB;
+  background-color: #f1f1f1;
   display: flex;
   align-items: center;
   justify-content: center;
