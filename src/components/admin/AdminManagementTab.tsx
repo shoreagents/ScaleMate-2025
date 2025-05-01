@@ -42,16 +42,96 @@ const Button = styled.button`
   }
 `;
 
+const TableContainer = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+  margin-top: 1.5rem;
+`;
+
 const Table = styled.table`
   width: 100%;
-  margin-top: 1rem;
-  background: white;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  border: 1px solid #E5E7EB;
-  tr:last-child td {
+`;
+
+const TableHead = styled.thead`
+  background-color: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+`;
+
+const TableHeader = styled.th<{ $sortable?: boolean }>`
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0F172A;
+  cursor: ${props => props.$sortable ? 'pointer' : 'default'};
+  user-select: none;
+  white-space: nowrap;
+  position: relative;
+
+  &:hover {
+    background-color: ${props => props.$sortable ? '#F1F5F9' : 'transparent'};
+  }
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+`;
+
+const SortIcon = styled.span<{ $active: boolean; $direction: 'asc' | 'desc' }>`
+  display: inline-flex;
+  align-items: center;
+  color: ${props => props.$active ? '#3B82F6' : '#9CA3AF'};
+  transform: ${props => props.$direction === 'desc' ? 'rotate(180deg)' : 'none'};
+  transition: all 0.2s ease;
+  opacity: ${props => props.$active ? 1 : 0};
+  visibility: ${props => props.$active ? 'visible' : 'hidden'};
+  margin-left: 0.5rem;
+
+  ${TableHeader}:hover & {
+    opacity: 1;
+    visibility: visible;
+  }
+`;
+
+const TableBody = styled.tbody`
+  tr {
+    border-bottom: 1px solid #E5E7EB;
+    &:hover {
+      background-color: #F9FAFB;
+    }
+    &:last-child {
     border-bottom: none;
   }
+  }
+`;
+
+const TableCell = styled.td`
+  padding: 1rem 1.5rem;
+  color: #0F172A;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+`;
+
+const UserName = styled.span`
+  font-weight: 500;
+  font-size: 0.875rem;
+`;
+
+const UserEmail = styled.span`
+  color: rgba(15, 23, 42, 0.7);
+  font-size: 0.875rem;
+  font-weight: 500;
 `;
 
 const Th = styled.th<{ $sortable?: boolean }>`
@@ -73,16 +153,6 @@ const Th = styled.th<{ $sortable?: boolean }>`
     padding-right: 16px;
     width: 120px;
   }
-`;
-
-const SortIcon = styled.span<{ $active: boolean; $direction: 'asc' | 'desc' }>`
-  display: inline-block;
-  margin-left: 4px;
-  color: ${props => props.theme.colors.text.primary};
-  transform: ${props => props.$direction === 'desc' ? 'rotate(180deg)' : 'none'};
-  transition: all 0.3s ease;
-  opacity: ${props => props.$active ? 1 : 0};
-  visibility: ${props => props.$active ? 'visible' : 'hidden'};
 `;
 
 const Td = styled.td`
@@ -115,20 +185,20 @@ const ActionGroup = styled.div`
 `;
 
 const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed' }>`
-  padding: 4px 8px;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 500;
   background-color: ${props => {
     switch (props.$status) {
       case 'active':
-        return '#D1FAE5';
+        return '#05966910';
       case 'pending':
-        return '#FEF3C7';
+        return '#D9770610';
       case 'not-confirmed':
-        return '#d0bdbd';
+        return '#6B728010';
       default:
-        return '#D1D5DB';
+        return '#6B728010';
     }
   }};
   color: ${props => {
@@ -138,9 +208,9 @@ const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed
       case 'pending':
         return '#D97706';
       case 'not-confirmed':
-        return props.theme.colors.text.primary;
+        return '#6B7280';
       default:
-        return props.theme.colors.text.primary;
+        return '#6B7280';
     }
   }};
   text-transform: capitalize;
@@ -333,7 +403,7 @@ const ButtonGroup = styled.div`
 
 const ModalButton = styled.button`
 font-size: 0.875rem;  
-padding: 8px 16px;
+  padding: 8px 16px;
   border: none;
   border-radius: 8px;
   font-weight: 500;
@@ -1040,7 +1110,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           'User Created',
           'The user has been successfully created and can now log in with their credentials.'
         );
-        setIsModalOpen(false);
+      setIsModalOpen(false);
         setModalSuccess('User created successfully');
         setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
         setRetryCount(0);
@@ -1216,10 +1286,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       // Update role if changed
       if (editFormData.role !== selectedUser.roles[0]) {
         const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-          p_action: 'update',
-          p_new_role: editFormData.role,
-          p_target_user_id: selectedUser.id
-        });
+        p_action: 'update',
+        p_new_role: editFormData.role,
+        p_target_user_id: selectedUser.id
+      });
 
         if (roleError) {
           throw new Error(`Failed to update role: ${roleError.message}`);
@@ -1271,7 +1341,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       setCurrentUsername('');
       setPasswordsMatch(null);
       setPasswordLength(false);
-
+      
       // Then show the success modal
       showSuccess(
         'User Updated',
@@ -1634,66 +1704,75 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               You need admin privileges to manage user roles.
             </InfoMessage>
           )}
+          <TableContainer>
           <Table>
-            <thead>
+              <TableHead>
               <tr>
-                <Th style={{ width: '50px' }}>#</Th>
-                <Th 
+                  <TableHeader style={{ width: '50px' }}>#</TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
                   $sortable
                 >
-                  Name
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'name'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Name</span>
+                    <SortIcon 
+                      $active={sortField === 'name'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
                 >
-                  Email
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'email'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Email</span>
+                    <SortIcon 
+                      $active={sortField === 'email'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Roles
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'roles'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Roles</span>
+                    <SortIcon 
+                      $active={sortField === 'roles'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-                  Last Activity
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                {isCurrentUserAdmin && <Th style={{ width: '120px' }}>Actions</Th>}
+                  <HeaderContent>
+                    <span>Last Activity</span>
+                    <SortIcon 
+                      $active={sortField === 'last_sign_in'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
               </tr>
-            </thead>
-            <tbody>
+              </TableHead>
+              <TableBody>
               {filterUsersByRole(allUsers, activeTab)
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
@@ -1716,12 +1795,16 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 })
                 .map((user, index) => (
                   <tr key={user.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '200px' }}>
-                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
-                    </Td>
-                    <Td style={{ width: '300px' }}>{user.email}</Td>
-                    <Td style={{ width: '200px' }}>
+                      <TableCell style={{ width: '50px' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
+                      </TableCell>
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '200px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -1729,15 +1812,15 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           </RoleBadge>
                         ))}
                       </RoleBadges>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
                         ? new Date(user.last_sign_in).toLocaleDateString()
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
-                    </Td>
+                      </TableCell>
                     {isCurrentUserAdmin && (
-                    <Td style={{ width: '120px' }}>
+                        <TableCell style={{ width: '120px' }}>
                       <ActionGroup>
                           <ActionButton 
                             onClick={() => handleEditUser(user)}
@@ -1771,12 +1854,13 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                         </ActionButton>
                           )}
                       </ActionGroup>
-                    </Td>
+                        </TableCell>
                     )}
                   </tr>
                 ))}
-            </tbody>
+              </TableBody>
           </Table>
+          </TableContainer>
         </>
       ) : activeTab === 'moderators' ? (
         <>
@@ -1800,66 +1884,75 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               You need admin privileges to manage user roles.
             </InfoMessage>
           )}
+          <TableContainer>
           <Table>
-            <thead>
+              <TableHead>
               <tr>
-                <Th style={{ width: '50px' }}>#</Th>
-                <Th 
+                  <TableHeader style={{ width: '50px' }}>#</TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
                   $sortable
                 >
-                  Name
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'name'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Name</span>
+                    <SortIcon 
+                      $active={sortField === 'name'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
                 >
-                  Email
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'email'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Email</span>
+                    <SortIcon 
+                      $active={sortField === 'email'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Roles
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'roles'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Roles</span>
+                    <SortIcon 
+                      $active={sortField === 'roles'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-                  Last Activity
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                {isCurrentUserAdmin && <Th style={{ width: '120px' }}>Actions</Th>}
+                  <HeaderContent>
+                    <span>Last Activity</span>
+                    <SortIcon 
+                      $active={sortField === 'last_sign_in'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
               </tr>
-            </thead>
-            <tbody>
+              </TableHead>
+              <TableBody>
               {filterUsersByRole(allUsers, activeTab)
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
@@ -1882,12 +1975,16 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 })
                 .map((user, index) => (
                   <tr key={user.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '200px' }}>
-                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
-                    </Td>
-                    <Td style={{ width: '300px' }}>{user.email}</Td>
-                    <Td style={{ width: '200px' }}>
+                      <TableCell style={{ width: '50px' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
+                      </TableCell>
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '200px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -1895,15 +1992,15 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           </RoleBadge>
                         ))}
                       </RoleBadges>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
                         ? new Date(user.last_sign_in).toLocaleDateString()
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
-                    </Td>
+                      </TableCell>
                     {isCurrentUserAdmin && (
-                      <Td style={{ width: '120px' }}>
+                        <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
                           <ActionButton 
                             onClick={() => handleEditUser(user)}
@@ -1937,12 +2034,13 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                             </ActionButton>
                           )}
                         </ActionGroup>
-                      </Td>
+                        </TableCell>
                     )}
                   </tr>
                 ))}
-            </tbody>
+              </TableBody>
           </Table>
+          </TableContainer>
         </>
       ) : (
         <>
@@ -1966,66 +2064,75 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               You need admin privileges to manage user roles.
             </InfoMessage>
           )}
+          <TableContainer>
           <Table>
-            <thead>
+              <TableHead>
               <tr>
-                <Th style={{ width: '50px' }}>#</Th>
-                <Th 
+                  <TableHeader style={{ width: '50px' }}>#</TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
                   $sortable
                 >
-                  Name
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'name'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Name</span>
+                    <SortIcon 
+                      $active={sortField === 'name'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
                 >
-                  Email
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'email'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Email</span>
+                    <SortIcon 
+                      $active={sortField === 'email'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Roles
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'roles'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                <Th 
+                  <HeaderContent>
+                    <span>Roles</span>
+                    <SortIcon 
+                      $active={sortField === 'roles'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-                  Last Activity
-                  <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                </Th>
-                {isCurrentUserAdmin && <Th style={{ width: '120px' }}>Actions</Th>}
+                  <HeaderContent>
+                    <span>Last Activity</span>
+                    <SortIcon 
+                      $active={sortField === 'last_sign_in'} 
+                      $direction={sortDirection}
+                    >
+                      ↑
+                    </SortIcon>
+                  </HeaderContent>
+                </TableHeader>
+                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
               </tr>
-            </thead>
-            <tbody>
+              </TableHead>
+              <TableBody>
               {filterUsersByRole(allUsers, activeTab)
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
@@ -2048,12 +2155,16 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                 })
                 .map((user, index) => (
                   <tr key={user.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '200px' }}>
-                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
-                    </Td>
-                    <Td style={{ width: '300px' }}>{user.email}</Td>
-                    <Td style={{ width: '200px' }}>
+                      <TableCell style={{ width: '50px' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
+                      </TableCell>
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '200px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -2061,15 +2172,15 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           </RoleBadge>
                         ))}
                       </RoleBadges>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
                         ? new Date(user.last_sign_in).toLocaleDateString()
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
-                    </Td>
+                      </TableCell>
                     {isCurrentUserAdmin && (
-                      <Td style={{ width: '120px' }}>
+                        <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
                           <ActionButton 
                             onClick={() => handleEditUser(user)}
@@ -2103,12 +2214,13 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                             </ActionButton>
                           )}
                         </ActionGroup>
-                      </Td>
+                        </TableCell>
                     )}
                   </tr>
                 ))}
-            </tbody>
+              </TableBody>
           </Table>
+          </TableContainer>
         </>
       )}
 
@@ -2759,24 +2871,24 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
             </DeleteIcon>
             <DeleteTitle>Delete User</DeleteTitle>
             <DeleteMessage>
-              Are you sure you want to delete {userToDelete.username || userToDelete.email}? This action cannot be undone.
+                  Are you sure you want to delete {userToDelete.username || userToDelete.email}? This action cannot be undone.
             </DeleteMessage>
-            {errorMessage && (
+                {errorMessage && (
               <ErrorMessage>
                 <FiAlertCircle />
-                {errorMessage}
+                    {errorMessage}
               </ErrorMessage>
-            )}
+                )}
             <DeleteButtonGroup>
               <DeleteCancelButton onClick={() => {
-                setIsDeleteModalOpen(false);
-                setUserToDelete(null);
-                setErrorMessage('');
+                      setIsDeleteModalOpen(false);
+                      setUserToDelete(null);
+                      setErrorMessage('');
               }}>
-                Cancel
+                    Cancel
               </DeleteCancelButton>
               <DeleteConfirmButton onClick={handleDeleteConfirm}>
-                Delete
+                    Delete
               </DeleteConfirmButton>
             </DeleteButtonGroup>
           </DeleteModalContent>
@@ -2805,176 +2917,23 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
 const TabContainer = styled.div`
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 8px;
-  position: relative;
-  z-index: 1;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 `;
 
-const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator' | 'user' | 'all' }>`
+const TabButton = styled.button<{ $active: boolean; $type: string }>`
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
   font-weight: 500;
+  cursor: pointer;
   transition: all 0.2s;
-  min-width: 120px;
-  position: relative;
-  z-index: 2;
-  background-color: ${props => {
-    if (props.$active) {
-      switch (props.$type) {
-        case 'admin':
-          return '#DBEAFE';
-        case 'moderator':
-          return '#F0FDF4';
-        case 'user':
-          return '#E5E7EB';
-        case 'all':
-          return '#D1D5DB';
-        default:
-          return '#F3F4F6';
-      }
-    } else {
-      switch (props.$type) {
-        case 'admin':
-          return '#DBEAFE';
-        case 'moderator':
-          return '#F0FDF4';
-        case 'user':
-          return '#E5E7EB';
-        case 'all':
-          return '#D1D5DB';
-        default:
-          return '#F3F4F6';
-      }
-    }
-  }};
-  color: ${props => {
-    if (props.$active) {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    } else {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    }
-  }};
+  border: 1px solid #E5E7EB;
+  background-color: ${props => props.$active ? '#F1F5F9' : 'white'};
+  color: ${props => props.$active ? '#0F172A' : 'rgba(15, 23, 42, 0.7)'};
 
   &:hover {
-    opacity: 0.9;
-  }
-
-  &:focus {
-    outline: none;
-     ${props => {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    }};
-  }
-
-  &:focus-visible {
-    outline: none;
-     ${props => {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    }};
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
-    border-radius: 9999px;
-    border: 1px solid ${props => {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    }};
-    opacity: ${props => props.$active ? 1 : 0};
-    transition: opacity 0.2s;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 9999px;
-    border: 1px solid ${props => {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    }};
-    opacity: ${props => props.$active ? 1 : 0};
-    transition: opacity 0.2s;
+    background-color: ${props => props.$active ? '#F1F5F9' : '#F9FAFB'};
   }
 `;
 
@@ -2985,32 +2944,32 @@ const RoleBadges = styled.div`
 `;
 
 const RoleBadge = styled.span<{ $role: string }>`
-  padding: 4px 8px;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 500;
   background-color: ${props => {
     switch (props.$role) {
       case 'admin':
-        return '#DBEAFE';
+        return '#EC489910';
       case 'moderator':
-        return '#F0FDF4';
+        return '#00E91510';
       case 'user':
-        return '#E5E7EB';
+        return '#3B82F610';
       default:
-        return '#F3E8FF';
+        return '#3B82F610';
     }
   }};
   color: ${props => {
     switch (props.$role) {
       case 'admin':
-        return '#1E40AF';
+        return '#EC4899';
       case 'moderator':
-        return '#166534';
+        return '#00E915';
       case 'user':
-        return '#374151';
+        return '#3B82F6';
       default:
-        return '#6B21A8';
+        return '#3B82F6';
     }
   }};
   text-transform: capitalize;
@@ -3198,47 +3157,23 @@ const DeleteButtonGroup = styled.div`
   justify-content: center;
 `;
 
-const DeleteConfirmButton = styled.button`
-  padding: 0.875rem 1.5rem;
-  background: ${props => props.theme.colors.error};
+const DeleteConfirmButton = styled(ModalButton)`
+  background-color: #EF4444;
   color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: 1;
 
   &:hover {
-    background: ${props => props.theme.colors.error};
-    opacity: 0.9;
-  }
-
-  &:active {
-    transform: scale(0.98);
+    background-color: #DC2626;
   }
 `;
 
-const DeleteCancelButton = styled.button`
-  padding: 0.875rem 1.5rem;
-  background: ${props => props.theme.colors.background.secondary};
+const DeleteCancelButton = styled(ModalButton)`
+  background: transparent;
+  border: 1.5px solid #9aa2b3;
   color: ${props => props.theme.colors.text.primary};
-  border: 1.5px solid ${props => props.theme.colors.border};
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: 1;
 
   &:hover {
-    background: ${props => props.theme.colors.background.primary};
+    background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
-  }
-
-  &:active {
-    transform: scale(0.98);
   }
 `;
 
