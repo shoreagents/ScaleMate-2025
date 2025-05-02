@@ -10,6 +10,8 @@ import {
   faArrowRight
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
+import { useAuth } from '../../../hooks/useAuth';
+import { ResourcesAuthModal } from '../../../components/resources/ResourcesAuthModal';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -237,6 +239,19 @@ const ArrowIcon = styled(FontAwesomeIcon)`
 
 export default function ResourceContent() {
   const [activeFilter, setActiveFilter] = useState('all');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { user } = useAuth();
+
+  const handleCreateAccount = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    // Refresh the page or update the UI to show unlocked resources
+    window.location.reload();
+  };
 
   return (
     <Section id="resources-content">
@@ -339,7 +354,7 @@ export default function ResourceContent() {
               <SidebarDescription>
                 Create a free account to access premium templates and guides.
               </SidebarDescription>
-              <CreateAccountButton>
+              <CreateAccountButton onClick={handleCreateAccount}>
                 Create Free Account
               </CreateAccountButton>
               <FeatureList>
@@ -360,6 +375,12 @@ export default function ResourceContent() {
           </Sidebar>
         </ContentWrapper>
       </Container>
+
+      <ResourcesAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </Section>
   );
 } 
