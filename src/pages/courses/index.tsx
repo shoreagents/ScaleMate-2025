@@ -1,9 +1,9 @@
 import React from 'react';
 import HeroSection from './components/HeroSection';
 import FilterSection from './components/FilterSection';
-import CourseGrid from './components/CourseGrid';
+import { CourseGrid } from './components/CourseGrid';
 import Leaderboard from './components/Leaderboard';
-import FinalCTA from './components/FinalCTA';
+import { FinalCTA } from './components/FinalCTA';
 import Footer from '../../components/layout/Footer';
 import styled from 'styled-components';
 

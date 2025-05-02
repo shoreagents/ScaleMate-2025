@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faToolbox, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '../../../hooks/useAuth';
+import { ToolsAuthModal } from '../../../components/tools/ToolsAuthModal';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -50,7 +52,7 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const PrimaryButton = styled(Link)`
+const PrimaryButton = styled.button`
   background-color: white;
   color: #3B82F6;
   padding: 1rem 2rem;
@@ -63,6 +65,8 @@ const PrimaryButton = styled(Link)`
   transition: background-color 0.2s;
   justify-content: center;
   width: 280px;
+  border: none;
+  cursor: pointer;
 
   @media (min-width: 768px) {
     width: auto;
@@ -97,6 +101,20 @@ const SecondaryButton = styled(Link)`
 `;
 
 export default function FinalCTA() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const { user } = useAuth();
+
+  const handleCreateAccount = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    // Refresh the page or update the UI to show personalized content
+    window.location.reload();
+  };
+
   return (
     <Section>
       <Container>
@@ -106,7 +124,7 @@ export default function FinalCTA() {
             Sign up to save tools, get personalized recommendations, and access implementation guides.
           </Description>
           <ButtonGroup>
-            <PrimaryButton href="/signup">
+            <PrimaryButton onClick={handleCreateAccount}>
               Create Free Account
               <FontAwesomeIcon icon={faToolbox} style={{ marginLeft: '0.5rem' }} />
             </PrimaryButton>
@@ -117,6 +135,12 @@ export default function FinalCTA() {
           </ButtonGroup>
         </CTAWrapper>
       </Container>
+
+      <ToolsAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </Section>
   );
 } 

@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartSimple, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import QuizInterface from './QuizInterface';
 import { FaRegCircle } from 'react-icons/fa6';
+import { ReadinessAuthModal } from '../../../components/readiness/ReadinessAuthModal';
+import { useRouter } from 'next/router';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Section = styled.section`
   padding-top: 8rem;
@@ -111,6 +114,27 @@ const QuizContainer = styled.div`
 `;
 
 export default function ReadinessHeroSection() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const handleStartQuiz = () => {
+    if (user) {
+      // If user is logged in, start the quiz
+      // You might want to add specific quiz initialization logic here
+      console.log('Starting quiz for logged-in user');
+    } else {
+      // If user is not logged in, show the auth modal
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    // You might want to add specific quiz initialization logic here
+    console.log('Starting quiz after successful auth');
+  };
+
   return (
     <Section id="readiness-hero">
       <Container>
@@ -123,7 +147,7 @@ export default function ReadinessHeroSection() {
           <Description>
             Answer a few quick questions and get your Readiness Score.
           </Description>
-          <Button>
+          <Button onClick={handleStartQuiz}>
             Sign Up to Start the Quiz
             <ButtonIcon icon={faArrowRight} />
           </Button>
@@ -132,6 +156,12 @@ export default function ReadinessHeroSection() {
           <QuizInterface />
         </QuizContainer>
       </Container>
+
+      <ReadinessAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </Section>
   );
 } 
