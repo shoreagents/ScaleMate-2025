@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import Link from 'next/link';
+import { useAuth } from '../../../hooks/useAuth';
+import { CoursesAuthModal } from '../../../components/courses/CoursesAuthModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 
@@ -50,18 +51,19 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const PrimaryButton = styled(Link)`
+const PrimaryButton = styled.button`
   background-color: white;
   color: #3B82F6;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
   font-weight: 600;
+  font-size: 1.125rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  text-decoration: none;
-  transition: background-color 0.2s;
-  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
   width: 280px;
 
   @media (min-width: 768px) {
@@ -70,43 +72,53 @@ const PrimaryButton = styled(Link)`
 
   &:hover {
     background-color: #F9FAFB;
+    transform: translateY(-1px);
   }
 `;
 
-const SecondaryButton = styled(Link)`
-  background-color: #EC297B;
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  transition: background-color 0.2s;
+export const FinalCTA = () => {
+  const { user } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  &:hover {
-    background-color: #D91A6B;
-  }
-`;
+  const handleStartLearning = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    // Handle navigation for authenticated users
+    // TODO: Implement navigation logic
+  };
 
-export default function FinalCTA() {
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    // Navigate after successful authentication
+    handleStartLearning();
+  };
+
   return (
-    <Section>
-      <Container>
-        <CTAWrapper>
-          <Title>Ready to Start Learning?</Title>
-          <Description>
-            Create your free account to track progress, earn XP, and unlock premium content
-          </Description>
-          <ButtonGroup>
-            <PrimaryButton href="/signup">
-              Start Learning now
-              <FontAwesomeIcon icon={faGraduationCap} style={{ marginLeft: '0.5rem' }} />
-            </PrimaryButton>
-          </ButtonGroup>
-        </CTAWrapper>
-      </Container>
-    </Section>
+    <>
+      <Section>
+        <Container>
+          <CTAWrapper>
+            <Title>Ready to Start Learning?</Title>
+            <Description>
+              Create your free account to track progress, earn XP, and unlock premium content
+            </Description>
+            <ButtonGroup>
+              <PrimaryButton onClick={handleStartLearning}>
+                Start Learning now
+                <FontAwesomeIcon icon={faGraduationCap} />
+              </PrimaryButton>
+            </ButtonGroup>
+          </CTAWrapper>
+        </Container>
+      </Section>
+
+      <CoursesAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+    </>
   );
-} 
+};

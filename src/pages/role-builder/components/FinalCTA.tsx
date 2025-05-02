@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWandMagicSparkles, faEye } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
+import { RoleBuilderAuthModal } from '../../../components/role-builder/RoleBuilderAuthModal';
+import { useRouter } from 'next/router';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -52,7 +55,7 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const PrimaryButton = styled(Link)`
+const PrimaryButton = styled.button`
   background-color: white;
   color: #3B82F6;
   padding: 1rem 2rem;
@@ -65,6 +68,8 @@ const PrimaryButton = styled(Link)`
   transition: background-color 0.2s;
   justify-content: center;
   width: 280px;
+  border: none;
+  cursor: pointer;
 
   @media (min-width: 768px) {
     width: auto;
@@ -103,6 +108,25 @@ const ButtonIcon = styled(FontAwesomeIcon)`
 `;
 
 export default function FinalCTA() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const handleTryRoleBuilder = () => {
+    if (user) {
+      // If user is logged in, navigate to the role builder
+      router.push('/role-builder/create');
+    } else {
+      // If user is not logged in, show the auth modal
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    router.push('/role-builder/create');
+  };
+
   return (
     <Section>
       <Container>
@@ -112,7 +136,7 @@ export default function FinalCTA() {
             Start with our AI-powered Role Builder or explore sample templates to get inspired.
           </Description>
           <ButtonGroup>
-            <PrimaryButton href="#">
+            <PrimaryButton onClick={handleTryRoleBuilder}>
               Try Role Builder
               <FontAwesomeIcon icon={faWandMagicSparkles} />
             </PrimaryButton>
@@ -123,6 +147,12 @@ export default function FinalCTA() {
           </ButtonGroup>
         </CTAWrapper>
       </Container>
+
+      <RoleBuilderAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </Section>
   );
 } 
