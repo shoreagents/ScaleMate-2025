@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
@@ -1224,7 +1224,7 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
   const handleDeleteAdmin = async (adminId: string) => {
     try {
       // Use the enable_user_roles_rls function to delete admin role
-      const { error: deleteError } = await supabase.rpc('enable_user_roles_rls', {
+      const { error: deleteError } = await supabaseAdmin.rpc('enable_user_roles_rls', {
         p_action: 'delete',
         p_new_role: 'admin',
         p_target_user_id: adminId
@@ -1250,7 +1250,7 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     try {
       // First, remove any existing roles for this user
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await supabaseAdmin
         .from('user_roles')
         .delete()
         .eq('user_id', userId);
@@ -1258,7 +1258,7 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
       if (deleteError) throw deleteError;
 
       // Then add the new role
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabaseAdmin
         .from('user_roles')
         .insert([
           {
@@ -1307,7 +1307,7 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
       const userId = typeof user === 'string' ? user : user.id;
       
       // Delete user completely using the new RPC function
-      const { error: deleteError } = await supabase.rpc('delete_user_completely', {
+      const { error: deleteError } = await supabaseAdmin.rpc('delete_user_completely', {
         p_user_id: userId
       });
 

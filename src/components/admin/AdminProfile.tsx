@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiLoader } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -966,7 +966,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: userProfile } = await supabase
+      const { data: userProfile } = await supabaseAdmin
         .from('user_details')
         .select('username')
         .eq('user_id', user.id)
@@ -985,7 +985,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       }
       
       // Query the user_details view
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('user_details')
         .select('username, user_id')
         .eq('username', username)
