@@ -12,7 +12,8 @@
     "test:e2e": "cypress run",
     "test:clean": "rm -rf .next",
     "test:reset": "npm run test:clean && npm run test:env",
-    "setup:storage": "ts-node scripts/setup-storage.ts"
+    "setup:storage": "ts-node scripts/setup-storage.ts",
+    "test:openai": "ts-node scripts/test-openai.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest",

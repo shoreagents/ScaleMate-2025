@@ -636,6 +636,33 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Track changes for activity logging
+      const changes: string[] = [];
+      if (profileData.first_name !== originalProfileData.first_name) {
+        changes.push(`Changed First Name from "${originalProfileData.first_name || 'Not Set'}" to "${profileData.first_name}"`);
+      }
+      if (profileData.last_name !== originalProfileData.last_name) {
+        changes.push(`Changed Last Name from "${originalProfileData.last_name || 'Not Set'}" to "${profileData.last_name}"`);
+      }
+      if (profileData.username !== originalProfileData.username) {
+        changes.push(`Changed Username from "${originalProfileData.username || 'Not Set'}" to "${profileData.username}"`);
+      }
+      if (profileData.gender !== originalProfileData.gender) {
+        changes.push(profileData.gender ? 
+          (originalProfileData.gender ? 
+            `Changed Gender from "${capitalizeFirstLetter(originalProfileData.gender)}" to "${capitalizeFirstLetter(profileData.gender)}"` :
+            `Set Gender to "${capitalizeFirstLetter(profileData.gender)}"`) : 
+          'Removed Gender');
+      }
+      if (profileData.phone !== originalProfileData.phone) {
+        changes.push(profileData.phone ? 
+          (originalProfileData.phone ? 
+            `Changed Phone from "${originalProfileData.phone}" to "${profileData.phone}"` :
+            `Added Phone: "${profileData.phone}"`) : 
+          'Removed Phone');
+      }
+
+      // Update profile
       const { error: updateError } = await supabase
         .from('user_profiles')
         .update({
@@ -649,6 +676,15 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
+
+      // Log each change as a separate activity
+      for (const change of changes) {
+        await supabase.rpc('log_profile_change', {
+          p_user_id: user.id,
+          p_type: 'profile',
+          p_description: change
+        });
+      }
 
       if (isEditing) {
         setBasicInfoSuccess('Profile updated successfully');
@@ -713,6 +749,9 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         return;
       }
 
+      // Store the previous password change date before updating
+      const previousPasswordChange = profileData.last_password_change || 'Never';
+
       const { error: profileError } = await supabase
         .from('user_profiles')
         .update({
@@ -725,6 +764,13 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         setPasswordError('Failed to update profile');
         return;
       }
+
+      // Log the password change with the previous date
+      await supabase.rpc('log_profile_change', {
+        p_user_id: user.id,
+        p_type: 'profile',
+        p_description: 'Changed Password (Last changed: ' + (previousPasswordChange === 'Never' ? 'Never' : new Date(previousPasswordChange).toLocaleString()) + ')'
+      });
 
       setPasswordSuccess('Password updated successfully');
       setIsEditingPassword(false);
@@ -827,6 +873,15 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
         console.error('Profile update error:', updateError);
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
+
+      // Log the profile picture change with more detail
+      await supabase.rpc('log_profile_change', {
+        p_user_id: user.id,
+        p_type: 'profile',
+        p_description: profileData.profile_picture ? 
+          'Changed Profile Picture' : 
+          'Set Profile Picture for the first time'
+      });
 
       // Update local state
       setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));

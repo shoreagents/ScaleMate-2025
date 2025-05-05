@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle, FaDatabase, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle, FaDatabase, FaArrowUp, FaArrowDown, FaRobot } from 'react-icons/fa';
 import { FiCheck } from 'react-icons/fi';
 import { useRouter } from 'next/router';
-import { testSupabaseConnection } from '@/lib/test-connection';
+import { testSupabaseConnection, testOpenAIConnection } from '@/lib/test-connection';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 
@@ -345,6 +345,12 @@ interface UserActivity {
   created_at: string;
 }
 
+interface OpenAIStatus {
+  success: boolean;
+  message: string;
+  lastChecked: Date;
+}
+
 const DashboardTab: React.FC = () => {
   const router = useRouter();
   const [dbStatus, setDbStatus] = useState<DatabaseStatus | null>(null);
@@ -361,6 +367,7 @@ const DashboardTab: React.FC = () => {
   });
   const [timePeriod, setTimePeriod] = useState<'today' | 'week' | 'month'>('today');
   const [recentActivities, setRecentActivities] = useState<UserActivity[]>([]);
+  const [openAIStatus, setOpenAIStatus] = useState<OpenAIStatus | null>(null);
 
   // Function to format time ago
   const getTimeAgo = (date: string | Date) => {
@@ -654,6 +661,18 @@ const DashboardTab: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const checkOpenAIStatus = async () => {
+      const status = await testOpenAIConnection();
+      setOpenAIStatus(status);
+    };
+
+    checkOpenAIStatus();
+    const interval = setInterval(checkOpenAIStatus, 5 * 60 * 1000); // Check every 5 minutes
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleTimePeriodToggle = () => {
     setTimePeriod(prev => {
       switch (prev) {
@@ -871,6 +890,28 @@ const DashboardTab: React.FC = () => {
                 <WarningTime>
                   {dbStatus?.lastChecked 
                     ? getTimeAgo(dbStatus.lastChecked)
+                    : 'Checking...'}
+                </WarningTime>
+              </WarningItem>
+              <WarningItem $type={openAIStatus?.success ? 'info' : 'error'}>
+                <WarningContent>
+                  <WarningIcon $type={openAIStatus?.success ? 'info' : 'error'}>
+                    <FaRobot />
+                  </WarningIcon>
+                  <WarningText>
+                    <WarningTitle $type={openAIStatus?.success ? 'info' : 'error'}>
+                      OpenAI Connection
+                    </WarningTitle>
+                    <WarningDescription>
+                      {openAIStatus?.success 
+                        ? 'Connection healthy' 
+                        : `Connection issue: ${openAIStatus?.message}`}
+                    </WarningDescription>
+                  </WarningText>
+                </WarningContent>
+                <WarningTime>
+                  {openAIStatus?.lastChecked 
+                    ? getTimeAgo(openAIStatus.lastChecked)
                     : 'Checking...'}
                 </WarningTime>
               </WarningItem>
