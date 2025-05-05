@@ -679,9 +679,22 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
 
       // Log each change as a separate activity
       for (const change of changes) {
+        let activityType = 'profile';
+        if (change.includes('Username')) {
+          activityType = 'username';
+        } else if (change.includes('First Name') || change.includes('Last Name')) {
+          activityType = 'name';
+        } else if (change.includes('Profile Picture')) {
+          activityType = 'profile_picture_change';
+        } else if (change.includes('Phone')) {
+          activityType = 'phone';
+        } else if (change.includes('Gender')) {
+          activityType = 'gender_change';
+        }
+
         await supabase.rpc('log_profile_change', {
           p_user_id: user.id,
-          p_type: 'profile',
+          p_type: activityType,
           p_description: change
         });
       }
@@ -768,7 +781,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       // Log the password change with the previous date
       await supabase.rpc('log_profile_change', {
         p_user_id: user.id,
-        p_type: 'profile',
+        p_type: 'password_change',
         p_description: 'Changed Password (Last changed: ' + (previousPasswordChange === 'Never' ? 'Never' : new Date(previousPasswordChange).toLocaleString()) + ')'
       });
 
@@ -877,7 +890,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
       // Log the profile picture change with more detail
       await supabase.rpc('log_profile_change', {
         p_user_id: user.id,
-        p_type: 'profile',
+        p_type: 'profile_picture_change',
         p_description: profileData.profile_picture ? 
           'Changed Profile Picture' : 
           'Set Profile Picture for the first time'
