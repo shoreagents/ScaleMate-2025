@@ -10,6 +10,7 @@ import {
   faArrowRight
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -237,6 +238,11 @@ const ArrowIcon = styled(FontAwesomeIcon)`
 
 export default function ResourceContent() {
   const [activeFilter, setActiveFilter] = useState('all');
+  const { user } = useAuth();
+
+  const handleCreateAccount = () => {
+    // No need for modal, just let the link handle navigation
+  };
 
   return (
     <Section id="resources-content">
@@ -339,7 +345,7 @@ export default function ResourceContent() {
               <SidebarDescription>
                 Create a free account to access premium templates and guides.
               </SidebarDescription>
-              <CreateAccountButton>
+              <CreateAccountButton onClick={handleCreateAccount}>
                 Create Free Account
               </CreateAccountButton>
               <FeatureList>
