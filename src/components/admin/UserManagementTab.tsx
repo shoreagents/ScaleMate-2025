@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseAdmin } from '@/lib/supabase';
 import { 
   FaUserPlus, 
   FaFilter, 
@@ -179,7 +179,7 @@ const UserManagementTab: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('users')
         .select(`
           id,
@@ -225,7 +225,7 @@ const UserManagementTab: React.FC = () => {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('users')
         .delete()
         .eq('id', userId);
