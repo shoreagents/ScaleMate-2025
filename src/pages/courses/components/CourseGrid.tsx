@@ -120,7 +120,7 @@ const ArrowIcon = styled(FontAwesomeIcon)`
   font-size: 0.875rem;
 `;
 
-export default function CourseGrid() {
+export const CourseGrid = () => {
   const { user } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
@@ -231,4 +231,4 @@ export default function CourseGrid() {
       />
     </>
   );
-} 
+}; 
