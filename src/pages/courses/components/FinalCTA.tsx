@@ -76,7 +76,7 @@ const PrimaryButton = styled.button`
   }
 `;
 
-export default function FinalCTA() {
+export const FinalCTA = () => {
   const { user } = useAuth();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
@@ -121,4 +121,4 @@ export default function FinalCTA() {
       />
     </>
   );
-}
+};
