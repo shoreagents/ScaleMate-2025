@@ -536,7 +536,7 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
         </>
       ) : (
         <>
-          <Title>Login</Title>
+          <Title>Sign In</Title>
           <Subtitle>Sign in to your account</Subtitle>
           <GoogleButton 
             onClick={handleGoogleSignIn}
