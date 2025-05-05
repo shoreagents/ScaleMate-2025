@@ -1337,11 +1337,8 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
     if (!userToDelete) return;
     
     try {
-      if (userToDelete.role === 'user') {
-        await handleDeleteUser(userToDelete);
-      } else if (userToDelete.role === 'admin') {
-        await handleDeleteAdmin(userToDelete.id);
-      }
+      // Use handleDeleteUser for all roles (user, admin, moderator)
+      await handleDeleteUser(userToDelete);
     } catch (error) {
       console.error('Error deleting user:', error);
     }
@@ -1699,11 +1696,8 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
 
   const handleDelete = async (user: UserToDelete) => {
     try {
-      if (user.role === 'user') {
-        await handleDeleteUser(user);
-      } else if (user.role === 'admin') {
-        await handleDeleteAdmin(user.id);
-      }
+      // Use handleDeleteUser for all roles (user, admin, moderator)
+      await handleDeleteUser(user);
     } catch (error) {
       console.error('Error deleting user:', error);
     }
