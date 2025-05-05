@@ -1097,10 +1097,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
         const createUserWithRetry = async () => {
           try {
-            const result = await supabase.auth.admin.createUser({
-              email: formData.email,
-              password: formData.password,
-              email_confirm: true
+            const result = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+              options: {
+                emailRedirectTo: `${window.location.origin}/auth/callback`
+              }
             });
 
             if (result.error) {
