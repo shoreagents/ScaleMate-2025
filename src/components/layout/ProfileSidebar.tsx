@@ -756,7 +756,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
           <Card>
             <SectionTitle>
               <FaHistory />
-              Recent Activities
+              Recent Activity
             </SectionTitle>
             <ActivityList>
               {Object.entries(groupedActivities).map(([date, activities]) => (
