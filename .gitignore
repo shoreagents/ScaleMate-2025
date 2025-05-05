@@ -13,3 +13,4 @@ node_modules
 .next/static/chunks/webpack.js
 .next/static/chunks
 .next/trace
+.env.local
