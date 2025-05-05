@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faWandMagicSparkles, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FaUsers } from 'react-icons/fa6';
+import { RoleBuilderAuthModal } from '../../../components/role-builder/RoleBuilderAuthModal';
+import { useRouter } from 'next/router';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Section = styled.section`
   padding: 8rem 0 4rem;
@@ -69,6 +72,25 @@ const ButtonIcon = styled(FontAwesomeIcon)`
 `;
 
 export default function RoleBuilderHeroSection() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const handleTryRoleBuilder = () => {
+    if (user) {
+      // If user is logged in, navigate to the role builder
+      router.push('/role-builder/create');
+    } else {
+      // If user is not logged in, show the auth modal
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    router.push('/role-builder/create');
+  };
+
   return (
     <Section id="role-builder-hero">
       <Container>
@@ -80,11 +102,17 @@ export default function RoleBuilderHeroSection() {
         <Description>
           Use our wizard to create a ready-to-hire role with job description, tasks, tools, and KPIs.
         </Description>
-        <Button>
+        <Button onClick={handleTryRoleBuilder}>
           Try Role Builder
           <ButtonIcon icon={faArrowRight} />
         </Button>
       </Container>
+
+      <RoleBuilderAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </Section>
   );
 } 
