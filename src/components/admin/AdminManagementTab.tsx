@@ -5,6 +5,7 @@ import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiS
 import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
 import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
+import ProfileSidebar from '@/components/layout/ProfileSidebar';
 
 const Container = styled.div`
   padding: 24px;
@@ -113,8 +114,17 @@ const TableBody = styled.tbody`
       background-color: #F9FAFB;
     }
     &:last-child {
-    border-bottom: none;
+      border-bottom: none;
+    }
   }
+`;
+
+const TableRow = styled.tr`
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #F9FAFB;
   }
 `;
 
@@ -213,9 +223,9 @@ const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed
       case 'pending':
         return '#D97706';
       case 'not-confirmed':
-        return '#6B7280';
+        return '#1F2937';
       default:
-        return '#6B7280';
+        return '#1F2937';
     }
   }};
   text-transform: capitalize;
@@ -631,7 +641,7 @@ interface Admin extends BaseUser {
 }
 
 interface UserRole extends BaseUser {
-  role: 'user';
+  role: 'user' | 'admin' | 'moderator';  // Update to allow all role types
   last_sign_in: string | null;
   phone: string;
   gender: string;
@@ -698,7 +708,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const [activeTab, setActiveTab] = useState<TabType>('users');
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserRole | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Admin | UserRole | null>(null);
   const [newRole, setNewRole] = useState<'admin' | 'user'>('admin');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<UserEditFormData>({
@@ -747,6 +757,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [loadingProfilePictures, setLoadingProfilePictures] = useState<{ [key: string]: boolean }>({});
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     checkCurrentUserRole();
@@ -902,7 +913,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       phone: admin.phone || '',
       gender: admin.gender || '',
       username: admin.username || '',
-      role: 'user',
+      role: 'admin',
       status: 'active'
     });
     setEditFormData({
@@ -1171,12 +1182,25 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           return;
         }
 
+        // Log the user creation activity for the admin
+        const { data: { user: adminUser } } = await supabase.auth.getUser();
+        if (adminUser) {
+          await supabase.rpc('log_profile_change', {
+            p_user_id: adminUser.id,
+            p_type: 'admin',
+            p_description: `Created New User
+
+Name: ${formData.first_name} ${formData.last_name}
+Email: ${formData.email}
+Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
+          });
+        }
+
         showSuccess(
           'User Created',
           'The user has been successfully created and can now log in with their credentials.'
         );
-      setIsModalOpen(false);
-        setModalSuccess('User created successfully');
+        setIsModalOpen(false);
         setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
         setRetryCount(0);
         setUsernameError(null);
@@ -1362,14 +1386,15 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       }
 
       // Update local state first to prevent flicker
-      const updatedUser = {
+      const updatedUser: UserRole = {
         ...selectedUser,
         first_name: editFormData.first_name.trim(),
         last_name: editFormData.last_name.trim(),
         phone: editFormData.phone,
         gender: editFormData.gender,
         username: editFormData.username.trim(),
-        roles: [editFormData.role]
+        roles: [editFormData.role],
+        role: editFormData.role as 'user' | 'admin' | 'moderator'
       };
 
       // Update the allUsers array with the new data
@@ -1412,6 +1437,20 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         'User Updated',
         'The user profile has been successfully updated with the new information.'
       );
+
+      // Log the user update activity for the admin
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await supabase.rpc('log_profile_change', {
+          p_user_id: adminUser.id,
+          p_type: 'admin',
+          p_description: `Updated User Profile
+
+Name: ${editFormData.first_name} ${editFormData.last_name}
+Email: ${editFormData.email}
+Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
+        });
+      }
     } catch (error) {
       console.error('Error in handleEditSubmit:', error);
       setModalError(error instanceof Error ? error.message : 'Failed to update user profile');
@@ -1733,6 +1772,20 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
     }
   }, [allUsers]);
 
+  const handleNameClick = (user: Admin | UserRole) => {
+    setSelectedUser(user);
+    setIsProfileOpen(true);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   if (loading) {
     return <PageLoadingSpinner />;
   }
@@ -1910,85 +1963,95 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   }
                 })
                 .map((user, index) => (
-                  <tr key={user.id}>
-                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                      <TableCell style={{ width: '200px' }}>
-                        <UserInfo>
-                          <Avatar 
-                            $imageUrl={user.profile_picture} 
-                            $isLoading={Boolean(loadingProfilePictures[user.id])}
-                          >
-                            {user.profile_picture && (
-                              <img
-                                src={user.profile_picture}
-                                alt={`${user.first_name}'s profile`}
-                                onLoad={() => handleImageLoad(user.id)}
-                                onError={() => handleImageError(user.id)}
-                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                              />
-                            )}
-                            {!user.profile_picture && <FiUser />}
-                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                          </Avatar>
-                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                        </UserInfo>
-                      </TableCell>
-                      <TableCell style={{ width: '300px' }}>
-                        <UserEmail>{user.email}</UserEmail>
-                      </TableCell>
-                      <TableCell style={{ width: '150px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string, idx: number) => (
-                          <RoleBadge key={idx} $role={role}>
-                            {role}
-                          </RoleBadge>
-                        ))}
-                      </RoleBadges>
-                      </TableCell>
-                      <TableCell style={{ width: '150px' }}>
-                      {user.last_sign_in 
-                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                      }
-                      </TableCell>
-                    {isCurrentUserAdmin && (
-                        <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                          <ActionButton 
-                            onClick={() => handleEditUser(user)}
-                            title="Update Info"
-                          >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                          {isConfirmingDelete === user.id ? (
-                            <>
-                              <ActionButton 
-                                $variant="success"
-                                onClick={() => handleDelete(user)}
-                              >
-                                <FiCheck size={18} />
-                              </ActionButton>
-                              <ActionButton 
-                                onClick={() => setIsConfirmingDelete(null)}
-                              >
-                                <FiX size={18} />
-                              </ActionButton>
-                            </>
-                          ) : (
-                        <ActionButton 
-                          $variant="danger"
-                          onClick={() => {
-                                setUserToDelete(user);
-                            setIsDeleteModalOpen(true);
-                          }}
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
                         >
-                          <FiTrash2 size={18} />
-                        </ActionButton>
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
                           )}
-                      </ActionGroup>
-                        </TableCell>
-                    )}
-                  </tr>
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                    <RoleBadges>
+                      {user.roles.map((role: string, idx: number) => (
+                        <RoleBadge key={idx} $role={role}>
+                          {role}
+                        </RoleBadge>
+                      ))}
+                    </RoleBadges>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                    {user.last_sign_in 
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                    }
+                    </TableCell>
+                  {isCurrentUserAdmin && (
+                      <TableCell style={{ width: '120px' }}>
+                    <ActionGroup>
+                        <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
+                          title="Update Info"
+                        >
+                        <FiEdit2 size={18} />
+                      </ActionButton>
+                        {isConfirmingDelete === user.id ? (
+                          <>
+                            <ActionButton 
+                              $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
+                            >
+                              <FiCheck size={18} />
+                            </ActionButton>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                            >
+                              <FiX size={18} />
+                            </ActionButton>
+                          </>
+                        ) : (
+                      <ActionButton 
+                        $variant="danger"
+                        onClick={(e) => {
+                              e.stopPropagation();
+                              setUserToDelete(user);
+                              setIsDeleteModalOpen(true);
+                        }}
+                      >
+                        <FiTrash2 size={18} />
+                      </ActionButton>
+                        )}
+                    </ActionGroup>
+                      </TableCell>
+                  )}
+                  </TableRow>
                 ))}
               </TableBody>
           </Table>
@@ -2109,85 +2172,95 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   }
                 })
                 .map((user, index) => (
-                  <tr key={user.id}>
-                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                      <TableCell style={{ width: '200px' }}>
-                        <UserInfo>
-                          <Avatar 
-                            $imageUrl={user.profile_picture} 
-                            $isLoading={Boolean(loadingProfilePictures[user.id])}
-                          >
-                            {user.profile_picture && (
-                              <img
-                                src={user.profile_picture}
-                                alt={`${user.first_name}'s profile`}
-                                onLoad={() => handleImageLoad(user.id)}
-                                onError={() => handleImageError(user.id)}
-                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                              />
-                            )}
-                            {!user.profile_picture && <FiUser />}
-                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                          </Avatar>
-                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                        </UserInfo>
-                      </TableCell>
-                      <TableCell style={{ width: '300px' }}>
-                        <UserEmail>{user.email}</UserEmail>
-                      </TableCell>
-                      <TableCell style={{ width: '150px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string, idx: number) => (
-                          <RoleBadge key={idx} $role={role}>
-                            {role}
-                          </RoleBadge>
-                        ))}
-                      </RoleBadges>
-                      </TableCell>
-                      <TableCell style={{ width: '150px' }}>
-                      {user.last_sign_in 
-                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                      }
-                      </TableCell>
-                    {isCurrentUserAdmin && (
-                        <TableCell style={{ width: '120px' }}>
-                        <ActionGroup>
-                          <ActionButton 
-                            onClick={() => handleEditUser(user)}
-                            title="Update Info"
-                          >
-                            <FiEdit2 size={18} />
-                          </ActionButton>
-                          {isConfirmingDelete === user.id ? (
-                            <>
-                              <ActionButton 
-                                $variant="success"
-                                onClick={() => handleDelete(user)}
-                              >
-                                <FiCheck size={18} />
-                              </ActionButton>
-                              <ActionButton 
-                                onClick={() => setIsConfirmingDelete(null)}
-                              >
-                                <FiX size={18} />
-                              </ActionButton>
-                            </>
-                          ) : (
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
+                        >
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                    <RoleBadges>
+                      {user.roles.map((role: string, idx: number) => (
+                        <RoleBadge key={idx} $role={role}>
+                          {role}
+                        </RoleBadge>
+                      ))}
+                    </RoleBadges>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                    {user.last_sign_in 
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                    }
+                    </TableCell>
+                  {isCurrentUserAdmin && (
+                      <TableCell style={{ width: '120px' }}>
+                      <ActionGroup>
+                        <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
+                          title="Update Info"
+                        >
+                          <FiEdit2 size={18} />
+                        </ActionButton>
+                        {isConfirmingDelete === user.id ? (
+                          <>
                             <ActionButton 
-                              $variant="danger"
-                              onClick={() => {
-                                setUserToDelete(user);
-                                setIsDeleteModalOpen(true);
+                              $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
                               }}
                             >
-                              <FiTrash2 size={18} />
+                              <FiCheck size={18} />
                             </ActionButton>
-                          )}
-                        </ActionGroup>
-                        </TableCell>
-                    )}
-                  </tr>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                            >
+                              <FiX size={18} />
+                            </ActionButton>
+                          </>
+                        ) : (
+                          <ActionButton 
+                            $variant="danger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUserToDelete(user);
+                              setIsDeleteModalOpen(true);
+                            }}
+                          >
+                            <FiTrash2 size={18} />
+                          </ActionButton>
+                        )}
+                      </ActionGroup>
+                      </TableCell>
+                  )}
+                  </TableRow>
                 ))}
               </TableBody>
           </Table>
@@ -2308,85 +2381,95 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   }
                 })
                 .map((user, index) => (
-                  <tr key={user.id}>
-                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                      <TableCell style={{ width: '200px' }}>
-                        <UserInfo>
-                          <Avatar 
-                            $imageUrl={user.profile_picture} 
-                            $isLoading={Boolean(loadingProfilePictures[user.id])}
-                          >
-                            {user.profile_picture && (
-                              <img
-                                src={user.profile_picture}
-                                alt={`${user.first_name}'s profile`}
-                                onLoad={() => handleImageLoad(user.id)}
-                                onError={() => handleImageError(user.id)}
-                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                              />
-                            )}
-                            {!user.profile_picture && <FiUser />}
-                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                          </Avatar>
-                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                        </UserInfo>
-                      </TableCell>
-                      <TableCell style={{ width: '300px' }}>
-                        <UserEmail>{user.email}</UserEmail>
-                      </TableCell>
-                      <TableCell style={{ width: '150px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string, idx: number) => (
-                          <RoleBadge key={idx} $role={role}>
-                            {role}
-                          </RoleBadge>
-                        ))}
-                      </RoleBadges>
-                      </TableCell>
-                      <TableCell style={{ width: '150px' }}>
-                      {user.last_sign_in 
-                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                      }
-                      </TableCell>
-                    {isCurrentUserAdmin && (
-                        <TableCell style={{ width: '120px' }}>
-                        <ActionGroup>
-                          <ActionButton 
-                            onClick={() => handleEditUser(user)}
-                            title="Update Info"
-                          >
-                            <FiEdit2 size={18} />
-                          </ActionButton>
-                          {isConfirmingDelete === user.id ? (
-                            <>
-                              <ActionButton 
-                                $variant="success"
-                                onClick={() => handleDelete(user)}
-                              >
-                                <FiCheck size={18} />
-                              </ActionButton>
-                              <ActionButton 
-                                onClick={() => setIsConfirmingDelete(null)}
-                              >
-                                <FiX size={18} />
-                              </ActionButton>
-                            </>
-                          ) : (
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
+                        >
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                    <RoleBadges>
+                      {user.roles.map((role: string, idx: number) => (
+                        <RoleBadge key={idx} $role={role}>
+                          {role}
+                        </RoleBadge>
+                      ))}
+                    </RoleBadges>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                    {user.last_sign_in 
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                    }
+                    </TableCell>
+                  {isCurrentUserAdmin && (
+                      <TableCell style={{ width: '120px' }}>
+                      <ActionGroup>
+                        <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
+                          title="Update Info"
+                        >
+                          <FiEdit2 size={18} />
+                        </ActionButton>
+                        {isConfirmingDelete === user.id ? (
+                          <>
                             <ActionButton 
-                              $variant="danger"
-                              onClick={() => {
-                                setUserToDelete(user);
-                                setIsDeleteModalOpen(true);
+                              $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
                               }}
                             >
-                              <FiTrash2 size={18} />
+                              <FiCheck size={18} />
                             </ActionButton>
-                          )}
-                        </ActionGroup>
-                        </TableCell>
-                    )}
-                  </tr>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                            >
+                              <FiX size={18} />
+                            </ActionButton>
+                          </>
+                        ) : (
+                          <ActionButton 
+                            $variant="danger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUserToDelete(user);
+                              setIsDeleteModalOpen(true);
+                            }}
+                          >
+                            <FiTrash2 size={18} />
+                          </ActionButton>
+                        )}
+                      </ActionGroup>
+                      </TableCell>
+                  )}
+                  </TableRow>
                 ))}
               </TableBody>
           </Table>
@@ -3081,6 +3164,36 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           </SuccessModalContent>
         </SuccessModal>
       )}
+
+      {selectedUser && (
+        <ProfileSidebar
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          profile={{
+            name: `${selectedUser.first_name} ${selectedUser.last_name}`,
+            email: selectedUser.email,
+            username: selectedUser.username,
+            role: selectedUser.roles.includes('admin') ? 'admin' : 
+                  selectedUser.roles.includes('moderator') ? 'moderator' : 'user',
+            phone: selectedUser.phone,
+            gender: selectedUser.gender,
+            joinedDate: formatDate(selectedUser.created_at),
+            lastLogin: formatDate(selectedUser.last_sign_in),
+            avatar: selectedUser.profile_picture,
+            user_id: selectedUser.id,
+            stats: {
+              leadsGenerated: 0,
+              rolesCreated: 0,
+              quotesSent: 0
+            },
+            preferences: {
+              notifications: true,
+              language: 'English',
+              theme: 'light'
+            }
+          }}
+        />
+      )}
     </Container>
   );
 };
@@ -3110,7 +3223,7 @@ const TabButton = styled.button<{ $active: boolean; $type: string }>`
   color: ${props => {
       switch (props.$type) {
         case 'all':
-          return '#6B7280';
+          return '#1F2937';
         case 'admin':
         return '#EC4899';
         case 'moderator':
@@ -3124,6 +3237,7 @@ const TabButton = styled.button<{ $active: boolean; $type: string }>`
   border: none;
   border-radius: 9999px;
   font-size: 0.875rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 

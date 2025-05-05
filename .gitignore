@@ -2,10 +2,10 @@ node_modules
 .next/
 .vercel
 *.log
-.env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.local
 .next/cache
 .next/cache/webpack
 .next/cache/webpack/client-development
@@ -13,3 +13,4 @@ node_modules
 .next/static/chunks/webpack.js
 .next/static/chunks
 .next/trace
+.env.local
