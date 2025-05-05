@@ -308,7 +308,7 @@ const CloseButton = styled.button`
   position: absolute;
   right: 0;
   top: 0;
-  
+
   &:hover {
     color: ${props => props.theme.colors.text.primary};
   }
@@ -610,9 +610,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
 
       // Log each change as a separate activity
       for (const change of changes) {
+        let activityType = 'profile';
+        if (change.includes('Username')) {
+          activityType = 'username';
+        } else if (change.includes('First Name') || change.includes('Last Name')) {
+          activityType = 'name';
+        } else if (change.includes('Profile Picture')) {
+          activityType = 'profile_picture_change';
+        } else if (change.includes('Phone')) {
+          activityType = 'phone';
+        } else if (change.includes('Gender')) {
+          activityType = 'gender_change';
+        }
+
         await supabase.rpc('log_profile_change', {
           p_user_id: user.id,
-          p_type: 'profile',
+          p_type: activityType,
           p_description: change
         });
       }
@@ -622,7 +635,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
 
       if (isEditing) {
         setBasicInfoSuccess('Profile updated successfully');
-        setIsEditing(false);
+      setIsEditing(false);
         setTimeout(() => setBasicInfoSuccess(null), 3000);
       }
       if (isEditingContact) {
@@ -701,7 +714,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
       // Log the password change with the previous date
       await supabase.rpc('log_profile_change', {
         p_user_id: user.id,
-        p_type: 'profile',
+        p_type: 'password_change',
         p_description: 'Changed Password (Last changed: ' + (previousPasswordChange === 'Never' ? 'Never' : new Date(previousPasswordChange).toLocaleString()) + ')'
       });
 
@@ -809,7 +822,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
       // Log the profile picture change
       await supabase.rpc('log_profile_change', {
         p_user_id: user.id,
-        p_type: 'profile',
+        p_type: 'profile_picture_change',
         p_description: profileData.profile_picture ? 
           'Changed Profile Picture' : 
           'Set Profile Picture for the first time'
@@ -913,13 +926,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
           </SectionTitle>
           {isEditing ? (
             <>
-              <FormGroup>
+          <FormGroup>
                 <Label>
                   Username
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <Input
-                  type="text"
+              <Input
+                type="text"
                   pattern="[a-zA-Z0-9._-]*"
                   value={profileData.username}
                   onChange={(e) => {
@@ -929,13 +942,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                   }}
                   placeholder="Enter username"
                 />
-              </FormGroup>
-              <FormGroup>
+          </FormGroup>
+          <FormGroup>
                 <Label>
                   First Name
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <Input
+              <Input
                   type="text"
                   pattern="[A-Za-z ]+"
                   value={profileData.first_name}
@@ -946,14 +959,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                   }}
                   placeholder="Enter your first name"
                 />
-              </FormGroup>
-              <FormGroup>
+          </FormGroup>
+          <FormGroup>
                 <Label>
                   Last Name
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <Input
-                  type="text"
+              <Input
+                type="text"
                   pattern="[A-Za-z ]+"
                   value={profileData.last_name}
                   onChange={(e) => {
@@ -962,14 +975,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                     }
                   }}
                   placeholder="Enter your last name"
-                />
+              />
               </FormGroup>
               <FormGroup>
-                <Label>Gender</Label>
+              <Label>Gender</Label>
                 <GenderSelectContainer>
                   <GenderSelect
-                    value={profileData.gender}
-                    onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                value={profileData.gender}
+                onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
                   >
                     <option value="">Select your gender</option>
                     <option value="male">Male</option>
@@ -985,7 +998,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                      <FaQuestion size={18} />}
                   </GenderIcon>
                 </GenderSelectContainer>
-              </FormGroup>
+          </FormGroup>
               <ButtonGroup>
                 <ChooseImageButton
                   type="button"
@@ -1015,7 +1028,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
               <FormGroup>
                 <Label>Username</Label>
                 <div>{profileData.username || '-'}</div>
-              </FormGroup>
+          </FormGroup>
               <FormGroup>
                 <Label>First Name</Label>
                 <div>{profileData.first_name || '-'}</div>
@@ -1075,7 +1088,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
             <FormGroup>
               <Label>Email</Label>
               <InputWrapper>
-                <Input 
+                <Input
                   value={profileData.email}
                   disabled
                   style={{ 
@@ -1202,14 +1215,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 <PasswordInputContainer>
                   <PasswordInput
                     type={showNewPassword ? "text" : "password"}
-                    value={newPassword}
+                  value={newPassword}
                     onChange={handleNewPasswordChange}
                     placeholder="Enter your new password"
-                  />
+                />
                   <ViewPasswordButton
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
                     {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
@@ -1255,14 +1268,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 <PasswordInputContainer>
                   <PasswordInput
                     type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
+                  value={confirmPassword}
                     onChange={handleConfirmPasswordChange}
                     placeholder="Confirm your new password"
-                  />
+                />
                   <ViewPasswordButton
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
                     {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
