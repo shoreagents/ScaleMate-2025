@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
-import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch } from 'react-icons/fa';
+import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch, FaTimes } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
 import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import ProfileSidebar from '@/components/layout/ProfileSidebar';
@@ -114,8 +114,8 @@ const TableBody = styled.tbody`
       background-color: #F9FAFB;
     }
     &:last-child {
-      border-bottom: none;
-    }
+    border-bottom: none;
+  }
   }
 `;
 
@@ -1187,7 +1187,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         if (adminUser) {
           await supabase.rpc('log_profile_change', {
             p_user_id: adminUser.id,
-            p_type: 'admin',
+            p_type: 'user_creation',
             p_description: `Created New User
 
 Name: ${formData.first_name} ${formData.last_name}
@@ -1200,7 +1200,7 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
           'User Created',
           'The user has been successfully created and can now log in with their credentials.'
         );
-        setIsModalOpen(false);
+      setIsModalOpen(false);
         setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
         setRetryCount(0);
         setUsernameError(null);
@@ -1305,6 +1305,8 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
   const handleDeleteUser = async (user: UserToDelete | string) => {
     try {
       const userId = typeof user === 'string' ? user : user.id;
+      const userEmail = typeof user === 'string' ? '' : user.email;
+      const userName = typeof user === 'string' ? '' : `${user.first_name} ${user.last_name}`.trim();
       
       // Delete user completely using the new RPC function
       const { error: deleteError } = await supabase.rpc('delete_user_completely', {
@@ -1314,6 +1316,20 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
       if (deleteError) {
         console.error('Error deleting user:', deleteError);
         throw new Error('Failed to delete user');
+      }
+
+      // Log the deletion activity for the admin
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await supabase.rpc('log_profile_change', {
+          p_user_id: adminUser.id,
+          p_type: 'user_deletion',
+          p_description: `Deleted User
+
+Name: ${userName || 'N/A'}
+Email: ${userEmail || userId}
+Role: ${typeof user === 'string' ? 'N/A' : user.roles.map(role => role.charAt(0).toUpperCase() + role.slice(1)).join(', ')}`
+        });
       }
 
       // Close the delete modal first
@@ -1337,11 +1353,8 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
     if (!userToDelete) return;
     
     try {
-      if (userToDelete.role === 'user') {
-        await handleDeleteUser(userToDelete);
-      } else if (userToDelete.role === 'admin') {
-        await handleDeleteAdmin(userToDelete.id);
-      }
+      // Use handleDeleteUser for all roles (user, admin, moderator)
+      await handleDeleteUser(userToDelete);
     } catch (error) {
       console.error('Error deleting user:', error);
     }
@@ -1443,7 +1456,7 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
       if (adminUser) {
         await supabase.rpc('log_profile_change', {
           p_user_id: adminUser.id,
-          p_type: 'admin',
+          p_type: 'user_update',
           p_description: `Updated User Profile
 
 Name: ${editFormData.first_name} ${editFormData.last_name}
@@ -1699,11 +1712,8 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
 
   const handleDelete = async (user: UserToDelete) => {
     try {
-      if (user.role === 'user') {
+      // Use handleDeleteUser for all roles (user, admin, moderator)
         await handleDeleteUser(user);
-      } else if (user.role === 'admin') {
-        await handleDeleteAdmin(user.id);
-      }
     } catch (error) {
       console.error('Error deleting user:', error);
     }
@@ -1990,67 +2000,67 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                       <UserEmail>{user.email}</UserEmail>
                     </TableCell>
                     <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
                     </TableCell>
                     <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
+                      {user.last_sign_in 
                       ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
                     </TableCell>
-                  {isCurrentUserAdmin && (
+                    {isCurrentUserAdmin && (
                       <TableCell style={{ width: '120px' }}>
-                    <ActionGroup>
-                        <ActionButton 
+                      <ActionGroup>
+                          <ActionButton 
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEditUser(user);
                           }}
-                          title="Update Info"
-                        >
-                        <FiEdit2 size={18} />
-                      </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
+                            title="Update Info"
+                          >
+                          <FiEdit2 size={18} />
+                        </ActionButton>
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDelete(user);
                               }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setIsConfirmingDelete(null);
                               }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
-                      <ActionButton 
-                        $variant="danger"
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                        <ActionButton 
+                          $variant="danger"
                         onClick={(e) => {
                               e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
-                        }}
-                      >
-                        <FiTrash2 size={18} />
-                      </ActionButton>
-                        )}
-                    </ActionGroup>
+                                setUserToDelete(user);
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
+                          <FiTrash2 size={18} />
+                        </ActionButton>
+                          )}
+                      </ActionGroup>
                       </TableCell>
-                  )}
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -2199,67 +2209,67 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                       <UserEmail>{user.email}</UserEmail>
                     </TableCell>
                     <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
                     </TableCell>
                     <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
+                      {user.last_sign_in 
                       ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
                     </TableCell>
-                  {isCurrentUserAdmin && (
+                    {isCurrentUserAdmin && (
                       <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton 
+                        <ActionGroup>
+                          <ActionButton 
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEditUser(user);
                           }}
-                          title="Update Info"
-                        >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
+                            title="Update Info"
+                          >
+                            <FiEdit2 size={18} />
+                          </ActionButton>
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDelete(user);
                               }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setIsConfirmingDelete(null);
                               }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
-                          <ActionButton 
-                            $variant="danger"
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                            <ActionButton 
+                              $variant="danger"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
-                            }}
-                          >
-                            <FiTrash2 size={18} />
-                          </ActionButton>
-                        )}
-                      </ActionGroup>
+                                setUserToDelete(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          )}
+                        </ActionGroup>
                       </TableCell>
-                  )}
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -2408,67 +2418,67 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                       <UserEmail>{user.email}</UserEmail>
                     </TableCell>
                     <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
                     </TableCell>
                     <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
+                      {user.last_sign_in 
                       ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
                     </TableCell>
-                  {isCurrentUserAdmin && (
+                    {isCurrentUserAdmin && (
                       <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton 
+                        <ActionGroup>
+                          <ActionButton 
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEditUser(user);
                           }}
-                          title="Update Info"
-                        >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
+                            title="Update Info"
+                          >
+                            <FiEdit2 size={18} />
+                          </ActionButton>
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDelete(user);
                               }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setIsConfirmingDelete(null);
                               }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
-                          <ActionButton 
-                            $variant="danger"
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                            <ActionButton 
+                              $variant="danger"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
-                            }}
-                          >
-                            <FiTrash2 size={18} />
-                          </ActionButton>
-                        )}
-                      </ActionGroup>
+                                setUserToDelete(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          )}
+                        </ActionGroup>
                       </TableCell>
-                  )}
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -2499,7 +2509,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               setPasswordsMatch(null);
               setPasswordLength(false);
             }}>
-              <FiX size={20} />
+              <FaTimes size={20} />
             </CloseButton>
           </ModalHeader>
 
@@ -2844,7 +2854,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
           <ModalHeader>
             <ModalTitle>Update User Profile</ModalTitle>
             <CloseButton onClick={handleModalClose}>
-              <FiX size={20} />
+              <FaTimes size={20} />
             </CloseButton>
           </ModalHeader>
 
@@ -3087,7 +3097,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               setIsRoleModalOpen(false);
               setSelectedUser(null);
             }}>
-              <FiX size={20} />
+              <FaTimes size={20} />
             </CloseButton>
           </ModalHeader>
 

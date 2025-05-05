@@ -8,6 +8,22 @@ import {
 } from 'react-icons/fa';
 import { FiX, FiUser } from 'react-icons/fi';
 import { supabase } from '../../lib/supabase';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faUser, faUserShield, faUserPlus, faUserEdit, faUserMinus, faUserCog, 
+  faUsers, faBook, faQuestionCircle, faTrophy, faAward, faCertificate, 
+  faFileAlt, faCommentAlt, faHeadset, faSlidersH, faPalette, faLanguage, 
+  faMoneyBill, faCreditCard, faFileInvoiceDollar, faMoneyCheck, faFileInvoice, 
+  faUndo, faTicketAlt, faPercent, faGift, faUserFriends, faHandshake, 
+  faMoneyBillWave, faMoneyBillTransfer, faMoneyBillTrendUp, faExchangeAlt, 
+  faWallet, faPlusCircle, faMinusCircle, faRandom, faPercentage, faInfoCircle, 
+  faHandHoldingUsd, faCalculator, faBriefcase, faSitemap, faShareAlt, faStar,
+  faLevelUpAlt, faShieldAlt, faSignInAlt, faKey, faMapMarkerAlt, faBuilding,
+  faFileContract, faMoneyCheckAlt, faSync, faChartLine, faBell as faBellIcon,
+  faCog as faCogIcon, faSignOutAlt as faSignOutAltIcon, faEnvelope as faEnvelopeIcon,
+  faPhone as faPhoneIcon, faUserCircle as faUserCircleIcon, faGlobe as faGlobeIcon,
+  faChartLine as faChartLineIcon, faAt, faUserCircle
+} from '@fortawesome/free-solid-svg-icons';
 
 interface ProfileSidebarProps {
   isOpen: boolean;
@@ -57,7 +73,6 @@ const Sidebar = styled.aside<{ $isOpen: boolean }>`
   transition: transform 0.3s ease;
   z-index: 1000;
   overflow-y: auto;
-  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.05);
 `;
 
 const SidebarHeader = styled.div`
@@ -544,6 +559,202 @@ const ActionButton = styled.button`
   }
 `;
 
+const getActivityIcon = (type: string, description: string) => {
+  switch (type) {
+    case 'profile':
+      return <FontAwesomeIcon icon={faUserEdit} className="text-blue-500" />;
+    case 'admin':
+      return <FontAwesomeIcon icon={faUserShield} className="text-purple-500" />;
+    case 'user_creation':
+      return <FontAwesomeIcon icon={faUserPlus} className="text-green-500" />;
+    case 'user_update':
+      return <FontAwesomeIcon icon={faUserEdit} className="text-yellow-500" />;
+    case 'user_deletion':
+      return <FontAwesomeIcon icon={faUserMinus} className="text-red-500" />;
+    case 'role_change':
+      return <FontAwesomeIcon icon={faUserCog} className="text-indigo-500" />;
+    case 'team':
+      return <FontAwesomeIcon icon={faUsers} className="text-blue-500" />;
+    case 'course':
+      return <FontAwesomeIcon icon={faBook} className="text-green-500" />;
+    case 'quiz':
+      return <FontAwesomeIcon icon={faQuestionCircle} className="text-yellow-500" />;
+    case 'achievement':
+      return <FontAwesomeIcon icon={faTrophy} className="text-yellow-500" />;
+    case 'xp':
+      return <FontAwesomeIcon icon={faStar} className="text-yellow-500" />;
+    case 'level':
+      return <FontAwesomeIcon icon={faLevelUpAlt} className="text-green-500" />;
+    case 'badge':
+      return <FontAwesomeIcon icon={faAward} className="text-purple-500" />;
+    case 'certificate':
+      return <FontAwesomeIcon icon={faCertificate} className="text-blue-500" />;
+    case 'resource':
+      return <FontAwesomeIcon icon={faFileAlt} className="text-gray-500" />;
+    case 'feedback':
+      return <FontAwesomeIcon icon={faCommentAlt} className="text-blue-500" />;
+    case 'support':
+      return <FontAwesomeIcon icon={faHeadset} className="text-green-500" />;
+    case 'notification':
+      return <FontAwesomeIcon icon={faBellIcon} className="text-yellow-500" />;
+    case 'security':
+      return <FontAwesomeIcon icon={faShieldAlt} className="text-red-500" />;
+    case 'settings':
+      return <FontAwesomeIcon icon={faCogIcon} className="text-gray-500" />;
+    case 'login':
+      return <FontAwesomeIcon icon={faSignInAlt} className="text-green-500" />;
+    case 'logout':
+      return <FontAwesomeIcon icon={faSignOutAltIcon} className="text-red-500" />;
+    case 'password':
+      return <FontAwesomeIcon icon={faKey} className="text-blue-500" />;
+    case 'email':
+      return <FontAwesomeIcon icon={faEnvelopeIcon} className="text-blue-500" />;
+    case 'phone':
+      return <FontAwesomeIcon icon={faPhoneIcon} className="text-green-500" />;
+    case 'location':
+      return <FontAwesomeIcon icon={faMapMarkerAlt} className="text-red-500" />;
+    case 'company':
+      return <FontAwesomeIcon icon={faBuilding} className="text-gray-500" />;
+    case 'position':
+      return <FontAwesomeIcon icon={faBriefcase} className="text-blue-500" />;
+    case 'department':
+      return <FontAwesomeIcon icon={faSitemap} className="text-purple-500" />;
+    case 'bio':
+      return <FontAwesomeIcon icon={faUserCircleIcon} className="text-blue-500" />;
+    case 'social':
+      return <FontAwesomeIcon icon={faShareAlt} className="text-blue-500" />;
+    case 'preferences':
+      return <FontAwesomeIcon icon={faSlidersH} className="text-gray-500" />;
+    case 'theme':
+      return <FontAwesomeIcon icon={faPalette} className="text-purple-500" />;
+    case 'language':
+      return <FontAwesomeIcon icon={faLanguage} className="text-blue-500" />;
+    case 'timezone':
+      return <FontAwesomeIcon icon={faGlobeIcon} className="text-green-500" />;
+    case 'currency':
+      return <FontAwesomeIcon icon={faMoneyBill} className="text-green-500" />;
+    case 'notification_preferences':
+      return <FontAwesomeIcon icon={faBellIcon} className="text-yellow-500" />;
+    case 'privacy':
+      return <FontAwesomeIcon icon={faUserShield} className="text-blue-500" />;
+    case 'terms':
+      return <FontAwesomeIcon icon={faFileContract} className="text-gray-500" />;
+    case 'subscription':
+      return <FontAwesomeIcon icon={faCreditCard} className="text-blue-500" />;
+    case 'billing':
+      return <FontAwesomeIcon icon={faFileInvoiceDollar} className="text-green-500" />;
+    case 'payment':
+      return <FontAwesomeIcon icon={faMoneyCheck} className="text-green-500" />;
+    case 'invoice':
+      return <FontAwesomeIcon icon={faFileInvoice} className="text-blue-500" />;
+    case 'refund':
+      return <FontAwesomeIcon icon={faUndo} className="text-yellow-500" />;
+    case 'coupon':
+      return <FontAwesomeIcon icon={faTicketAlt} className="text-green-500" />;
+    case 'discount':
+      return <FontAwesomeIcon icon={faPercent} className="text-green-500" />;
+    case 'gift':
+      return <FontAwesomeIcon icon={faGift} className="text-red-500" />;
+    case 'referral':
+      return <FontAwesomeIcon icon={faUserFriends} className="text-blue-500" />;
+    case 'affiliate':
+      return <FontAwesomeIcon icon={faHandshake} className="text-green-500" />;
+    case 'commission':
+      return <FontAwesomeIcon icon={faMoneyBillWave} className="text-green-500" />;
+    case 'payout':
+      return <FontAwesomeIcon icon={faMoneyCheckAlt} className="text-green-500" />;
+    case 'withdrawal':
+      return <FontAwesomeIcon icon={faMoneyBillTransfer} className="text-yellow-500" />;
+    case 'deposit':
+      return <FontAwesomeIcon icon={faMoneyBillTrendUp} className="text-green-500" />;
+    case 'transaction':
+      return <FontAwesomeIcon icon={faExchangeAlt} className="text-blue-500" />;
+    case 'balance':
+      return <FontAwesomeIcon icon={faWallet} className="text-green-500" />;
+    case 'credit':
+      return <FontAwesomeIcon icon={faPlusCircle} className="text-green-500" />;
+    case 'debit':
+      return <FontAwesomeIcon icon={faMinusCircle} className="text-red-500" />;
+    case 'transfer':
+      return <FontAwesomeIcon icon={faRandom} className="text-blue-500" />;
+    case 'exchange':
+      return <FontAwesomeIcon icon={faExchangeAlt} className="text-yellow-500" />;
+    case 'conversion':
+      return <FontAwesomeIcon icon={faSync} className="text-blue-500" />;
+    case 'rate':
+      return <FontAwesomeIcon icon={faChartLineIcon} className="text-green-500" />;
+    case 'fee':
+      return <FontAwesomeIcon icon={faHandHoldingUsd} className="text-red-500" />;
+    case 'tax':
+      return <FontAwesomeIcon icon={faCalculator} className="text-gray-500" />;
+    case 'vat':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'gst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'hst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'pst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'qst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'cst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'mst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'ast':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'nst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'sst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'ist':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'gst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'cst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'mst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'ast':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'nst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'sst':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'ist':
+      return <FontAwesomeIcon icon={faPercentage} className="text-gray-500" />;
+    case 'username':
+      return <FontAwesomeIcon icon={faAt} className="text-blue-500" />;
+    case 'name':
+      return <FontAwesomeIcon icon={faUser} className="text-blue-500" />;
+    case 'profile_picture':
+      return <FontAwesomeIcon icon={faUserCircle} className="text-blue-500" />;
+    case 'gender':
+      return <FontAwesomeIcon icon={faUser} className="text-purple-500" />;
+    case 'password_change':
+      return <FontAwesomeIcon icon={faKey} className="text-green-500" />;
+    case 'profile_picture_change':
+      return <FontAwesomeIcon icon={faUserCircle} className="text-blue-500" />;
+    case 'gender_change':
+      // Extract the new gender from the description
+      const genderMatch = description.match(/to\s+"([^"]+)"/i);
+      const newGender = genderMatch ? genderMatch[1].toLowerCase() : null;
+      
+      if (newGender === 'male') {
+        return <FaMale size={18} className="text-blue-500" />;
+      } else if (newGender === 'female') {
+        return <FaFemale size={18} className="text-pink-500" />;
+      } else if (newGender === 'other') {
+        return <FaTransgender size={18} className="text-purple-500" />;
+      } else if (newGender === 'prefer not to say') {
+        return <FaQuestion size={18} className="text-gray-500" />;
+      }
+      return <FaQuestion size={18} className="text-gray-500" />;
+    default:
+      return <FontAwesomeIcon icon={faInfoCircle} className="text-gray-500" />;
+  }
+};
+
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profile }) => {
   const [isInfoVisible, setIsInfoVisible] = React.useState(false);
   const [visibleDates, setVisibleDates] = React.useState<Record<string, boolean>>({});
@@ -556,6 +767,24 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
     date: string;
     time: string;
   }>>([]);
+
+  // Add click outside handler
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const sidebar = document.getElementById('profile-sidebar');
+      if (sidebar && !sidebar.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
 
   React.useEffect(() => {
     const fetchRecentActivity = async () => {
@@ -640,7 +869,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
   if (!profile) return null;
 
   return (
-    <Sidebar $isOpen={isOpen}>
+    <Sidebar $isOpen={isOpen} id="profile-sidebar">
       <SidebarHeader>
         <SidebarTitle>Profile Details</SidebarTitle>
         <CloseButton onClick={onClose}>
@@ -770,19 +999,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
                   <ActivityGroup $isVisible={visibleDates[date]}>
                     {activities.slice(0, visibleItems[date]).map((activity) => (
                       <ActivityItem key={activity.id}>
-                        {activity.type === 'profile' && activity.description.includes('Gender') && (
-                          activity.description.includes('to "Male"') ? <FaMale size={18} /> :
-                          activity.description.includes('to "Female"') ? <FaFemale size={18} /> :
-                          activity.description.includes('to "Other"') ? <FaTransgender size={18} /> :
-                          activity.description.includes('to "Prefer-not-to-say"') ? <FaQuestion size={18} /> :
-                          <FaQuestion size={18} />
-                        )}
-                        {activity.type === 'profile' && activity.description.includes('Phone') && <FaPhone size={18} />}
-                        {activity.type === 'profile' && activity.description.includes('Username') && <FaAt size={18} />}
-                        {activity.type === 'profile' && activity.description.includes('Password') && <FaLock size={18} />}
-                        {activity.type === 'profile' && activity.description.includes('Profile Picture') && <FaUserCircle size={18} />}
-                        {activity.type === 'admin' && <FaUserPlus size={18} />}
-                        {activity.type === 'profile' && !activity.description.includes('Gender') && !activity.description.includes('Phone') && !activity.description.includes('Username') && !activity.description.includes('Password') && !activity.description.includes('Profile Picture') && <FaUser size={18} />}
+                        {getActivityIcon(activity.type, activity.description)}
                         <ActivityContent>
                           <p>{activity.description.replace('Removed Gender', 'Unset Gender')}</p>
                           <span>{activity.time}</span>

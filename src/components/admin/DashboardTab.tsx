@@ -785,7 +785,7 @@ const DashboardTab: React.FC = () => {
 
           <ContentGrid>
             <ActivityFeed>
-              <SectionTitle>Recent Activity</SectionTitle>
+              <SectionTitle>Recent Activities</SectionTitle>
               <ActivityList>
                 {recentActivities.map((activity) => (
                   <ActivityItem key={activity.id}>
