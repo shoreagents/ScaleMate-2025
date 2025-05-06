@@ -185,23 +185,6 @@ export default function FormSection() {
     const isAuthenticated = await checkAuth();
     if (isAuthenticated) {
       setIsDownloadModalOpen(true);
-      // Trigger the download
-      const downloadUrl = '/api/blueprints/download'; // Replace with actual API endpoint
-      fetch(downloadUrl)
-        .then(response => response.blob())
-        .then(blob => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'job-blueprint.pdf';
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          a.remove();
-        })
-        .catch(error => {
-          console.error('Error downloading blueprint:', error);
-        });
     } else {
       setIsLoginModalOpen(true);
     }
@@ -210,23 +193,6 @@ export default function FormSection() {
   const handleAuthSuccess = () => {
     setIsLoginModalOpen(false);
     setIsDownloadModalOpen(true);
-    // Trigger the download
-    const downloadUrl = '/api/blueprints/download'; // Replace with actual API endpoint
-    fetch(downloadUrl)
-      .then(response => response.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'job-blueprint.pdf';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-      })
-      .catch(error => {
-        console.error('Error downloading blueprint:', error);
-      });
   };
 
   return (
