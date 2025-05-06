@@ -282,7 +282,7 @@ const InfoLabel = styled.span`
 `;
 
 const InfoValue = styled.span`
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   color: rgba(15,23,42,0.7);
   font-weight: 500;
 `;
