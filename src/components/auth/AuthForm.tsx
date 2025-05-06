@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
-import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
 import { createClient } from '@supabase/supabase-js';
 
 const FormContainer = styled.div`
@@ -51,7 +51,6 @@ const FormFields = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
-  padding-bottom: 1rem;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -75,7 +74,6 @@ const FormActions = styled.div`
   padding-top: 1rem;
   position: sticky;
   bottom: 0;
-  background: white;
   z-index: 1;
 `;
 
@@ -89,6 +87,8 @@ const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  text-align: left;
+  display: block;
 `;
 
 const Input = styled.input`
@@ -171,14 +171,12 @@ const ForgotPasswordLink = styled.button`
   }
 `;
 
-const MessageContainer = styled.div`
-  padding: 0.75rem;
-  border-radius: 8px;
+const MessageContainer = styled.div<{ $isSuccess?: boolean }>`
   font-size: 0.75rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 4px;
+  color: ${props => props.$isSuccess ? props.theme.colors.success : props.theme.colors.error};
 `;
 
 const PasswordInputContainer = styled.div`
@@ -213,8 +211,7 @@ const ViewPasswordButton = styled.button`
 const PasswordInputGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 8px;
+  gap: 8px;
 `;
 
 const PasswordLabelContainer = styled.div`
@@ -300,9 +297,12 @@ const GoogleButton = styled.button`
 interface AuthFormProps {
   onSuccess?: (message: string) => void;
   onError?: (error: string) => void;
+  preventRedirect?: boolean;
+  hideLinks?: boolean;
+  redirectUrl?: string;
 }
 
-export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
+export default function AuthForm({ onSuccess, onError, preventRedirect = false, hideLinks = false, redirectUrl }: AuthFormProps) {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -311,7 +311,44 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerification, setShowVerification] = useState(false);
   const router = useRouter();
+
+  const handleVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: loginIdentifier,
+        token: verificationCode,
+        type: 'email'
+      });
+
+      if (verifyError) {
+        throw verifyError;
+      }
+
+      setSuccess('Email verified successfully!');
+      
+      // If we're in the blueprint modal, stay in the modal
+      if (preventRedirect) {
+        onSuccess?.('Email verified successfully!');
+      } else {
+        // Otherwise redirect to login
+        router.push('/login');
+      }
+    } catch (err) {
+      console.error('Verification error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
+      setError(errorMessage);
+      onError?.(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,74 +362,48 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
       
       let loginEmail = loginIdentifier;
       
-      // If it's not an email, try to find the user by username
+      // If not an email, try to get the email from the username
       if (!isEmail) {
-        // Create a client with service role key for admin access
-        const serviceRoleClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
-
-        // First, get the user_id from user_profiles
-        const { data: userProfile, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('user_id')
+        const { data: profile } = await supabase
+          .from('user_details')
+          .select('email')
           .eq('username', loginIdentifier)
           .single();
 
-        if (profileError) {
-          throw new Error('Account does not exist');
+        if (!profile) {
+          throw new Error('Invalid username or email');
         }
-
-        if (!userProfile) {
-          throw new Error('Account does not exist');
-        }
-
-        // Then, get the user's email from the users table
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('email')
-          .eq('id', userProfile.user_id)
-          .single();
-
-        if (userError || !userData?.email) {
-          throw new Error('Account does not exist');
-        }
-
-        loginEmail = userData.email;
+        loginEmail = profile.email;
       }
 
-      const { data: { user }, error } = await supabase.auth.signInWithPassword({
+      // Sign in with email and password
+      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
         email: loginEmail,
-        password,
+        password
       });
 
-      if (error) {
-        throw error;
+      if (signInError) {
+        // Check if the error is due to unconfirmed email
+        if (signInError.message.includes('Email not confirmed')) {
+          setShowVerification(true);
+          setSuccess('Please verify your email address');
+          return;
+        }
+        throw signInError;
       }
 
-      if (!user?.id) {
-        throw new Error('User ID not found after login');
+      if (!user) {
+        throw new Error('No user found');
       }
 
-      // Get user's role from user_roles
-      const { data: roles, error: rolesError } = await supabase
+      // Get user's role
+      const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id);
 
-      if (rolesError) {
-        throw new Error('Error fetching user roles');
-      }
-
       if (!roles || roles.length === 0) {
-        throw new Error('User has no roles assigned. Please contact support.');
+        throw new Error('No role assigned to user');
       }
 
       const userRoles = roles.map(r => r.role);
@@ -400,15 +411,18 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
       setSuccess('Successfully signed in!');
       onSuccess?.('Successfully signed in!');
 
-      // Redirect based on role immediately
-      if (userRoles.includes('admin')) {
-        router.push('/admin/dashboard');
-      } else if (userRoles.includes('moderator')) {
-        router.push('/admin/dashboard');
-      } else if (userRoles.includes('user')) {
-        router.push('/user/dashboard');
-      } else {
-        throw new Error('User has no valid role assigned. Please contact support.');
+      // Only redirect if preventRedirect is false
+      if (!preventRedirect) {
+        // Redirect based on role immediately
+        if (userRoles.includes('admin')) {
+          router.push('/admin/dashboard');
+        } else if (userRoles.includes('moderator')) {
+          router.push('/admin/dashboard');
+        } else if (userRoles.includes('user')) {
+          router.push('/user/dashboard');
+        } else {
+          throw new Error('User has no valid role assigned. Please contact support.');
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -454,7 +468,7 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl || `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
@@ -497,6 +511,51 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
     );
   };
 
+  if (showVerification) {
+    return (
+      <FormContainer>
+        <Title>Verify Your Email</Title>
+        <Subtitle>Please enter the verification code sent to your email</Subtitle>
+        <Form onSubmit={handleVerification}>
+          <FormContent>
+            <FormFields>
+              <InputGroup>
+                <Label htmlFor="verificationCode">Verification Code</Label>
+                <Input
+                  id="verificationCode"
+                  type="text"
+                  placeholder="Enter verification code"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  required
+                />
+                {error && (
+                  <MessageContainer>
+                    <FiX size={14} />
+                    {error}
+                  </MessageContainer>
+                )}
+              </InputGroup>
+            </FormFields>
+            <FormActions>
+              <ButtonContainer>
+                <SecondaryButton type="button" onClick={() => setShowVerification(false)}>
+                  Back to Sign In
+                </SecondaryButton>
+                <Button 
+                  type="submit" 
+                  disabled={isLoading || !verificationCode}
+                >
+                  {isLoading ? 'Verifying...' : 'Verify Email'}
+                </Button>
+              </ButtonContainer>
+            </FormActions>
+          </FormContent>
+        </Form>
+      </FormContainer>
+    );
+  }
+
   return (
     <FormContainer>
       {showResetForm ? (
@@ -517,6 +576,12 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
                     required
                   />
                 </InputGroup>
+                {error && (
+                  <MessageContainer>
+                    <FiX size={14} />
+                    {error}
+                  </MessageContainer>
+                )}
               </FormFields>
               <FormActions>
                 <ButtonContainer>
@@ -567,22 +632,30 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
                       Forgot Your Password?
                     </ForgotPasswordLink>
                   </PasswordLabelContainer>
-                  <PasswordInputContainer>
-                    <PasswordInput
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                    <ViewPasswordButton
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </ViewPasswordButton>
-                  </PasswordInputContainer>
+                  <PasswordInputGroup>
+                    <PasswordInputContainer>
+                      <PasswordInput
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <ViewPasswordButton
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </ViewPasswordButton>
+                    </PasswordInputContainer>
+                    {error && (
+                      <MessageContainer>
+                        <FiX size={14} />
+                        {error}
+                      </MessageContainer>
+                    )}
+                  </PasswordInputGroup>
                 </InputGroup>
               </FormFields>
               <FormActions>
@@ -594,9 +667,11 @@ export default function AuthForm({ onSuccess, onError }: AuthFormProps) {
                     {isLoading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </ButtonContainer>
-                <SignUpLink>
-                  Don't have an account? <a href="/signup">Sign Up Now</a>
-                </SignUpLink>
+                {!hideLinks && (
+                  <SignUpLink>
+                    Don't have an account? <a href="/signup">Sign Up Now</a>
+                  </SignUpLink>
+                )}
               </FormActions>
             </FormContent>
           </Form>

@@ -6,6 +6,7 @@ interface ModalProps {
   onClose: () => void;
   children: React.ReactNode;
   title?: string;
+  closeOnOverlayClick?: boolean;
 }
 
 const ModalOverlay = styled.div<{ isOpen: boolean }>`
@@ -24,25 +25,32 @@ const ModalContainer = styled.div`
   z-index: 50;
   display: flex;
   min-height: 100%;
-  padding: 1.5rem;
+  padding: 1rem;
   justify-content: center;
   align-items: center;
+
+  @media (min-width: 640px) {
+    padding: 1.5rem;
+  }
 `;
 
 const ModalContent = styled.div`
   background-color: white;
-  padding: 2rem;
+  padding: 1.5rem;
   border-radius: 0.75rem;
   width: 100%;
   max-width: 32rem;
   position: relative;
-  transform: scale(1);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   border: 1px solid #E5E7EB;
-  transition: transform 0.2s ease-in-out;
 
-  &:hover {
-    transform: scale(1.01);
+  @media (min-width: 640px) {
+    transform: scale(1);
+    transition: transform 0.2s ease-in-out;
+
+    &:hover {
+      transform: scale(1.01);
+    }
   }
 `;
 
@@ -53,11 +61,11 @@ const ModalTitle = styled.h3`
   margin-bottom: 1rem;
 `;
 
-export const Modal = ({ isOpen, onClose, children, title }: ModalProps) => {
+export const Modal = ({ isOpen, onClose, children, title, closeOnOverlayClick = true }: ModalProps) => {
   if (!isOpen) return null;
 
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
+    if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();
     }
   };
@@ -66,7 +74,7 @@ export const Modal = ({ isOpen, onClose, children, title }: ModalProps) => {
     <>
       <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick} />
       <ModalContainer onClick={handleOverlayClick}>
-        <ModalContent>
+        <ModalContent onClick={(e) => e.stopPropagation()}>
           {title && <ModalTitle>{title}</ModalTitle>}
           {children}
         </ModalContent>

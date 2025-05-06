@@ -132,7 +132,6 @@ export default function AuthCallback() {
               profile_picture: highQualityAvatarUrl || null
             };
 
-
             const { error: profileError } = await serviceRoleClient
               .from('user_profiles')
               .insert(profileData);
@@ -141,7 +140,6 @@ export default function AuthCallback() {
               console.error('Profile creation error:', profileError);
               window.location.reload();
               return;
-
             }
           }
 
@@ -178,7 +176,14 @@ export default function AuthCallback() {
         // Check if setup is needed
         const needsSetup = !profile?.username;
         
-        if (needsSetup) {
+        // Check if we came from the blueprint modal
+        const fromBlueprintModal = router.query.from === 'blueprint-modal';
+        
+        if (fromBlueprintModal) {
+          // If we came from the blueprint modal, redirect back to the same page
+          // The modal will be reopened automatically
+          router.push(router.query.redirectTo as string || '/');
+        } else if (needsSetup) {
           // Redirect to dashboard instead of setup
           router.push('/user/dashboard');
         } else {
