@@ -67,9 +67,11 @@ const PrimaryButton = styled.button`
   width: 280px;
   border: none;
   cursor: pointer;
+  font-size: 1rem;
+  min-width: 280px;
 
   @media (min-width: 768px) {
-    width: auto;
+    width: 280px;
   }
 
   &:hover {
@@ -90,9 +92,11 @@ const SecondaryButton = styled(Link)`
   transition: background-color 0.2s;
   justify-content: center;
   width: 280px;
+  font-size: 1rem;
+  min-width: 280px;
 
   @media (min-width: 768px) {
-    width: auto;
+    width: 280px;
   }
 
   &:hover {
