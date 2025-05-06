@@ -124,72 +124,6 @@ const TestimonialContainer = styled.div<{ $isVisible: boolean }>`
   transition: all 0.5s ease-in-out;
 `;
 
-const ErrorMessage = styled.div`
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  background-color: #FEE2E2;
-  color: #DC2626;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  animation: slideIn 0.3s ease-out;
-  z-index: 10;
-  &::before {
-    content: "✕";
-    font-size: 1rem;
-    font-weight: bold;
-  }
-
-  @keyframes slideIn {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-`;
-
-const SuccessMessage = styled.div`
-  position: fixed;
-  top: 2rem;
-  right: 2rem;
-  background-color: #D1FAE5;
-  color: #059669;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  animation: slideIn 0.3s ease-out;
-  z-index: 10;
-  &::before {
-    content: "✓";
-    font-size: 1rem;
-    font-weight: bold;
-  }
-
-  @keyframes slideIn {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-`;
-
 const testimonials = [
   {
     id: 1,
@@ -219,8 +153,6 @@ const LoginPage = () => {
   const theme = useTheme();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -259,29 +191,15 @@ const LoginPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Add effect to clear messages after 2 seconds
-  useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        setError(null);
-        setSuccess(null);
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [error, success]);
-
   return (
     <LoginContainer>
       <AuthColumn>
         <Logo href="/">ScaleMate</Logo>
         <AuthFormContainer>
-          <AuthForm onError={setError} onSuccess={setSuccess} />
+          <AuthForm />
         </AuthFormContainer>
       </AuthColumn>
       <TestimonialsColumn>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        {success && <SuccessMessage>{success}</SuccessMessage>}
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <QuoteIcon>
             <FaQuoteLeft />

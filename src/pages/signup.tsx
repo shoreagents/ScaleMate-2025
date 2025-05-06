@@ -313,9 +313,6 @@ const SignUpPage = () => {
         </AuthFormContainer>
       </AuthColumn>
       <TestimonialsColumn>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-        {success && <SuccessMessage>{success}</SuccessMessage>}
-       
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <QuoteIcon>
             <FaQuoteLeft />
