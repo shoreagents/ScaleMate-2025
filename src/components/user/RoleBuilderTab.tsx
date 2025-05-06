@@ -51,6 +51,11 @@ const StepCircle = styled.div<{ $active?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${props => props.$active ? '#4F46E5' : '#D1D5DB'};
+  }
 `;
 
 const StepLine = styled.div<{ $active?: boolean }>`
@@ -218,27 +223,59 @@ const RoleBuilderTab: React.FC = () => {
     setCurrentStep(prev => prev - 1);
   };
 
+  const handleStepClick = (stepNumber: number) => {
+    // Only allow clicking on steps that have been completed or are the next step
+    if (stepNumber <= currentStep + 1) {
+      setCurrentStep(stepNumber);
+    }
+  };
+
   return (
     <MainContent>
       <Container>
         <ProgressSteps>
           <StepContainer>
-            <StepCircle $active={currentStep >= 1}>1</StepCircle>
+            <StepCircle 
+              $active={currentStep >= 1} 
+              onClick={() => handleStepClick(1)}
+            >
+              1
+            </StepCircle>
             <StepLine $active={currentStep >= 2} />
           </StepContainer>
           <StepContainer>
-            <StepCircle $active={currentStep >= 2}>2</StepCircle>
+            <StepCircle 
+              $active={currentStep >= 2} 
+              onClick={() => handleStepClick(2)}
+            >
+              2
+            </StepCircle>
             <StepLine $active={currentStep >= 3} />
           </StepContainer>
           <StepContainer>
-            <StepCircle $active={currentStep >= 3}>3</StepCircle>
+            <StepCircle 
+              $active={currentStep >= 3} 
+              onClick={() => handleStepClick(3)}
+            >
+              3
+            </StepCircle>
             <StepLine $active={currentStep >= 4} />
           </StepContainer>
           <StepContainer>
-            <StepCircle $active={currentStep >= 4}>4</StepCircle>
+            <StepCircle 
+              $active={currentStep >= 4} 
+              onClick={() => handleStepClick(4)}
+            >
+              4
+            </StepCircle>
             <StepLine $active={currentStep >= 5} />
           </StepContainer>
-          <StepCircle $active={currentStep >= 5}>5</StepCircle>
+          <StepCircle 
+            $active={currentStep >= 5} 
+            onClick={() => handleStepClick(5)}
+          >
+            5
+          </StepCircle>
         </ProgressSteps>
 
         {currentStep === 1 && (
