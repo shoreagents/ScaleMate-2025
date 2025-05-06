@@ -38,6 +38,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
+import { DownloadBlueprintModal } from '@/components/quote/DownloadBlueprintModal';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -155,6 +156,17 @@ const DashboardPage = () => {
   const [showAuthCallback, setShowAuthCallback] = useState(false);
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+
+  useEffect(() => {
+    // Check for showDownloadModal parameter
+    const { showDownloadModal: shouldShowDownload } = router.query;
+    if (shouldShowDownload === 'true') {
+      setShowDownloadModal(true);
+      // Remove the parameter from the URL without refreshing
+      router.replace('/user/dashboard', undefined, { shallow: true });
+    }
+  }, [router.query]);
 
   const checkAuth = async () => {
     try {
@@ -334,6 +346,10 @@ const DashboardPage = () => {
           </SuccessModalContent>
         </SuccessModal>
       )}
+      <DownloadBlueprintModal 
+        isOpen={showDownloadModal} 
+        onClose={() => setShowDownloadModal(false)} 
+      />
     </NoNavbarLayout>
   );
 };
