@@ -250,18 +250,18 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
       const url = new URL(window.location.href);
       // Add a query parameter to identify this is from the blueprint modal
       url.searchParams.set('from', 'blueprint-modal');
+      // Store the current URL to return to after auth
+      url.searchParams.set('redirectTo', window.location.pathname + window.location.search);
       return url.toString();
     }
     return '';
   };
 
   const handleAuthSuccess = (message: string) => {
-    // Close the modal for both signup and login
-    handleClose();
-    
-    // For login view, trigger onAuthSuccess
+    // For login view, trigger onAuthSuccess and show download modal
     if (currentView === 'login' && onAuthSuccess) {
       onAuthSuccess();
+      setShowDownloadModal(true);
     }
     // For signup view, show download modal
     else if (currentView === 'signup') {
