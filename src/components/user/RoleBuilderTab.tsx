@@ -1,5 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
+import Step1 from './role-builder-components/Step1';
+import Step2 from './role-builder-components/Step2';
+import Step3 from './role-builder-components/Step3';
+import Step4 from './role-builder-components/Step4';
+import Step5 from './role-builder-components/Step5';
 import { 
   FaBriefcase, 
   FaUsers, 
@@ -16,8 +21,7 @@ const MainContent = styled.main`
 `;
 
 const Container = styled.div`
-  padding: 1.5rem;
-  max-width: 72rem;
+  max-width: 100%;
   margin: 0 auto;
 `;
 
@@ -174,14 +178,20 @@ const ActionButtons = styled.div`
 `;
 
 const ActionButton = styled.button`
-  color: rgba(15, 23, 42, 0.7);
-  display: flex;
+display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  padding: 0.5rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  color: #0F172A;
 
   &:hover {
-    color: #0F172A;
+    background-color: #F9FAFB;
+  }
+
+  svg {
+    color: rgba(15, 23, 42, 0.7);
   }
 `;
 
@@ -198,107 +208,95 @@ const PreviewText = styled.p`
 
 const RoleBuilderTab: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = React.useState<string>('sales');
+  const [currentStep, setCurrentStep] = React.useState<number>(1);
+
+  const handleContinue = () => {
+    setCurrentStep(prev => prev + 1);
+  };
+
+  const handleBack = () => {
+    setCurrentStep(prev => prev - 1);
+  };
 
   return (
     <MainContent>
-      <ProgressSteps>
-        <StepContainer>
-          <StepCircle $active>1</StepCircle>
-          <StepLine $active />
-        </StepContainer>
-        <StepContainer>
-          <StepCircle>2</StepCircle>
-          <StepLine />
-        </StepContainer>
-        <StepContainer>
-          <StepCircle>3</StepCircle>
-          <StepLine />
-        </StepContainer>
-        <StepContainer>
-          <StepCircle>4</StepCircle>
-          <StepLine />
-        </StepContainer>
-        <StepCircle>5</StepCircle>
-      </ProgressSteps>
+      <Container>
+        <ProgressSteps>
+          <StepContainer>
+            <StepCircle $active={currentStep >= 1}>1</StepCircle>
+            <StepLine $active={currentStep >= 2} />
+          </StepContainer>
+          <StepContainer>
+            <StepCircle $active={currentStep >= 2}>2</StepCircle>
+            <StepLine $active={currentStep >= 3} />
+          </StepContainer>
+          <StepContainer>
+            <StepCircle $active={currentStep >= 3}>3</StepCircle>
+            <StepLine $active={currentStep >= 4} />
+          </StepContainer>
+          <StepContainer>
+            <StepCircle $active={currentStep >= 4}>4</StepCircle>
+            <StepLine $active={currentStep >= 5} />
+          </StepContainer>
+          <StepCircle $active={currentStep >= 5}>5</StepCircle>
+        </ProgressSteps>
 
-      <Section>
-        <SectionTitle>Pick a Department</SectionTitle>
-        <DepartmentGrid>
-          <DepartmentCard 
-            $selected={selectedDepartment === 'sales'}
-            onClick={() => setSelectedDepartment('sales')}
-          >
-            <CardHeader>
-              <IconContainer $selected={selectedDepartment === 'sales'}>
-                <FaBriefcase />
-              </IconContainer>
-              <RadioCircle $selected={selectedDepartment === 'sales'}>
-                {selectedDepartment === 'sales' && <RadioDot />}
-              </RadioCircle>
-            </CardHeader>
-            <CardTitle>Sales</CardTitle>
-            <CardDescription>Sales, Business Development, Account Management</CardDescription>
-          </DepartmentCard>
+        {currentStep === 1 && (
+          <Step1
+            selectedDepartment={selectedDepartment}
+            onDepartmentSelect={setSelectedDepartment}
+            onContinue={handleContinue}
+          />
+        )}
 
-          <DepartmentCard 
-            $selected={selectedDepartment === 'admin'}
-            onClick={() => setSelectedDepartment('admin')}
-          >
-            <CardHeader>
-              <IconContainer $selected={selectedDepartment === 'admin'}>
-                <FaUsers />
-              </IconContainer>
-              <RadioCircle $selected={selectedDepartment === 'admin'}>
-                {selectedDepartment === 'admin' && <RadioDot />}
-              </RadioCircle>
-            </CardHeader>
-            <CardTitle>Admin</CardTitle>
-            <CardDescription>Executive Assistant, Office Management, Support</CardDescription>
-          </DepartmentCard>
+        {currentStep === 2 && (
+          <Step2
+            onBack={handleBack}
+            onContinue={handleContinue}
+          />
+        )}
 
-          <DepartmentCard 
-            $selected={selectedDepartment === 'operations'}
-            onClick={() => setSelectedDepartment('operations')}
-          >
-            <CardHeader>
-              <IconContainer $selected={selectedDepartment === 'operations'}>
-                <FaGears />
-              </IconContainer>
-              <RadioCircle $selected={selectedDepartment === 'operations'}>
-                {selectedDepartment === 'operations' && <RadioDot />}
-              </RadioCircle>
-            </CardHeader>
-            <CardTitle>Operations</CardTitle>
-            <CardDescription>Project Management, Process, Systems</CardDescription>
-          </DepartmentCard>
-        </DepartmentGrid>
+        {currentStep === 3 && (
+          <Step3
+            onBack={handleBack}
+            onContinue={handleContinue}
+          />
+        )}
 
-        <ButtonContainer>
-          <ContinueButton>
-            Continue to Tasks
-            <FaArrowRight />
-          </ContinueButton>
-        </ButtonContainer>
-      </Section>
+        {currentStep === 4 && (
+          <Step4
+            onBack={handleBack}
+            onContinue={handleContinue}
+          />
+        )}
 
-      <PreviewPanel>
-        <PreviewHeader>
-          <PreviewTitle>Role Preview</PreviewTitle>
-          <ActionButtons>
-            <ActionButton>
-              <FaRegBookmark />
-              <span>Save Draft</span>
-            </ActionButton>
-            <ActionButton>
-              <FaRegCopy />
-              <span>Duplicate</span>
-            </ActionButton>
-          </ActionButtons>
-        </PreviewHeader>
-        <PreviewContent>
-          <PreviewText>Complete all steps to generate your full role blueprint...</PreviewText>
-        </PreviewContent>
-      </PreviewPanel>
+        {currentStep === 5 && (
+          <Step5
+            onBack={handleBack}
+          />
+        )}
+      </Container>
+
+      {currentStep !== 5 && (
+        <PreviewPanel>
+          <PreviewHeader>
+            <PreviewTitle>Role Preview</PreviewTitle>
+            <ActionButtons>
+              <ActionButton>
+                <FaRegBookmark />
+                <span>Save Draft</span>
+              </ActionButton>
+              <ActionButton>
+                <FaRegCopy />
+                <span>Duplicate</span>
+              </ActionButton>
+            </ActionButtons>
+          </PreviewHeader>
+          <PreviewContent>
+            <PreviewText>Complete all steps to generate your full role blueprint...</PreviewText>
+          </PreviewContent>
+        </PreviewPanel>
+      )}
     </MainContent>
   );
 };
