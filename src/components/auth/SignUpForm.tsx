@@ -10,6 +10,10 @@ const FormContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 640px) {
+    padding: 0;
+  }
 `;
 
 const Title = styled.h1`
@@ -140,6 +144,10 @@ const Input = styled.input`
   color: ${props => props.theme.colors.text.primary};
   transition: all 0.2s ease;
 
+  @media (max-width: 640px) {
+    width: 100%;
+  }
+
   &:focus {
     outline: none;
     border-color: ${props => props.theme.colors.primary};
@@ -235,6 +243,11 @@ const FormRow = styled.div`
   display: flex;
   gap: 1rem;
   width: 100%;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 0.875rem;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -242,6 +255,11 @@ const FormGroup = styled.div`
   flex-direction: column;
   gap: 0.5rem;
   flex: 1;
+  width: 100%;
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
 `;
 
 const PasswordSection = styled.div`
@@ -253,9 +271,13 @@ const PasswordSection = styled.div`
 interface SignUpFormProps {
   onSuccess?: (message: string) => void;
   onError?: (error: string | null) => void;
+  hideLinks?: boolean;
+  preventRedirect?: boolean;
+  redirectUrl?: string;
+  onVerificationStateChange?: (isVerifying: boolean) => void;
 }
 
-export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
+export default function SignUpForm({ onSuccess, onError, hideLinks = false, preventRedirect = false, redirectUrl, onVerificationStateChange }: SignUpFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
@@ -265,6 +287,8 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
     firstName: '',
     lastName: ''
   });
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerification, setShowVerification] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -400,6 +424,47 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
     }
   };
 
+  const setShowVerificationWithCallback = (value: boolean) => {
+    setShowVerification(value);
+    onVerificationStateChange?.(value);
+  };
+
+  const handleVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: formData.email,
+        token: verificationCode,
+        type: 'signup'
+      });
+
+      if (verifyError) {
+        throw verifyError;
+      }
+
+      setSuccess('Email verified successfully!');
+      setShowVerificationWithCallback(false);
+      
+      // If we're in the blueprint modal, stay in the modal
+      if (preventRedirect) {
+        onSuccess?.('Email verified successfully!');
+      } else {
+        // Otherwise redirect to login
+        router.push('/login');
+      }
+    } catch (err) {
+      console.error('Verification error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
+      setError(errorMessage);
+      onError?.(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -409,37 +474,44 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
     try {
       // Validate passwords
       if (!validatePasswords(formData.password, formData.confirmPassword)) {
-        throw new Error('Passwords do not match');
+        setError('Passwords do not match');
+        return;
       }
 
       // Validate username
       if (usernameExists) {
-        throw new Error('Username is already taken');
+        setError('Username is already taken');
+        return;
       }
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        throw new Error('Please enter a valid email address');
+        setError('Please enter a valid email address');
+        return;
       }
 
       // Check if email exists
       if (emailExists) {
+        setError('An account with this email already exists');
         onError?.('An account with this email already exists');
         return;
       }
 
       // Validate password length
       if (formData.password.length < 8) {
-        throw new Error('Password must be at least 8 characters long');
+        setError('Password must be at least 8 characters long');
+        return;
       }
 
       // Validate first name and last name
       if (!formData.firstName.trim()) {
-        throw new Error('First name is required');
+        setError('First name is required');
+        return;
       }
       if (!formData.lastName.trim()) {
-        throw new Error('Last name is required');
+        setError('Last name is required');
+        return;
       }
 
       // Create a client with service role key for admin operations
@@ -469,11 +541,20 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
 
       if (signUpError) {
         console.error('Sign up error:', signUpError);
-        throw new Error(signUpError.message || 'Failed to create account');
+        if (signUpError.message.includes('duplicate key value')) {
+          setError('An account with this email already exists');
+          onError?.('An account with this email already exists');
+          return;
+        }
+        setError(signUpError.message || 'Failed to create account');
+        onError?.(signUpError.message || 'Failed to create account');
+        return;
       }
 
       if (!user) {
-        throw new Error('Failed to create user account');
+        setError('Failed to create user account');
+        onError?.('Failed to create user account');
+        return;
       }
 
       // 2. Check if user already exists in users table
@@ -490,21 +571,28 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
 
       // Only insert if user doesn't exist
       if (!existingUser) {
-      const { error: userError } = await serviceRoleClient
-        .from('users')
-        .insert({
-          id: user.id,
-          email: formData.email,
-          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-          is_active: true
-        });
+        const { error: userError } = await serviceRoleClient
+          .from('users')
+          .insert({
+            id: user.id,
+            email: formData.email,
+            full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+            is_active: true
+          });
 
-      if (userError) {
-        console.error('User creation error:', userError);
-        // If user creation fails, try to delete the auth user to maintain consistency
-        await supabase.auth.admin.deleteUser(user.id);
-        throw new Error('Failed to create user record: ' + userError.message);
-      }
+        if (userError) {
+          console.error('User creation error:', userError);
+          // If user creation fails, try to delete the auth user to maintain consistency
+          await supabase.auth.admin.deleteUser(user.id);
+          if (userError.message.includes('duplicate key value')) {
+            setError('An account with this email already exists');
+            onError?.('An account with this email already exists');
+            return;
+          }
+          setError('Failed to create user record: ' + userError.message);
+          onError?.('Failed to create user record: ' + userError.message);
+          return;
+        }
       }
 
       // 3. Check if profile exists
@@ -521,25 +609,51 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
 
       // Only insert if profile doesn't exist
       if (!existingProfile) {
-      const { error: profileError } = await serviceRoleClient
-        .from('user_profiles')
-        .insert({
-          user_id: user.id,
-          username: formData.username,
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
-          phone: null,
-          gender: null,
-          last_password_change: new Date().toISOString()
-        });
+        // Double check username availability before creating profile
+        const { data: usernameCheck, error: usernameCheckError } = await serviceRoleClient
+          .from('user_profiles')
+          .select('username')
+          .eq('username', formData.username)
+          .single();
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        // If profile creation fails, try to delete the auth user and user record
-        await serviceRoleClient.from('users').delete().eq('id', user.id);
-        await supabase.auth.admin.deleteUser(user.id);
-        throw new Error('Failed to create user profile: ' + profileError.message);
-      }
+        if (usernameCheckError && usernameCheckError.code !== 'PGRST116') {
+          console.error('Error checking username:', usernameCheckError);
+          throw new Error('Failed to check username availability');
+        }
+
+        if (usernameCheck) {
+          // If username is taken, clean up and show error
+          await serviceRoleClient.from('users').delete().eq('id', user.id);
+          await supabase.auth.admin.deleteUser(user.id);
+          setError('Username is already taken. Please choose a different username.');
+          onError?.('Username is already taken. Please choose a different username.');
+          return;
+        }
+
+        const { error: profileError } = await serviceRoleClient
+          .from('user_profiles')
+          .insert({
+            user_id: user.id,
+            username: formData.username,
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
+            phone: null,
+            gender: null,
+            last_password_change: new Date().toISOString()
+          });
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // If profile creation fails, try to delete the auth user and user record
+          await serviceRoleClient.from('users').delete().eq('id', user.id);
+          await supabase.auth.admin.deleteUser(user.id);
+          if (profileError.message.includes('duplicate key value')) {
+            setError('Username is already taken. Please choose a different username.');
+            onError?.('Username is already taken. Please choose a different username.');
+            return;
+          }
+          throw new Error('Failed to create user profile: ' + profileError.message);
+        }
       }
 
       // 4. Check if role exists
@@ -556,29 +670,25 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
 
       // Only insert if role doesn't exist
       if (!existingRole) {
-      const { error: roleError } = await serviceRoleClient
-        .from('user_roles')
-        .insert({
-          user_id: user.id,
-          role: 'user'
-        });
+        const { error: roleError } = await serviceRoleClient
+          .from('user_roles')
+          .insert({
+            user_id: user.id,
+            role: 'user'
+          });
 
-      if (roleError) {
-        console.error('Role assignment error:', roleError);
-        // If role assignment fails, try to clean up
-        await serviceRoleClient.from('user_profiles').delete().eq('user_id', user.id);
-        await serviceRoleClient.from('users').delete().eq('id', user.id);
-        await supabase.auth.admin.deleteUser(user.id);
-        throw new Error('Failed to assign user role: ' + roleError.message);
+        if (roleError) {
+          console.error('Role assignment error:', roleError);
+          // If role assignment fails, try to clean up
+          await serviceRoleClient.from('user_profiles').delete().eq('user_id', user.id);
+          await serviceRoleClient.from('users').delete().eq('id', user.id);
+          await supabase.auth.admin.deleteUser(user.id);
+          throw new Error('Failed to assign user role: ' + roleError.message);
         }
       }
 
-      setSuccess('An email confirmation has been sent!');
-      onSuccess?.('An email confirmation has been sent!');
-      // Wait for 1 second before redirecting to login page
-      setTimeout(() => {
-        router.push('/login');
-      }, 1000);
+      setSuccess('Verification code sent to your email!');
+      setShowVerificationWithCallback(true);
     } catch (err) {
       console.error('Sign up error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign up';
@@ -622,7 +732,7 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl || `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -660,6 +770,44 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
       formData.password === formData.confirmPassword
     );
   };
+
+  if (showVerification) {
+    return (
+      <FormContainer>
+        <Title>Verify Your Email</Title>
+        <Subtitle>Please enter the verification code sent to your email</Subtitle>
+        <Form onSubmit={handleVerification}>
+          <InputGroup>
+            <Label htmlFor="verificationCode">Verification Code</Label>
+            <InputWrapper>
+              <Input
+                id="verificationCode"
+                type="text"
+                placeholder="Enter verification code"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                required
+              />
+              {error && (
+                <HelperText style={{ color: '#dc2626' }}>
+                  <FiX size={14} />
+                  {error}
+                </HelperText>
+              )}
+            </InputWrapper>
+          </InputGroup>
+          <ButtonContainer>
+            <Button 
+              type="submit" 
+              disabled={isLoading || !verificationCode}
+            >
+              {isLoading ? 'Verifying...' : 'Verify Email'}
+            </Button>
+          </ButtonContainer>
+        </Form>
+      </FormContainer>
+    );
+  }
 
   return (
     <FormContainer>
@@ -762,6 +910,12 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
               onChange={handleChange}
               required
             />
+            {error && (
+              <HelperText style={{ color: '#dc2626' }}>
+                <FiX size={14} />
+                {error}
+              </HelperText>
+            )}
           </InputWrapper>
         </InputGroup>
         <PasswordSection>
@@ -845,22 +999,6 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
             </FormGroup>
           </FormRow>
         </PasswordSection>
-        {error && (
-          <div style={{ 
-            color: '#dc2626', 
-            fontSize: '0.875rem',
-            padding: '0.75rem',
-            backgroundColor: '#fee2e2',
-            borderRadius: '8px',
-            marginBottom: '1rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            <FiX size={16} />
-            {error}
-          </div>
-        )}
         <ButtonContainer>
           <Button 
             type="submit" 
@@ -869,9 +1007,11 @@ export default function SignUpForm({ onSuccess, onError }: SignUpFormProps) {
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </Button>
         </ButtonContainer>
-        <SignInLink>
-          Already have an account? <a href="/login">Sign In</a>
-        </SignInLink>
+        {!hideLinks && (
+          <SignInLink>
+            Already have an account? <a href="/login">Sign In</a>
+          </SignInLink>
+        )}
       </Form>
     </FormContainer>
   );
