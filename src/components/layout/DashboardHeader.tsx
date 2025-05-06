@@ -109,11 +109,11 @@ const DropdownItem = styled.div`
   }
 `;
 
-const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
+const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean }>`
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background-color: ${props => props.$imageUrl ? 'transparent' : '#f3f4f6'};
+  background-color: #f1f1f1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -127,12 +127,26 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   }
 `;
 
+const AvatarSpinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  border-top-color: #3B82F6;
+  animation: spin 1s ease-in-out infinite;
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+`;
+
 interface DashboardHeaderProps {
   title: string;
   profilePicture?: string | null;
   onLogout: () => void;
   onProfileClick: () => void;
   showProfile?: boolean;
+  isLoading?: boolean;
 }
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -140,7 +154,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   profilePicture,
   onLogout,
   onProfileClick,
-  showProfile = false
+  showProfile = false,
+  isLoading = false
 }) => {
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -170,8 +185,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </NotificationBadge>
         <ProfileContainer id="profile-menu">
           <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
-            <ProfileIcon $imageUrl={profilePicture}>
-              {profilePicture ? (
+            <ProfileIcon $imageUrl={profilePicture} $isLoading={isLoading}>
+              {isLoading ? (
+                <AvatarSpinner />
+              ) : profilePicture ? (
                 <img src={profilePicture} alt="Profile" />
               ) : (
                 <FiUser size={20} />

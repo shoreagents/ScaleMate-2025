@@ -515,204 +515,204 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
   return (
     <>
       {!showSuccessModal && (
-        <DashboardContainer>
-          <DashboardHeader
-            title="Dashboard"
+    <DashboardContainer>
+      <DashboardHeader
+        title="Dashboard"
             profilePicture={userData?.avatar}
-            onLogout={handleLogout}
-            onProfileClick={() => setShowProfile(true)}
-            showProfile={showProfile}
-          />
-          {showProfile ? (
-            <UserProfile />
-          ) : (
-            <MainContent>
-              <WelcomeSection>
-                <WelcomeContent>
-                  <WelcomeText>
+        onLogout={handleLogout}
+        onProfileClick={() => setShowProfile(true)}
+        showProfile={showProfile}
+      />
+      {showProfile ? (
+        <UserProfile />
+      ) : (
+        <MainContent>
+          <WelcomeSection>
+            <WelcomeContent>
+              <WelcomeText>
                     <WelcomeTitle>Welcome back, {userData?.name}!</WelcomeTitle>
-                    <WelcomeSubtitle>Ready to scale your team today?</WelcomeSubtitle>
-                  </WelcomeText>
-                  <TipBox>
-                    <TipContent>
-                      <TipIcon>
-                        <FaLightbulb />
-                      </TipIcon>
-                      <TipText>
-                        <TipTitle>Today's Tip</TipTitle>
-                        <TipDescription>
-                          Use our AI-powered Role Builder to create custom job descriptions in minutes!
-                        </TipDescription>
-                      </TipText>
-                    </TipContent>
-                  </TipBox>
-                </WelcomeContent>
-              </WelcomeSection>
+                <WelcomeSubtitle>Ready to scale your team today?</WelcomeSubtitle>
+              </WelcomeText>
+              <TipBox>
+                <TipContent>
+                  <TipIcon>
+                    <FaLightbulb />
+                  </TipIcon>
+                  <TipText>
+                    <TipTitle>Today's Tip</TipTitle>
+                    <TipDescription>
+                      Use our AI-powered Role Builder to create custom job descriptions in minutes!
+                    </TipDescription>
+                  </TipText>
+                </TipContent>
+              </TipBox>
+            </WelcomeContent>
+          </WelcomeSection>
 
-              <ProgressGrid>
-                <ProgressCard>
-                  <CardTitle>XP Progress</CardTitle>
-                  <XPProgressContainer>
-                    <XPProgressBar>
-                      <XPProgressHeader>
-                        <XPLevel>Level 3</XPLevel>
-                        <XPCount>2,450 / 3,000 XP</XPCount>
-                      </XPProgressHeader>
-                      <ProgressBarContainer>
-                        <ProgressBarFill $width="82%" />
-                      </ProgressBarContainer>
-                    </XPProgressBar>
-                    <XPInfo>
-                      <FaMedal />
-                      <span>550 XP until next level</span>
-                    </XPInfo>
-                  </XPProgressContainer>
-                </ProgressCard>
+          <ProgressGrid>
+            <ProgressCard>
+              <CardTitle>XP Progress</CardTitle>
+              <XPProgressContainer>
+                <XPProgressBar>
+                  <XPProgressHeader>
+                    <XPLevel>Level 3</XPLevel>
+                    <XPCount>2,450 / 3,000 XP</XPCount>
+                  </XPProgressHeader>
+                  <ProgressBarContainer>
+                    <ProgressBarFill $width="82%" />
+                  </ProgressBarContainer>
+                </XPProgressBar>
+                <XPInfo>
+                  <FaMedal />
+                  <span>550 XP until next level</span>
+                </XPInfo>
+              </XPProgressContainer>
+            </ProgressCard>
 
-                <ProgressCard>
-                  <CardTitle>Badge Progress</CardTitle>
-                  <BadgeContainer>
-                    <Badge>
-                      <BadgeIcon $color="#3B82F6/10">
-                        <FaStar />
-                      </BadgeIcon>
-                      <BadgeLabel>Recruiter</BadgeLabel>
-                    </Badge>
-                    <Badge>
-                      <BadgeIcon $color="#84CC16/10">
-                        <FaTrophy />
-                      </BadgeIcon>
-                      <BadgeLabel>Scaling Pro</BadgeLabel>
-                    </Badge>
-                    <Badge $isLocked>
-                      <BadgeIcon $color="#E5E7EB">
-                        <FaCrown />
-                      </BadgeIcon>
-                      <BadgeLabel>Expert</BadgeLabel>
-                    </Badge>
-                  </BadgeContainer>
-                </ProgressCard>
-              </ProgressGrid>
+            <ProgressCard>
+              <CardTitle>Badge Progress</CardTitle>
+              <BadgeContainer>
+                <Badge>
+                  <BadgeIcon $color="#3B82F6/10">
+                    <FaStar />
+                  </BadgeIcon>
+                  <BadgeLabel>Recruiter</BadgeLabel>
+                </Badge>
+                <Badge>
+                  <BadgeIcon $color="#84CC16/10">
+                    <FaTrophy />
+                  </BadgeIcon>
+                  <BadgeLabel>Scaling Pro</BadgeLabel>
+                </Badge>
+                <Badge $isLocked>
+                  <BadgeIcon $color="#E5E7EB">
+                    <FaCrown />
+                  </BadgeIcon>
+                  <BadgeLabel>Expert</BadgeLabel>
+                </Badge>
+              </BadgeContainer>
+            </ProgressCard>
+          </ProgressGrid>
 
-              <ActivityGrid>
-                <ActivityCard>
-                  <CardHeader>
-                    <CardTitle>Recent Roles</CardTitle>
-                    <ViewAllLink>View All</ViewAllLink>
-                  </CardHeader>
-                  <ActivityList>
-                    <ActivityItem>
-                      <IconContainer $bgColor="rgba(59, 130, 246, 0.1)" $iconColor="#3B82F6">
-                        <FaUser />
-                      </IconContainer>
-                      <ItemContent>
-                        <ItemTitle>Senior VA</ItemTitle>
-                        <ItemSubtext>Created 2 days ago</ItemSubtext>
-                      </ItemContent>
-                    </ActivityItem>
-                    <ActivityItem>
-                      <IconContainer $bgColor="rgba(59, 130, 246, 0.1)" $iconColor="#3B82F6">
-                        <FaUser />
-                      </IconContainer>
-                      <ItemContent>
-                        <ItemTitle>Customer Support</ItemTitle>
-                        <ItemSubtext>Created 4 days ago</ItemSubtext>
-                      </ItemContent>
-                    </ActivityItem>
-                  </ActivityList>
-                </ActivityCard>
+          <ActivityGrid>
+            <ActivityCard>
+              <CardHeader>
+                <CardTitle>Recent Roles</CardTitle>
+                <ViewAllLink>View All</ViewAllLink>
+              </CardHeader>
+              <ActivityList>
+                <ActivityItem>
+                  <IconContainer $bgColor="rgba(59, 130, 246, 0.1)" $iconColor="#3B82F6">
+                    <FaUser />
+                  </IconContainer>
+                  <ItemContent>
+                    <ItemTitle>Senior VA</ItemTitle>
+                    <ItemSubtext>Created 2 days ago</ItemSubtext>
+                  </ItemContent>
+                </ActivityItem>
+                <ActivityItem>
+                  <IconContainer $bgColor="rgba(59, 130, 246, 0.1)" $iconColor="#3B82F6">
+                    <FaUser />
+                  </IconContainer>
+                  <ItemContent>
+                    <ItemTitle>Customer Support</ItemTitle>
+                    <ItemSubtext>Created 4 days ago</ItemSubtext>
+                  </ItemContent>
+                </ActivityItem>
+              </ActivityList>
+            </ActivityCard>
 
-                <ActivityCard>
-                  <CardHeader>
-                    <CardTitle>Recent Quotes</CardTitle>
-                    <ViewAllLink>View All</ViewAllLink>
-                  </CardHeader>
-                  <ActivityList>
-                    <ActivityItem>
-                      <IconContainer $bgColor="rgba(132, 204, 22, 0.1)" $iconColor="#84CC16">
-                        <FaFileInvoiceDollar />
-                      </IconContainer>
-                      <ItemContent>
-                        <ItemTitle>VA Team Quote</ItemTitle>
-                        <ItemSubtext>$2,400/month</ItemSubtext>
-                      </ItemContent>
-                    </ActivityItem>
-                  </ActivityList>
-                </ActivityCard>
+            <ActivityCard>
+              <CardHeader>
+                <CardTitle>Recent Quotes</CardTitle>
+                <ViewAllLink>View All</ViewAllLink>
+              </CardHeader>
+              <ActivityList>
+                <ActivityItem>
+                  <IconContainer $bgColor="rgba(132, 204, 22, 0.1)" $iconColor="#84CC16">
+                    <FaFileInvoiceDollar />
+                  </IconContainer>
+                  <ItemContent>
+                    <ItemTitle>VA Team Quote</ItemTitle>
+                    <ItemSubtext>$2,400/month</ItemSubtext>
+                  </ItemContent>
+                </ActivityItem>
+              </ActivityList>
+            </ActivityCard>
 
-                <ActivityCard>
-                  <CardHeader>
-                    <CardTitle>Active Courses</CardTitle>
-                    <ViewAllLink>View All</ViewAllLink>
-                  </CardHeader>
-                  <ActivityList>
-                    <ActivityItem>
-                      <IconContainer $bgColor="rgba(236, 41, 123, 0.1)" $iconColor="#EC297B">
-                        <FaGraduationCap />
-                      </IconContainer>
-                      <ItemContent>
-                        <ItemTitle>Hiring Mastery</ItemTitle>
-                        <ProgressBar>
-                          <ProgressFill $width="75%" $color="#EC297B" />
-                        </ProgressBar>
-                      </ItemContent>
-                    </ActivityItem>
-                  </ActivityList>
-                </ActivityCard>
-              </ActivityGrid>
+            <ActivityCard>
+              <CardHeader>
+                <CardTitle>Active Courses</CardTitle>
+                <ViewAllLink>View All</ViewAllLink>
+              </CardHeader>
+              <ActivityList>
+                <ActivityItem>
+                  <IconContainer $bgColor="rgba(236, 41, 123, 0.1)" $iconColor="#EC297B">
+                    <FaGraduationCap />
+                  </IconContainer>
+                  <ItemContent>
+                    <ItemTitle>Hiring Mastery</ItemTitle>
+                    <ProgressBar>
+                      <ProgressFill $width="75%" $color="#EC297B" />
+                    </ProgressBar>
+                  </ItemContent>
+                </ActivityItem>
+              </ActivityList>
+            </ActivityCard>
+          </ActivityGrid>
 
-              <BottomGrid>
-                <NextStepsCard>
-                  <CardTitle>Suggested Next Steps</CardTitle>
-                  <StepsGrid>
-                    <StepItem>
-                      <StepHeader>
-                        <StepIcon>
-                          <FaClipboardCheck />
-                        </StepIcon>
-                        <StepTitle>Complete Readiness Quiz</StepTitle>
-                      </StepHeader>
-                      <StepDescription>Get personalized scaling recommendations</StepDescription>
-                    </StepItem>
-                    <StepItem>
-                      <StepHeader>
-                        <StepIcon>
-                          <FaUsers />
-                        </StepIcon>
-                        <StepTitle>Build Your First Role</StepTitle>
-                      </StepHeader>
-                      <StepDescription>Create a custom role description</StepDescription>
-                    </StepItem>
-                  </StepsGrid>
-                </NextStepsCard>
+          <BottomGrid>
+            <NextStepsCard>
+              <CardTitle>Suggested Next Steps</CardTitle>
+              <StepsGrid>
+                <StepItem>
+                  <StepHeader>
+                    <StepIcon>
+                      <FaClipboardCheck />
+                    </StepIcon>
+                    <StepTitle>Complete Readiness Quiz</StepTitle>
+                  </StepHeader>
+                  <StepDescription>Get personalized scaling recommendations</StepDescription>
+                </StepItem>
+                <StepItem>
+                  <StepHeader>
+                    <StepIcon>
+                      <FaUsers />
+                    </StepIcon>
+                    <StepTitle>Build Your First Role</StepTitle>
+                  </StepHeader>
+                  <StepDescription>Create a custom role description</StepDescription>
+                </StepItem>
+              </StepsGrid>
+            </NextStepsCard>
 
-                <QuickLinksCard>
-                  <CardTitle>Quick Links</CardTitle>
-                  <LinksList>
-                    <LinkItem href="#">
-                      <LinkIcon>
-                        <FaScrewdriver />
-                      </LinkIcon>
-                      <LinkText>Tools Library</LinkText>
-                    </LinkItem>
-                    <LinkItem href="#">
-                      <LinkIcon>
-                        <FaBook />
-                      </LinkIcon>
-                      <LinkText>Resources</LinkText>
-                    </LinkItem>
-                    <LinkItem href="#">
-                      <LinkIcon>
-                        <FaCalendarDays />
-                      </LinkIcon>
-                      <LinkText>Book Strategy Call</LinkText>
-                    </LinkItem>
-                  </LinksList>
-                </QuickLinksCard>
-              </BottomGrid>
-            </MainContent>
-          )}
-        </DashboardContainer>
+            <QuickLinksCard>
+              <CardTitle>Quick Links</CardTitle>
+              <LinksList>
+                <LinkItem href="#">
+                  <LinkIcon>
+                    <FaScrewdriver />
+                  </LinkIcon>
+                  <LinkText>Tools Library</LinkText>
+                </LinkItem>
+                <LinkItem href="#">
+                  <LinkIcon>
+                    <FaBook />
+                  </LinkIcon>
+                  <LinkText>Resources</LinkText>
+                </LinkItem>
+                <LinkItem href="#">
+                  <LinkIcon>
+                    <FaCalendarDays />
+                  </LinkIcon>
+                  <LinkText>Book Strategy Call</LinkText>
+                </LinkItem>
+              </LinksList>
+            </QuickLinksCard>
+          </BottomGrid>
+        </MainContent>
+      )}
+    </DashboardContainer>
       )}
 
       <SuccessModal $isOpen={showSuccessModal}>
