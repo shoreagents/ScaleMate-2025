@@ -847,18 +847,6 @@ const DashboardTab: React.FC = () => {
           <SystemWarnings>
             <SectionTitle>System Health</SectionTitle>
             <WarningList>
-              <WarningItem $type="error">
-                <WarningContent>
-                  <WarningIcon $type="error">
-                    <FaExclamationTriangle />
-                  </WarningIcon>
-                  <WarningText>
-                    <WarningTitle $type="error">API Timeout</WarningTitle>
-                    <WarningDescription>Payment gateway response delay</WarningDescription>
-                  </WarningText>
-                </WarningContent>
-                <WarningTime>2 mins ago</WarningTime>
-              </WarningItem>
               <WarningItem $type="info">
                 <WarningContent>
                   <WarningIcon $type="info">
