@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
-import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
+import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch, FaTimes } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
 import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
+import ProfileSidebar from '@/components/layout/ProfileSidebar';
 
 const Container = styled.div`
   padding: 24px;
@@ -23,42 +24,137 @@ const Title = styled.h2`
   color: ${props => props.theme.colors.text.primary};
 `;
 
-const Button = styled.button`
-  font-size: 0.875rem;
+const Button = styled.button<{ $primary?: boolean }>`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  ${props => props.$primary ? `
   background-color: #3B82F6;
   color: white;
   border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
-
   &:hover {
     background-color: #2563EB;
   }
+  ` : `
+    background-color: white;
+    color: #0F172A;
+    border: 1px solid #E5E7EB;
+    &:hover {
+      background-color: #F9FAFB;
+    }
+  `}
+`;
+
+const TableContainer = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
+  margin-top: 1.5rem;
 `;
 
 const Table = styled.table`
   width: 100%;
-  margin-top: 1rem;
-  background: white;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  border: 1px solid #E5E7EB;
-  tr:last-child td {
+`;
+
+const TableHead = styled.thead`
+  background-color: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+`;
+
+const TableHeader = styled.th<{ $sortable?: boolean }>`
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0F172A;
+  cursor: ${props => props.$sortable ? 'pointer' : 'default'};
+  user-select: none;
+  white-space: nowrap;
+  position: relative;
+
+  &:hover {
+    background-color: ${props => props.$sortable ? '#F1F5F9' : 'transparent'};
+  }
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+`;
+
+const SortIcon = styled.span<{ $active: boolean; $direction: 'asc' | 'desc' }>`
+  display: inline-flex;
+  align-items: center;
+  color: ${props => props.$active ? '#3B82F6' : '#9CA3AF'};
+  transform: ${props => props.$direction === 'desc' ? 'rotate(180deg)' : 'none'};
+  transition: all 0.2s ease;
+  opacity: ${props => props.$active ? 1 : 0};
+  visibility: ${props => props.$active ? 'visible' : 'hidden'};
+  margin-left: 0.5rem;
+
+  ${TableHeader}:hover & {
+    opacity: 1;
+    visibility: visible;
+  }
+`;
+
+const TableBody = styled.tbody`
+  tr {
+    border-bottom: 1px solid #E5E7EB;
+    &:hover {
+      background-color: #F9FAFB;
+    }
+    &:last-child {
     border-bottom: none;
   }
+  }
+`;
+
+const TableRow = styled.tr`
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #F9FAFB;
+  }
+`;
+
+const TableCell = styled.td`
+  padding: 1rem 1.5rem;
+  color: #0F172A;
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+`;
+
+const UserName = styled.span`
+  font-weight: 500;
+  font-size: 1rem;
+`;
+
+const UserEmail = styled.span`
+  color: rgba(15, 23, 42, 0.7);
+  font-weight: 500;
 `;
 
 const Th = styled.th<{ $sortable?: boolean }>`
   padding: 12px 16px;
   text-align: left;
   color: rgb(107, 114, 128);
-  font-weight: 500;
   border-bottom: 1px solid #E5E7EB;
   font-size: 0.875rem;
   cursor: ${props => props.$sortable ? 'pointer' : 'default'};
@@ -73,16 +169,6 @@ const Th = styled.th<{ $sortable?: boolean }>`
     padding-right: 16px;
     width: 120px;
   }
-`;
-
-const SortIcon = styled.span<{ $active: boolean; $direction: 'asc' | 'desc' }>`
-  display: inline-block;
-  margin-left: 4px;
-  color: ${props => props.theme.colors.text.primary};
-  transform: ${props => props.$direction === 'desc' ? 'rotate(180deg)' : 'none'};
-  transition: all 0.3s ease;
-  opacity: ${props => props.$active ? 1 : 0};
-  visibility: ${props => props.$active ? 'visible' : 'hidden'};
 `;
 
 const Td = styled.td`
@@ -115,20 +201,19 @@ const ActionGroup = styled.div`
 `;
 
 const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed' }>`
-  padding: 4px 8px;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.875rem;
   background-color: ${props => {
     switch (props.$status) {
       case 'active':
-        return '#D1FAE5';
+        return '#05966910';
       case 'pending':
-        return '#FEF3C7';
+        return '#D9770610';
       case 'not-confirmed':
-        return '#d0bdbd';
+        return '#6B728010';
       default:
-        return '#D1D5DB';
+        return '#6B728010';
     }
   }};
   color: ${props => {
@@ -138,9 +223,9 @@ const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed
       case 'pending':
         return '#D97706';
       case 'not-confirmed':
-        return props.theme.colors.text.primary;
+        return '#1F2937';
       default:
-        return props.theme.colors.text.primary;
+        return '#1F2937';
     }
   }};
   text-transform: capitalize;
@@ -333,7 +418,7 @@ const ButtonGroup = styled.div`
 
 const ModalButton = styled.button`
 font-size: 0.875rem;  
-padding: 8px 16px;
+  padding: 8px 16px;
   border: none;
   border-radius: 8px;
   font-weight: 500;
@@ -426,16 +511,23 @@ const FilterContainer = styled.div`
   justify-content: space-between;
 `;
 
-const FilterInput = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #E5E7EB;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  width: 400px;
+const SearchInput = styled.div`
+  position: relative;
+  width: 16rem;
 
-  &:focus {
-    outline: none;
-    border-color: #3B82F6;
+  input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+  border: 1px solid #E5E7EB;
+    border-radius: 0.5rem;
+  }
+
+  svg {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(15, 23, 42, 0.4);
   }
 `;
 
@@ -480,6 +572,54 @@ const ViewPasswordButton = styled.button`
   }
 `;
 
+// Add Avatar styled component
+const Avatar = styled.div<{ $imageUrl?: string; $isLoading?: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #f1f1f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: ${props => props.$isLoading ? 0 : 1};
+    transition: opacity 0.2s ease;
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+    color: #6B7280;
+    opacity: ${props => props.$isLoading ? 0 : 1};
+    transition: opacity 0.2s ease;
+  }
+`;
+
+const AvatarSpinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(59, 130, 246, 0.1);
+  border-radius: 50%;
+  border-top-color: #3B82F6;
+  animation: spin 1s linear infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  @keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+`;
+
 interface BaseUser {
   id: string;
   first_name: string;
@@ -487,6 +627,7 @@ interface BaseUser {
   email: string;
   created_at: string;
   last_login?: string;
+  profile_picture?: string;
 }
 
 interface Admin extends BaseUser {
@@ -500,7 +641,7 @@ interface Admin extends BaseUser {
 }
 
 interface UserRole extends BaseUser {
-  role: 'user';
+  role: 'user' | 'admin' | 'moderator';  // Update to allow all role types
   last_sign_in: string | null;
   phone: string;
   gender: string;
@@ -564,10 +705,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('admins');
+  const [activeTab, setActiveTab] = useState<TabType>('users');
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserRole | null>(null);
+  const [selectedUser, setSelectedUser] = useState<Admin | UserRole | null>(null);
   const [newRole, setNewRole] = useState<'admin' | 'user'>('admin');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<UserEditFormData>({
@@ -615,6 +756,9 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   // Add back the showSuccessModal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const [loadingProfilePictures, setLoadingProfilePictures] = useState<{ [key: string]: boolean }>({});
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+
   useEffect(() => {
     checkCurrentUserRole();
     fetchAdmins();
@@ -654,7 +798,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           created_at,
           last_sign_in_at,
           roles,
-          username
+          username,
+          profile_picture
         `)
         .order('created_at', { ascending: false });
 
@@ -672,6 +817,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
         phone: user.phone || '',
         gender: user.gender || '',
         username: user.username || '',
+        profile_picture: user.profile_picture || '',
         role: 'user',
         status: 'active'
       }));
@@ -767,7 +913,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       phone: admin.phone || '',
       gender: admin.gender || '',
       username: admin.username || '',
-      role: 'user',
+      role: 'admin',
       status: 'active'
     });
     setEditFormData({
@@ -1036,12 +1182,25 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           return;
         }
 
+        // Log the user creation activity for the admin
+        const { data: { user: adminUser } } = await supabase.auth.getUser();
+        if (adminUser) {
+          await supabase.rpc('log_profile_change', {
+            p_user_id: adminUser.id,
+            p_type: 'user_creation',
+            p_description: `Created New User
+
+Name: ${formData.first_name} ${formData.last_name}
+Email: ${formData.email}
+Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
+          });
+        }
+
         showSuccess(
           'User Created',
           'The user has been successfully created and can now log in with their credentials.'
         );
-        setIsModalOpen(false);
-        setModalSuccess('User created successfully');
+      setIsModalOpen(false);
         setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
         setRetryCount(0);
         setUsernameError(null);
@@ -1146,6 +1305,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const handleDeleteUser = async (user: UserToDelete | string) => {
     try {
       const userId = typeof user === 'string' ? user : user.id;
+      const userEmail = typeof user === 'string' ? '' : user.email;
+      const userName = typeof user === 'string' ? '' : `${user.first_name} ${user.last_name}`.trim();
       
       // Delete user completely using the new RPC function
       const { error: deleteError } = await supabase.rpc('delete_user_completely', {
@@ -1155,6 +1316,20 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       if (deleteError) {
         console.error('Error deleting user:', deleteError);
         throw new Error('Failed to delete user');
+      }
+
+      // Log the deletion activity for the admin
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await supabase.rpc('log_profile_change', {
+          p_user_id: adminUser.id,
+          p_type: 'user_deletion',
+          p_description: `Deleted User
+
+Name: ${userName || 'N/A'}
+Email: ${userEmail || userId}
+Role: ${typeof user === 'string' ? 'N/A' : user.roles.map(role => role.charAt(0).toUpperCase() + role.slice(1)).join(', ')}`
+        });
       }
 
       // Close the delete modal first
@@ -1178,11 +1353,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
     if (!userToDelete) return;
     
     try {
-      if (userToDelete.role === 'user') {
-        await handleDeleteUser(userToDelete);
-      } else if (userToDelete.role === 'admin') {
-        await handleDeleteAdmin(userToDelete.id);
-      }
+      // Use handleDeleteUser for all roles (user, admin, moderator)
+      await handleDeleteUser(userToDelete);
     } catch (error) {
       console.error('Error deleting user:', error);
     }
@@ -1216,10 +1388,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       // Update role if changed
       if (editFormData.role !== selectedUser.roles[0]) {
         const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-          p_action: 'update',
-          p_new_role: editFormData.role,
-          p_target_user_id: selectedUser.id
-        });
+        p_action: 'update',
+        p_new_role: editFormData.role,
+        p_target_user_id: selectedUser.id
+      });
 
         if (roleError) {
           throw new Error(`Failed to update role: ${roleError.message}`);
@@ -1227,14 +1399,15 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       }
 
       // Update local state first to prevent flicker
-      const updatedUser = {
+      const updatedUser: UserRole = {
         ...selectedUser,
         first_name: editFormData.first_name.trim(),
         last_name: editFormData.last_name.trim(),
         phone: editFormData.phone,
         gender: editFormData.gender,
         username: editFormData.username.trim(),
-        roles: [editFormData.role]
+        roles: [editFormData.role],
+        role: editFormData.role as 'user' | 'admin' | 'moderator'
       };
 
       // Update the allUsers array with the new data
@@ -1271,12 +1444,26 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       setCurrentUsername('');
       setPasswordsMatch(null);
       setPasswordLength(false);
-
+      
       // Then show the success modal
       showSuccess(
         'User Updated',
         'The user profile has been successfully updated with the new information.'
       );
+
+      // Log the user update activity for the admin
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await supabase.rpc('log_profile_change', {
+          p_user_id: adminUser.id,
+          p_type: 'user_update',
+          p_description: `Updated User Profile
+
+Name: ${editFormData.first_name} ${editFormData.last_name}
+Email: ${editFormData.email}
+Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
+        });
+      }
     } catch (error) {
       console.error('Error in handleEditSubmit:', error);
       setModalError(error instanceof Error ? error.message : 'Failed to update user profile');
@@ -1525,11 +1712,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
 
   const handleDelete = async (user: UserToDelete) => {
     try {
-      if (user.role === 'user') {
+      // Use handleDeleteUser for all roles (user, admin, moderator)
         await handleDeleteUser(user);
-      } else if (user.role === 'admin') {
-        await handleDeleteAdmin(user.id);
-      }
     } catch (error) {
       console.error('Error deleting user:', error);
     }
@@ -1548,6 +1732,68 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   const hideSuccess = () => {
     setShowSuccessModal(false);
     setSuccessMessage({ title: '', description: '' });
+  };
+
+  // Update the handleImageLoad function to be more robust
+  const handleImageLoad = (userId: string) => {
+    console.log('Image loaded for user:', userId); // Debug log
+    setLoadingProfilePictures(prev => {
+      const newState = { ...prev };
+      delete newState[userId]; // Remove the loading state completely
+      return newState;
+    });
+  };
+
+  // Update the handleImageError function to be more robust
+  const handleImageError = (userId: string) => {
+    console.log('Image error for user:', userId); // Debug log
+    setLoadingProfilePictures(prev => {
+      const newState = { ...prev };
+      delete newState[userId]; // Remove the loading state completely
+      return newState;
+    });
+  };
+
+  // Update the initialization of loading states to be more precise
+  useEffect(() => {
+    const initializeLoadingStates = (users: (UserRole | Admin)[]) => {
+      const loadingStates: { [key: string]: boolean } = {};
+      users.forEach(user => {
+        if (user.profile_picture) {
+          // Create an image object to check if it's already cached
+          const img = new Image();
+          img.src = user.profile_picture;
+          
+          if (img.complete) {
+            // Image is already loaded/cached
+            console.log('Image already loaded for user:', user.id);
+          } else {
+            // Image needs to be loaded
+            console.log('Setting loading state for user:', user.id);
+            loadingStates[user.id] = true;
+          }
+        }
+      });
+      setLoadingProfilePictures(loadingStates);
+    };
+
+    if (allUsers.length > 0) {
+      initializeLoadingStates(allUsers);
+    }
+  }, [allUsers]);
+
+  const handleNameClick = (user: Admin | UserRole) => {
+    setSelectedUser(user);
+    setIsProfileOpen(true);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   if (loading) {
@@ -1615,14 +1861,17 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
       {activeTab === 'admins' ? (
         <>
           <FilterContainer>
-            <FilterInput
+            <SearchInput>
+              <input
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
+              <FaSearch />
+            </SearchInput>
             {isCurrentUserAdmin && (
-            <Button onClick={handleAddAdmin}>
+            <Button $primary onClick={handleAddAdmin}>
               <FiUserPlus />
               Add User
             </Button>
@@ -1634,66 +1883,75 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               You need admin privileges to manage user roles.
             </InfoMessage>
           )}
+          <TableContainer>
           <Table>
-            <thead>
+              <TableHead>
               <tr>
-                <Th style={{ width: '50px' }}>#</Th>
-                <Th 
+                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
                   $sortable
                 >
-                  Name
+                  <HeaderContent>
+                    <span>Name</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'name'} 
+                      $active={sortField === 'name'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
                 >
-                  Email
+                  <HeaderContent>
+                    <span>Email</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'email'} 
+                      $active={sortField === 'email'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
-                  style={{ width: '200px' }}
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
+                  style={{ width: '150px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Roles
+                  <HeaderContent>
+                    <span>Roles</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'roles'} 
+                      $active={sortField === 'roles'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-                  Last Activity
+                  <HeaderContent>
+                    <span>Last Activity</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
+                      $active={sortField === 'last_sign_in'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                {isCurrentUserAdmin && <Th style={{ width: '120px' }}>Actions</Th>}
+                  </HeaderContent>
+                </TableHeader>
+                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
               </tr>
-            </thead>
-            <tbody>
+              </TableHead>
+              <TableBody>
               {filterUsersByRole(allUsers, activeTab)
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
@@ -1715,13 +1973,33 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   }
                 })
                 .map((user, index) => (
-                  <tr key={user.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '200px' }}>
-                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
-                    </Td>
-                    <Td style={{ width: '300px' }}>{user.email}</Td>
-                    <Td style={{ width: '200px' }}>
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
+                        >
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -1729,18 +2007,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           </RoleBadge>
                         ))}
                       </RoleBadges>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
-                        ? new Date(user.last_sign_in).toLocaleDateString()
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
-                    </Td>
+                    </TableCell>
                     {isCurrentUserAdmin && (
-                    <Td style={{ width: '120px' }}>
+                      <TableCell style={{ width: '120px' }}>
                       <ActionGroup>
                           <ActionButton 
-                            onClick={() => handleEditUser(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
                             title="Update Info"
                           >
                           <FiEdit2 size={18} />
@@ -1749,12 +2030,18 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                             <>
                               <ActionButton 
                                 $variant="success"
-                                onClick={() => handleDelete(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
                               >
                                 <FiCheck size={18} />
                               </ActionButton>
                               <ActionButton 
-                                onClick={() => setIsConfirmingDelete(null)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
                               >
                                 <FiX size={18} />
                               </ActionButton>
@@ -1762,7 +2049,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           ) : (
                         <ActionButton 
                           $variant="danger"
-                          onClick={() => {
+                        onClick={(e) => {
+                              e.stopPropagation();
                                 setUserToDelete(user);
                             setIsDeleteModalOpen(true);
                           }}
@@ -1771,24 +2059,28 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                         </ActionButton>
                           )}
                       </ActionGroup>
-                    </Td>
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 ))}
-            </tbody>
+              </TableBody>
           </Table>
+          </TableContainer>
         </>
       ) : activeTab === 'moderators' ? (
         <>
           <FilterContainer>
-            <FilterInput
+            <SearchInput>
+              <input
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
+              <FaSearch />
+            </SearchInput>
             {isCurrentUserAdmin && (
-              <Button onClick={handleAddAdmin}>
+              <Button $primary onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
               </Button>
@@ -1800,66 +2092,75 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               You need admin privileges to manage user roles.
             </InfoMessage>
           )}
+          <TableContainer>
           <Table>
-            <thead>
+              <TableHead>
               <tr>
-                <Th style={{ width: '50px' }}>#</Th>
-                <Th 
+                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
                   $sortable
                 >
-                  Name
+                  <HeaderContent>
+                    <span>Name</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'name'} 
+                      $active={sortField === 'name'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
                 >
-                  Email
+                  <HeaderContent>
+                    <span>Email</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'email'} 
+                      $active={sortField === 'email'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
-                  style={{ width: '200px' }}
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
+                  style={{ width: '150px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Roles
+                  <HeaderContent>
+                    <span>Roles</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'roles'} 
+                      $active={sortField === 'roles'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-                  Last Activity
+                  <HeaderContent>
+                    <span>Last Activity</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
+                      $active={sortField === 'last_sign_in'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                {isCurrentUserAdmin && <Th style={{ width: '120px' }}>Actions</Th>}
+                  </HeaderContent>
+                </TableHeader>
+                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
               </tr>
-            </thead>
-            <tbody>
+              </TableHead>
+              <TableBody>
               {filterUsersByRole(allUsers, activeTab)
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
@@ -1881,13 +2182,33 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   }
                 })
                 .map((user, index) => (
-                  <tr key={user.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '200px' }}>
-                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
-                    </Td>
-                    <Td style={{ width: '300px' }}>{user.email}</Td>
-                    <Td style={{ width: '200px' }}>
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
+                        >
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -1895,18 +2216,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           </RoleBadge>
                         ))}
                       </RoleBadges>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
-                        ? new Date(user.last_sign_in).toLocaleDateString()
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
-                    </Td>
+                    </TableCell>
                     {isCurrentUserAdmin && (
-                      <Td style={{ width: '120px' }}>
+                      <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
                           <ActionButton 
-                            onClick={() => handleEditUser(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
                             title="Update Info"
                           >
                             <FiEdit2 size={18} />
@@ -1915,12 +2239,18 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                             <>
                               <ActionButton 
                                 $variant="success"
-                                onClick={() => handleDelete(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
                               >
                                 <FiCheck size={18} />
                               </ActionButton>
                               <ActionButton 
-                                onClick={() => setIsConfirmingDelete(null)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
                               >
                                 <FiX size={18} />
                               </ActionButton>
@@ -1928,7 +2258,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           ) : (
                             <ActionButton 
                               $variant="danger"
-                              onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                                 setUserToDelete(user);
                                 setIsDeleteModalOpen(true);
                               }}
@@ -1937,24 +2268,28 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                             </ActionButton>
                           )}
                         </ActionGroup>
-                      </Td>
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 ))}
-            </tbody>
+              </TableBody>
           </Table>
+          </TableContainer>
         </>
       ) : (
         <>
           <FilterContainer>
-            <FilterInput
+            <SearchInput>
+              <input
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
+              <FaSearch />
+            </SearchInput>
             {isCurrentUserAdmin && (
-              <Button onClick={handleAddAdmin}>
+              <Button $primary onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
               </Button>
@@ -1966,66 +2301,75 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               You need admin privileges to manage user roles.
             </InfoMessage>
           )}
+          <TableContainer>
           <Table>
-            <thead>
+              <TableHead>
               <tr>
-                <Th style={{ width: '50px' }}>#</Th>
-                <Th 
+                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                  <TableHeader 
                   style={{ width: '200px' }}
                   onClick={() => handleSort('name')}
                   $sortable
                 >
-                  Name
+                  <HeaderContent>
+                    <span>Name</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'name'} 
+                      $active={sortField === 'name'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '300px' }}
                   onClick={() => handleSort('email')}
                   $sortable
                 >
-                  Email
+                  <HeaderContent>
+                    <span>Email</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'email'} 
+                      $active={sortField === 'email'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
-                  style={{ width: '200px' }}
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
+                  style={{ width: '150px' }}
                   onClick={() => handleSort('roles')}
                   $sortable
                 >
-                  Roles
+                  <HeaderContent>
+                    <span>Roles</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'roles'} 
+                      $active={sortField === 'roles'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                <Th 
+                  </HeaderContent>
+                </TableHeader>
+                  <TableHeader 
                   style={{ width: '150px' }}
                   onClick={() => handleSort('last_sign_in')}
                   $sortable
                 >
-                  Last Activity
+                  <HeaderContent>
+                    <span>Last Activity</span>
                   <SortIcon 
-                    $active={showSortIcon && activeSortColumn === 'last_sign_in'} 
+                      $active={sortField === 'last_sign_in'} 
                     $direction={sortDirection}
                   >
                     ↑
                   </SortIcon>
-                </Th>
-                {isCurrentUserAdmin && <Th style={{ width: '120px' }}>Actions</Th>}
+                  </HeaderContent>
+                </TableHeader>
+                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
               </tr>
-            </thead>
-            <tbody>
+              </TableHead>
+              <TableBody>
               {filterUsersByRole(allUsers, activeTab)
                 .sort((a, b) => {
                   const direction = sortDirection === 'asc' ? 1 : -1;
@@ -2047,13 +2391,33 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                   }
                 })
                 .map((user, index) => (
-                  <tr key={user.id}>
-                    <Td style={{ width: '50px' }}>{index + 1}</Td>
-                    <Td style={{ width: '200px' }}>
-                      {`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}
-                    </Td>
-                    <Td style={{ width: '300px' }}>{user.email}</Td>
-                    <Td style={{ width: '200px' }}>
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
+                        >
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -2061,18 +2425,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           </RoleBadge>
                         ))}
                       </RoleBadges>
-                    </Td>
-                    <Td style={{ width: '150px' }}>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
-                        ? new Date(user.last_sign_in).toLocaleDateString()
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
-                    </Td>
+                    </TableCell>
                     {isCurrentUserAdmin && (
-                      <Td style={{ width: '120px' }}>
+                      <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
                           <ActionButton 
-                            onClick={() => handleEditUser(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
                             title="Update Info"
                           >
                             <FiEdit2 size={18} />
@@ -2081,12 +2448,18 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                             <>
                               <ActionButton 
                                 $variant="success"
-                                onClick={() => handleDelete(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
                               >
                                 <FiCheck size={18} />
                               </ActionButton>
                               <ActionButton 
-                                onClick={() => setIsConfirmingDelete(null)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
                               >
                                 <FiX size={18} />
                               </ActionButton>
@@ -2094,7 +2467,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                           ) : (
                             <ActionButton 
                               $variant="danger"
-                              onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                                 setUserToDelete(user);
                                 setIsDeleteModalOpen(true);
                               }}
@@ -2103,12 +2477,13 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
                             </ActionButton>
                           )}
                         </ActionGroup>
-                      </Td>
+                      </TableCell>
                     )}
-                  </tr>
+                  </TableRow>
                 ))}
-            </tbody>
+              </TableBody>
           </Table>
+          </TableContainer>
         </>
       )}
 
@@ -2134,7 +2509,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               setPasswordsMatch(null);
               setPasswordLength(false);
             }}>
-              <FiX size={20} />
+              <FaTimes size={20} />
             </CloseButton>
           </ModalHeader>
 
@@ -2479,7 +2854,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           <ModalHeader>
             <ModalTitle>Update User Profile</ModalTitle>
             <CloseButton onClick={handleModalClose}>
-              <FiX size={20} />
+              <FaTimes size={20} />
             </CloseButton>
           </ModalHeader>
 
@@ -2722,7 +3097,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
               setIsRoleModalOpen(false);
               setSelectedUser(null);
             }}>
-              <FiX size={20} />
+              <FaTimes size={20} />
             </CloseButton>
           </ModalHeader>
 
@@ -2759,24 +3134,24 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
             </DeleteIcon>
             <DeleteTitle>Delete User</DeleteTitle>
             <DeleteMessage>
-              Are you sure you want to delete {userToDelete.username || userToDelete.email}? This action cannot be undone.
+                  Are you sure you want to delete {userToDelete.username || userToDelete.email}? This action cannot be undone.
             </DeleteMessage>
-            {errorMessage && (
+                {errorMessage && (
               <ErrorMessage>
                 <FiAlertCircle />
-                {errorMessage}
+                    {errorMessage}
               </ErrorMessage>
-            )}
+                )}
             <DeleteButtonGroup>
               <DeleteCancelButton onClick={() => {
-                setIsDeleteModalOpen(false);
-                setUserToDelete(null);
-                setErrorMessage('');
+                      setIsDeleteModalOpen(false);
+                      setUserToDelete(null);
+                      setErrorMessage('');
               }}>
-                Cancel
+                    Cancel
               </DeleteCancelButton>
               <DeleteConfirmButton onClick={handleDeleteConfirm}>
-                Delete
+                    Delete
               </DeleteConfirmButton>
             </DeleteButtonGroup>
           </DeleteModalContent>
@@ -2799,182 +3174,98 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
           </SuccessModalContent>
         </SuccessModal>
       )}
+
+      {selectedUser && (
+        <ProfileSidebar
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          profile={{
+            name: `${selectedUser.first_name} ${selectedUser.last_name}`,
+            email: selectedUser.email,
+            username: selectedUser.username,
+            role: selectedUser.roles.includes('admin') ? 'admin' : 
+                  selectedUser.roles.includes('moderator') ? 'moderator' : 'user',
+            phone: selectedUser.phone,
+            gender: selectedUser.gender,
+            joinedDate: formatDate(selectedUser.created_at),
+            lastLogin: formatDate(selectedUser.last_sign_in),
+            avatar: selectedUser.profile_picture,
+            user_id: selectedUser.id,
+            stats: {
+              leadsGenerated: 0,
+              rolesCreated: 0,
+              quotesSent: 0
+            },
+            preferences: {
+              notifications: true,
+              language: 'English',
+              theme: 'light'
+            }
+          }}
+        />
+      )}
     </Container>
   );
 };
 
 const TabContainer = styled.div`
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 8px;
-  position: relative;
-  z-index: 1;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 `;
 
-const TabButton = styled.button<{ $active: boolean; $type?: 'admin' | 'moderator' | 'user' | 'all' }>`
-  font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-  min-width: 120px;
-  position: relative;
-  z-index: 2;
+const TabButton = styled.button<{ $active: boolean; $type: string }>`
+  padding: 0.25rem 0.75rem;
   background-color: ${props => {
-    if (props.$active) {
       switch (props.$type) {
-        case 'admin':
-          return '#DBEAFE';
-        case 'moderator':
-          return '#F0FDF4';
-        case 'user':
-          return '#E5E7EB';
         case 'all':
-          return '#D1D5DB';
-        default:
-          return '#F3F4F6';
-      }
-    } else {
-      switch (props.$type) {
+        return props.$active ? '#6B728010' : '#6B728010';
         case 'admin':
-          return '#DBEAFE';
+        return props.$active ? '#EC489910' : '#EC489910';
         case 'moderator':
-          return '#F0FDF4';
+        return props.$active ? '#00E91510' : '#00E91510';
         case 'user':
-          return '#E5E7EB';
-        case 'all':
-          return '#D1D5DB';
+        return props.$active ? '#3B82F610' : '#3B82F610';
         default:
-          return '#F3F4F6';
-      }
+        return props.$active ? '#3B82F610' : '#3B82F610';
     }
   }};
   color: ${props => {
-    if (props.$active) {
       switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
         case 'all':
           return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    } else {
-      switch (props.$type) {
         case 'admin':
-          return '#1E40AF';
+        return '#EC4899';
         case 'moderator':
-          return '#166534';
+        return '#00E915';
         case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
+        return '#3B82F6';
         default:
-          return '#6B7280';
-      }
+        return '#3B82F6';
     }
   }};
+  border: none;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
 
   &:hover {
-    opacity: 0.9;
-  }
-
-  &:focus {
-    outline: none;
-     ${props => {
+    background-color: ${props => {
       switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
         case 'all':
-          return '#1F2937';
+          return '#6B728020';
+        case 'admin':
+          return '#EC489920';
+        case 'moderator':
+          return '#00E91520';
+        case 'user':
+          return '#3B82F620';
         default:
-          return '#6B7280';
+          return '#3B82F620';
       }
     }};
-  }
-
-  &:focus-visible {
-    outline: none;
-     ${props => {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    }};
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
-    border-radius: 9999px;
-    border: 1px solid ${props => {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    }};
-    opacity: ${props => props.$active ? 1 : 0};
-    transition: opacity 0.2s;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
-    border-radius: 9999px;
-    border: 1px solid ${props => {
-      switch (props.$type) {
-        case 'admin':
-          return '#1E40AF';
-        case 'moderator':
-          return '#166534';
-        case 'user':
-          return '#374151';
-        case 'all':
-          return '#1F2937';
-        default:
-          return '#6B7280';
-      }
-    }};
-    opacity: ${props => props.$active ? 1 : 0};
-    transition: opacity 0.2s;
   }
 `;
 
@@ -2985,32 +3276,32 @@ const RoleBadges = styled.div`
 `;
 
 const RoleBadge = styled.span<{ $role: string }>`
-  padding: 4px 8px;
+  padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 500;
   background-color: ${props => {
     switch (props.$role) {
       case 'admin':
-        return '#DBEAFE';
+        return '#EC489910';
       case 'moderator':
-        return '#F0FDF4';
+        return '#00E91510';
       case 'user':
-        return '#E5E7EB';
+        return '#3B82F610';
       default:
-        return '#F3E8FF';
+        return '#3B82F610';
     }
   }};
   color: ${props => {
     switch (props.$role) {
       case 'admin':
-        return '#1E40AF';
+        return '#EC4899';
       case 'moderator':
-        return '#166534';
+        return '#00E915';
       case 'user':
-        return '#374151';
+        return '#3B82F6';
       default:
-        return '#6B21A8';
+        return '#3B82F6';
     }
   }};
   text-transform: capitalize;
@@ -3198,47 +3489,23 @@ const DeleteButtonGroup = styled.div`
   justify-content: center;
 `;
 
-const DeleteConfirmButton = styled.button`
-  padding: 0.875rem 1.5rem;
-  background: ${props => props.theme.colors.error};
+const DeleteConfirmButton = styled(ModalButton)`
+  background-color: #EF4444;
   color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: 1;
 
   &:hover {
-    background: ${props => props.theme.colors.error};
-    opacity: 0.9;
-  }
-
-  &:active {
-    transform: scale(0.98);
+    background-color: #DC2626;
   }
 `;
 
-const DeleteCancelButton = styled.button`
-  padding: 0.875rem 1.5rem;
-  background: ${props => props.theme.colors.background.secondary};
+const DeleteCancelButton = styled(ModalButton)`
+  background: transparent;
+  border: 1.5px solid #9aa2b3;
   color: ${props => props.theme.colors.text.primary};
-  border: 1.5px solid ${props => props.theme.colors.border};
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex: 1;
 
   &:hover {
-    background: ${props => props.theme.colors.background.primary};
+    background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
-  }
-
-  &:active {
-    transform: scale(0.98);
   }
 `;
 

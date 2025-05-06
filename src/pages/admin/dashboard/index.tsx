@@ -7,18 +7,18 @@ import DashboardSidebar, { NavItem } from '@/components/layout/DashboardSidebar'
 import { supabase } from '@/lib/supabase';
 import { 
   FaGripVertical,
-  FaUsers,
+  FaUsers, 
   FaUserShield,
   FaChartLine,
   FaGear,
-  FaFile,
+  FaFile, 
   FaBook,
   FaGraduationCap,
   FaRobot,
   FaLayerGroup,
   FaTrophy,
   FaBell,
-  FaCircleQuestion,
+  FaCircleQuestion, 
   FaDatabase,
   FaHouse,
   FaChartPie,
@@ -672,25 +672,29 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
+      setIsLoadingProfile(true);
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
 
           if (profile) {
             setUserData(profile);
-            setProfilePicture(profile.profile_picture);
+        setProfilePicture(profile.profile_picture);
           }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+      } finally {
+        setIsLoadingProfile(false);
       }
     };
 
@@ -778,24 +782,25 @@ const DashboardPage = () => {
 
   return (
     <NoNavbarLayout>
-      <DashboardContainer>
-        <DashboardSidebar
+    <DashboardContainer>
+      <DashboardSidebar
           logoText="ScaleMate Admin"
-          navItems={navItems}
-          activeTab={activeTab}
-          onTabClick={handleTabClick}
-        />
-        <MainContent>
-          <DashboardHeader
+        navItems={navItems}
+        activeTab={activeTab}
+        onTabClick={handleTabClick}
+      />
+      <MainContent>
+        <DashboardHeader
             title={getTabTitle(activeTab)}
-            profilePicture={profilePicture}
-            onLogout={handleLogout}
+          profilePicture={profilePicture}
+          onLogout={handleLogout}
             onProfileClick={() => setActiveTab('profile')}
             showProfile={activeTab === 'profile'}
-          />
+            isLoading={isLoadingProfile}
+        />
           {renderContent()}
-        </MainContent>
-      </DashboardContainer>
+      </MainContent>
+    </DashboardContainer>
     </NoNavbarLayout>
   );
 };

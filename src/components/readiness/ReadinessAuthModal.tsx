@@ -130,11 +130,14 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
     if (onAuthSuccess) {
       onAuthSuccess();
     }
+    // Close the modal after successful auth
+    handleClose();
   };
 
   const handleAuthError = (error: string | null) => {
     if (error) {
       console.error('Auth error:', error);
+      // You might want to show an error message to the user here
     }
   };
 
@@ -149,7 +152,10 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
       case 'signup':
         return (
           <>
-            <SignUpForm onSuccess={handleAuthSuccess} onError={handleAuthError} />
+            <SignUpForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError}
+            />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
               Back to options
@@ -159,7 +165,10 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
       case 'login':
         return (
           <>
-            <AuthForm onSuccess={handleAuthSuccess} onError={handleAuthError} />
+            <AuthForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError}
+            />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
               Back to options

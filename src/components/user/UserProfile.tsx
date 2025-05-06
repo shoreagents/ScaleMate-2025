@@ -308,7 +308,7 @@ const CloseButton = styled.button`
   position: absolute;
   right: 0;
   top: 0;
-  
+
   &:hover {
     color: ${props => props.theme.colors.text.primary};
   }
@@ -458,7 +458,7 @@ interface UserProfileData {
 }
 
 interface UserProfileProps {
-  onProfilePictureChange?: (newPictureUrl: string) => void;
+  onProfilePictureChange?: (url: string) => void;
 }
 
 const capitalizeFirstLetter = (string: string) => {
@@ -476,30 +476,41 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     last_password_change: '',
     username: ''
   });
+  const [originalProfileData, setOriginalProfileData] = useState<UserProfileData>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    gender: '',
+    profile_picture: '',
+    last_password_change: '',
+    username: ''
+  });
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [basicInfoError, setBasicInfoError] = useState<string | null>(null);
   const [basicInfoSuccess, setBasicInfoSuccess] = useState<string | null>(null);
   const [contactError, setContactError] = useState<string | null>(null);
   const [contactSuccess, setContactSuccess] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
+  const [isUpdatingProfilePicture, setIsUpdatingProfilePicture] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
   const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
-  const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
-  const [isUpdatingProfilePicture, setIsUpdatingProfilePicture] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchProfileData();
@@ -530,6 +541,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
       };
 
       setProfileData(profileData);
+      setOriginalProfileData(profileData);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -544,15 +556,44 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
-    setPasswordsMatch(null);
-    setCurrentPasswordValid(null);
+    setPasswordLength(null);
+    setPasswordError(null);
+    setPasswordSuccess(null);
   };
 
   const handleProfileUpdate = async () => {
     try {
+      setIsUpdating(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Track changes for activity logging
+      const changes: string[] = [];
+      if (profileData.first_name !== originalProfileData.first_name) {
+        changes.push(`Changed First Name from "${originalProfileData.first_name || 'Not Set'}" to "${profileData.first_name}"`);
+      }
+      if (profileData.last_name !== originalProfileData.last_name) {
+        changes.push(`Changed Last Name from "${originalProfileData.last_name || 'Not Set'}" to "${profileData.last_name}"`);
+      }
+      if (profileData.username !== originalProfileData.username) {
+        changes.push(`Changed Username from "${originalProfileData.username || 'Not Set'}" to "${profileData.username}"`);
+      }
+      if (profileData.gender !== originalProfileData.gender) {
+        changes.push(profileData.gender ? 
+          (originalProfileData.gender ? 
+            `Changed Gender from "${capitalizeFirstLetter(originalProfileData.gender)}" to "${capitalizeFirstLetter(profileData.gender)}"` :
+            `Set Gender to "${capitalizeFirstLetter(profileData.gender)}"`) : 
+          'Removed Gender');
+      }
+      if (profileData.phone !== originalProfileData.phone) {
+        changes.push(profileData.phone ? 
+          (originalProfileData.phone ? 
+            `Changed Phone from "${originalProfileData.phone}" to "${profileData.phone}"` :
+            `Added Phone: "${profileData.phone}"`) : 
+          'Removed Phone');
+      }
+
+      // Update profile
       const { error: updateError } = await supabase
         .from('user_profiles')
         .update({
@@ -567,25 +608,54 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
 
       if (updateError) throw updateError;
 
+      // Log each change as a separate activity
+      for (const change of changes) {
+        let activityType = 'profile';
+        if (change.includes('Username')) {
+          activityType = 'username';
+        } else if (change.includes('First Name') || change.includes('Last Name')) {
+          activityType = 'name';
+        } else if (change.includes('Profile Picture')) {
+          activityType = 'profile_picture_change';
+        } else if (change.includes('Phone')) {
+          activityType = 'phone';
+        } else if (change.includes('Gender')) {
+          activityType = 'gender_change';
+        }
+
+        await supabase.rpc('log_profile_change', {
+          p_user_id: user.id,
+          p_type: activityType,
+          p_description: change
+        });
+      }
+
+      // Refresh profile data from server
+      await fetchProfileData();
+
       if (isEditing) {
         setBasicInfoSuccess('Profile updated successfully');
-        setIsEditing(false);
-        setTimeout(() => setBasicInfoSuccess(null), 500);
+      setIsEditing(false);
+        setTimeout(() => setBasicInfoSuccess(null), 3000);
       }
       if (isEditingContact) {
         setContactSuccess('Profile updated successfully');
         setIsEditingContact(false);
-        setTimeout(() => setContactSuccess(null), 500);
+        setTimeout(() => setContactSuccess(null), 3000);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
       const errorMessage = 'Failed to update profile';
       if (isEditing) {
         setBasicInfoError(errorMessage);
+        setTimeout(() => setBasicInfoError(null), 3000);
       }
       if (isEditingContact) {
         setContactError(errorMessage);
+        setTimeout(() => setContactError(null), 3000);
       }
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -625,6 +695,9 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
         return;
       }
 
+      // Store the previous password change date before updating
+      const previousPasswordChange = profileData.last_password_change || 'Never';
+
       const { error: profileError } = await supabase
         .from('user_profiles')
         .update({
@@ -637,6 +710,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
         setPasswordError('Failed to update profile');
         return;
       }
+
+      // Log the password change with the previous date
+      await supabase.rpc('log_profile_change', {
+        p_user_id: user.id,
+        p_type: 'password_change',
+        p_description: 'Changed Password (Last changed: ' + (previousPasswordChange === 'Never' ? 'Never' : new Date(previousPasswordChange).toLocaleString()) + ')'
+      });
 
       setPasswordSuccess('Password updated successfully');
       setIsEditingPassword(false);
@@ -739,18 +819,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
         throw new Error(`Profile update failed: ${updateError.message}`);
       }
 
+      // Log the profile picture change
+      await supabase.rpc('log_profile_change', {
+        p_user_id: user.id,
+        p_type: 'profile_picture_change',
+        p_description: profileData.profile_picture ? 
+          'Changed Profile Picture' : 
+          'Set Profile Picture for the first time'
+      });
+
       // Update local state and notify parent component
       setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));
-      
-      // Call the callback before closing the modal
-      if (onProfilePictureChange) {
-        onProfilePictureChange(publicUrl);
-      }
-
-      // Close modal and reset states
       setIsProfileModalOpen(false);
       setPreviewImage(null);
       setSelectedFile(null);
+      
+      if (onProfilePictureChange) {
+        onProfilePictureChange(publicUrl);
+      }
     } catch (error) {
       console.error('Error updating profile picture:', error);
       setBasicInfoError(error instanceof Error ? error.message : 'Failed to update profile picture');
@@ -784,6 +870,23 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     }
   };
 
+  const isBasicInfoValid = () => {
+    return profileData.first_name.trim() !== '' && 
+           profileData.last_name.trim() !== '';
+  };
+
+  const handleModalClose = () => {
+    setIsProfileModalOpen(false);
+    setPreviewImage(null);
+    setSelectedFile(null);
+    setBasicInfoError(null);
+    setBasicInfoSuccess(null);
+    setContactError(null);
+    setContactSuccess(null);
+    setPasswordError(null);
+    setPasswordSuccess(null);
+  };
+
   const validateCurrentPassword = async (password: string) => {
     if (!password) {
       setCurrentPasswordValid(null);
@@ -810,23 +913,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     await validateCurrentPassword(value);
   };
 
-  const isBasicInfoValid = () => {
-    return profileData.first_name.trim() !== '' && 
-           profileData.last_name.trim() !== '';
-  };
-
-  const handleModalClose = () => {
-    setIsProfileModalOpen(false);
-    setPreviewImage(null);
-    setSelectedFile(null);
-    setBasicInfoError(null);
-    setBasicInfoSuccess(null);
-    setContactError(null);
-    setContactSuccess(null);
-    setPasswordError(null);
-    setPasswordSuccess(null);
-  };
-
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -840,13 +926,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
           </SectionTitle>
           {isEditing ? (
             <>
-              <FormGroup>
+          <FormGroup>
                 <Label>
                   Username
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <Input
-                  type="text"
+              <Input
+                type="text"
                   pattern="[a-zA-Z0-9._-]*"
                   value={profileData.username}
                   onChange={(e) => {
@@ -856,13 +942,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                   }}
                   placeholder="Enter username"
                 />
-              </FormGroup>
-              <FormGroup>
+          </FormGroup>
+          <FormGroup>
                 <Label>
                   First Name
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <Input
+              <Input
                   type="text"
                   pattern="[A-Za-z ]+"
                   value={profileData.first_name}
@@ -873,14 +959,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                   }}
                   placeholder="Enter your first name"
                 />
-              </FormGroup>
-              <FormGroup>
+          </FormGroup>
+          <FormGroup>
                 <Label>
                   Last Name
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <Input
-                  type="text"
+              <Input
+                type="text"
                   pattern="[A-Za-z ]+"
                   value={profileData.last_name}
                   onChange={(e) => {
@@ -889,14 +975,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                     }
                   }}
                   placeholder="Enter your last name"
-                />
+              />
               </FormGroup>
               <FormGroup>
-                <Label>Gender</Label>
+              <Label>Gender</Label>
                 <GenderSelectContainer>
                   <GenderSelect
-                    value={profileData.gender}
-                    onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                value={profileData.gender}
+                onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
                   >
                     <option value="">Select your gender</option>
                     <option value="male">Male</option>
@@ -912,7 +998,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                      <FaQuestion size={18} />}
                   </GenderIcon>
                 </GenderSelectContainer>
-              </FormGroup>
+          </FormGroup>
               <ButtonGroup>
                 <ChooseImageButton
                   type="button"
@@ -922,9 +1008,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 </ChooseImageButton>
                 <SaveButton 
                   onClick={handleProfileUpdate}
-                  disabled={!isBasicInfoValid()}
+                  disabled={!isBasicInfoValid() || isUpdating}
                 >
-                  Save Changes
+                  {isUpdating ? (
+                    <>
+                      <SpinningIcon size={16} />
+                      Updating...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
                 </SaveButton>
               </ButtonGroup>
               {basicInfoError && <ErrorMessage>{basicInfoError}</ErrorMessage>}
@@ -935,7 +1028,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
               <FormGroup>
                 <Label>Username</Label>
                 <div>{profileData.username || '-'}</div>
-              </FormGroup>
+          </FormGroup>
               <FormGroup>
                 <Label>First Name</Label>
                 <div>{profileData.first_name || '-'}</div>
@@ -995,7 +1088,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
             <FormGroup>
               <Label>Email</Label>
               <InputWrapper>
-                <Input 
+                <Input
                   value={profileData.email}
                   disabled
                   style={{ 
@@ -1032,7 +1125,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 Cancel
               </ChooseImageButton>
               <SaveButton onClick={handleProfileUpdate}>
-                Save Changes
+                {isUpdating ? (
+                  <>
+                    <SpinningIcon size={16} />
+                    Updating...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </SaveButton>
             </ButtonGroup>
             {contactError && <ErrorMessage>{contactError}</ErrorMessage>}
@@ -1115,14 +1215,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 <PasswordInputContainer>
                   <PasswordInput
                     type={showNewPassword ? "text" : "password"}
-                    value={newPassword}
+                  value={newPassword}
                     onChange={handleNewPasswordChange}
                     placeholder="Enter your new password"
-                  />
+                />
                   <ViewPasswordButton
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                >
                     {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
@@ -1168,14 +1268,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 <PasswordInputContainer>
                   <PasswordInput
                     type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
+                  value={confirmPassword}
                     onChange={handleConfirmPasswordChange}
                     placeholder="Confirm your new password"
-                  />
+                />
                   <ViewPasswordButton
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
                     {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
@@ -1193,7 +1293,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 type="submit"
                 disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
               >
-                Save Changes
+                {isUpdating ? (
+                  <>
+                    <SpinningIcon size={16} />
+                    Updating...
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </SaveButton>
             </ButtonGroup>
           </PasswordChangeForm>

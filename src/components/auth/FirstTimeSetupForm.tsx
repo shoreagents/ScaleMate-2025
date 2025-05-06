@@ -294,7 +294,6 @@ interface FormData {
   username: string;
   password: string;
   confirmPassword: string;
-  fullName: string;
 }
 
 const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
@@ -308,8 +307,7 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
   const [formData, setFormData] = useState<FormData>({
     username: currentUsername,
     password: '',
-    confirmPassword: '',
-    fullName: ''
+    confirmPassword: ''
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -457,13 +455,12 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
 
       // Update user profile
       const { error: profileError } = await supabase
-        .from('users')
+        .from('user_profiles')
         .update({
-          full_name: formData.fullName,
           username: formData.username,
           last_password_change: new Date().toISOString()
         })
-        .eq('id', userId);
+        .eq('user_id', userId);
 
       if (profileError) throw profileError;
 
@@ -505,17 +502,6 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
           </ModalHeader>
 
           <Form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                placeholder="Enter your full name"
-                required
-              />
-            </FormGroup>
             <FormGroup>
               <Label htmlFor="username">
                 Username
