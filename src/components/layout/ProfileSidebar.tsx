@@ -64,7 +64,7 @@ const Sidebar = styled.aside<{ $isOpen: boolean }>`
   position: fixed;
   right: 0;
   top: 0;
-  width: 24rem;
+  width: 74rem;
   height: 100%;
   background-color: #F8FAFC;
   border-left: 1px solid #E2E8F0;
@@ -73,6 +73,8 @@ const Sidebar = styled.aside<{ $isOpen: boolean }>`
   transition: transform 0.3s ease;
   z-index: 1000;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 `;
 
 const SidebarHeader = styled.div`
@@ -113,23 +115,45 @@ const CloseButton = styled.button`
 `;
 
 const SidebarContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #F1F5F9;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+  }
 `;
 
 const Card = styled.div`
   background-color: white;
-  border-radius: 0.75rem;;
-  padding: 1.5rem;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  width: 100%;
 `;
 
 const ProfileHeader = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  text-align: center;
-  margin-bottom: 2rem;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 `;
 
 const Avatar = styled.div`
@@ -162,11 +186,8 @@ const ProfileInfo = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  width: 100%;
-  max-width: 100%;
-  word-break: break-word;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
+  text-align: left;
 `;
 
 const ProfileName = styled.h3`
@@ -174,9 +195,7 @@ const ProfileName = styled.h3`
   font-weight: 600;
   color: #1E293B;
   margin: 0;
-  word-break: break-word;
   line-height: 1.3;
-  padding: 0 0.5rem;
 `;
 
 const ProfileRole = styled.p`
@@ -250,15 +269,11 @@ const DividerWithText = styled.div<{ $isActive: boolean }>`
   }
 `;
 
-const InfoList = styled.div<{ $isVisible: boolean }>`
-  display: flex;
-  flex-direction: column;
+const InfoList = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
-  opacity: ${props => props.$isVisible ? 1 : 0};
-  max-height: ${props => props.$isVisible ? '1000px' : '0'};
-  overflow: hidden;
-  transition: all 0.3s ease;
-  padding-top: ${props => props.$isVisible ? '2rem' : '0'};
+  padding-top: 1.5rem;
 `;
 
 const InfoItem = styled.div`
@@ -282,7 +297,7 @@ const InfoLabel = styled.span`
 `;
 
 const InfoValue = styled.span`
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   color: rgba(15,23,42,0.7);
   font-weight: 500;
 `;
@@ -878,117 +893,112 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
       </SidebarHeader>
 
       <SidebarContent>
-        <Card>
-          <ProfileHeader>
-            {profile.avatar ? (
-              <Avatar>
-                <img src={profile.avatar} alt={profile.name} />
-              </Avatar>
-            ) : (
-              <AvatarPlaceholder>
-                <FiUser size={24} />
-              </AvatarPlaceholder>
-            )}
-            <ProfileInfo>
-              <ProfileName>{profile.name}</ProfileName>
-              <ProfileRole>{profile.role}</ProfileRole>
-            </ProfileInfo>
-          </ProfileHeader>
-
-          <DividerWithText 
-            onClick={() => setIsInfoVisible(!isInfoVisible)}
-            $isActive={isInfoVisible}
-          >
-            {isInfoVisible ? 'Hide Info' : 'Show Info'}
-          </DividerWithText>
-
-          <InfoList $isVisible={isInfoVisible}>
-            <InfoItem>
-              <InfoLabel>
-                <FaEnvelope />
-                Email
-              </InfoLabel>
-              <InfoValue>{profile.email}</InfoValue>
-            </InfoItem>
-            {profile.username && (
-              <InfoItem>
-                <InfoLabel>
-                  <FaUser />
-                  Username
-                </InfoLabel>
-                <InfoValue>@{profile.username}</InfoValue>
-              </InfoItem>
-            )}
-            {profile.gender && (
-              <InfoItem>
-                <InfoLabel>
-                  {profile.gender === 'male' ? <FaMale size={18} /> :
-                   profile.gender === 'female' ? <FaFemale size={18} /> :
-                   profile.gender === 'other' ? <FaTransgender size={18} /> :
-                   profile.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
-                   <FaQuestion size={18} />}
-                  Gender
-                </InfoLabel>
-                <InfoValue>{profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)}</InfoValue>
-              </InfoItem>
-            )}
-            {profile.phone && (
-              <InfoItem>
-                <InfoLabel>
-                  <FaPhone />
-                  Phone
-                </InfoLabel>
-                <InfoValue>{profile.phone}</InfoValue>
-              </InfoItem>
-            )}
-            <InfoItem>
-              <InfoLabel>
-                <FaCalendarAlt />
-                Joined
-              </InfoLabel>
-              <InfoValue>{profile.joinedDate}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>
-                <FaClock />
-                Last Login
-              </InfoLabel>
-              <InfoValue>{profile.lastLogin}</InfoValue>
-            </InfoItem>
-          </InfoList>
-        </Card>
-
-        {profile.stats && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <Card>
-            <SectionTitle>
-              <FaChartLine />
-              Performance Stats
-            </SectionTitle>
-            <StatsGrid>
-              <StatItem>
-                <h4>{profile.stats.leadsGenerated}</h4>
-                <p>Leads</p>
-              </StatItem>
-              <StatItem>
-                <h4>{profile.stats.rolesCreated}</h4>
-                <p>Roles</p>
-              </StatItem>
-              <StatItem>
-                <h4>{profile.stats.quotesSent}</h4>
-                <p>Quotes</p>
-              </StatItem>
-            </StatsGrid>
+            <ProfileHeader>
+              {profile.avatar ? (
+                <Avatar>
+                  <img src={profile.avatar} alt={profile.name} />
+                </Avatar>
+              ) : (
+                <AvatarPlaceholder>
+                  <FiUser size={24} />
+                </AvatarPlaceholder>
+              )}
+              <ProfileInfo>
+                <ProfileName>{profile.name}</ProfileName>
+                <ProfileRole>{profile.role}</ProfileRole>
+              </ProfileInfo>
+            </ProfileHeader>
+
+            <InfoList>
+              <InfoItem>
+                <InfoLabel>
+                  <FaEnvelope />
+                  Email
+                </InfoLabel>
+                <InfoValue>{profile.email}</InfoValue>
+              </InfoItem>
+              {profile.username && (
+                <InfoItem>
+                  <InfoLabel>
+                    <FaUser />
+                    Username
+                  </InfoLabel>
+                  <InfoValue>@{profile.username}</InfoValue>
+                </InfoItem>
+              )}
+              {profile.gender && (
+                <InfoItem>
+                  <InfoLabel>
+                    {profile.gender === 'male' ? <FaMale size={18} /> :
+                     profile.gender === 'female' ? <FaFemale size={18} /> :
+                     profile.gender === 'other' ? <FaTransgender size={18} /> :
+                     profile.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
+                     <FaQuestion size={18} />}
+                    Gender
+                  </InfoLabel>
+                  <InfoValue>{profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)}</InfoValue>
+                </InfoItem>
+              )}
+              {profile.phone && (
+                <InfoItem>
+                  <InfoLabel>
+                    <FaPhone />
+                    Phone
+                  </InfoLabel>
+                  <InfoValue>{profile.phone}</InfoValue>
+                </InfoItem>
+              )}
+              <InfoItem>
+                <InfoLabel>
+                  <FaCalendarAlt />
+                  Joined
+                </InfoLabel>
+                <InfoValue>{profile.joinedDate}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>
+                  <FaClock />
+                  Last Login
+                </InfoLabel>
+                <InfoValue>{profile.lastLogin}</InfoValue>
+              </InfoItem>
+            </InfoList>
           </Card>
-        )}
 
-        {recentActivity.length > 0 && (
-          <Card>
-            <SectionTitle>
-              <FaHistory />
-              Recent Activities
-            </SectionTitle>
-            <ActivityList>
-              {Object.entries(groupedActivities).map(([date, activities]) => (
+          {profile.stats && (
+            <Card>
+              <SectionTitle>
+                <FaChartLine />
+                Performance Stats
+              </SectionTitle>
+              <StatsGrid>
+                <StatItem>
+                  <h4>{profile.stats.leadsGenerated}</h4>
+                  <p>Leads</p>
+                </StatItem>
+                <StatItem>
+                  <h4>{profile.stats.rolesCreated}</h4>
+                  <p>Roles</p>
+                </StatItem>
+                <StatItem>
+                  <h4>{profile.stats.quotesSent}</h4>
+                  <p>Quotes</p>
+                </StatItem>
+              </StatsGrid>
+            </Card>
+          )}
+        </div>
+
+        <Card>
+          <SectionTitle>
+            <FaHistory />
+            Recent Activities
+          </SectionTitle>
+          <ActivityList>
+            {recentActivity.length > 0 ? (
+              Object.entries(groupedActivities).map(([date, activities]) => (
                 <React.Fragment key={date}>
                   <ActivityDate 
                     onClick={() => toggleDateVisibility(date)}
@@ -1013,10 +1023,19 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
                     )}
                   </ActivityGroup>
                 </React.Fragment>
-              ))}
-            </ActivityList>
-          </Card>
-        )}
+              ))
+            ) : (
+              <div style={{ 
+                textAlign: 'center', 
+                padding: '2rem', 
+                color: 'rgba(15,23,42,0.7)',
+                fontSize: '0.875rem'
+              }}>
+                No recent activities to show
+              </div>
+            )}
+          </ActivityList>
+        </Card>
       </SidebarContent>
     </Sidebar>
   );

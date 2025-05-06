@@ -143,12 +143,13 @@ const UserInfo = styled.div`
 
 const UserName = styled.span`
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 0.875rem;
 `;
 
 const UserEmail = styled.span`
   color: rgba(15, 23, 42, 0.7);
   font-weight: 500;
+  font-size: 0.875rem;
 `;
 
 const Th = styled.th<{ $sortable?: boolean }>`
