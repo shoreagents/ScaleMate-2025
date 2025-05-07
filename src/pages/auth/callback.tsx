@@ -233,9 +233,6 @@ export default function AuthCallback() {
 
         // Now handle redirects after setup is complete
         if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
-          // Add a delay to ensure role and profile creation is complete
-          await new Promise(resolve => setTimeout(resolve, 5000));
-          
           // If we came from a modal, redirect back to the same page
           if (redirectTo) {
             router.push(redirectTo);
@@ -252,6 +249,9 @@ export default function AuthCallback() {
                 router.push('/user/dashboard?showBlueprintModal=true');
               } else if (fromCostSavingsModal) {
                 router.push('/user/dashboard?showCostSavingsModal=true');
+              } else if (redirectTo) {
+                // If we have a redirectTo parameter, use it
+                router.push(redirectTo);
               } else {
                 router.push('/user/dashboard');
               }
