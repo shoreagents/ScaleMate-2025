@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
-import { ChartBarIcon } from '@heroicons/react/24/outline';
+import { DocumentIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -63,7 +63,7 @@ const Description = styled.p`
 
 const IconContainer = styled.div`
   width: 100%;
-  background-color: rgba(99, 102, 241, 0.1);
+  background-color: rgba(244, 114, 182, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
@@ -78,7 +78,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6366F1;
+  color: #F472B6;
 
   @media (min-width: 640px) {
     width: 4rem;
@@ -93,7 +93,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -115,7 +115,7 @@ const ButtonContainer = styled.div`
 
 const SignUpButton = styled.button`
   flex: 1;
-  background: #6366F1;
+  background: #F472B6;
   color: white;
   padding: 0.875rem;
   border-radius: 8px;
@@ -131,7 +131,7 @@ const SignUpButton = styled.button`
   }
 
   &:hover {
-    background: #4F46E5;
+    background: #EC4899;
   }
 
   &:active {
@@ -177,7 +177,7 @@ const LoginButton = styled.button`
 `;
 
 const BackButton = styled.button`
-  color: #6366F1;
+  color: #F472B6;
   background: none;
   border: none;
   cursor: pointer;
@@ -194,10 +194,10 @@ const BackButton = styled.button`
 
   @media (min-width: 640px) {
     margin-top: 1rem;
+  }
 
-    &:hover {
-      color: #4F46E5;
-    }
+  &:hover {
+    color: #EC4899;
   }
 `;
 
@@ -212,13 +212,13 @@ const ExploreContainer = styled.div`
 `;
 
 const ExploreLink = styled.a`
-  color: #6366F1;
+  color: #F472B6;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
   &:hover {
-    color: #4F46E5;
+    color: #EC4899;
   }
 `;
 
@@ -234,7 +234,7 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
       const fromParam = urlParams.get('from');
       
       if (fromParam === 'readiness-modal') {
-        // Remove the parameters from the URL without refreshing
+        // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { 
           shallow: true,
@@ -242,9 +242,9 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
         });
         
         // Call onAuthSuccess if provided
-    if (onAuthSuccess) {
-      onAuthSuccess();
-    }
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       }
     }
   }, [router.isReady, onAuthSuccess]);
@@ -315,10 +315,10 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
               onVerificationStateChange={setIsVerifying}
             />
             {!isVerifying && (
-            <BackButton onClick={() => setCurrentView('initial')}>
-              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+              <BackButton onClick={() => setCurrentView('initial')}>
+                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
                 Go Back
-            </BackButton>
+              </BackButton>
             )}
           </FormWrapper>
         );
@@ -341,14 +341,15 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
       default:
         return (
           <>
-            <Title>Ready to Assess Your Readiness?</Title>
+            <Title>Almost there!</Title>
+            
             <Description>
-              Create a free account to take the readiness assessment and get personalized recommendations.
+              Create a free account to unlock the complete readiness assessment, including detailed insights and personalized recommendations.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <ChartBarIcon style={{ width: '2.5rem', height: '2.5rem' }} />
+                <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
               <IconText>Readiness Assessment</IconText>
             </IconContainer>
@@ -358,15 +359,15 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
                 Log In
               </LoginButton>
 
-            <SignUpButton onClick={() => setCurrentView('signup')}>
+              <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
-            </SignUpButton>
+              </SignUpButton>
             </ButtonContainer>
 
             <ExploreContainer>
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
-                Keep exploring
+                Keep exploring tools
               </ExploreLink>
             </ExploreContainer>
           </>
