@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
 import { ChartBarIcon } from '@heroicons/react/24/outline';
@@ -6,6 +6,8 @@ import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabase';
 
 interface ReadinessAuthModalProps {
   isOpen: boolean;
@@ -91,7 +93,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-    font-size: 1.25rem;
+  font-size: 1.25rem;
   }
 `;
 
@@ -222,19 +224,44 @@ const ExploreLink = styled.a`
 
 export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: ReadinessAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const router = useRouter();
 
-  const handleAuthSuccess = (message: string) => {
+  // Check URL parameters on mount and after auth redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined' && router.isReady) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromParam = urlParams.get('from');
+      
+      if (fromParam === 'readiness-modal') {
+        // Remove the parameters from the URL without refreshing
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, undefined, { 
+          shallow: true,
+          scroll: false
+        });
+        
+        // Call onAuthSuccess if provided
     if (onAuthSuccess) {
       onAuthSuccess();
     }
-    // Close the modal after successful auth
-    handleClose();
-  };
-
-  const handleAuthError = (error: string | null) => {
-    if (error) {
-      console.error('Auth error:', error);
+      }
     }
+  }, [router.isReady, onAuthSuccess]);
+
+  // Get the current URL for OAuth redirect
+  const getCurrentUrl = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      // Add a query parameter to identify this is from the readiness modal
+      url.searchParams.set('from', 'readiness-modal');
+      // Store the current URL to return to after auth
+      const currentPath = window.location.pathname + window.location.search;
+      url.searchParams.set('redirectTo', currentPath);
+      console.log('OAuth Redirect URL:', url.toString()); // Debug log
+      return url.toString();
+    }
+    return '';
   };
 
   const handleClose = () => {
@@ -243,22 +270,68 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
     setTimeout(() => setCurrentView('initial'), 300);
   };
 
+  const handleAuthSuccess = async (message: string) => {
+    try {
+      console.log('Auth Success:', message); // Debug log
+      
+      // Call onAuthSuccess if provided
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
+      
+      // Wait for session to be established
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session not established:', error);
+        return;
+      }
+
+      console.log('Session established:', session); // Debug log
+      
+      // Close the auth modal after session is confirmed
+      handleClose();
+    } catch (err) {
+      console.error('Error in handleAuthSuccess:', err);
+    }
+  };
+
+  const handleAuthError = (error: string | null) => {
+    if (error) {
+      console.error('Auth error:', error);
+    }
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm onSuccess={handleAuthSuccess} onError={handleAuthError} />
+            <SignUpForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              hideLinks={true} 
+              preventRedirect={true}
+              redirectUrl={getCurrentUrl()}
+              onVerificationStateChange={setIsVerifying}
+            />
+            {!isVerifying && (
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-              Go Back
+                Go Back
             </BackButton>
+            )}
           </FormWrapper>
         );
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm onSuccess={handleAuthSuccess} onError={handleAuthError} />
+            <AuthForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              preventRedirect={true} 
+              hideLinks={true}
+              redirectUrl={getCurrentUrl()}
+            />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
               Go Back
@@ -268,10 +341,9 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
       default:
         return (
           <>
-            <Title>Almost there!</Title>
-            
+            <Title>Ready to Assess Your Readiness?</Title>
             <Description>
-              Create a free account to unlock the full Readiness Quiz, including AI-powered assessment and personalized recommendations.
+              Create a free account to take the readiness assessment and get personalized recommendations.
             </Description>
 
             <IconContainer>
@@ -286,15 +358,15 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
                 Log In
               </LoginButton>
 
-              <SignUpButton onClick={() => setCurrentView('signup')}>
+            <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
-              </SignUpButton>
+            </SignUpButton>
             </ButtonContainer>
 
             <ExploreContainer>
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
-                Keep exploring tools
+                Keep exploring
               </ExploreLink>
             </ExploreContainer>
           </>
