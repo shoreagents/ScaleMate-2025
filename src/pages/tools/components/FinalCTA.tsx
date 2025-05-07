@@ -115,8 +115,9 @@ export default function FinalCTA() {
   };
 
   const handleAuthSuccess = () => {
-    // Refresh the page or update the UI to show personalized content
-    window.location.reload();
+    setIsAuthModalOpen(false);
+    // Update UI state to reflect authenticated user
+    // No page refresh needed as useAuth hook will update automatically
   };
 
   return (
