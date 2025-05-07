@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faToolbox, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../ui/Modal';
 import AuthForm from '../auth/AuthForm';
 import SignUpForm from '../auth/SignUpForm';
+import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabase';
 
 const Container = styled.div`
   display: flex;
@@ -221,6 +224,45 @@ type ModalView = 'initial' | 'signup' | 'login';
 
 export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const router = useRouter();
+
+  // Check URL parameters on mount and after auth redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined' && router.isReady) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromParam = urlParams.get('from');
+      
+      if (fromParam === 'tools-modal') {
+        // Remove the parameters from the URL without refreshing
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, undefined, { 
+          shallow: true,
+          scroll: false
+        });
+        
+        // Call onAuthSuccess if provided
+        if (onAuthSuccess) {
+      onAuthSuccess();
+        }
+      }
+    }
+  }, [router.isReady, onAuthSuccess]);
+
+  // Get the current URL for OAuth redirect
+  const getCurrentUrl = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      // Add a query parameter to identify this is from the tools modal
+      url.searchParams.set('from', 'tools-modal');
+      // Store the current URL to return to after auth
+      const currentPath = window.location.pathname + window.location.search;
+      url.searchParams.set('redirectTo', currentPath);
+      console.log('OAuth Redirect URL:', url.toString()); // Debug log
+      return url.toString();
+    }
+    return '';
+  };
 
   const handleClose = () => {
     onClose();
@@ -228,11 +270,35 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
     setTimeout(() => setCurrentView('initial'), 300);
   };
 
-  const handleAuthSuccess = () => {
-    if (onAuthSuccess) {
-      onAuthSuccess();
+  const handleAuthSuccess = async (message: string) => {
+    try {
+      console.log('Auth Success:', message); // Debug log
+      
+      // Call onAuthSuccess if provided
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
+      
+      // Wait for session to be established
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session not established:', error);
+        return;
+      }
+
+      console.log('Session established:', session); // Debug log
+      
+      // Close the auth modal after session is confirmed
+      handleClose();
+    } catch (err) {
+      console.error('Error in handleAuthSuccess:', err);
     }
-    handleClose();
+  };
+
+  const handleAuthError = (error: string | null) => {
+    if (error) {
+      console.error('Auth error:', error);
+    }
   };
 
   const renderContent = () => {
@@ -240,28 +306,31 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm
-              onSuccess={handleAuthSuccess}
-              onError={(error: string | null) => console.error(error)}
+            <SignUpForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              hideLinks={true} 
               preventRedirect={true}
-              redirectUrl={`${window.location.href}?from=tools-modal`}
-              hideLinks={true}
+              redirectUrl={getCurrentUrl()}
+              onVerificationStateChange={setIsVerifying}
             />
-            <BackButton onClick={() => setCurrentView('initial')}>
+            {!isVerifying && (
+              <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-              Go Back
+                Go Back
             </BackButton>
+            )}
           </FormWrapper>
         );
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm
-              onSuccess={handleAuthSuccess}
-              onError={(error: string) => console.error(error)}
-              preventRedirect={true}
-              redirectUrl={`${window.location.href}?from=tools-modal`}
+            <AuthForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              preventRedirect={true} 
               hideLinks={true}
+              redirectUrl={getCurrentUrl()}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -272,17 +341,16 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       default:
         return (
           <>
-            <Title>Almost there!</Title>
-            
+            <Title>Ready to Access Our Tools?</Title>
             <Description>
-              Create a free account to unlock the full tool library, including AI-powered recommendations and custom tool stacks.
+              Create a free account to access our suite of business tools and resources.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <FontAwesomeIcon icon={faToolbox} style={{ width: '2.5rem', height: '2.5rem' }} />
+                <WrenchScrewdriverIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Tool Library</IconText>
+              <IconText>Business Tools</IconText>
             </IconContainer>
 
             <ButtonContainer>
@@ -298,7 +366,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
             <ExploreContainer>
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
-                Keep exploring tools
+                Keep exploring
               </ExploreLink>
             </ExploreContainer>
           </>

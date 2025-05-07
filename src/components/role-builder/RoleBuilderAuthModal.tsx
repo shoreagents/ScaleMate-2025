@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
@@ -6,6 +6,8 @@ import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabase';
 
 interface RoleBuilderAuthModalProps {
   isOpen: boolean;
@@ -222,10 +224,65 @@ const ExploreLink = styled.a`
 
 export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBuilderAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const router = useRouter();
 
-  const handleAuthSuccess = (message: string) => {
+  // Check URL parameters on mount and after auth redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined' && router.isReady) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromParam = urlParams.get('from');
+      
+      if (fromParam === 'role-builder-modal') {
+        // Remove the parameters from the URL
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, undefined, { shallow: true });
+        
+        // Call onAuthSuccess if provided
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
+      }
+    }
+  }, [router.isReady, onAuthSuccess]);
+
+  // Get the current URL for OAuth redirect
+  const getCurrentUrl = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      // Add a query parameter to identify this is from the role builder modal
+      url.searchParams.set('from', 'role-builder-modal');
+      // Store the current URL to return to after auth
+      const currentPath = window.location.pathname + window.location.search;
+      url.searchParams.set('redirectTo', currentPath);
+      console.log('OAuth Redirect URL:', url.toString()); // Debug log
+      return url.toString();
+    }
+    return '';
+  };
+
+  const handleAuthSuccess = async (message: string) => {
+    try {
+      console.log('Auth Success:', message); // Debug log
+      
+      // Close the auth modal first
+      onClose();
+      
+      // Call onAuthSuccess if provided
     if (onAuthSuccess) {
       onAuthSuccess();
+      }
+      
+      // Wait for session to be established
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session not established:', error);
+        return;
+      }
+
+      console.log('Session established:', session); // Debug log
+    } catch (err) {
+      console.error('Error in handleAuthSuccess:', err);
     }
   };
 
@@ -246,17 +303,32 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm onSuccess={handleAuthSuccess} onError={handleAuthError} />
+            <SignUpForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              hideLinks={true} 
+              preventRedirect={true}
+              redirectUrl={getCurrentUrl()}
+              onVerificationStateChange={setIsVerifying}
+            />
+            {!isVerifying && (
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-              Go Back
+                Go Back
             </BackButton>
+            )}
           </FormWrapper>
         );
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm onSuccess={handleAuthSuccess} onError={handleAuthError} />
+            <AuthForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              preventRedirect={true} 
+              hideLinks={true}
+              redirectUrl={getCurrentUrl()}
+            />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
               Go Back
@@ -269,14 +341,14 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full Role Builder, including AI-powered job descriptions, tasks, tools, and KPIs.
+              Create a free account to unlock the complete role builder, including detailed job descriptions, requirements, and salary benchmarks.
             </Description>
 
             <IconContainer>
               <IconWrapper>
                 <UserGroupIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>AI-Powered Role Builder</IconText>
+              <IconText>Complete Role Builder</IconText>
             </IconContainer>
 
             <ButtonContainer>
@@ -301,10 +373,12 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
   };
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={handleClose}>
       <Container>
         {renderContent()}
       </Container>
     </Modal>
+    </>
   );
 }; 

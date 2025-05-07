@@ -285,7 +285,7 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
-        onAuthSuccess();
+      onAuthSuccess();
       }
       
       // Wait for session to be established
