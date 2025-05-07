@@ -269,8 +269,8 @@ const GoogleButton = styled.button`
   gap: 0.75rem;
   width: 100%;
   padding: 0.875rem;
-  background: white;
-  border: 1.5px solid ${props => props.theme.colors.border};
+  background: transparent;
+  border: 1.5px solid rgb(154, 162, 179);
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 600;
