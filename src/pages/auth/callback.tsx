@@ -215,12 +215,6 @@ export default function AuthCallback() {
           }
         }
 
-        // Check if we came from a modal
-        const fromBlueprintModal = router.query.from === 'blueprint-modal';
-        const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
-        const fromToolsModal = router.query.from === 'tools-modal';
-        const redirectTo = router.query.redirectTo as string;
-
         // Verify session is still valid before redirecting
         const finalSessionCheck = await isSessionValid();
         if (!finalSessionCheck) {
@@ -228,14 +222,14 @@ export default function AuthCallback() {
           return;
         }
 
+        // Check if we came from a modal
+        const fromBlueprintModal = router.query.from === 'blueprint-modal';
+        const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
+        const fromToolsModal = router.query.from === 'tools-modal';
+        const redirectTo = router.query.redirectTo as string;
+
         // Check if setup is needed
         const needsSetup = !profile?.username;
-
-        // Always complete setup work before redirecting
-        if (needsSetup) {
-          // No need to create profile again, just handle setup
-          // ... rest of the setup code ...
-        }
 
         // Now handle redirects after setup is complete
         if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
