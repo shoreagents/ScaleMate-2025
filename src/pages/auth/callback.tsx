@@ -173,23 +173,20 @@ export default function AuthCallback() {
           }
         }
 
-        // Wait for another short delay to ensure all operations are complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
         // Check if we came from a modal
         const fromBlueprintModal = router.query.from === 'blueprint-modal';
         const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
         const fromToolsModal = router.query.from === 'tools-modal';
         const redirectTo = router.query.redirectTo as string;
 
+        // Wait for another short delay to ensure session is fully established
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
           // If we came from a modal, redirect back to the same page
           // The modal will be reopened automatically
           if (redirectTo) {
-            // Add a small delay before redirecting
-            setTimeout(() => {
-              router.push(redirectTo);
-            }, 500);
+            router.push(redirectTo);
           } else {
             router.push('/');
           }
