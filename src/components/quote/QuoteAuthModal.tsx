@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
@@ -7,6 +7,7 @@ import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useDownloadModal } from './QuoteDownloadModal';
+import { useRouter } from 'next/router';
 
 interface QuoteAuthModalProps {
   isOpen: boolean;
@@ -232,6 +233,24 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const [isVerifying, setIsVerifying] = useState(false);
   const { openModal } = useDownloadModal();
+  const router = useRouter();
+
+  // Check URL parameters on mount and after auth redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromParam = urlParams.get('from');
+      
+      if (fromParam === 'blueprint-modal') {
+        // Remove the parameters from the URL
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, undefined, { shallow: true });
+        
+        // Open the download modal
+        openModal(handleDownloadModalClose);
+      }
+    }
+  }, [router.isReady]);
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -258,10 +277,12 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
     // Close the auth modal first
     onClose();
     
-    // Show download modal for both login and signup
+    // Call onAuthSuccess if provided
     if (onAuthSuccess) {
       onAuthSuccess();
     }
+    
+    // Always show download modal after successful auth
     openModal(handleDownloadModalClose);
   };
 
