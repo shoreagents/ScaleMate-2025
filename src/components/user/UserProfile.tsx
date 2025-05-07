@@ -1,15 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiEdit2, FiX, FiUser, FiEye, FiEyeOff, FiCheck, FiLoader } from 'react-icons/fi';
-import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
+import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiLoader, FiActivity, FiClock, FiUsers, FiShield } from 'react-icons/fi';
+import { FaMale, FaFemale, FaTransgender, FaQuestion, FaHistory, FaUserPlus, FaUserEdit, FaUserMinus, FaUserCog, FaShieldAlt, FaKey, FaUserCircle } from 'react-icons/fa';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const Container = styled.div`
-  max-width: 700px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
   width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+`;
+
+const LeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const RightColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 `;
 
 const Section = styled.div`
@@ -446,6 +461,128 @@ const SpinningIcon = styled(FiLoader)`
   }
 `;
 
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+`;
+
+const StatCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const StatValue = styled.div`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const StatLabel = styled.div`
+  font-size: 0.875rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const ActivityList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const ActivityGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const ActivityDate = styled.div`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6B7280;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+
+  &:hover {
+    color: #374151;
+  }
+`;
+
+const ActivityItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #F9FAFB;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #F3F4F6;
+  }
+`;
+
+const ActivityIcon = styled.div`
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+`;
+
+const ActivityContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const ActivityTitle = styled.div`
+  font-weight: 500;
+  color: #1F2937;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const ActivityTime = styled.div`
+  font-size: 0.75rem;
+  color: #6B7280;
+`;
+
+const ShowMoreButton = styled.button`
+  background: none;
+  border: none;
+  color: #3B82F6;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #F3F4F6;
+  }
+`;
+
 interface UserProfileData {
   first_name: string;
   last_name: string;
@@ -455,6 +592,22 @@ interface UserProfileData {
   profile_picture: string;
   last_password_change: string;
   username: string;
+}
+
+interface PerformanceStats {
+  total_courses: number;
+  completed_courses: number;
+  total_quizzes: number;
+  last_activity: string;
+}
+
+interface RecentActivity {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+  date: string;
+  time: string;
 }
 
 interface UserProfileProps {
@@ -511,9 +664,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
   const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
   const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [performanceStats, setPerformanceStats] = useState<PerformanceStats>({
+    total_courses: 0,
+    completed_courses: 0,
+    total_quizzes: 0,
+    last_activity: ''
+  });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(true);
+  const [visibleDates, setVisibleDates] = useState<Record<string, boolean>>({});
+  const [visibleItems, setVisibleItems] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchProfileData();
+    fetchPerformanceStats();
+    fetchRecentActivities();
   }, []);
 
   const fetchProfileData = async () => {
@@ -635,7 +801,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
 
       if (isEditing) {
         setBasicInfoSuccess('Profile updated successfully');
-      setIsEditing(false);
+        setIsEditing(false);
         setTimeout(() => setBasicInfoSuccess(null), 3000);
       }
       if (isEditingContact) {
@@ -913,92 +1079,520 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     await validateCurrentPassword(value);
   };
 
+  const fetchPerformanceStats = async () => {
+    try {
+      setIsLoadingStats(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch total courses enrolled
+      const { count: totalCourses } = await supabase
+        .from('user_courses')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      // Fetch completed courses
+      const { count: completedCourses } = await supabase
+        .from('user_courses')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'completed');
+
+      // Fetch total quizzes taken
+      const { count: totalQuizzes } = await supabase
+        .from('user_quizzes')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      // Get last activity
+      const { data: lastActivity } = await supabase
+        .from('user_activity')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      setPerformanceStats({
+        total_courses: totalCourses || 0,
+        completed_courses: completedCourses || 0,
+        total_quizzes: totalQuizzes || 0,
+        last_activity: lastActivity?.created_at || ''
+      });
+    } catch (error) {
+      console.error('Error fetching performance stats:', error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  const fetchRecentActivities = async () => {
+    try {
+      setIsLoadingActivities(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: activity, error } = await supabase
+        .from('user_activity')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedActivities = activity.map(item => {
+        const date = new Date(item.created_at);
+        return {
+          id: item.id,
+          type: item.type,
+          description: item.description,
+          timestamp: date.toLocaleString(),
+          date: date.toLocaleDateString(),
+          time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+      });
+
+      setRecentActivity(formattedActivities);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  };
+
+  // Group activities by date
+  const groupedActivities = React.useMemo(() => {
+    return recentActivity.reduce((groups, activity) => {
+      const date = activity.date;
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(activity);
+      return groups;
+    }, {} as Record<string, typeof recentActivity>);
+  }, [recentActivity]);
+
+  // Initialize visible dates when activities are loaded
+  React.useEffect(() => {
+    const dates = Object.keys(groupedActivities);
+    const initialVisibility = dates.reduce((acc, date) => {
+      acc[date] = false;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setVisibleDates(initialVisibility);
+  }, [groupedActivities]);
+
+  // Initialize visible items when activities are loaded
+  React.useEffect(() => {
+    const dates = Object.keys(groupedActivities);
+    const initialVisibility = dates.reduce((acc, date) => {
+      acc[date] = 5; // Show first 5 items initially
+      return acc;
+    }, {} as Record<string, number>);
+    setVisibleItems(initialVisibility);
+  }, [groupedActivities]);
+
+  const toggleDateVisibility = (date: string) => {
+    setVisibleDates(prev => ({
+      ...prev,
+      [date]: !prev[date]
+    }));
+  };
+
+  const showMoreItems = (date: string) => {
+    setVisibleItems(prev => ({
+      ...prev,
+      [date]: prev[date] + 5
+    }));
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'course_start':
+        return <FaUserPlus />;
+      case 'course_complete':
+        return <FaUserEdit />;
+      case 'quiz_taken':
+        return <FaUserCog />;
+      case 'profile_picture_change':
+        return <FaUserCircle />;
+      default:
+        return <FaHistory />;
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
 
   return (
     <Container>
-      <ProfileSection>
-        <ProfileInfo>
-          <SectionTitle>
-            Basic Info
-          </SectionTitle>
-          {isEditing ? (
-            <>
-          <FormGroup>
-                <Label>
-                  Username
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-              <Input
-                type="text"
-                  pattern="[a-zA-Z0-9._-]*"
-                  value={profileData.username}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setProfileData({ ...profileData, username: e.target.value });
+      <LeftColumn>
+        <ProfileSection>
+          <ProfileInfo>
+            <SectionTitle>
+              Basic Info
+            </SectionTitle>
+            {isEditing ? (
+              <>
+                <FormGroup>
+                  <Label>
+                    Username
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <Input
+                    type="text"
+                    pattern="[a-zA-Z0-9._-]*"
+                    value={profileData.username}
+                    onChange={(e) => {
+                      if (e.target.validity.valid) {
+                        setProfileData({ ...profileData, username: e.target.value });
+                      }
+                    }}
+                    placeholder="Enter username"
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label>
+                    First Name
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <Input
+                    type="text"
+                    pattern="[A-Za-z ]+"
+                    value={profileData.first_name}
+                    onChange={(e) => {
+                      if (e.target.validity.valid) {
+                        setProfileData({ ...profileData, first_name: e.target.value });
+                      }
+                    }}
+                    placeholder="Enter your first name"
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label>
+                    Last Name
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <Input
+                    type="text"
+                    pattern="[A-Za-z ]+"
+                    value={profileData.last_name}
+                    onChange={(e) => {
+                      if (e.target.validity.valid) {
+                        setProfileData({ ...profileData, last_name: e.target.value });
+                      }
+                    }}
+                    placeholder="Enter your last name"
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label>Gender</Label>
+                  <GenderSelectContainer>
+                    <GenderSelect
+                      value={profileData.gender}
+                      onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                    >
+                      <option value="">Select your gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer-not-to-say">Prefer not to say</option>
+                    </GenderSelect>
+                    <GenderIcon>
+                      {profileData.gender === 'male' ? <FaMale size={18} /> :
+                       profileData.gender === 'female' ? <FaFemale size={18} /> :
+                       profileData.gender === 'other' ? <FaTransgender size={18} /> :
+                       profileData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
+                       <FaQuestion size={18} />}
+                    </GenderIcon>
+                  </GenderSelectContainer>
+                </FormGroup>
+                <ButtonGroup>
+                  <ChooseImageButton
+                    type="button"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </ChooseImageButton>
+                  <SaveButton 
+                    onClick={handleProfileUpdate}
+                    disabled={!isBasicInfoValid() || isUpdating}
+                  >
+                    {isUpdating ? (
+                      <>
+                        <SpinningIcon size={16} />
+                        Updating...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </SaveButton>
+                </ButtonGroup>
+                {basicInfoError && <ErrorMessage>{basicInfoError}</ErrorMessage>}
+                {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
+              </>
+            ) : (
+              <>
+                <FormGroup>
+                  <Label>Username</Label>
+                  <div>{profileData.username || '-'}</div>
+                </FormGroup>
+                <FormGroup>
+                  <Label>First Name</Label>
+                  <div>{profileData.first_name || '-'}</div>
+                </FormGroup>
+                <FormGroup>
+                  <Label>Last Name</Label>
+                  <div>{profileData.last_name || '-'}</div>
+                </FormGroup>
+                <FormGroup>
+                  <Label>Gender</Label>
+                  <div>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</div>
+                </FormGroup>
+                <div style={{ marginTop: '16px' }}>
+                  <EditButton onClick={() => setIsEditing(true)}>
+                    <FiEdit2 />
+                    Edit Basic Info
+                  </EditButton>
+                </div>
+                {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
+              </>
+            )}
+          </ProfileInfo>
+          <ProfilePicture>
+            {profileData.profile_picture ? (
+              <ProfileImage 
+                src={profileData.profile_picture} 
+                alt={`${profileData.first_name}'s profile`}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    const svg = parent.querySelector('svg');
+                    if (svg) {
+                      svg.style.display = 'block';
                     }
-                  }}
-                  placeholder="Enter username"
-                />
-          </FormGroup>
-          <FormGroup>
-                <Label>
-                  First Name
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-              <Input
-                  type="text"
-                  pattern="[A-Za-z ]+"
-                  value={profileData.first_name}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setProfileData({ ...profileData, first_name: e.target.value });
-                    }
-                  }}
-                  placeholder="Enter your first name"
-                />
-          </FormGroup>
-          <FormGroup>
-                <Label>
-                  Last Name
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-              <Input
-                type="text"
-                  pattern="[A-Za-z ]+"
-                  value={profileData.last_name}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setProfileData({ ...profileData, last_name: e.target.value });
-                    }
-                  }}
-                  placeholder="Enter your last name"
+                  }
+                }}
               />
+            ) : (
+              <FiUser size={80} color="#6b7280" />
+            )}
+            {isEditing && (
+              <UploadButton onClick={() => setIsProfileModalOpen(true)}>
+                <FiEdit2 size={16} />
+              </UploadButton>
+            )}
+          </ProfilePicture>
+        </ProfileSection>
+
+        <Section>
+          <SectionTitle>
+            Contact Info
+          </SectionTitle>
+          {isEditingContact ? (
+            <>
+              <FormGroup>
+                <Label>Email</Label>
+                <InputWrapper>
+                  <Input
+                    value={profileData.email}
+                    disabled
+                    style={{ 
+                      backgroundColor: '#f9fafb',
+                      color: '#6b7280'
+                    }}
+                  />
+                  <HelperText>
+                    Email cannot be changed
+                  </HelperText>
+                </InputWrapper>
               </FormGroup>
               <FormGroup>
-              <Label>Gender</Label>
-                <GenderSelectContainer>
-                  <GenderSelect
-                value={profileData.gender}
-                onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                <Label>Phone</Label>
+                <InputWrapper>
+                  <Input
+                    type="tel"
+                    pattern="[0-9]*"
+                    value={profileData.phone}
+                    onChange={(e) => {
+                      if (e.target.validity.valid) {
+                        setProfileData({ ...profileData, phone: e.target.value });
+                      }
+                    }}
+                    placeholder="Enter your phone number"
+                  />
+                </InputWrapper>
+              </FormGroup>
+              <ButtonGroup>
+                <ChooseImageButton
+                  type="button"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </ChooseImageButton>
+                <SaveButton onClick={handleProfileUpdate}>
+                  {isUpdating ? (
+                    <>
+                      <SpinningIcon size={16} />
+                      Updating...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </SaveButton>
+              </ButtonGroup>
+              {contactError && <ErrorMessage>{contactError}</ErrorMessage>}
+              {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+            </>
+          ) : (
+            <>
+              <FormGroup>
+                <Label>Email</Label>
+                <div>{profileData.email}</div>
+              </FormGroup>
+              <FormGroup>
+                <Label>Phone</Label>
+                <div>{profileData.phone || '-'}</div>
+              </FormGroup>
+              <div style={{ marginTop: '16px' }}>
+                <EditButton onClick={() => setIsEditingContact(true)}>
+                  <FiEdit2 />
+                  Edit Contact Info
+                </EditButton>
+              </div>
+              {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+            </>
+          )}
+        </Section>
+
+        <Section>
+          <SectionTitle>
+            Password
+          </SectionTitle>
+          {isEditingPassword ? (
+            <PasswordChangeForm onSubmit={handlePasswordChange}>
+              <PasswordColumn>
+                <Label>
+                  Current Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={handleCurrentPasswordChange}
+                    placeholder="Enter your current password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   >
-                    <option value="">Select your gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </GenderSelect>
-                  <GenderIcon>
-                    {profileData.gender === 'male' ? <FaMale size={18} /> :
-                     profileData.gender === 'female' ? <FaFemale size={18} /> :
-                     profileData.gender === 'other' ? <FaTransgender size={18} /> :
-                     profileData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
-                     <FaQuestion size={18} />}
-                  </GenderIcon>
-                </GenderSelectContainer>
-          </FormGroup>
+                    {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+                {validatingCurrentPassword ? (
+                  <PasswordMatchIndicator $matches={true}>
+                    <FiLoader size={14} />
+                    Verifying...
+                  </PasswordMatchIndicator>
+                ) : currentPasswordValid !== null && (
+                  <PasswordMatchIndicator $matches={currentPasswordValid}>
+                    {currentPasswordValid ? (
+                      <>
+                        <FiCheck size={14} />
+                        Current password is correct
+                      </>
+                    ) : (
+                      <>
+                        <FiX size={14} />
+                        Current password is incorrect
+                      </>
+                    )}
+                  </PasswordMatchIndicator>
+                )}
+              </PasswordColumn>
+
+              <PasswordRow>
+                <PasswordColumn>
+                  <Label>
+                    New Password
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <PasswordInputContainer>
+                    <PasswordInput
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={handleNewPasswordChange}
+                      placeholder="Enter your new password"
+                    />
+                    <ViewPasswordButton
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </ViewPasswordButton>
+                  </PasswordInputContainer>
+                  <PasswordValidations>
+                    {newPassword && (
+                      <PasswordMatchIndicator $matches={passwordLength === true}>
+                        {passwordLength ? (
+                          <>
+                            <FiCheck size={14} />
+                            Password length is valid
+                          </>
+                        ) : (
+                          <>
+                            <FiX size={14} />
+                            Password must be at least 8 characters
+                          </>
+                        )}
+                      </PasswordMatchIndicator>
+                    )}
+                    {passwordsMatch !== null && (
+                      <PasswordMatchIndicator $matches={passwordsMatch}>
+                        {passwordsMatch ? (
+                          <>
+                            <FiCheck size={14} />
+                            Passwords match
+                          </>
+                        ) : (
+                          <>
+                            <FiX size={14} />
+                            Passwords do not match
+                          </>
+                        )}
+                      </PasswordMatchIndicator>
+                    )}
+                  </PasswordValidations>
+                </PasswordColumn>
+
+                <PasswordColumn>
+                  <Label>
+                    Confirm New Password
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <PasswordInputContainer>
+                    <PasswordInput
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={handleConfirmPasswordChange}
+                      placeholder="Confirm your new password"
+                    />
+                    <ViewPasswordButton
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </ViewPasswordButton>
+                  </PasswordInputContainer>
+                </PasswordColumn>
+              </PasswordRow>
+
               <ButtonGroup>
                 <ChooseImageButton
                   type="button"
@@ -1007,8 +1601,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                   Cancel
                 </ChooseImageButton>
                 <SaveButton 
-                  onClick={handleProfileUpdate}
-                  disabled={!isBasicInfoValid() || isUpdating}
+                  type="submit"
+                  disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
                 >
                   {isUpdating ? (
                     <>
@@ -1020,310 +1614,115 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                   )}
                 </SaveButton>
               </ButtonGroup>
-              {basicInfoError && <ErrorMessage>{basicInfoError}</ErrorMessage>}
-              {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
-            </>
+            </PasswordChangeForm>
           ) : (
             <>
               <FormGroup>
-                <Label>Username</Label>
-                <div>{profileData.username || '-'}</div>
-          </FormGroup>
-              <FormGroup>
-                <Label>First Name</Label>
-                <div>{profileData.first_name || '-'}</div>
-              </FormGroup>
-              <FormGroup>
-                <Label>Last Name</Label>
-                <div>{profileData.last_name || '-'}</div>
-              </FormGroup>
-              <FormGroup>
-                <Label>Gender</Label>
-                <div>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</div>
+                <Label>Last Changed</Label>
+                <div>
+                  {profileData.last_password_change
+                    ? new Date(profileData.last_password_change).toLocaleDateString()
+                    : 'Never'}
+                </div>
               </FormGroup>
               <div style={{ marginTop: '16px' }}>
-                <EditButton onClick={() => setIsEditing(true)}>
+                <EditButton onClick={() => setIsEditingPassword(true)}>
                   <FiEdit2 />
-                  Edit Basic Info
+                  Change Password
                 </EditButton>
               </div>
-              {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
+              {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
             </>
           )}
-        </ProfileInfo>
-        <ProfilePicture>
-          {profileData.profile_picture ? (
-            <ProfileImage 
-              src={profileData.profile_picture} 
-              alt={`${profileData.first_name}'s profile`}
-              onError={(e) => {
-                const target = e.currentTarget;
-                target.style.display = 'none';
-                const parent = target.parentElement;
-                if (parent) {
-                  const svg = parent.querySelector('svg');
-                  if (svg) {
-                    svg.style.display = 'block';
-                  }
-                }
-              }}
-            />
+        </Section>
+      </LeftColumn>
+
+      <RightColumn>
+        <Section>
+          <SectionTitle>
+            <FiActivity />
+            Performance Stats
+          </SectionTitle>
+          {isLoadingStats ? (
+            <LoadingSpinner />
           ) : (
-            <FiUser size={80} color="#6b7280" />
+            <StatsGrid>
+              <StatCard>
+                <StatValue>{performanceStats.total_courses}</StatValue>
+                <StatLabel>
+                  <FiUsers />
+                  Total Courses
+                </StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>{performanceStats.completed_courses}</StatValue>
+                <StatLabel>
+                  <FiUser />
+                  Completed Courses
+                </StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>{performanceStats.total_quizzes}</StatValue>
+                <StatLabel>
+                  <FiShield />
+                  Quizzes Taken
+                </StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>
+                  {performanceStats.last_activity ? new Date(performanceStats.last_activity).toLocaleDateString() : 'N/A'}
+                </StatValue>
+                <StatLabel>
+                  <FiClock />
+                  Last Activity
+                </StatLabel>
+              </StatCard>
+            </StatsGrid>
           )}
-          {isEditing && (
-            <UploadButton onClick={() => setIsProfileModalOpen(true)}>
-              <FiEdit2 size={16} />
-            </UploadButton>
+        </Section>
+
+        <Section>
+          <SectionTitle>
+            <FaHistory />
+            Recent Activities
+          </SectionTitle>
+          {isLoadingActivities ? (
+            <LoadingSpinner />
+          ) : recentActivity.length === 0 ? (
+            <div style={{ padding: '1rem', color: '#6B7280', textAlign: 'center' }}>
+              No recent activities found
+            </div>
+          ) : (
+            <ActivityList>
+              {Object.entries(groupedActivities).map(([date, activities]) => (
+                <ActivityGroup key={date}>
+                  <ActivityDate onClick={() => toggleDateVisibility(date)}>
+                    {date}
+                  </ActivityDate>
+                  {visibleDates[date] && activities
+                    .slice(0, visibleItems[date])
+                    .map((activity) => (
+                      <ActivityItem key={activity.id}>
+                        <ActivityIcon>
+                          {getActivityIcon(activity.type)}
+                        </ActivityIcon>
+                        <ActivityContent>
+                          <ActivityTitle>{activity.description}</ActivityTitle>
+                          <ActivityTime>{activity.time}</ActivityTime>
+                        </ActivityContent>
+                      </ActivityItem>
+                    ))}
+                  {visibleDates[date] && activities.length > visibleItems[date] && (
+                    <ShowMoreButton onClick={() => showMoreItems(date)}>
+                      Show more activities
+                    </ShowMoreButton>
+                  )}
+                </ActivityGroup>
+              ))}
+            </ActivityList>
           )}
-        </ProfilePicture>
-      </ProfileSection>
-
-      <Section>
-        <SectionTitle>
-          Contact Info
-        </SectionTitle>
-        {isEditingContact ? (
-          <>
-            <FormGroup>
-              <Label>Email</Label>
-              <InputWrapper>
-                <Input
-                  value={profileData.email}
-                  disabled
-                  style={{ 
-                    backgroundColor: '#f9fafb',
-                    color: '#6b7280'
-                  }}
-                />
-                <HelperText>
-                  Email cannot be changed
-                </HelperText>
-              </InputWrapper>
-            </FormGroup>
-            <FormGroup>
-              <Label>Phone</Label>
-              <InputWrapper>
-                <Input
-                  type="tel"
-                  pattern="[0-9]*"
-                  value={profileData.phone}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setProfileData({ ...profileData, phone: e.target.value });
-                    }
-                  }}
-                  placeholder="Enter your phone number"
-                />
-              </InputWrapper>
-            </FormGroup>
-            <ButtonGroup>
-              <ChooseImageButton
-                type="button"
-                onClick={handleCancel}
-              >
-                Cancel
-              </ChooseImageButton>
-              <SaveButton onClick={handleProfileUpdate}>
-                {isUpdating ? (
-                  <>
-                    <SpinningIcon size={16} />
-                    Updating...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </SaveButton>
-            </ButtonGroup>
-            {contactError && <ErrorMessage>{contactError}</ErrorMessage>}
-            {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
-          </>
-        ) : (
-          <>
-            <FormGroup>
-              <Label>Email</Label>
-              <div>{profileData.email}</div>
-            </FormGroup>
-            <FormGroup>
-              <Label>Phone</Label>
-              <div>{profileData.phone || '-'}</div>
-            </FormGroup>
-            <div style={{ marginTop: '16px' }}>
-              <EditButton onClick={() => setIsEditingContact(true)}>
-                <FiEdit2 />
-                Edit Contact Info
-              </EditButton>
-            </div>
-            {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
-          </>
-        )}
-      </Section>
-
-      <Section>
-        <SectionTitle>
-          Password
-        </SectionTitle>
-        {isEditingPassword ? (
-          <PasswordChangeForm onSubmit={handlePasswordChange}>
-            <PasswordColumn>
-              <Label>
-                Current Password
-                <RequiredAsterisk>*</RequiredAsterisk>
-              </Label>
-              <PasswordInputContainer>
-                <PasswordInput
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={currentPassword}
-                  onChange={handleCurrentPasswordChange}
-                  placeholder="Enter your current password"
-                />
-                <ViewPasswordButton
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                >
-                  {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </ViewPasswordButton>
-              </PasswordInputContainer>
-              {validatingCurrentPassword ? (
-                <PasswordMatchIndicator $matches={true}>
-                  <FiLoader size={14} />
-                  Verifying...
-                </PasswordMatchIndicator>
-              ) : currentPasswordValid !== null && (
-                <PasswordMatchIndicator $matches={currentPasswordValid}>
-                  {currentPasswordValid ? (
-                    <>
-                      <FiCheck size={14} />
-                      Current password is correct
-                    </>
-                  ) : (
-                    <>
-                      <FiX size={14} />
-                      Current password is incorrect
-                    </>
-                  )}
-                </PasswordMatchIndicator>
-              )}
-            </PasswordColumn>
-
-            <PasswordRow>
-              <PasswordColumn>
-                <Label>
-                  New Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <PasswordInputContainer>
-                  <PasswordInput
-                    type={showNewPassword ? "text" : "password"}
-                  value={newPassword}
-                    onChange={handleNewPasswordChange}
-                    placeholder="Enter your new password"
-                />
-                  <ViewPasswordButton
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                >
-                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                  </ViewPasswordButton>
-                </PasswordInputContainer>
-                <PasswordValidations>
-                  {newPassword && (
-                    <PasswordMatchIndicator $matches={passwordLength === true}>
-                      {passwordLength ? (
-                        <>
-                          <FiCheck size={14} />
-                          Password length is valid
-                        </>
-                      ) : (
-                        <>
-                          <FiX size={14} />
-                          Password must be at least 8 characters
-                        </>
-                      )}
-                    </PasswordMatchIndicator>
-                  )}
-                  {passwordsMatch !== null && (
-                    <PasswordMatchIndicator $matches={passwordsMatch}>
-                      {passwordsMatch ? (
-                        <>
-                          <FiCheck size={14} />
-                          Passwords match
-                        </>
-                      ) : (
-                        <>
-                          <FiX size={14} />
-                          Passwords do not match
-                        </>
-                      )}
-                    </PasswordMatchIndicator>
-                  )}
-                </PasswordValidations>
-              </PasswordColumn>
-
-              <PasswordColumn>
-                <Label>
-                  Confirm New Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <PasswordInputContainer>
-                  <PasswordInput
-                    type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                    onChange={handleConfirmPasswordChange}
-                    placeholder="Confirm your new password"
-                />
-                  <ViewPasswordButton
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                  </ViewPasswordButton>
-                </PasswordInputContainer>
-              </PasswordColumn>
-            </PasswordRow>
-
-            <ButtonGroup>
-              <ChooseImageButton
-                type="button"
-                onClick={handleCancel}
-              >
-                Cancel
-              </ChooseImageButton>
-              <SaveButton 
-                type="submit"
-                disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
-              >
-                {isUpdating ? (
-                  <>
-                    <SpinningIcon size={16} />
-                    Updating...
-                  </>
-                ) : (
-                  'Save Changes'
-                )}
-              </SaveButton>
-            </ButtonGroup>
-          </PasswordChangeForm>
-        ) : (
-          <>
-            <FormGroup>
-              <Label>Last Changed</Label>
-              <div>
-                {profileData.last_password_change
-                  ? new Date(profileData.last_password_change).toLocaleDateString()
-                  : 'Never'}
-              </div>
-            </FormGroup>
-            <div style={{ marginTop: '16px' }}>
-              <EditButton onClick={() => setIsEditingPassword(true)}>
-                <FiEdit2 />
-                Change Password
-              </EditButton>
-            </div>
-            {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
-          </>
-        )}
-      </Section>
+        </Section>
+      </RightColumn>
 
       <ProfileModal $isOpen={isProfileModalOpen}>
         <ProfileModalContent>
