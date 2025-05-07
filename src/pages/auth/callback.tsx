@@ -146,6 +146,20 @@ export default function AuthCallback() {
             setError('Failed to create user record. Please try again.');
             return;
           }
+
+          // Add default user role
+          const { error: roleError } = await serviceRoleClient
+            .from('user_roles')
+            .insert({
+              user_id: user.id,
+              role: 'user'
+            });
+
+          if (roleError) {
+            console.error('Role creation error:', roleError);
+            setError('Failed to assign user role. Please try again.');
+            return;
+          }
         }
 
         // Get user's profile data
