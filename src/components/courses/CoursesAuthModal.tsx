@@ -238,9 +238,9 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
         router.replace(newUrl, undefined, { shallow: true });
         
         // Call onAuthSuccess if provided
-        if (onAuthSuccess) {
-          onAuthSuccess();
-        }
+    if (onAuthSuccess) {
+      onAuthSuccess();
+    }
       }
     }
   }, [router.isReady, onAuthSuccess]);
