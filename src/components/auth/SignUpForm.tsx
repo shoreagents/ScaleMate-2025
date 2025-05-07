@@ -738,17 +738,18 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       const url = new URL(currentUrl);
       const fromParam = url.searchParams.get('from');
       
+      // Create the callback URL with parameters
+      const callbackWithParams = new URL(callbackUrl);
+      callbackWithParams.searchParams.set('from', fromParam || '');
+      callbackWithParams.searchParams.set('redirectTo', currentUrl);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: callbackUrl,
+          redirectTo: callbackWithParams.toString(),
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent',
-            // Pass the original redirect URL as a parameter
-            redirectTo: currentUrl,
-            // Pass the source modal type from the URL parameter
-            from: fromParam || ''
+            prompt: 'consent'
           },
           scopes: 'email profile openid'
         }
