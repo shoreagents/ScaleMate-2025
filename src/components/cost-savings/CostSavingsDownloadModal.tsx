@@ -1,12 +1,129 @@
-import React, { useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
+import { supabase } from '@/lib/supabase';
 
-interface CostSavingsDownloadModalProps {
+// Create context for modal state
+interface DownloadModalContextType {
   isOpen: boolean;
-  onClose: () => void;
+  openModal: (onClose?: () => void) => void;
+  closeModal: () => void;
+  onCloseCallback: (() => void) | null;
 }
+
+const DownloadModalContext = createContext<DownloadModalContextType>({
+  isOpen: false,
+  openModal: () => {},
+  closeModal: () => {},
+  onCloseCallback: null
+});
+
+// Provider component
+export const DownloadModalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [onCloseCallback, setOnCloseCallback] = useState<(() => void) | null>(null);
+
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only close the modal on sign out
+      if (event === 'SIGNED_OUT' && isOpen) {
+        setIsOpen(false);
+        if (onCloseCallback) {
+          onCloseCallback();
+          setOnCloseCallback(null);
+        }
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [isOpen, onCloseCallback]);
+
+  const openModal = (onClose?: () => void) => {
+    setIsOpen(true);
+    if (onClose) {
+      setOnCloseCallback(() => onClose);
+    }
+  };
+
+  const closeModal = () => {
+    setIsOpen(false);
+    if (onCloseCallback) {
+      onCloseCallback();
+      setOnCloseCallback(null);
+    }
+  };
+
+  return (
+    <DownloadModalContext.Provider value={{ isOpen, openModal, closeModal, onCloseCallback }}>
+      {children}
+    </DownloadModalContext.Provider>
+  );
+};
+
+// Hook to use the modal context
+export const useDownloadModal = () => useContext(DownloadModalContext);
+
+// Modal component
+export const CostSavingsDownloadModal = () => {
+  const { isOpen, closeModal } = useDownloadModal();
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      const response = await fetch('/api/cost-savings/download');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cost-savings-report.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    } catch (error) {
+      console.error('Error downloading report:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={closeModal}>
+      <Container>
+        <Title>Your Cost Savings Report is Ready!</Title>
+        
+        <Description>
+          Get your complete cost savings analysis with detailed breakdowns, ROI calculations, and implementation recommendations.
+        </Description>
+
+        <IconContainer>
+          <IconWrapper>
+            <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
+          </IconWrapper>
+          <IconText>Complete Cost Analysis</IconText>
+        </IconContainer>
+
+        <ButtonContainer>
+          <DownloadButton onClick={handleDownload} disabled={isDownloading}>
+            {isDownloading ? 'Downloading...' : 'Download Report'}
+          </DownloadButton>
+        </ButtonContainer>
+
+        <ExploreContainer>
+          <ExploreText>Want to calculate another scenario?</ExploreText>
+          <ExploreLink href="#" onClick={(e) => { e.preventDefault(); closeModal(); }}>
+            Yes, please!
+          </ExploreLink>
+        </ExploreContainer>
+      </Container>
+    </Modal>
+  );
+};
 
 const Container = styled.div`
   display: flex;
@@ -47,46 +164,82 @@ const Description = styled.p`
   font-size: 0.875rem;
 `;
 
-const DownloadContainer = styled.div`
+const IconContainer = styled.div`
   width: 100%;
-  background-color: #F1F5F9;
+  background-color: rgba(244, 114, 182, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
   text-align: center;
-  border: 1px solid #E2E8F0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
+  border: 1px solid #E5E7EB;
 `;
 
-const DownloadIcon = styled.div`
-  width: 2.5rem;
-  height: 2.5rem;
-  color: #64748B;
-  margin-bottom: 0.5rem;
+const IconWrapper = styled.div`
+  width: 3rem;
+  height: 3rem;
+  margin: 0 auto 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #F472B6;
 
   @media (min-width: 640px) {
-    width: 3rem;
-    height: 3rem;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1rem;
   }
 `;
 
-const DownloadText = styled.p`
+const IconText = styled.p`
   color: #64748B;
   font-weight: 500;
   font-size: 0.875rem;
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  width: 100%;
+  margin-bottom: 1.25rem;
+
+  @media (min-width: 640px) {
+    margin-bottom: 1.5rem;
+  }
+`;
+
+const DownloadButton = styled.button`
+  width: 100%;
+  background: #F472B6;
+  color: white;
+  padding: 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #EC4899;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:disabled {
+    background: #9CA3AF;
+    cursor: not-allowed;
+  }
+`;
+
+const ExploreContainer = styled.div`
+  margin-top: 0rem;
 `;
 
 const ExploreText = styled.span`
   color: #6B7280;
   font-size: 0.875rem;
   margin-right: 0.25rem;
-`;
-
-const ExploreContainer = styled.div`
-  margin-top: 0rem;
 `;
 
 const ExploreLink = styled.a`
@@ -98,55 +251,4 @@ const ExploreLink = styled.a`
   &:hover {
     color: #EC4899;
   }
-`;
-
-export const CostSavingsDownloadModal = ({ isOpen, onClose }: CostSavingsDownloadModalProps) => {
-  useEffect(() => {
-    if (isOpen) {
-      handleDownload();
-    }
-  }, [isOpen]);
-
-  const handleDownload = async () => {
-    try {
-      const response = await fetch('/api/cost-savings/download');
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'cost-savings-report.pdf';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Error downloading report:', error);
-    }
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose}>
-      <Container>
-        <Title>Thanks! Your Report is on its way.</Title>
-        
-        <Description>
-          Your detailed cost savings analysis report is now downloading. It includes monthly comparisons, annual projections, and ROI calculations.
-        </Description>
-
-        <DownloadContainer>
-          <DownloadIcon>
-            <DocumentIcon />
-          </DownloadIcon>
-          <DownloadText>Cost Savings Report Download in Progress</DownloadText>
-        </DownloadContainer>
-
-        <ExploreContainer>
-          <ExploreText>Want to calculate another scenario?</ExploreText>
-          <ExploreLink href="#" onClick={(e) => { e.preventDefault(); onClose(); }}>
-            Yes, please!
-          </ExploreLink>
-        </ExploreContainer>
-      </Container>
-    </Modal>
-  );
-}; 
+`; 

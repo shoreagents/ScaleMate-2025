@@ -255,16 +255,14 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
   };
 
   const handleAuthSuccess = (message: string) => {
-    // For login view, trigger onAuthSuccess and show download modal
-    if (currentView === 'login' && onAuthSuccess) {
+    // Close the auth modal first
+    onClose();
+    
+    // Show download modal for both login and signup
+    if (onAuthSuccess) {
       onAuthSuccess();
-      openModal(handleDownloadModalClose);
     }
-    // For signup view, show download modal and close auth modal
-    else if (currentView === 'signup') {
-      onClose(); // Close the auth modal first
-      openModal(handleDownloadModalClose);
-    }
+    openModal(handleDownloadModalClose);
   };
 
   const handleAuthError = (error: string | null) => {
