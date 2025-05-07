@@ -229,25 +229,26 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
   const { openModal } = useDownloadModal();
   const router = useRouter();
 
-  // Check URL parameters on mount and after auth redirect
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from');
-      const redirectTo = urlParams.get('redirectTo');
-      
-      console.log('URL Params:', { fromParam, redirectTo }); // Debug log
       
       if (fromParam === 'cost-savings-modal') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
-        router.replace(newUrl, undefined, { shallow: true });
+        router.replace(newUrl, undefined, { 
+          shallow: true,
+          scroll: false
+        });
         
-        // Open the download modal
-        openModal(handleDownloadModalClose);
+        // Call onAuthSuccess if provided
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       }
     }
-  }, [router.isReady]);
+  }, [router.isReady, onAuthSuccess]);
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -266,6 +267,8 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
 
   const handleClose = () => {
     onClose();
+    // Reset to initial view after modal is closed
+    setTimeout(() => setCurrentView('initial'), 300);
   };
 
   const handleDownloadModalClose = () => {
@@ -275,9 +278,6 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
   const handleAuthSuccess = async (message: string) => {
     try {
       console.log('Auth Success:', message); // Debug log
-      
-      // Close the auth modal first
-      onClose();
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
@@ -292,7 +292,10 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
       }
 
       console.log('Session established:', session); // Debug log
-
+      
+      // Close the auth modal after session is confirmed
+      handleClose();
+      
       // Show download modal after session is confirmed
       openModal(handleDownloadModalClose);
     } catch (err) {
