@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
@@ -6,7 +6,7 @@ import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { CostSavingsDownloadModal } from './CostSavingsDownloadModal';
+import { useDownloadModal } from './CostSavingsDownloadModal';
 
 interface CostSavingsAuthModalProps {
   isOpen: boolean;
@@ -224,20 +224,7 @@ const ExploreLink = styled.a`
 export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSavingsAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
-
-  // Disable body scroll when modal is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    // Cleanup function to re-enable scrolling when modal is closed
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
+  const { openModal } = useDownloadModal();
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -252,15 +239,24 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
     return '';
   };
 
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleDownloadModalClose = () => {
+    onClose();
+  };
+
   const handleAuthSuccess = (message: string) => {
     // For login view, trigger onAuthSuccess and show download modal
     if (currentView === 'login' && onAuthSuccess) {
       onAuthSuccess();
-      setShowDownloadModal(true);
+      openModal(handleDownloadModalClose);
     }
-    // For signup view, show download modal
+    // For signup view, show download modal and close auth modal
     else if (currentView === 'signup') {
-      setShowDownloadModal(true);
+      onClose(); // Close the auth modal first
+      openModal(handleDownloadModalClose);
     }
   };
 
@@ -268,15 +264,6 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
     if (error) {
       console.error('Auth error:', error);
     }
-  };
-
-  const handleClose = () => {
-    onClose();
-  };
-
-  const handleDownloadModalClose = () => {
-    setShowDownloadModal(false);
-    onClose();
   };
 
   const renderContent = () => {
@@ -293,10 +280,10 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
               onVerificationStateChange={setIsVerifying}
             />
             {!isVerifying && (
-            <BackButton onClick={() => setCurrentView('initial')}>
-              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+              <BackButton onClick={() => setCurrentView('initial')}>
+                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
                 Go Back
-            </BackButton>
+              </BackButton>
             )}
           </FormWrapper>
         );
@@ -322,20 +309,20 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full cost savings report, including detailed breakdowns and ROI calculations.
+              Create a free account to unlock the complete cost savings analysis, including detailed breakdowns and ROI calculations.
             </Description>
 
             <IconContainer>
               <IconWrapper>
                 <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Complete Cost Savings Report</IconText>
+              <IconText>Complete Cost Analysis</IconText>
             </IconContainer>
 
             <ButtonContainer>
-            <LoginButton onClick={() => setCurrentView('login')}>
-              Log In
-            </LoginButton>
+              <LoginButton onClick={() => setCurrentView('login')}>
+                Log In
+              </LoginButton>
 
               <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
@@ -346,7 +333,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
                 Keep exploring tools
-            </ExploreLink>
+              </ExploreLink>
             </ExploreContainer>
           </>
         );
@@ -355,15 +342,11 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <Container>
-        {renderContent()}
-      </Container>
-    </Modal>
-      <CostSavingsDownloadModal 
-        isOpen={showDownloadModal} 
-        onClose={handleDownloadModalClose} 
-      />
+      <Modal isOpen={isOpen} onClose={handleClose}>
+        <Container>
+          {renderContent()}
+        </Container>
+      </Modal>
     </>
   );
 }; 
