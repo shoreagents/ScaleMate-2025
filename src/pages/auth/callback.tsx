@@ -233,30 +233,8 @@ export default function AuthCallback() {
 
         // Always complete setup work before redirecting
         if (needsSetup) {
-          // Create profile if it doesn't exist
-          if (!profile) {
-            const avatarUrl = user.user_metadata?.avatar_url;
-            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
-
-            const profileData = {
-              user_id: user.id,
-              username: null,
-              first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-              last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-              last_password_change: null,
-              profile_picture: highQualityAvatarUrl || null
-            };
-
-            const { error: profileError } = await serviceRoleClient
-              .from('user_profiles')
-              .insert(profileData);
-
-            if (profileError) {
-              console.error('Profile creation error:', profileError);
-              setError('Failed to create profile. Please try again.');
-              return;
-            }
-          }
+          // No need to create profile again, just handle setup
+          // ... rest of the setup code ...
         }
 
         // Now handle redirects after setup is complete
