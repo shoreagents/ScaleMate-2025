@@ -245,8 +245,14 @@ export default function AuthCallback() {
             router.push('/user/dashboard');
           } else {
             // Only add showDownloadModal parameter if user came from a modal
-            if (isGoogleUser && (fromBlueprintModal || fromCostSavingsModal || fromToolsModal)) {
-              router.push('/user/dashboard?showDownloadModal=true');
+            if (isGoogleUser) {
+              if (fromBlueprintModal) {
+                router.push('/user/dashboard?showBlueprintModal=true');
+              } else if (fromCostSavingsModal) {
+                router.push('/user/dashboard?showCostSavingsModal=true');
+              } else {
+                router.push('/user/dashboard');
+              }
             } else {
               router.push('/user/dashboard');
             }
