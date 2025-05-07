@@ -224,7 +224,6 @@ type ModalView = 'initial' | 'signup' | 'login';
 
 export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
-  const [isVerifying, setIsVerifying] = useState(false);
   const router = useRouter();
 
   // Check URL parameters on mount and after auth redirect
@@ -240,7 +239,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
         
         // Call onAuthSuccess if provided
         if (onAuthSuccess) {
-      onAuthSuccess();
+          onAuthSuccess();
         }
       }
     }
@@ -255,7 +254,6 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
-      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
@@ -269,15 +267,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
 
   const handleAuthSuccess = async (message: string) => {
     try {
-      console.log('Auth Success:', message); // Debug log
-      
-      // Close the auth modal first
-      onClose();
-      
-      // Call onAuthSuccess if provided
-      if (onAuthSuccess) {
-        onAuthSuccess();
-      }
+      console.log('Auth Success:', message);
       
       // Wait for session to be established
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -286,7 +276,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
         return;
       }
 
-      console.log('Session established:', session); // Debug log
+      console.log('Session established:', session);
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }
@@ -309,14 +299,11 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
-              onVerificationStateChange={setIsVerifying}
             />
-            {!isVerifying && (
-              <BackButton onClick={() => setCurrentView('initial')}>
+            <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-                Go Back
+              Go Back
             </BackButton>
-            )}
           </FormWrapper>
         );
       case 'login':
@@ -338,22 +325,23 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       default:
         return (
           <>
-            <Title>Ready to Access Our Tools?</Title>
+            <Title>Almost there!</Title>
+            
             <Description>
-              Create a free account to access our suite of business tools and resources.
+              Create a free account to unlock all tools, including the Role Builder, Readiness Quiz, and more.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <WrenchScrewdriverIcon style={{ width: '2.5rem', height: '2.5rem' }} />
+                <FontAwesomeIcon icon={faToolbox} style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Business Tools</IconText>
+              <IconText>Tools Library</IconText>
             </IconContainer>
 
             <ButtonContainer>
               <LoginButton onClick={() => setCurrentView('login')}>
-              Log In
-            </LoginButton>
+                Log In
+              </LoginButton>
 
               <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
@@ -363,7 +351,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
             <ExploreContainer>
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
-                Keep exploring
+                Keep exploring tools
               </ExploreLink>
             </ExploreContainer>
           </>

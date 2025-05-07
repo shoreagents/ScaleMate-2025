@@ -223,7 +223,6 @@ type ModalView = 'initial' | 'signup' | 'login';
 
 export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
-  const [isVerifying, setIsVerifying] = useState(false);
   const router = useRouter();
 
   // Check URL parameters on mount and after auth redirect
@@ -254,7 +253,6 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
       // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
-      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
@@ -268,7 +266,7 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
 
   const handleAuthSuccess = async (message: string) => {
     try {
-      console.log('Auth Success:', message); // Debug log
+      console.log('Auth Success:', message);
       
       // Wait for session to be established
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -277,7 +275,7 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
         return;
       }
 
-      console.log('Session established:', session); // Debug log
+      console.log('Session established:', session);
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }
@@ -300,14 +298,11 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
-              onVerificationStateChange={setIsVerifying}
             />
-            {!isVerifying && (
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-                Go Back
+              Go Back
             </BackButton>
-            )}
           </FormWrapper>
         );
       case 'login':
@@ -347,9 +342,9 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
                 Log In
               </LoginButton>
 
-            <SignUpButton onClick={() => setCurrentView('signup')}>
+              <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
-            </SignUpButton>
+              </SignUpButton>
             </ButtonContainer>
 
             <ExploreContainer>
