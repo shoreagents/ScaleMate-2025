@@ -250,31 +250,20 @@ export default function AuthCallback() {
           return;
         }
 
-        // Handle redirects after setup is complete
-        if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
-          // If coming from a modal, always redirect back to the original page
-          // but only if profile and role are properly set up
-          if (verifyProfile && verifyRole) {
-            if (redirectTo) {
-              router.push(redirectTo);
-            } else {
-              router.push('/');
-            }
-          } else {
-            setError('Failed to complete user setup. Please try again.');
-          }
-        } else {
-          // For non-modal users, handle setup first
-          if (needsSetup) {
-            router.push('/user/dashboard');
-          } else if (redirectTo) {
-            // If we have a redirectTo parameter and not from a modal, use it
-            router.push(redirectTo);
-          } else {
-            // Default to dashboard
-            router.push('/user/dashboard');
-          }
+        // Check if setup is needed
+        if (needsSetup) {
+          setError('Please complete your profile setup first.');
+          return;
         }
+
+        // If we get here, setup is complete
+        if (!verifyProfile || !verifyRole) {
+          setError('Failed to complete user setup. Please try again.');
+          return;
+        }
+
+        // Show success message
+        setError('Authentication successful! You can now close this window and return to the application.');
       } catch (err) {
         console.error('Auth callback error:', err);
         setError('An unexpected error occurred. Please try again.');
