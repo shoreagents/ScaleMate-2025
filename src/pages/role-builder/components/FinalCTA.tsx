@@ -128,7 +128,7 @@ export default function FinalCTA() {
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    router.push('/role-builder/create');
+    router.push('/user/dashboard?tab=role-builder');
   };
 
   return (
