@@ -222,28 +222,45 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check if we came from a modal
-        const fromBlueprintModal = router.query.from === 'blueprint-modal';
-        const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
-        const fromToolsModal = router.query.from === 'tools-modal';
-        const fromReadinessModal = router.query.from === 'readiness-modal';
-        const fromResourcesModal = router.query.from === 'resources-modal';
-        const fromRoleBuilderModal = router.query.from === 'role-builder-modal';
-        const fromQuoteModal = router.query.from === 'quote-modal';
-        const fromCoursesModal = router.query.from === 'courses-modal';
+        // Debug log the query parameters
+        console.log('Callback query params:', router.query);
+
+        // Get the from parameter and redirectTo URL
+        const fromParam = router.query.from as string;
         const redirectTo = router.query.redirectTo as string;
 
+        // Debug log the parameters
+        console.log('From param:', fromParam);
+        console.log('RedirectTo:', redirectTo);
+
+        // List of valid modal types
+        const validModalTypes = [
+          'blueprint-modal',
+          'cost-savings-modal',
+          'tools-modal',
+          'readiness-modal',
+          'resources-modal',
+          'role-builder-modal',
+          'quote-modal',
+          'courses-modal'
+        ];
+
+        // Check if we came from a modal
+        const isFromModal = fromParam && validModalTypes.includes(fromParam);
+
         // Handle redirects based on modal status
-        if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal || 
-            fromReadinessModal || fromResourcesModal || fromRoleBuilderModal || 
-            fromQuoteModal || fromCoursesModal) {
+        if (isFromModal) {
+          console.log('User came from modal:', fromParam);
           // If coming from a modal, redirect back to the original page
           if (redirectTo) {
+            console.log('Redirecting to:', redirectTo);
             router.push(redirectTo);
           } else {
+            console.log('No redirectTo URL, going to home');
             router.push('/');
           }
         } else {
+          console.log('Not from modal, going to dashboard');
           // For non-modal sign-ins, redirect to dashboard
           router.push('/user/dashboard');
         }
