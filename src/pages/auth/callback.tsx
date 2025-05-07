@@ -262,6 +262,19 @@ export default function AuthCallback() {
           return;
         }
 
+        // Handle redirects based on modal status
+        if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
+          // If coming from a modal, redirect back to the original page
+          if (redirectTo) {
+            router.push(redirectTo);
+          } else {
+            router.push('/');
+          }
+        } else {
+          // For non-modal sign-ins, redirect to dashboard
+          router.push('/user/dashboard');
+        }
+
         // Show success message
         setError('Authentication successful! You can now close this window and return to the application.');
       } catch (err) {
