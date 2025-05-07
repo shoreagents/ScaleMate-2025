@@ -68,47 +68,42 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Wait for session to be valid
-        const sessionValid = await waitForValidSession();
-        if (!sessionValid) {
-          setError('Failed to establish session. Please try again.');
-          return;
-        }
-
-        // Get the session
+        // First, handle the OAuth callback
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
         if (sessionError) {
           console.error('Session error:', sessionError);
           setError('Failed to get session. Please try again.');
           return;
         }
+
         if (!session) {
           console.error('No session found');
           setError('No session found. Please try signing in again.');
           return;
         }
 
-        // Get the user
+        // Get the user from the session
         const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
         if (userError) {
           console.error('User error:', userError);
           setError('Failed to get user. Please try again.');
           return;
         }
+
         if (!user) {
           console.error('No user found');
           setError('No user found. Please try signing in again.');
           return;
         }
 
-        // Check if this is a Google sign-in
-        const isGoogleUser = user.app_metadata?.provider === 'google';
-        console.log('Is Google user:', isGoogleUser);
+        console.log('Debug - Google OAuth successful:', { user });
 
-        // Create a client with service role key for admin operations
+        // Now create the user records
         const serviceRoleClient = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
           {
             auth: {
               autoRefreshToken: false,
@@ -233,16 +228,10 @@ export default function AuthCallback() {
         const isFromModal = fromParam && typeof fromParam === 'string' && fromParam.endsWith('-modal');
         const redirectTo = router.query.redirectTo as string;
 
-        // Verify session is still valid before redirecting
-        const finalSessionCheck = await isSessionValid();
-        if (!finalSessionCheck) {
-          setError('Session validation failed before redirect. Please try again.');
-          return;
-        }
+        console.log('Debug - Redirect info:', { fromParam, isFromModal, redirectTo });
 
         if (isFromModal) {
           // If we came from any modal, redirect back to the same page
-          // The modal will be reopened automatically
           if (redirectTo) {
             router.push(redirectTo);
           } else {
