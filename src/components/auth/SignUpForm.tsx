@@ -734,6 +734,10 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       // Get the current URL for redirect
       const currentUrl = redirectUrl || window.location.href;
       
+      // Parse the current URL to get the from parameter
+      const url = new URL(currentUrl);
+      const fromParam = url.searchParams.get('from');
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -743,15 +747,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
             prompt: 'consent',
             // Pass the original redirect URL as a parameter
             redirectTo: currentUrl,
-            // Pass the source modal type
-            from: currentUrl.includes('blueprint-modal') ? 'blueprint-modal' :
-                  currentUrl.includes('cost-savings-modal') ? 'cost-savings-modal' :
-                  currentUrl.includes('tools-modal') ? 'tools-modal' :
-                  currentUrl.includes('readiness-modal') ? 'readiness-modal' :
-                  currentUrl.includes('resources-modal') ? 'resources-modal' :
-                  currentUrl.includes('role-builder-modal') ? 'role-builder-modal' :
-                  currentUrl.includes('quote-modal') ? 'quote-modal' :
-                  currentUrl.includes('courses-modal') ? 'courses-modal' : ''
+            // Pass the source modal type from the URL parameter
+            from: fromParam || ''
           },
           scopes: 'email profile openid'
         }
