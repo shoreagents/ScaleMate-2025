@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faPhone, faTimes } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { CostSavingsAuthModal } from '../../../components/cost-savings/CostSavingsAuthModal';
-import { CostSavingsDownloadModal } from '../../../components/cost-savings/CostSavingsDownloadModal';
-import { useAuth } from '../../../hooks/useAuth';
+import { CostSavingsDownloadModal, useDownloadModal } from '../../../components/cost-savings/CostSavingsDownloadModal';
+import { useAuth } from '@/hooks/useAuth';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -166,8 +166,8 @@ const CalendlyContainer = styled.div`
 export default function CTA() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const { user } = useAuth();
+  const { openModal } = useDownloadModal();
 
   const handleBookStrategyClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -177,7 +177,7 @@ export default function CTA() {
   const handleDownloadClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (user) {
-      setIsDownloadModalOpen(true);
+      openModal();
     } else {
       setIsLoginModalOpen(true);
     }
@@ -185,7 +185,7 @@ export default function CTA() {
 
   const handleAuthSuccess = () => {
     setIsLoginModalOpen(false);
-    setIsDownloadModalOpen(true);
+    openModal();
   };
 
   return (
@@ -234,10 +234,7 @@ export default function CTA() {
         onAuthSuccess={handleAuthSuccess}
       />
 
-      <CostSavingsDownloadModal
-        isOpen={isDownloadModalOpen}
-        onClose={() => setIsDownloadModalOpen(false)}
-      />
+      <CostSavingsDownloadModal />
     </>
   );
 } 
