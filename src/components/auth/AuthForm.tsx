@@ -268,7 +268,7 @@ const GoogleButton = styled.button`
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.875rem;
+  padding: 0.85rem;
   background: transparent;
   border: 1.5px solid ${props => props.theme.colors.border};
   border-radius: 8px;
