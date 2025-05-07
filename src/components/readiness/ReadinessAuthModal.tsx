@@ -93,7 +93,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-    font-size: 1.25rem;
+  font-size: 1.25rem;
   }
 `;
 
@@ -242,9 +242,9 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
         });
         
         // Call onAuthSuccess if provided
-        if (onAuthSuccess) {
-          onAuthSuccess();
-        }
+    if (onAuthSuccess) {
+      onAuthSuccess();
+    }
       }
     }
   }, [router.isReady, onAuthSuccess]);
@@ -315,10 +315,10 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
               onVerificationStateChange={setIsVerifying}
             />
             {!isVerifying && (
-              <BackButton onClick={() => setCurrentView('initial')}>
-                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+            <BackButton onClick={() => setCurrentView('initial')}>
+              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
                 Go Back
-              </BackButton>
+            </BackButton>
             )}
           </FormWrapper>
         );
@@ -359,9 +359,9 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
                 Log In
               </LoginButton>
 
-              <SignUpButton onClick={() => setCurrentView('signup')}>
+            <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
-              </SignUpButton>
+            </SignUpButton>
             </ButtonContainer>
 
             <ExploreContainer>
