@@ -260,7 +260,9 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
       // Add a query parameter to identify this is from the blueprint modal
       url.searchParams.set('from', 'blueprint-modal');
       // Store the current URL to return to after auth
-      url.searchParams.set('redirectTo', window.location.pathname + window.location.search);
+      const currentPath = window.location.pathname + window.location.search;
+      url.searchParams.set('redirectTo', currentPath);
+      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
@@ -276,12 +278,14 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
 
   const handleAuthSuccess = async (message: string) => {
     try {
+      console.log('Auth Success:', message); // Debug log
+      
       // Close the auth modal first
       onClose();
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
-      onAuthSuccess();
+        onAuthSuccess();
       }
       
       // Wait for session to be established
@@ -290,6 +294,8 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
         console.error('Session not established:', error);
         return;
       }
+
+      console.log('Session established:', session); // Debug log
 
       // Show download modal after session is confirmed
       openModal(handleDownloadModalClose);
