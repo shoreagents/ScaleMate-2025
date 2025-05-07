@@ -250,12 +250,12 @@ export default function AuthCallback() {
                 router.push('/user/dashboard?showBlueprintModal=true');
               } else if (fromCostSavingsModal) {
                 router.push('/user/dashboard?showCostSavingsModal=true');
-              } else {
-                router.push('/user/dashboard');
-              }
-            } else {
-              router.push('/user/dashboard');
-            }
+          } else {
+            router.push('/user/dashboard');
+          }
+        } else {
+          router.push('/user/dashboard');
+        }
           }
         }
       } catch (err) {
