@@ -34,6 +34,10 @@ const isSessionValid = async () => {
     if (userError) return false;
     if (!user) return false;
 
+    // Verify session is persisted
+    const persistedSession = await supabase.auth.getSession();
+    if (!persistedSession.data.session) return false;
+
     return true;
   } catch (err) {
     console.error('Session validation error:', err);
@@ -41,11 +45,15 @@ const isSessionValid = async () => {
   }
 };
 
-// Helper function to wait for session to be valid
+// Helper function to wait for session to be valid and persisted
 const waitForValidSession = async (maxAttempts = 10) => {
   for (let i = 0; i < maxAttempts; i++) {
     if (await isSessionValid()) {
-      return true;
+      // Double check session is persisted
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        return true;
+      }
     }
     // Wait 200ms between attempts
     await new Promise(resolve => setTimeout(resolve, 200));
