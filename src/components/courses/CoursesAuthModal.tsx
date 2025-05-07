@@ -217,7 +217,7 @@ interface CoursesAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: () => void;
-}
+  }
 
 type ModalView = 'initial' | 'signup' | 'login';
 
@@ -314,10 +314,10 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
               onVerificationStateChange={setIsVerifying}
             />
             {!isVerifying && (
-              <BackButton onClick={() => setCurrentView('initial')}>
-                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+            <BackButton onClick={() => setCurrentView('initial')}>
+              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
                 Go Back
-              </BackButton>
+            </BackButton>
             )}
           </FormWrapper>
         );
@@ -358,9 +358,9 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
                 Log In
               </LoginButton>
 
-              <SignUpButton onClick={() => setCurrentView('signup')}>
+            <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
-              </SignUpButton>
+            </SignUpButton>
             </ButtonContainer>
 
             <ExploreContainer>
