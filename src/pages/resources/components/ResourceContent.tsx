@@ -250,8 +250,8 @@ export default function ResourceContent() {
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    // Refresh the page to show personalized content
-    window.location.reload();
+    // Update UI state to reflect authenticated user
+    // No page refresh needed as useAuth hook will update automatically
   };
 
   return (
