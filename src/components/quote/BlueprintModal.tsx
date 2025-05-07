@@ -6,7 +6,7 @@ import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { DownloadBlueprintModal } from './DownloadBlueprintModal';
+import { useDownloadModal } from './DownloadBlueprintModal';
 
 interface BlueprintModalProps {
   isOpen: boolean;
@@ -22,22 +22,11 @@ const Container = styled.div`
   align-items: center;
   text-align: center;
   padding: 1rem;
-  max-height: 90vh;
-  overflow-y: auto;
   width: 100%;
 
   @media (max-width: 640px) {
     padding: 0.75rem;
   }
-
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Hide scrollbar for IE, Edge and Firefox */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
 `;
 
 const FormWrapper = styled.div`
@@ -242,7 +231,7 @@ const ExploreLink = styled.a`
 export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const [isVerifying, setIsVerifying] = useState(false);
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const { openModal } = useDownloadModal();
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -257,15 +246,23 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
     return '';
   };
 
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleDownloadModalClose = () => {
+    onClose();
+  };
+
   const handleAuthSuccess = (message: string) => {
     // For login view, trigger onAuthSuccess and show download modal
     if (currentView === 'login' && onAuthSuccess) {
       onAuthSuccess();
-      setShowDownloadModal(true);
+      openModal(handleDownloadModalClose);
     }
     // For signup view, show download modal
     else if (currentView === 'signup') {
-      setShowDownloadModal(true);
+      openModal(handleDownloadModalClose);
     }
   };
 
@@ -273,15 +270,6 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
     if (error) {
       console.error('Auth error:', error);
     }
-  };
-
-  const handleClose = () => {
-    onClose();
-  };
-
-  const handleDownloadModalClose = () => {
-    setShowDownloadModal(false);
-    onClose();
   };
 
   const renderContent = () => {
@@ -365,10 +353,6 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
           {renderContent()}
         </Container>
       </Modal>
-      <DownloadBlueprintModal 
-        isOpen={showDownloadModal} 
-        onClose={handleDownloadModalClose} 
-      />
     </>
   );
 };

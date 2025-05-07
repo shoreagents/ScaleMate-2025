@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faToolbox, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../ui/Modal';
 import AuthForm from '../auth/AuthForm';
 import SignUpForm from '../auth/SignUpForm';
@@ -52,7 +52,7 @@ const Description = styled.p`
 
 const IconContainer = styled.div`
   width: 100%;
-  background-color: rgba(74, 222, 128, 0.1);
+  background-color: rgba(244, 114, 182, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
@@ -67,7 +67,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4ADE80;
+  color: #F472B6;
 
   @media (min-width: 640px) {
     width: 4rem;
@@ -82,7 +82,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -104,7 +104,7 @@ const ButtonContainer = styled.div`
 
 const SignUpButton = styled.button`
   flex: 1;
-  background: #4ADE80;
+  background: #F472B6;
   color: white;
   padding: 0.875rem;
   border-radius: 8px;
@@ -120,7 +120,7 @@ const SignUpButton = styled.button`
   }
 
   &:hover {
-    background: #22C55E;
+    background: #EC4899;
   }
 
   &:active {
@@ -166,7 +166,7 @@ const LoginButton = styled.button`
 `;
 
 const BackButton = styled.button`
-  color: #4ADE80;
+  color: #F472B6;
   background: none;
   border: none;
   cursor: pointer;
@@ -184,8 +184,8 @@ const BackButton = styled.button`
   @media (min-width: 640px) {
     margin-top: 1rem;
 
-  &:hover {
-      color: #22C55E;
+    &:hover {
+      color: #EC4899;
     }
   }
 `;
@@ -201,17 +201,17 @@ const ExploreContainer = styled.div`
 `;
 
 const ExploreLink = styled.a`
-  color: #4ADE80;
+  color: #F472B6;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
   &:hover {
-    color: #22C55E;
+    color: #EC4899;
   }
 `;
 
-interface ToolsAuthModalProps {
+interface ResourcesAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: () => void;
@@ -219,7 +219,7 @@ interface ToolsAuthModalProps {
 
 type ModalView = 'initial' | 'signup' | 'login';
 
-export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
+export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
 
   const handleClose = () => {
@@ -244,7 +244,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
               onSuccess={handleAuthSuccess}
               onError={(error: string | null) => console.error(error)}
               preventRedirect={true}
-              redirectUrl={`${window.location.href}?from=tools-modal`}
+              redirectUrl={`${window.location.href}?from=resources-modal`}
               hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
@@ -260,7 +260,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
               onSuccess={handleAuthSuccess}
               onError={(error: string) => console.error(error)}
               preventRedirect={true}
-              redirectUrl={`${window.location.href}?from=tools-modal`}
+              redirectUrl={`${window.location.href}?from=resources-modal`}
               hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
@@ -275,20 +275,20 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full tool library, including AI-powered recommendations and custom tool stacks.
+              Create a free account to unlock the full resource library, including AI-powered recommendations and custom resource collections.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <FontAwesomeIcon icon={faToolbox} style={{ width: '2.5rem', height: '2.5rem' }} />
+                <FontAwesomeIcon icon={faBook} style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Tool Library</IconText>
+              <IconText>Resource Library</IconText>
             </IconContainer>
 
             <ButtonContainer>
               <LoginButton onClick={() => setCurrentView('login')}>
-              Log In
-            </LoginButton>
+                Log In
+              </LoginButton>
 
               <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
@@ -298,7 +298,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
             <ExploreContainer>
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
-                Keep exploring tools
+                Keep exploring resources
               </ExploreLink>
             </ExploreContainer>
           </>

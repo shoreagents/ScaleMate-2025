@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
@@ -14,91 +14,101 @@ const Container = styled.div`
   align-items: center;
   text-align: center;
   padding: 1rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 100%;
+
+  @media (max-width: 640px) {
+    padding: 0.75rem;
+  }
+
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for IE, Edge and Firefox */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 `;
 
 const Title = styled.h2`
-  font-size: 2.25rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 600;
   text-align: center;
-  margin-bottom: 1.5rem;
-  color: #0F172A;
+  margin: 0rem;
+  color: rgb(31, 41, 55);
 `;
 
 const Description = styled.p`
   color: rgba(15, 23, 42, 0.7);
-  margin-bottom: 2rem;
-  font-size: 1.125rem;
+  margin-bottom: 3rem;
   max-width: 32rem;
+  font-size: 0.875rem;
 `;
 
-const IconContainer = styled.div`
+const DownloadContainer = styled.div`
   width: 100%;
-  background-color: rgba(244, 114, 182, 0.1);
+  background-color: #F1F5F9;
   border-radius: 0.75rem;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  padding: 1.5rem;
+  margin-bottom: 3rem;
   text-align: center;
-  border: 1px solid #E5E7EB;
-`;
-
-const IconWrapper = styled.div`
-  width: 4rem;
-  height: 4rem;
-  margin: 0 auto 1rem;
+  border: 1px solid #E2E8F0;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  color: #F472B6;
+  gap: 0.5rem;
 `;
 
-const IconText = styled.p`
-  color: #0F172A;
-  font-weight: 600;
-  font-size: 1.25rem;
-`;
+const DownloadIcon = styled.div`
+  width: 2.5rem;
+  height: 2.5rem;
+  color: #64748B;
+  margin-bottom: 0.5rem;
 
-const DownloadButton = styled.button`
-  width: 100%;
-  background-color: #F472B6;
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 1.125rem;
-  margin-bottom: 1rem;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: #EC4899;
-    transform: translateY(-1px);
+  @media (min-width: 640px) {
+    width: 3rem;
+    height: 3rem;
   }
 `;
 
-const BuildAnotherButton = styled.button`
-  width: 100%;
-  background-color: white;
-  color: #0F172A;
-  padding: 1rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 1.125rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #E5E7EB;
-  cursor: pointer;
-  transition: all 0.2s;
+const DownloadText = styled.p`
+  color: #64748B;
+  font-weight: 500;
+  font-size: 0.875rem;
+`;
 
+const ExploreText = styled.span`
+  color: #6B7280;
+  font-size: 0.875rem;
+  margin-right: 0.25rem;
+`;
+
+const ExploreContainer = styled.div`
+  margin-top: 0rem;
+`;
+
+const ExploreLink = styled.a`
+  color: #F472B6;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: color 0.2s ease;
   &:hover {
-    background-color: #F9FAFB;
-    border-color: #D1D5DB;
+    color: #EC4899;
   }
 `;
 
 export const CostSavingsDownloadModal = ({ isOpen, onClose }: CostSavingsDownloadModalProps) => {
+  useEffect(() => {
+    if (isOpen) {
+      handleDownload();
+    }
+  }, [isOpen]);
+
   const handleDownload = async () => {
     try {
-      // TODO: Implement actual download logic
       const response = await fetch('/api/cost-savings/download');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -117,26 +127,25 @@ export const CostSavingsDownloadModal = ({ isOpen, onClose }: CostSavingsDownloa
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <Container>
-        <Title>Your Report is Ready!</Title>
+        <Title>Thanks! Your Report is on its way.</Title>
         
         <Description>
-          Your detailed cost savings analysis report has been generated, including monthly comparisons and annual projections.
+          Your detailed cost savings analysis report is now downloading. It includes monthly comparisons, annual projections, and ROI calculations.
         </Description>
 
-        <IconContainer>
-          <IconWrapper>
-            <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
-          </IconWrapper>
-          <IconText>Cost Savings Report</IconText>
-        </IconContainer>
+        <DownloadContainer>
+          <DownloadIcon>
+            <DocumentIcon />
+          </DownloadIcon>
+          <DownloadText>Cost Savings Report Download in Progress</DownloadText>
+        </DownloadContainer>
 
-        <DownloadButton onClick={handleDownload}>
-          Download Report
-        </DownloadButton>
-
-        <BuildAnotherButton onClick={onClose}>
-          Calculate Another Scenario
-        </BuildAnotherButton>
+        <ExploreContainer>
+          <ExploreText>Want to calculate another scenario?</ExploreText>
+          <ExploreLink href="#" onClick={(e) => { e.preventDefault(); onClose(); }}>
+            Yes, please!
+          </ExploreLink>
+        </ExploreContainer>
       </Container>
     </Modal>
   );
