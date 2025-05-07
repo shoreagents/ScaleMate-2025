@@ -468,6 +468,9 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       // Always redirect to the callback URL first
       const callbackUrl = `${window.location.origin}/auth/callback`;
       
+      // Get the current URL for redirect
+      const currentUrl = redirectUrl || window.location.href;
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -476,16 +479,16 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
             access_type: 'offline',
             prompt: 'consent',
             // Pass the original redirect URL as a parameter
-            redirectTo: redirectUrl || window.location.href,
+            redirectTo: currentUrl,
             // Pass the source modal type
-            from: redirectUrl?.includes('blueprint-modal') ? 'blueprint-modal' :
-                  redirectUrl?.includes('cost-savings-modal') ? 'cost-savings-modal' :
-                  redirectUrl?.includes('tools-modal') ? 'tools-modal' :
-                  redirectUrl?.includes('readiness-modal') ? 'readiness-modal' :
-                  redirectUrl?.includes('resources-modal') ? 'resources-modal' :
-                  redirectUrl?.includes('role-builder-modal') ? 'role-builder-modal' :
-                  redirectUrl?.includes('quote-modal') ? 'quote-modal' :
-                  redirectUrl?.includes('courses-modal') ? 'courses-modal' : ''
+            from: currentUrl.includes('blueprint-modal') ? 'blueprint-modal' :
+                  currentUrl.includes('cost-savings-modal') ? 'cost-savings-modal' :
+                  currentUrl.includes('tools-modal') ? 'tools-modal' :
+                  currentUrl.includes('readiness-modal') ? 'readiness-modal' :
+                  currentUrl.includes('resources-modal') ? 'resources-modal' :
+                  currentUrl.includes('role-builder-modal') ? 'role-builder-modal' :
+                  currentUrl.includes('quote-modal') ? 'quote-modal' :
+                  currentUrl.includes('courses-modal') ? 'courses-modal' : ''
           },
           scopes: 'email profile',
         }
