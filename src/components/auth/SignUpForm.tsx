@@ -729,10 +729,14 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     setError(null);
 
     try {
+      // Construct the redirect URL with necessary parameters
+      const redirectTo = redirectUrl || `${window.location.origin}/auth/callback`;
+      console.log('Redirect URL:', redirectTo); // Debug log
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl || `${window.location.origin}/auth/callback`,
+          redirectTo,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
