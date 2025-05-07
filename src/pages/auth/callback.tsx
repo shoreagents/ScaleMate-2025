@@ -231,33 +231,25 @@ export default function AuthCallback() {
         // Check if setup is needed
         const needsSetup = !profile?.username;
 
-        // Now handle redirects after setup is complete
+        // Handle redirects after setup is complete
         if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
-          // If we came from a modal, redirect back to the same page
+          // If coming from a modal, always redirect back to the original page
+          // regardless of setup status
           if (redirectTo) {
             router.push(redirectTo);
           } else {
             router.push('/');
           }
         } else {
+          // For non-modal users, handle setup first
           if (needsSetup) {
             router.push('/user/dashboard');
+          } else if (redirectTo) {
+            // If we have a redirectTo parameter and not from a modal, use it
+            router.push(redirectTo);
           } else {
-            // Only add showDownloadModal parameter if user came from a modal
-            if (isGoogleUser) {
-              if (fromBlueprintModal) {
-                router.push('/user/dashboard?showBlueprintModal=true');
-              } else if (fromCostSavingsModal) {
-                router.push('/user/dashboard?showCostSavingsModal=true');
-              } else if (redirectTo) {
-                // If we have a redirectTo parameter, use it
-                router.push(redirectTo);
-              } else {
-                router.push('/user/dashboard');
-              }
-            } else {
-              router.push('/user/dashboard');
-            }
+            // Default to dashboard
+            router.push('/user/dashboard');
           }
         }
       } catch (err) {
