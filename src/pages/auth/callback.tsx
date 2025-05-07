@@ -161,61 +161,6 @@ export default function AuthCallback() {
           return;
         }
 
-        // Create profile if it doesn't exist
-        if (!profile) {
-          // Get high-quality profile picture URL
-          const avatarUrl = user.user_metadata?.avatar_url;
-          const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
-
-          const profileData = {
-            user_id: user.id,
-            username: null,
-            first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-            last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-            last_password_change: null,
-            profile_picture: highQualityAvatarUrl || null
-          };
-
-          const { error: profileError } = await serviceRoleClient
-            .from('user_profiles')
-            .insert(profileData);
-
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            setError('Failed to create profile. Please try again.');
-            return;
-          }
-        }
-
-        // Check if role exists
-        const { data: existingRole, error: roleCheckError } = await serviceRoleClient
-          .from('user_roles')
-          .select('user_id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (roleCheckError && roleCheckError.code !== 'PGRST116') {
-          console.error('Error checking existing role:', roleCheckError);
-          setError('Failed to check role. Please try again.');
-          return;
-        }
-
-        // Only insert if role doesn't exist
-        if (!existingRole) {
-          const { error: roleError } = await serviceRoleClient
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
-              role: 'user'
-            });
-
-          if (roleError) {
-            console.error('Role assignment error:', roleError);
-            setError('Failed to assign role. Please try again.');
-            return;
-          }
-        }
-
         // Check if we came from a modal
         const fromBlueprintModal = router.query.from === 'blueprint-modal';
         const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
@@ -232,9 +177,37 @@ export default function AuthCallback() {
         // Check if setup is needed
         const needsSetup = !profile?.username;
 
+        // Always complete setup work before redirecting
+        if (needsSetup) {
+          // Create profile if it doesn't exist
+          if (!profile) {
+            const avatarUrl = user.user_metadata?.avatar_url;
+            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+
+            const profileData = {
+              user_id: user.id,
+              username: null,
+              first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+              last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+              last_password_change: null,
+              profile_picture: highQualityAvatarUrl || null
+            };
+
+            const { error: profileError } = await serviceRoleClient
+              .from('user_profiles')
+              .insert(profileData);
+
+            if (profileError) {
+              console.error('Profile creation error:', profileError);
+              setError('Failed to create profile. Please try again.');
+              return;
+            }
+          }
+        }
+
+        // Now handle redirects after setup is complete
         if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
           // If we came from a modal, redirect back to the same page
-          // The modal will be reopened automatically
           if (redirectTo) {
             router.push(redirectTo);
           } else {
