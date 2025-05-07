@@ -146,8 +146,23 @@ export default function AuthCallback() {
             setError('Failed to create user record. Please try again.');
             return;
           }
+        }
 
-          // Add default user role
+        // Check if role exists
+        const { data: existingRole, error: roleCheckError } = await serviceRoleClient
+          .from('user_roles')
+          .select('user_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (roleCheckError && roleCheckError.code !== 'PGRST116') {
+          console.error('Error checking existing role:', roleCheckError);
+          setError('Failed to check existing role. Please try again.');
+          return;
+        }
+
+        // Add role if it doesn't exist
+        if (!existingRole) {
           const { error: roleError } = await serviceRoleClient
             .from('user_roles')
             .insert({
@@ -173,6 +188,31 @@ export default function AuthCallback() {
           console.error('Profile error:', profileError);
           setError('Failed to get profile. Please try again.');
           return;
+        }
+
+        // Create profile if it doesn't exist
+        if (!profile) {
+          const avatarUrl = user.user_metadata?.avatar_url;
+          const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+
+          const profileData = {
+            user_id: user.id,
+            username: null,
+            first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+            last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            last_password_change: null,
+            profile_picture: highQualityAvatarUrl || null
+          };
+
+          const { error: profileError } = await serviceRoleClient
+            .from('user_profiles')
+            .insert(profileData);
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            setError('Failed to create profile. Please try again.');
+            return;
+          }
         }
 
         // Check if we came from a modal
