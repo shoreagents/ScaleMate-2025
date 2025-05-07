@@ -22,6 +22,37 @@ const ErrorMessage = styled.div`
   border-radius: 4px;
 `;
 
+// Helper function to check if session is properly set
+const isSessionValid = async () => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) return false;
+    if (!session) return false;
+    
+    // Verify we can get the user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) return false;
+    if (!user) return false;
+
+    return true;
+  } catch (err) {
+    console.error('Session validation error:', err);
+    return false;
+  }
+};
+
+// Helper function to wait for session to be valid
+const waitForValidSession = async (maxAttempts = 10) => {
+  for (let i = 0; i < maxAttempts; i++) {
+    if (await isSessionValid()) {
+      return true;
+    }
+    // Wait 200ms between attempts
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  return false;
+};
+
 export default function AuthCallback() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -29,8 +60,12 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Wait for a short delay to ensure session is established
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait for session to be valid
+        const sessionValid = await waitForValidSession();
+        if (!sessionValid) {
+          setError('Failed to establish session. Please try again.');
+          return;
+        }
 
         // Get the session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -179,8 +214,12 @@ export default function AuthCallback() {
         const fromToolsModal = router.query.from === 'tools-modal';
         const redirectTo = router.query.redirectTo as string;
 
-        // Wait for another short delay to ensure session is fully established
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Verify session is still valid before redirecting
+        const finalSessionCheck = await isSessionValid();
+        if (!finalSessionCheck) {
+          setError('Session validation failed before redirect. Please try again.');
+          return;
+        }
 
         if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
           // If we came from a modal, redirect back to the same page
