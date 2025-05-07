@@ -244,8 +244,8 @@ export default function AuthCallback() {
           if (needsSetup) {
             router.push('/user/dashboard');
           } else {
-            // Redirect to dashboard with showDownloadModal parameter for Google users
-            if (isGoogleUser) {
+            // Only add showDownloadModal parameter if user came from a modal
+            if (isGoogleUser && (fromBlueprintModal || fromCostSavingsModal || fromToolsModal)) {
               router.push('/user/dashboard?showDownloadModal=true');
             } else {
               router.push('/user/dashboard');

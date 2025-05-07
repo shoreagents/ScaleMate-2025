@@ -297,10 +297,10 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
               onVerificationStateChange={setIsVerifying}
             />
             {!isVerifying && (
-              <BackButton onClick={() => setCurrentView('initial')}>
-                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+            <BackButton onClick={() => setCurrentView('initial')}>
+              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
                 Go Back
-              </BackButton>
+            </BackButton>
             )}
           </FormWrapper>
         );
@@ -337,9 +337,9 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
             </IconContainer>
 
             <ButtonContainer>
-              <LoginButton onClick={() => setCurrentView('login')}>
-                Log In
-              </LoginButton>
+            <LoginButton onClick={() => setCurrentView('login')}>
+              Log In
+            </LoginButton>
 
               <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
@@ -350,7 +350,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
                 Keep exploring tools
-              </ExploreLink>
+            </ExploreLink>
             </ExploreContainer>
           </>
         );
@@ -359,11 +359,11 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose}>
-        <Container>
-          {renderContent()}
-        </Container>
-      </Modal>
+    <Modal isOpen={isOpen} onClose={handleClose}>
+      <Container>
+        {renderContent()}
+      </Container>
+    </Modal>
     </>
   );
 }; 
