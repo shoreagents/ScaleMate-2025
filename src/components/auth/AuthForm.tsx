@@ -480,7 +480,12 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
             // Pass the source modal type
             from: redirectUrl?.includes('blueprint-modal') ? 'blueprint-modal' :
                   redirectUrl?.includes('cost-savings-modal') ? 'cost-savings-modal' :
-                  redirectUrl?.includes('tools-modal') ? 'tools-modal' : ''
+                  redirectUrl?.includes('tools-modal') ? 'tools-modal' :
+                  redirectUrl?.includes('readiness-modal') ? 'readiness-modal' :
+                  redirectUrl?.includes('resources-modal') ? 'resources-modal' :
+                  redirectUrl?.includes('role-builder-modal') ? 'role-builder-modal' :
+                  redirectUrl?.includes('quote-modal') ? 'quote-modal' :
+                  redirectUrl?.includes('courses-modal') ? 'courses-modal' : ''
           },
           scopes: 'email profile',
         }
