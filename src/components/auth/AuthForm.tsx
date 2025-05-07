@@ -270,7 +270,7 @@ const GoogleButton = styled.button`
   width: 100%;
   padding: 0.875rem;
   background: transparent;
-  border: 1.5px solid rgb(154, 162, 179);
+  border: 1.5px solid ${props => props.theme.colors.border};
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 600;
