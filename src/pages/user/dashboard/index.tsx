@@ -38,7 +38,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
-import { DownloadBlueprintModal } from '@/components/quote/DownloadBlueprintModal';
+import { DownloadBlueprintModal, setDownloadModalState } from '@/components/quote/DownloadBlueprintModal';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -159,22 +159,24 @@ const DashboardPage = () => {
   const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   useEffect(() => {
-    // Check for showDownloadModal parameter
-    const { showDownloadModal: shouldShowDownload } = router.query;
-    if (shouldShowDownload === 'true') {
-      setShowDownloadModal(true);
-      // Remove the parameter from the URL without refreshing
-      router.replace('/user/dashboard', undefined, { shallow: true });
+    // Check if we should show the download modal (e.g., after Google sign-in)
+    const showDownloadModal = router.query.showDownloadModal === 'true';
+    if (showDownloadModal) {
+      setDownloadModalState(true, () => {
+        // Remove the query parameter
+        const { showDownloadModal, ...rest } = router.query;
+        router.replace({ query: rest });
+      });
     }
   }, [router.query]);
 
   const checkAuth = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        return;
-      }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          return;
+        }
 
       // Get user's profile data
       const { data: profile, error: profileError } = await supabase
@@ -185,8 +187,8 @@ const DashboardPage = () => {
 
       if (profileError) {
         console.error('Profile error:', profileError);
-        return;
-      }
+          return;
+        }
 
       // Set user and show dashboard
       setUser(user);
@@ -195,13 +197,13 @@ const DashboardPage = () => {
       // Check if username and last_password_change are null
       if (!profile?.username && !profile?.last_password_change) {
         setShowSetupForm(true);
-      }
+        }
 
       setLoading(false);
     } catch (err) {
       console.error('Auth check error:', err);
-    }
-  };
+      }
+    };
 
   useEffect(() => {
     checkAuth();
@@ -346,10 +348,6 @@ const DashboardPage = () => {
           </SuccessModalContent>
         </SuccessModal>
       )}
-      <DownloadBlueprintModal 
-        isOpen={showDownloadModal} 
-        onClose={() => setShowDownloadModal(false)} 
-      />
     </NoNavbarLayout>
   );
 };
