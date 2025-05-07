@@ -270,14 +270,6 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
     try {
       console.log('Auth Success:', message); // Debug log
       
-      // Close the auth modal first
-      onClose();
-      
-      // Call onAuthSuccess if provided
-      if (onAuthSuccess) {
-        onAuthSuccess();
-      }
-      
       // Wait for session to be established
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) {
