@@ -3,9 +3,10 @@ import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { BlueprintModal } from '../../../components/quote/BlueprintModal';
-import { useDownloadModal } from '../../../components/quote/DownloadBlueprintModal';
+import { useDownloadModal } from '../../../components/quote/QuoteDownloadModal';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
+import { QuoteAuthModal } from '../../../components/quote/QuoteAuthModal';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -310,7 +311,7 @@ export default function FormSection() {
         </Grid>
       </Container>
 
-      <BlueprintModal 
+      <QuoteAuthModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}

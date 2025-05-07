@@ -7,7 +7,7 @@ import { theme } from '@/styles/theme';
 import Header from '@/components/layout/Header';
 import { useRouter } from 'next/router';
 import { AuthProvider } from '@/contexts/AuthContext';
-import { DownloadBlueprintModal, DownloadModalProvider } from '@/components/quote/DownloadBlueprintModal';
+import { QuoteDownloadModal, DownloadModalProvider } from '@/components/quote/QuoteDownloadModal';
 
 // Prevent Font Awesome from adding its CSS since we did it manually above
 config.autoAddCss = false;
@@ -26,7 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <DownloadModalProvider>
         {showHeader && <Header />}
         <Component {...pageProps} />
-          <DownloadBlueprintModal />
+          <QuoteDownloadModal />
         </DownloadModalProvider>
       </ThemeProvider>
     </AuthProvider>

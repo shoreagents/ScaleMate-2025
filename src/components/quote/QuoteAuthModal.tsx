@@ -6,9 +6,9 @@ import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { useDownloadModal } from './DownloadBlueprintModal';
+import { useDownloadModal } from './QuoteDownloadModal';
 
-interface BlueprintModalProps {
+interface QuoteAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: () => void;
@@ -228,7 +228,7 @@ const ExploreLink = styled.a`
   }
 `;
 
-export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModalProps) => {
+export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const [isVerifying, setIsVerifying] = useState(false);
   const { openModal } = useDownloadModal();
@@ -260,8 +260,9 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
       onAuthSuccess();
       openModal(handleDownloadModalClose);
     }
-    // For signup view, show download modal
+    // For signup view, show download modal and close auth modal
     else if (currentView === 'signup') {
+      onClose(); // Close the auth modal first
       openModal(handleDownloadModalClose);
     }
   };

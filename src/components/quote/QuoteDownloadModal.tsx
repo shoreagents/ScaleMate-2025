@@ -68,7 +68,7 @@ export const DownloadModalProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useDownloadModal = () => useContext(DownloadModalContext);
 
 // Modal component
-export const DownloadBlueprintModal = () => {
+export const QuoteDownloadModal = () => {
   const { isOpen, closeModal } = useDownloadModal();
   const [isDownloading, setIsDownloading] = useState(false);
 

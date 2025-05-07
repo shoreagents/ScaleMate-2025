@@ -38,7 +38,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
-import { useDownloadModal } from '@/components/quote/DownloadBlueprintModal';
+import { useDownloadModal } from '@/components/quote/QuoteDownloadModal';
 
 const DashboardContainer = styled.div`
   display: flex;
