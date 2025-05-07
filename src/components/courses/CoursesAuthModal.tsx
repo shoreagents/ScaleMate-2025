@@ -241,9 +241,9 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
         });
         
         // Call onAuthSuccess if provided
-        if (onAuthSuccess) {
-          onAuthSuccess();
-        }
+    if (onAuthSuccess) {
+      onAuthSuccess();
+    }
       }
     }
   }, [router.isReady, onAuthSuccess]);
