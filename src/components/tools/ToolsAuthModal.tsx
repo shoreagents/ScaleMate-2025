@@ -240,7 +240,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
         
         // Call onAuthSuccess if provided
         if (onAuthSuccess) {
-          onAuthSuccess();
+      onAuthSuccess();
         }
       }
     }
