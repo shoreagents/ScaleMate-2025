@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { BlueprintModal } from '../../../components/quote/BlueprintModal';
 import { useDownloadModal } from '../../../components/quote/QuoteDownloadModal';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
