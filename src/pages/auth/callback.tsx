@@ -222,12 +222,6 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check if we came from a modal
-        const fromBlueprintModal = router.query.from === 'blueprint-modal';
-        const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
-        const fromToolsModal = router.query.from === 'tools-modal';
-        const redirectTo = router.query.redirectTo as string;
-
         // Check if setup is needed
         const needsSetup = !profile?.username;
 
@@ -250,20 +244,21 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check if setup is needed
-        if (needsSetup) {
-          setError('Please complete your profile setup first.');
-          return;
-        }
-
-        // If we get here, setup is complete
-        if (!verifyProfile || !verifyRole) {
-          setError('Failed to complete user setup. Please try again.');
-          return;
-        }
+        // Check if we came from a modal
+        const fromBlueprintModal = router.query.from === 'blueprint-modal';
+        const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
+        const fromToolsModal = router.query.from === 'tools-modal';
+        const fromReadinessModal = router.query.from === 'readiness-modal';
+        const fromResourcesModal = router.query.from === 'resources-modal';
+        const fromRoleBuilderModal = router.query.from === 'role-builder-modal';
+        const fromQuoteModal = router.query.from === 'quote-modal';
+        const fromCoursesModal = router.query.from === 'courses-modal';
+        const redirectTo = router.query.redirectTo as string;
 
         // Handle redirects based on modal status
-        if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
+        if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal || 
+            fromReadinessModal || fromResourcesModal || fromRoleBuilderModal || 
+            fromQuoteModal || fromCoursesModal) {
           // If coming from a modal, redirect back to the original page
           if (redirectTo) {
             router.push(redirectTo);
