@@ -61,7 +61,7 @@ const waitForValidSession = async (maxAttempts = 10) => {
   return false;
 };
 
-export default function AuthCallback() {
+export default function AuthCallbacsk() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
