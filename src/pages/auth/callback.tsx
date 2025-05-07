@@ -217,9 +217,8 @@ export default function AuthCallback() {
         }
 
         // Check if we came from a modal
-        const fromBlueprintModal = router.query.from === 'blueprint-modal';
-        const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
-        const fromToolsModal = router.query.from === 'tools-modal';
+        const fromParam = router.query.from;
+        const isFromModal = fromParam && typeof fromParam === 'string' && fromParam.endsWith('-modal');
         const redirectTo = router.query.redirectTo as string;
 
         // Verify session is still valid before redirecting
@@ -229,8 +228,8 @@ export default function AuthCallback() {
           return;
         }
 
-        if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
-          // If we came from a modal, redirect back to the same page
+        if (isFromModal) {
+          // If we came from any modal, redirect back to the same page
           // The modal will be reopened automatically
           if (redirectTo) {
             router.push(redirectTo);
@@ -244,18 +243,7 @@ export default function AuthCallback() {
           if (needsSetup) {
             router.push('/user/dashboard');
           } else {
-            // Only add showDownloadModal parameter if user came from a modal
-            if (isGoogleUser) {
-              if (fromBlueprintModal) {
-                router.push('/user/dashboard?showBlueprintModal=true');
-              } else if (fromCostSavingsModal) {
-                router.push('/user/dashboard?showCostSavingsModal=true');
-          } else {
             router.push('/user/dashboard');
-          }
-        } else {
-          router.push('/user/dashboard');
-        }
           }
         }
       } catch (err) {
