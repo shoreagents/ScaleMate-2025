@@ -229,6 +229,9 @@ export default function AuthCallback() {
           return;
         }
 
+        // Check if setup is needed
+        const needsSetup = !profile?.username;
+
         if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
           // If we came from a modal, redirect back to the same page
           // The modal will be reopened automatically
@@ -238,9 +241,6 @@ export default function AuthCallback() {
             router.push('/');
           }
         } else {
-          // Check if setup is needed
-          const needsSetup = !profile?.username;
-          
           if (needsSetup) {
             router.push('/user/dashboard');
           } else {
@@ -250,12 +250,12 @@ export default function AuthCallback() {
                 router.push('/user/dashboard?showBlueprintModal=true');
               } else if (fromCostSavingsModal) {
                 router.push('/user/dashboard?showCostSavingsModal=true');
-          } else {
-            router.push('/user/dashboard');
-          }
-        } else {
-          router.push('/user/dashboard');
-        }
+              } else {
+                router.push('/user/dashboard');
+              }
+            } else {
+              router.push('/user/dashboard');
+            }
           }
         }
       } catch (err) {
