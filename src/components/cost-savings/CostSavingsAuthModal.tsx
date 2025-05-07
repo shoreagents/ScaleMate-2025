@@ -237,10 +237,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
       if (fromParam === 'cost-savings-modal') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
-        router.replace(newUrl, undefined, { 
-          shallow: true,
-          scroll: false
-        });
+        router.replace(newUrl, undefined, { shallow: true });
         
         // Open the download modal
         openModal(handleDownloadModalClose);
@@ -276,6 +273,9 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
   const handleAuthSuccess = async (message: string) => {
     try {
       console.log('Auth Success:', message); // Debug log
+      
+      // Close the auth modal first
+      onClose();
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
