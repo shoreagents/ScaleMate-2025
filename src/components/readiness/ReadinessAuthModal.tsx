@@ -239,9 +239,9 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
         router.replace(newUrl, undefined, { shallow: true });
         
         // Call onAuthSuccess if provided
-        if (onAuthSuccess) {
-          onAuthSuccess();
-        }
+    if (onAuthSuccess) {
+      onAuthSuccess();
+    }
       }
     }
   }, [router.isReady, onAuthSuccess]);
