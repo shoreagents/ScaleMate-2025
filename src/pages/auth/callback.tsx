@@ -118,7 +118,7 @@ export default function AuthCallback() {
           }
 
           // Create profile if it doesn't exist
-          if (!profile) {
+        if (!profile) {
             // Get high-quality profile picture URL
             const avatarUrl = user.user_metadata?.avatar_url;
             const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
@@ -145,7 +145,7 @@ export default function AuthCallback() {
 
           // Check if role exists
           const { data: existingRole, error: roleCheckError } = await serviceRoleClient
-            .from('user_roles')
+          .from('user_roles')
             .select('user_id')
             .eq('user_id', user.id)
             .single();
@@ -154,7 +154,7 @@ export default function AuthCallback() {
             console.error('Error checking existing role:', roleCheckError);
             window.location.reload();
             return;
-          }
+        }
 
           // Only insert if role doesn't exist
           if (!existingRole) {
@@ -176,16 +176,18 @@ export default function AuthCallback() {
         // Check if setup is needed
         const needsSetup = !profile?.username;
         
-        // Check if we came from the blueprint modal
+        // Check if we came from the blueprint modal or cost savings modal
         const fromBlueprintModal = router.query.from === 'blueprint-modal';
+        const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
+        const fromToolsModal = router.query.from === 'tools-modal';
         
-        if (fromBlueprintModal) {
-          // If we came from the blueprint modal, redirect back to the same page
+        if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
+          // If we came from any modal, redirect back to the same page
           // The modal will be reopened automatically
           router.push(router.query.redirectTo as string || '/');
         } else if (needsSetup) {
           // Redirect to dashboard instead of setup
-          router.push('/user/dashboard');
+            router.push('/user/dashboard');
         } else {
           // Check if this is a Google sign-in
           const isGoogleUser = user.app_metadata?.provider === 'google';
@@ -209,4 +211,4 @@ export default function AuthCallback() {
       <LoadingSpinner />
     </LoadingContainer>
   );
-}
+} 

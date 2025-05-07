@@ -3,9 +3,10 @@ import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { BlueprintModal } from '../../../components/quote/BlueprintModal';
-import { DownloadBlueprintModal } from '../../../components/quote/DownloadBlueprintModal';
+import { useDownloadModal } from '../../../components/quote/QuoteDownloadModal';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
+import { QuoteAuthModal } from '../../../components/quote/QuoteAuthModal';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -173,8 +174,8 @@ const SummaryContainer = styled.div`
 
 export default function FormSection() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const router = useRouter();
+  const { openModal } = useDownloadModal();
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -184,7 +185,7 @@ export default function FormSection() {
   const handleBlueprintClick = async () => {
     const isAuthenticated = await checkAuth();
     if (isAuthenticated) {
-      setIsDownloadModalOpen(true);
+      openModal(() => setIsLoginModalOpen(false));
     } else {
       setIsLoginModalOpen(true);
     }
@@ -192,7 +193,6 @@ export default function FormSection() {
 
   const handleAuthSuccess = () => {
     setIsLoginModalOpen(false);
-    setIsDownloadModalOpen(true);
   };
 
   return (
@@ -311,15 +311,10 @@ export default function FormSection() {
         </Grid>
       </Container>
 
-      <BlueprintModal 
+      <QuoteAuthModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
-      />
-
-      <DownloadBlueprintModal 
-        isOpen={isDownloadModalOpen}
-        onClose={() => setIsDownloadModalOpen(false)}
       />
     </Section>
   );
