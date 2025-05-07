@@ -72,26 +72,31 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create triggers for updated_at columns
+DROP TRIGGER IF EXISTS update_users_timestamp ON public.users;
 CREATE TRIGGER update_users_timestamp
     BEFORE UPDATE ON public.users
     FOR EACH ROW
     EXECUTE FUNCTION update_timestamp();
 
+DROP TRIGGER IF EXISTS update_user_profiles_timestamp ON public.user_profiles;
 CREATE TRIGGER update_user_profiles_timestamp
     BEFORE UPDATE ON public.user_profiles
     FOR EACH ROW
     EXECUTE FUNCTION update_timestamp();
 
+DROP TRIGGER IF EXISTS update_user_roles_timestamp ON public.user_roles;
 CREATE TRIGGER update_user_roles_timestamp
     BEFORE UPDATE ON public.user_roles
     FOR EACH ROW
     EXECUTE FUNCTION update_timestamp();
 
+DROP TRIGGER IF EXISTS update_teams_timestamp ON public.teams;
 CREATE TRIGGER update_teams_timestamp
     BEFORE UPDATE ON public.teams
     FOR EACH ROW
     EXECUTE FUNCTION update_timestamp();
 
+DROP TRIGGER IF EXISTS update_team_members_timestamp ON public.team_members;
 CREATE TRIGGER update_team_members_timestamp
     BEFORE UPDATE ON public.team_members
     FOR EACH ROW
@@ -107,29 +112,46 @@ ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
 -- Create RLS Policies
 
 -- Users policies
+DROP POLICY IF EXISTS "Users can view their own data" ON public.users;
 CREATE POLICY "Users can view their own data"
     ON public.users
     FOR SELECT
     USING (auth.uid() = id);
 
 -- User profiles policies
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.user_profiles;
 CREATE POLICY "Users can view their own profile"
     ON public.user_profiles
     FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.user_profiles;
+CREATE POLICY "Users can insert their own profile"
+    ON public.user_profiles
+    FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.user_profiles;
 CREATE POLICY "Users can update their own profile"
     ON public.user_profiles
     FOR UPDATE
     USING (auth.uid() = user_id);
 
 -- User roles policies
+DROP POLICY IF EXISTS "Users can view their own roles" ON public.user_roles;
 CREATE POLICY "Users can view their own roles"
     ON public.user_roles
     FOR SELECT
     USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own roles" ON public.user_roles;
+CREATE POLICY "Users can insert their own roles"
+    ON public.user_roles
+    FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
 -- Teams policies
+DROP POLICY IF EXISTS "Team members can view their teams" ON public.teams;
 CREATE POLICY "Team members can view their teams"
     ON public.teams
     FOR SELECT
@@ -142,12 +164,14 @@ CREATE POLICY "Team members can view their teams"
         OR owner_id = auth.uid()
     );
 
+DROP POLICY IF EXISTS "Team owners can update their teams" ON public.teams;
 CREATE POLICY "Team owners can update their teams"
     ON public.teams
     FOR UPDATE
     USING (owner_id = auth.uid());
 
 -- Team members policies
+DROP POLICY IF EXISTS "Users can view teams they are members of" ON public.team_members;
 CREATE POLICY "Users can view teams they are members of"
     ON public.team_members
     FOR SELECT
