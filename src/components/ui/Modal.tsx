@@ -21,10 +21,9 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
 const ModalContainer = styled.div`
   position: fixed;
   inset: 0;
-  overflow-y: auto;
   z-index: 50;
   display: flex;
-  min-height: 100%;
+  min-height: 100vh;
   padding: 1rem;
   justify-content: center;
   align-items: center;
@@ -43,6 +42,8 @@ const ModalContent = styled.div`
   position: relative;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   border: 1px solid #E5E7EB;
+  max-height: 90vh;
+  overflow-y: auto;
 
   @media (min-width: 640px) {
     transform: scale(1);
@@ -62,13 +63,13 @@ const ModalTitle = styled.h3`
 `;
 
 export const Modal = ({ isOpen, onClose, children, title, closeOnOverlayClick = true }: ModalProps) => {
-  if (!isOpen) return null;
-
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <>

@@ -1,20 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Modal } from '../ui/Modal';
-import { DocumentIcon } from '@heroicons/react/24/outline';
-import SignUpForm from '../auth/SignUpForm';
-import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { DownloadBlueprintModal } from './DownloadBlueprintModal';
-
-interface BlueprintModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAuthSuccess?: () => void;
-}
-
-type ModalView = 'initial' | 'signup' | 'login';
+import { faBook, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { Modal } from '../ui/Modal';
+import AuthForm from '../auth/AuthForm';
+import SignUpForm from '../auth/SignUpForm';
 
 const Container = styled.div`
   display: flex;
@@ -22,22 +12,11 @@ const Container = styled.div`
   align-items: center;
   text-align: center;
   padding: 1rem;
-  max-height: 90vh;
-  overflow-y: auto;
   width: 100%;
 
   @media (max-width: 640px) {
     padding: 0.75rem;
   }
-
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Hide scrollbar for IE, Edge and Firefox */
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
 `;
 
 const FormWrapper = styled.div`
@@ -62,27 +41,23 @@ const Title = styled.h2`
   text-align: center;
   margin: 0rem;
   color: rgb(31, 41, 55);
-
-  
 `;
 
 const Description = styled.p`
   color: rgba(15, 23, 42, 0.7);
   margin-bottom: 3rem;
   max-width: 32rem;
-    font-size: 0.875rem;
- 
+  font-size: 0.875rem;
 `;
 
 const IconContainer = styled.div`
   width: 100%;
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(244, 114, 182, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
   text-align: center;
   border: 1px solid #E5E7EB;
-
 `;
 
 const IconWrapper = styled.div`
@@ -92,7 +67,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3B82F6;
+  color: #F472B6;
 
   @media (min-width: 640px) {
     width: 4rem;
@@ -129,7 +104,7 @@ const ButtonContainer = styled.div`
 
 const SignUpButton = styled.button`
   flex: 1;
-  background: #3B82F6;
+  background: #F472B6;
   color: white;
   padding: 0.875rem;
   border-radius: 8px;
@@ -145,7 +120,7 @@ const SignUpButton = styled.button`
   }
 
   &:hover {
-    background: #2563EB;
+    background: #EC4899;
   }
 
   &:active {
@@ -191,7 +166,7 @@ const LoginButton = styled.button`
 `;
 
 const BackButton = styled.button`
-  color: #3B82F6;
+  color: #F472B6;
   background: none;
   border: none;
   cursor: pointer;
@@ -210,7 +185,7 @@ const BackButton = styled.button`
     margin-top: 1rem;
 
     &:hover {
-      color: #2563EB;
+      color: #EC4899;
     }
   }
 `;
@@ -219,9 +194,6 @@ const ExploreText = styled.span`
   color: #6B7280;
   font-size: 0.875rem;
   margin-right: 0.25rem;
-
-  @media (min-width: 640px) {
-  }
 `;
 
 const ExploreContainer = styled.div`
@@ -229,59 +201,38 @@ const ExploreContainer = styled.div`
 `;
 
 const ExploreLink = styled.a`
-  color: #3B82F6;
+  color: #F472B6;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
   &:hover {
-    color: #2563EB;
+    color: #EC4899;
   }
 `;
 
-export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModalProps) => {
+interface ResourcesAuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess?: () => void;
+}
+
+type ModalView = 'initial' | 'signup' | 'login';
+
+export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
-
-  // Get the current URL for OAuth redirect
-  const getCurrentUrl = () => {
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      // Add a query parameter to identify this is from the blueprint modal
-      url.searchParams.set('from', 'blueprint-modal');
-      // Store the current URL to return to after auth
-      url.searchParams.set('redirectTo', window.location.pathname + window.location.search);
-      return url.toString();
-    }
-    return '';
-  };
-
-  const handleAuthSuccess = (message: string) => {
-    // For login view, trigger onAuthSuccess and show download modal
-    if (currentView === 'login' && onAuthSuccess) {
-      onAuthSuccess();
-      setShowDownloadModal(true);
-    }
-    // For signup view, show download modal
-    else if (currentView === 'signup') {
-      setShowDownloadModal(true);
-    }
-  };
-
-  const handleAuthError = (error: string | null) => {
-    if (error) {
-      console.error('Auth error:', error);
-    }
-  };
 
   const handleClose = () => {
     onClose();
+    // Reset to initial view after modal is closed
+    setTimeout(() => setCurrentView('initial'), 300);
   };
 
-  const handleDownloadModalClose = () => {
-    setShowDownloadModal(false);
-    onClose();
+  const handleAuthSuccess = () => {
+    if (onAuthSuccess) {
+      onAuthSuccess();
+    }
+    handleClose();
   };
 
   const renderContent = () => {
@@ -289,31 +240,28 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm 
-              onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
-              hideLinks={true} 
+            <SignUpForm
+              onSuccess={handleAuthSuccess}
+              onError={(error: string | null) => console.error(error)}
               preventRedirect={true}
-              redirectUrl={getCurrentUrl()}
-              onVerificationStateChange={setIsVerifying}
+              redirectUrl={`${window.location.href}?from=resources-modal`}
+              hideLinks={true}
             />
-            {!isVerifying && (
-              <BackButton onClick={() => setCurrentView('initial')}>
-                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-                Go Back
-              </BackButton>
-            )}
+            <BackButton onClick={() => setCurrentView('initial')}>
+              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+              Go Back
+            </BackButton>
           </FormWrapper>
         );
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm 
-              onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
-              preventRedirect={true} 
+            <AuthForm
+              onSuccess={handleAuthSuccess}
+              onError={(error: string) => console.error(error)}
+              preventRedirect={true}
+              redirectUrl={`${window.location.href}?from=resources-modal`}
               hideLinks={true}
-              redirectUrl={getCurrentUrl()}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -327,14 +275,14 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full job blueprint, including salary breakdowns, tools, and task lists.
+              Create a free account to unlock the full resource library, including AI-powered recommendations and custom resource collections.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
+                <FontAwesomeIcon icon={faBook} style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Complete Job Blueprint</IconText>
+              <IconText>Resource Library</IconText>
             </IconContainer>
 
             <ButtonContainer>
@@ -350,7 +298,7 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
             <ExploreContainer>
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
-                Keep exploring tools
+                Keep exploring resources
               </ExploreLink>
             </ExploreContainer>
           </>
@@ -359,16 +307,10 @@ export const BlueprintModal = ({ isOpen, onClose, onAuthSuccess }: BlueprintModa
   };
 
   return (
-    <>
-      <Modal isOpen={isOpen} onClose={handleClose}>
-        <Container>
-          {renderContent()}
-        </Container>
-      </Modal>
-      <DownloadBlueprintModal 
-        isOpen={showDownloadModal} 
-        onClose={handleDownloadModalClose} 
-      />
-    </>
+    <Modal isOpen={isOpen} onClose={handleClose}>
+      <Container>
+        {renderContent()}
+      </Container>
+    </Modal>
   );
-};
+}; 

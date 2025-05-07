@@ -11,6 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { useAuth } from '../../../hooks/useAuth';
+import { ResourcesAuthModal } from '../../../components/resources/ResourcesAuthModal';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -238,10 +239,19 @@ const ArrowIcon = styled(FontAwesomeIcon)`
 
 export default function ResourceContent() {
   const [activeFilter, setActiveFilter] = useState('all');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const { user } = useAuth();
 
   const handleCreateAccount = () => {
-    // No need for modal, just let the link handle navigation
+    if (!user) {
+      setIsAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setIsAuthModalOpen(false);
+    // Refresh the page to show personalized content
+    window.location.reload();
   };
 
   return (
@@ -366,6 +376,12 @@ export default function ResourceContent() {
           </Sidebar>
         </ContentWrapper>
       </Container>
+
+      <ResourcesAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </Section>
   );
 } 

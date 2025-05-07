@@ -489,8 +489,12 @@ const Header = () => {
 
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsLoggedIn(!!session?.user);
+      // Close the profile dropdown on sign out
+      if (event === 'SIGNED_OUT') {
+        setIsProfileOpen(false);
+      }
     });
 
     return () => {

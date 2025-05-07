@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faToolbox, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../ui/Modal';
-import AuthForm from '../auth/AuthForm';
+import { DocumentIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../auth/SignUpForm';
+import AuthForm from '../auth/AuthForm';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { useDownloadModal } from './QuoteDownloadModal';
+
+interface QuoteAuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess?: () => void;
+}
+
+type ModalView = 'initial' | 'signup' | 'login';
 
 const Container = styled.div`
   display: flex;
@@ -41,23 +51,27 @@ const Title = styled.h2`
   text-align: center;
   margin: 0rem;
   color: rgb(31, 41, 55);
+
+  
 `;
 
 const Description = styled.p`
   color: rgba(15, 23, 42, 0.7);
   margin-bottom: 3rem;
   max-width: 32rem;
-  font-size: 0.875rem;
+    font-size: 0.875rem;
+ 
 `;
 
 const IconContainer = styled.div`
   width: 100%;
-  background-color: rgba(74, 222, 128, 0.1);
+  background-color: rgba(59, 130, 246, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
   text-align: center;
   border: 1px solid #E5E7EB;
+
 `;
 
 const IconWrapper = styled.div`
@@ -67,7 +81,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4ADE80;
+  color: #3B82F6;
 
   @media (min-width: 640px) {
     width: 4rem;
@@ -82,7 +96,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -104,7 +118,7 @@ const ButtonContainer = styled.div`
 
 const SignUpButton = styled.button`
   flex: 1;
-  background: #4ADE80;
+  background: #3B82F6;
   color: white;
   padding: 0.875rem;
   border-radius: 8px;
@@ -120,7 +134,7 @@ const SignUpButton = styled.button`
   }
 
   &:hover {
-    background: #22C55E;
+    background: #2563EB;
   }
 
   &:active {
@@ -166,7 +180,7 @@ const LoginButton = styled.button`
 `;
 
 const BackButton = styled.button`
-  color: #4ADE80;
+  color: #3B82F6;
   background: none;
   border: none;
   cursor: pointer;
@@ -184,8 +198,8 @@ const BackButton = styled.button`
   @media (min-width: 640px) {
     margin-top: 1rem;
 
-  &:hover {
-      color: #22C55E;
+    &:hover {
+      color: #2563EB;
     }
   }
 `;
@@ -194,6 +208,9 @@ const ExploreText = styled.span`
   color: #6B7280;
   font-size: 0.875rem;
   margin-right: 0.25rem;
+
+  @media (min-width: 640px) {
+  }
 `;
 
 const ExploreContainer = styled.div`
@@ -201,38 +218,59 @@ const ExploreContainer = styled.div`
 `;
 
 const ExploreLink = styled.a`
-  color: #4ADE80;
+  color: #3B82F6;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
   &:hover {
-    color: #22C55E;
+    color: #2563EB;
   }
 `;
 
-interface ToolsAuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAuthSuccess?: () => void;
-}
-
-type ModalView = 'initial' | 'signup' | 'login';
-
-export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
+export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const { openModal } = useDownloadModal();
+
+  // Get the current URL for OAuth redirect
+  const getCurrentUrl = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      // Add a query parameter to identify this is from the blueprint modal
+      url.searchParams.set('from', 'blueprint-modal');
+      // Store the current URL to return to after auth
+      url.searchParams.set('redirectTo', window.location.pathname + window.location.search);
+      return url.toString();
+    }
+    return '';
+  };
 
   const handleClose = () => {
     onClose();
-    // Reset to initial view after modal is closed
-    setTimeout(() => setCurrentView('initial'), 300);
   };
 
-  const handleAuthSuccess = () => {
-    if (onAuthSuccess) {
+  const handleDownloadModalClose = () => {
+    onClose();
+  };
+
+  const handleAuthSuccess = (message: string) => {
+    // For login view, trigger onAuthSuccess and show download modal
+    if (currentView === 'login' && onAuthSuccess) {
       onAuthSuccess();
+      openModal(handleDownloadModalClose);
     }
-    handleClose();
+    // For signup view, show download modal and close auth modal
+    else if (currentView === 'signup') {
+      onClose(); // Close the auth modal first
+      openModal(handleDownloadModalClose);
+    }
+  };
+
+  const handleAuthError = (error: string | null) => {
+    if (error) {
+      console.error('Auth error:', error);
+    }
   };
 
   const renderContent = () => {
@@ -240,28 +278,31 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm
-              onSuccess={handleAuthSuccess}
-              onError={(error: string | null) => console.error(error)}
+            <SignUpForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              hideLinks={true} 
               preventRedirect={true}
-              redirectUrl={`${window.location.href}?from=tools-modal`}
-              hideLinks={true}
+              redirectUrl={getCurrentUrl()}
+              onVerificationStateChange={setIsVerifying}
             />
-            <BackButton onClick={() => setCurrentView('initial')}>
-              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-              Go Back
-            </BackButton>
+            {!isVerifying && (
+              <BackButton onClick={() => setCurrentView('initial')}>
+                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+                Go Back
+              </BackButton>
+            )}
           </FormWrapper>
         );
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm
-              onSuccess={handleAuthSuccess}
-              onError={(error: string) => console.error(error)}
-              preventRedirect={true}
-              redirectUrl={`${window.location.href}?from=tools-modal`}
+            <AuthForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              preventRedirect={true} 
               hideLinks={true}
+              redirectUrl={getCurrentUrl()}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -275,20 +316,20 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full tool library, including AI-powered recommendations and custom tool stacks.
+              Create a free account to unlock the full job blueprint, including salary breakdowns, tools, and task lists.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <FontAwesomeIcon icon={faToolbox} style={{ width: '2.5rem', height: '2.5rem' }} />
+                <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Tool Library</IconText>
+              <IconText>Complete Job Blueprint</IconText>
             </IconContainer>
 
             <ButtonContainer>
               <LoginButton onClick={() => setCurrentView('login')}>
-              Log In
-            </LoginButton>
+                Log In
+              </LoginButton>
 
               <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
@@ -307,10 +348,12 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <Container>
-        {renderContent()}
-      </Container>
-    </Modal>
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose}>
+        <Container>
+          {renderContent()}
+        </Container>
+      </Modal>
+    </>
   );
-}; 
+};
