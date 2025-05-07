@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useDownloadModal } from './CostSavingsDownloadModal';
 import { useRouter } from 'next/router';
+import { supabase } from '@/lib/supabase';
 
 interface CostSavingsAuthModalProps {
   isOpen: boolean;
@@ -266,15 +267,28 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
     onClose();
   };
 
-  const handleAuthSuccess = (message: string) => {
-    // Close the auth modal first
-    onClose();
-    
-    // Show download modal for both login and signup
-    if (onAuthSuccess) {
-      onAuthSuccess();
+  const handleAuthSuccess = async (message: string) => {
+    try {
+      // Close the auth modal first
+      onClose();
+      
+      // Call onAuthSuccess if provided
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
+      
+      // Wait for session to be established
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session not established:', error);
+        return;
+      }
+
+      // Show download modal after session is confirmed
+      openModal(handleDownloadModalClose);
+    } catch (err) {
+      console.error('Error in handleAuthSuccess:', err);
     }
-    openModal(handleDownloadModalClose);
   };
 
   const handleAuthError = (error: string | null) => {
