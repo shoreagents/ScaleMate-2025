@@ -54,7 +54,7 @@ const SocialIcon = styled.span`
   color: rgba(15, 23, 42, 0.6);
   font-size: 1.25rem;
   cursor: pointer;
-  transition: color 1.2s;
+  transition: color 0.2s;
 
   &:hover {
     color: #3B82F6;
