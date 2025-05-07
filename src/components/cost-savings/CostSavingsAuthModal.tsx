@@ -234,6 +234,9 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from');
+      const redirectTo = urlParams.get('redirectTo');
+      
+      console.log('URL Params:', { fromParam, redirectTo }); // Debug log
       
       if (fromParam === 'cost-savings-modal') {
         // Remove the parameters from the URL
@@ -253,7 +256,9 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
       // Add a query parameter to identify this is from the cost savings modal
       url.searchParams.set('from', 'cost-savings-modal');
       // Store the current URL to return to after auth
-      url.searchParams.set('redirectTo', window.location.pathname + window.location.search);
+      const currentPath = window.location.pathname + window.location.search;
+      url.searchParams.set('redirectTo', currentPath);
+      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
@@ -269,6 +274,8 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
 
   const handleAuthSuccess = async (message: string) => {
     try {
+      console.log('Auth Success:', message); // Debug log
+      
       // Close the auth modal first
       onClose();
       
@@ -283,6 +290,8 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
         console.error('Session not established:', error);
         return;
       }
+
+      console.log('Session established:', session); // Debug log
 
       // Show download modal after session is confirmed
       openModal(handleDownloadModalClose);
