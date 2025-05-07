@@ -6,9 +6,9 @@ import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { useDownloadModal } from './CostSavingsDownloadModal';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
+import { useDownloadModal } from './CostSavingsDownloadModal';
 
 interface CostSavingsAuthModalProps {
   isOpen: boolean;
@@ -242,13 +242,11 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
           scroll: false
         });
         
-        // Call onAuthSuccess if provided
-        if (onAuthSuccess) {
-          onAuthSuccess();
-        }
+        // Open the download modal
+        openModal(handleDownloadModalClose);
       }
     }
-  }, [router.isReady, onAuthSuccess]);
+  }, [router.isReady]);
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -292,10 +290,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
       }
 
       console.log('Session established:', session); // Debug log
-      
-      // Close the auth modal after session is confirmed
-      handleClose();
-      
+
       // Show download modal after session is confirmed
       openModal(handleDownloadModalClose);
     } catch (err) {
