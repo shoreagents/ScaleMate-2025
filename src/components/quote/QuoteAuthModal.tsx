@@ -236,71 +236,36 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
   const { openModal } = useDownloadModal();
   const router = useRouter();
 
-  // Get the current URL for OAuth redirect
-  const getCurrentUrl = () => {
-    // Get the current URL without any query parameters
-    const baseUrl = window.location.href.split('?')[0];
-    // Store the current path to return to after auth
-    const currentPath = window.location.pathname + window.location.search;
-    // Add the callback URL as a query parameter
-    return `${baseUrl}?from=blueprint-modal&callback=${encodeURIComponent(currentPath)}`;
-  };
-
+  // Check URL parameters on mount and after auth redirect
   useEffect(() => {
-    if (isOpen) {
-      // Check for URL parameters when modal opens
-      const url = new URL(window.location.href);
-      const fromParam = url.searchParams.get('from');
-      const callbackUrl = url.searchParams.get('callback');
-
+    if (typeof window !== 'undefined' && router.isReady) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromParam = urlParams.get('from');
+      
       if (fromParam === 'blueprint-modal') {
         // Remove the parameters from the URL
-        url.searchParams.delete('from');
-        url.searchParams.delete('callback');
-        router.replace(url.toString());
-
-        // If we have a callback URL, check if it's from login/signup
-        if (callbackUrl) {
-          const decodedCallback = decodeURIComponent(callbackUrl);
-          const path = decodedCallback.split('?')[0]; // Get path without query params
-
-          // If coming from login or signup, redirect to dashboard based on role
-          if (path === '/login' || path === '/signup') {
-            // Get user role from session
-            supabase.auth.getSession().then(({ data: { session } }) => {
-              if (session?.user) {
-                // Get user role from user_metadata
-                const role = session.user.user_metadata?.role || 'user';
-                // Redirect to appropriate dashboard
-                router.push(`/user/${role}-dashboard`);
-              }
-            });
-          } else {
-            // For other pages, redirect back to the original page
-            router.push(decodedCallback);
-          }
-        }
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, undefined, { shallow: true });
+        
+        // Open the download modal
+        openModal(handleDownloadModalClose);
       }
     }
-  }, [isOpen, router]);
+  }, [router.isReady]);
 
-  const handleGoogleSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: getCurrentUrl(),
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
+  // Get the current URL for OAuth redirect
+  const getCurrentUrl = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      // Add a query parameter to identify this is from the blueprint modal
+      url.searchParams.set('from', 'blueprint-modal');
+      // Store the current URL to return to after auth
+      const currentPath = window.location.pathname + window.location.search;
+      url.searchParams.set('redirectTo', currentPath);
+      console.log('OAuth Redirect URL:', url.toString()); // Debug log
+      return url.toString();
     }
+    return '';
   };
 
   const handleClose = () => {
