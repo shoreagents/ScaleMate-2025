@@ -29,6 +29,9 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        // Wait for a short delay to ensure session is established
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Get the session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
@@ -170,6 +173,9 @@ export default function AuthCallback() {
           }
         }
 
+        // Wait for another short delay to ensure all operations are complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         // Check if we came from a modal
         const fromBlueprintModal = router.query.from === 'blueprint-modal';
         const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
@@ -180,7 +186,10 @@ export default function AuthCallback() {
           // If we came from a modal, redirect back to the same page
           // The modal will be reopened automatically
           if (redirectTo) {
-            router.push(redirectTo);
+            // Add a small delay before redirecting
+            setTimeout(() => {
+              router.push(redirectTo);
+            }, 500);
           } else {
             router.push('/');
           }
