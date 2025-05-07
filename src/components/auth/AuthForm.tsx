@@ -476,7 +476,11 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
             access_type: 'offline',
             prompt: 'consent',
             // Pass the original redirect URL as a parameter
-            redirectTo: redirectUrl || window.location.href
+            redirectTo: redirectUrl || window.location.href,
+            // Pass the source modal type
+            from: redirectUrl?.includes('blueprint-modal') ? 'blueprint-modal' :
+                  redirectUrl?.includes('cost-savings-modal') ? 'cost-savings-modal' :
+                  redirectUrl?.includes('tools-modal') ? 'tools-modal' : ''
           },
           scopes: 'email profile',
         }
