@@ -448,12 +448,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       setSuccess('Email verified successfully!');
       setShowVerificationWithCallback(false);
       
-      // If we're in the blueprint modal, stay in the modal
+      // If we're in a modal, stay in the modal
       if (preventRedirect) {
         onSuccess?.('Email verified successfully!');
       } else {
-        // Otherwise redirect to login
-        router.push('/login');
+        // Redirect to dashboard instead of login
+        router.push('/user/dashboard');
       }
     } catch (err) {
       console.error('Verification error:', err);
