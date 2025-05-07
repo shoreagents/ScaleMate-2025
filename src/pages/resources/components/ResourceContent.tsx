@@ -310,7 +310,7 @@ export default function ResourceContent() {
                 <LockOverlay>
                   <LockContent>
                     <LockIcon icon={faLock} />
-                    <LockText>Login to Access</LockText>
+                    <LockText>Logi to Access</LockText>
                   </LockContent>
                 </LockOverlay>
                 <CardContent>
