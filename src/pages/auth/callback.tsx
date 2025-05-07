@@ -15,7 +15,6 @@ const LoadingContainer = styled.div`
 
 const ErrorMessage = styled.div`
   color: #ff4d4f;
-
   text-align: center;
   margin-top: 1rem;
   padding: 1rem;
@@ -30,185 +29,194 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        // Get the session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           console.error('Session error:', sessionError);
-          window.location.reload();
+          setError('Failed to get session. Please try again.');
           return;
         }
         if (!session) {
           console.error('No session found');
-          window.location.reload();
+          setError('No session found. Please try signing in again.');
           return;
         }
 
+        // Get the user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
         if (userError) {
           console.error('User error:', userError);
-          window.location.reload();
+          setError('Failed to get user. Please try again.');
           return;
         }
-
         if (!user) {
           console.error('No user found');
-          window.location.reload();
+          setError('No user found. Please try signing in again.');
           return;
         }
 
-        // Check if this is a Google sign-up
+        // Check if this is a Google sign-in
         const isGoogleUser = user.app_metadata?.provider === 'google';
         console.log('Is Google user:', isGoogleUser);
 
+        // Create a client with service role key for admin operations
+        const serviceRoleClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+          {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          }
+        );
+
+        // Check if user exists in users table
+        const { data: existingUser, error: checkError } = await serviceRoleClient
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .single();
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          console.error('Error checking existing user:', checkError);
+          setError('Failed to check existing user. Please try again.');
+          return;
+        }
+
+        // Only insert if user doesn't exist
+        if (!existingUser) {
+          const { error: userError } = await serviceRoleClient
+            .from('users')
+            .insert({
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || '',
+              is_active: true
+            });
+
+          if (userError) {
+            console.error('User creation error:', userError);
+            setError('Failed to create user record. Please try again.');
+            return;
+          }
+        }
+
         // Get user's profile data
-        const { data: profile, error: profileError } = await supabase
+        const { data: profile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .select('*')
           .eq('user_id', user.id)
           .single();
+
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile error:', profileError);
-          window.location.reload();
+          setError('Failed to get profile. Please try again.');
           return;
         }
 
-        // For Google users, create profile and role if they don't exist
-        if (isGoogleUser) {
-          // Create a client with service role key for admin operations
-          const serviceRoleClient = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-            {
-              auth: {
-                autoRefreshToken: false,
-                persistSession: false
-              }
-            }
-          );
-
-          // Check if user exists in users table
-          const { data: existingUser, error: checkError } = await serviceRoleClient
-            .from('users')
-            .select('id')
-            .eq('id', user.id)
-            .single();
-
-          if (checkError && checkError.code !== 'PGRST116') {
-            console.error('Error checking existing user:', checkError);
-            window.location.reload();
-            return;
-          }
-
-          // Only insert if user doesn't exist
-          if (!existingUser) {
-            const { error: userError } = await serviceRoleClient
-              .from('users')
-              .insert({
-                id: user.id,
-                email: user.email,
-                full_name: user.user_metadata?.full_name || '',
-                is_active: true
-              });
-
-            if (userError) {
-              console.error('User creation error:', userError);
-              window.location.reload();
-              return;
-            }
-          }
-
-          // Create profile if it doesn't exist
+        // Create profile if it doesn't exist
         if (!profile) {
-            // Get high-quality profile picture URL
-            const avatarUrl = user.user_metadata?.avatar_url;
-            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+          // Get high-quality profile picture URL
+          const avatarUrl = user.user_metadata?.avatar_url;
+          const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
 
-            const profileData = {
-              user_id: user.id,
-              username: null,
-              first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-              last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-              last_password_change: null,
-              profile_picture: highQualityAvatarUrl || null
-            };
+          const profileData = {
+            user_id: user.id,
+            username: null,
+            first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+            last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+            last_password_change: null,
+            profile_picture: highQualityAvatarUrl || null
+          };
 
-            const { error: profileError } = await serviceRoleClient
-              .from('user_profiles')
-              .insert(profileData);
+          const { error: profileError } = await serviceRoleClient
+            .from('user_profiles')
+            .insert(profileData);
 
-            if (profileError) {
-              console.error('Profile creation error:', profileError);
-              window.location.reload();
-              return;
-            }
-          }
-
-          // Check if role exists
-          const { data: existingRole, error: roleCheckError } = await serviceRoleClient
-          .from('user_roles')
-            .select('user_id')
-            .eq('user_id', user.id)
-            .single();
-
-          if (roleCheckError && roleCheckError.code !== 'PGRST116') {
-            console.error('Error checking existing role:', roleCheckError);
-            window.location.reload();
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            setError('Failed to create profile. Please try again.');
             return;
-        }
-
-          // Only insert if role doesn't exist
-          if (!existingRole) {
-            const { error: roleError } = await serviceRoleClient
-              .from('user_roles')
-              .insert({
-                user_id: user.id,
-                role: 'user'
-              });
-
-            if (roleError) {
-              console.error('Role assignment error:', roleError);
-              window.location.reload();
-              return;
-            }
           }
         }
 
-        // Check if setup is needed
-        const needsSetup = !profile?.username;
-        
-        // Check if we came from the blueprint modal or cost savings modal
+        // Check if role exists
+        const { data: existingRole, error: roleCheckError } = await serviceRoleClient
+          .from('user_roles')
+          .select('user_id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (roleCheckError && roleCheckError.code !== 'PGRST116') {
+          console.error('Error checking existing role:', roleCheckError);
+          setError('Failed to check role. Please try again.');
+          return;
+        }
+
+        // Only insert if role doesn't exist
+        if (!existingRole) {
+          const { error: roleError } = await serviceRoleClient
+            .from('user_roles')
+            .insert({
+              user_id: user.id,
+              role: 'user'
+            });
+
+          if (roleError) {
+            console.error('Role assignment error:', roleError);
+            setError('Failed to assign role. Please try again.');
+            return;
+          }
+        }
+
+        // Check if we came from a modal
         const fromBlueprintModal = router.query.from === 'blueprint-modal';
         const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
         const fromToolsModal = router.query.from === 'tools-modal';
-        
+        const redirectTo = router.query.redirectTo as string;
+
         if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
-          // If we came from any modal, redirect back to the same page
+          // If we came from a modal, redirect back to the same page
           // The modal will be reopened automatically
-          router.push(router.query.redirectTo as string || '/');
-        } else if (needsSetup) {
-          // Redirect to dashboard instead of setup
-            router.push('/user/dashboard');
-        } else {
-          // Check if this is a Google sign-in
-          const isGoogleUser = user.app_metadata?.provider === 'google';
-          
-          // Redirect to dashboard with showDownloadModal parameter for Google users
-          if (isGoogleUser) {
-            router.push('/user/dashboard?showDownloadModal=true');
+          if (redirectTo) {
+            router.push(redirectTo);
           } else {
+            router.push('/');
+          }
+        } else {
+          // Check if setup is needed
+          const needsSetup = !profile?.username;
+          
+          if (needsSetup) {
             router.push('/user/dashboard');
+          } else {
+            // Redirect to dashboard with showDownloadModal parameter for Google users
+            if (isGoogleUser) {
+              router.push('/user/dashboard?showDownloadModal=true');
+            } else {
+              router.push('/user/dashboard');
+            }
           }
         }
       } catch (err) {
         console.error('Auth callback error:', err);
-        window.location.reload();
+        setError('An unexpected error occurred. Please try again.');
       }
     };
-    handleCallback();
-  }, [router]);
+
+    if (router.isReady) {
+      handleCallback();
+    }
+  }, [router.isReady]);
+
   return (
     <LoadingContainer>
-      <LoadingSpinner />
+      {error ? (
+        <ErrorMessage>{error}</ErrorMessage>
+      ) : (
+        <LoadingSpinner />
+      )}
     </LoadingContainer>
   );
 } 
