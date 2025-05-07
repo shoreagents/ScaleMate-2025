@@ -222,28 +222,6 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check if setup is needed
-        const needsSetup = !profile?.username;
-
-        // Verify profile and role were created successfully
-        const { data: verifyProfile, error: verifyProfileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        const { data: verifyRole, error: verifyRoleError } = await serviceRoleClient
-          .from('user_roles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (verifyProfileError || verifyRoleError) {
-          console.error('Profile or role verification failed:', { verifyProfileError, verifyRoleError });
-          setError('Failed to verify user setup. Please try again.');
-          return;
-        }
-
         // Check if we came from a modal
         const fromBlueprintModal = router.query.from === 'blueprint-modal';
         const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
