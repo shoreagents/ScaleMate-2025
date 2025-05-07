@@ -38,7 +38,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
-import { DownloadBlueprintModal, setDownloadModalState } from '@/components/quote/DownloadBlueprintModal';
+import { useDownloadModal } from '@/components/quote/DownloadBlueprintModal';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -156,19 +156,19 @@ const DashboardPage = () => {
   const [showAuthCallback, setShowAuthCallback] = useState(false);
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const { openModal } = useDownloadModal();
 
   useEffect(() => {
     // Check if we should show the download modal (e.g., after Google sign-in)
     const showDownloadModal = router.query.showDownloadModal === 'true';
     if (showDownloadModal) {
-      setDownloadModalState(true, () => {
+      openModal(() => {
         // Remove the query parameter
         const { showDownloadModal, ...rest } = router.query;
         router.replace({ query: rest });
       });
     }
-  }, [router.query]);
+  }, [router.query, openModal]);
 
   const checkAuth = async () => {
       try {
