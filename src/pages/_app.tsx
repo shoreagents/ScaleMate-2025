@@ -24,8 +24,8 @@ export default function App({ Component, pageProps }: AppProps) {
     <AuthProvider>
       <ThemeProvider theme={theme}>
         <DownloadModalProvider>
-          {showHeader && <Header />}
-          <Component {...pageProps} />
+        {showHeader && <Header />}
+        <Component {...pageProps} />
           <DownloadBlueprintModal />
         </DownloadModalProvider>
       </ThemeProvider>
