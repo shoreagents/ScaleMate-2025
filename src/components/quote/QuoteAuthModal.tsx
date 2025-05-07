@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useDownloadModal } from './QuoteDownloadModal';
 import { useRouter } from 'next/router';
+import { supabase } from '../../lib/supabase';
 
 interface QuoteAuthModalProps {
   isOpen: boolean;
@@ -237,7 +238,7 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
 
   // Check URL parameters on mount and after auth redirect
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from');
       
@@ -273,17 +274,28 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
     onClose();
   };
 
-  const handleAuthSuccess = (message: string) => {
-    // Close the auth modal first
-    onClose();
-    
-    // Call onAuthSuccess if provided
-    if (onAuthSuccess) {
-      onAuthSuccess();
+  const handleAuthSuccess = async (message: string) => {
+    try {
+      // Close the auth modal first
+      onClose();
+      
+      // Call onAuthSuccess if provided
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
+      
+      // Wait for session to be established
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session not established:', error);
+        return;
+      }
+
+      // Show download modal after session is confirmed
+      openModal(handleDownloadModalClose);
+    } catch (err) {
+      console.error('Error in handleAuthSuccess:', err);
     }
-    
-    // Always show download modal after successful auth
-    openModal(handleDownloadModalClose);
   };
 
   const handleAuthError = (error: string | null) => {
