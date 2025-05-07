@@ -235,15 +235,12 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
       if (fromParam === 'courses-modal') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
-        router.replace(newUrl, undefined, { 
-          shallow: true,
-          scroll: false
-        });
+        router.replace(newUrl, undefined, { shallow: true });
         
         // Call onAuthSuccess if provided
-    if (onAuthSuccess) {
-      onAuthSuccess();
-    }
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       }
     }
   }, [router.isReady, onAuthSuccess]);
@@ -273,6 +270,9 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
     try {
       console.log('Auth Success:', message); // Debug log
       
+      // Close the auth modal first
+      onClose();
+      
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
         onAuthSuccess();
@@ -286,9 +286,6 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
       }
 
       console.log('Session established:', session); // Debug log
-      
-      // Close the auth modal after session is confirmed
-      handleClose();
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }

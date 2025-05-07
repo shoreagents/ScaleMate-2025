@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBook, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../ui/Modal';
 import AuthForm from '../auth/AuthForm';
 import SignUpForm from '../auth/SignUpForm';
+import { useRouter } from 'next/router';
+import { supabase } from '../../lib/supabase';
 
 const Container = styled.div`
   display: flex;
@@ -221,6 +223,37 @@ type ModalView = 'initial' | 'signup' | 'login';
 
 export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && router.isReady) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromParam = urlParams.get('from');
+      
+      if (fromParam === 'resources-modal') {
+        // Remove the parameters from the URL
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, undefined, { shallow: true });
+        
+        // Call onAuthSuccess if provided
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
+      }
+    }
+  }, [router.isReady, onAuthSuccess]);
+
+  const getCurrentUrl = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('from', 'resources-modal');
+      const currentPath = window.location.pathname + window.location.search;
+      url.searchParams.set('redirectTo', currentPath);
+      console.log('OAuth Redirect URL:', url.toString()); // Debug log
+      return url.toString();
+    }
+    return '';
+  };
 
   const handleClose = () => {
     onClose();
@@ -228,11 +261,29 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
     setTimeout(() => setCurrentView('initial'), 300);
   };
 
-  const handleAuthSuccess = () => {
-    if (onAuthSuccess) {
-      onAuthSuccess();
+  const handleAuthSuccess = async (message: string) => {
+    try {
+      console.log('Auth Success:', message); // Debug log
+      
+      // Close the auth modal first
+      onClose();
+      
+      // Call onAuthSuccess if provided
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
+      
+      // Wait for session to be established
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session not established:', error);
+        return;
+      }
+
+      console.log('Session established:', session); // Debug log
+    } catch (err) {
+      console.error('Error in handleAuthSuccess:', err);
     }
-    handleClose();
   };
 
   const renderContent = () => {
@@ -244,7 +295,7 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
               onSuccess={handleAuthSuccess}
               onError={(error: string | null) => console.error(error)}
               preventRedirect={true}
-              redirectUrl={`${window.location.href}?from=resources-modal`}
+              redirectUrl={getCurrentUrl()}
               hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
@@ -260,7 +311,7 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
               onSuccess={handleAuthSuccess}
               onError={(error: string) => console.error(error)}
               preventRedirect={true}
-              redirectUrl={`${window.location.href}?from=resources-modal`}
+              redirectUrl={getCurrentUrl()}
               hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>

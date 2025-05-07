@@ -234,16 +234,13 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       const fromParam = urlParams.get('from');
       
       if (fromParam === 'tools-modal') {
-        // Remove the parameters from the URL without refreshing
+        // Remove the parameters from the URL
         const newUrl = window.location.pathname;
-        router.replace(newUrl, undefined, { 
-          shallow: true,
-          scroll: false
-        });
+        router.replace(newUrl, undefined, { shallow: true });
         
         // Call onAuthSuccess if provided
         if (onAuthSuccess) {
-      onAuthSuccess();
+          onAuthSuccess();
         }
       }
     }
@@ -274,6 +271,9 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
     try {
       console.log('Auth Success:', message); // Debug log
       
+      // Close the auth modal first
+      onClose();
+      
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
         onAuthSuccess();
@@ -287,9 +287,6 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       }
 
       console.log('Session established:', session); // Debug log
-      
-      // Close the auth modal after session is confirmed
-      handleClose();
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }
