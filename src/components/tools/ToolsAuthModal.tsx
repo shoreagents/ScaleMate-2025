@@ -267,16 +267,22 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
 
   const handleAuthSuccess = async (message: string) => {
     try {
-      console.log('Auth Success:', message);
+      console.log('Auth Success:', message); // Debug log
       
-      // Wait for session to be established
+      // Wait for session to be established first
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) {
         console.error('Session not established:', error);
         return;
       }
 
-      console.log('Session established:', session);
+      console.log('Session established:', session); // Debug log
+      
+      // Only close modal and call onAuthSuccess after session is confirmed
+      onClose();
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }
@@ -295,7 +301,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
           <FormWrapper>
             <SignUpForm 
               onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
+              onError={(error: string | null) => console.error(error)}
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
@@ -311,7 +317,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
           <FormWrapper>
             <AuthForm 
               onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
+              onError={(error: string) => console.error(error)}
               preventRedirect={true} 
               hideLinks={true}
               redirectUrl={getCurrentUrl()}

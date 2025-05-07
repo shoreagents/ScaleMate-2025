@@ -249,7 +249,6 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       url.searchParams.set('from', 'resources-modal');
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
-      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
@@ -265,15 +264,7 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
     try {
       console.log('Auth Success:', message); // Debug log
       
-      // Close the auth modal first
-      onClose();
-      
-      // Call onAuthSuccess if provided
-      if (onAuthSuccess) {
-        onAuthSuccess();
-      }
-      
-      // Wait for session to be established
+      // Wait for session to be established first
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) {
         console.error('Session not established:', error);
@@ -281,6 +272,12 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       }
 
       console.log('Session established:', session); // Debug log
+      
+      // Only close modal and call onAuthSuccess after session is confirmed
+      onClose();
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }

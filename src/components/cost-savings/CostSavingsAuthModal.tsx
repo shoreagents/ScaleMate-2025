@@ -274,15 +274,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
     try {
       console.log('Auth Success:', message); // Debug log
       
-      // Close the auth modal first
-      onClose();
-      
-      // Call onAuthSuccess if provided
-      if (onAuthSuccess) {
-        onAuthSuccess();
-      }
-      
-      // Wait for session to be established
+      // Wait for session to be established first
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) {
         console.error('Session not established:', error);
@@ -290,6 +282,12 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
       }
 
       console.log('Session established:', session); // Debug log
+      
+      // Only close modal and call onAuthSuccess after session is confirmed
+      onClose();
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
 
       // Show download modal after session is confirmed
       openModal(handleDownloadModalClose);

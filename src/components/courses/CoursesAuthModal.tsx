@@ -84,7 +84,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -217,7 +217,7 @@ interface CoursesAuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: () => void;
-  }
+}
 
 type ModalView = 'initial' | 'signup' | 'login';
 
@@ -225,7 +225,6 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
-  // Check URL parameters on mount and after auth redirect
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
@@ -244,13 +243,10 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
     }
   }, [router.isReady, onAuthSuccess]);
 
-  // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      // Add a query parameter to identify this is from the courses modal
       url.searchParams.set('from', 'courses-modal');
-      // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
       return url.toString();
@@ -266,24 +262,24 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
 
   const handleAuthSuccess = async (message: string) => {
     try {
-      console.log('Auth Success:', message);
+      console.log('Auth Success:', message); // Debug log
       
-      // Wait for session to be established
+      // Wait for session to be established first
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) {
         console.error('Session not established:', error);
         return;
       }
 
-      console.log('Session established:', session);
+      console.log('Session established:', session); // Debug log
+      
+      // Only close modal and call onAuthSuccess after session is confirmed
+      onClose();
+      if (onAuthSuccess) {
+        onAuthSuccess();
+      }
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
-    }
-  };
-
-  const handleAuthError = (error: string | null) => {
-    if (error) {
-      console.error('Auth error:', error);
     }
   };
 
@@ -292,12 +288,12 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm 
-              onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
-              hideLinks={true} 
+            <SignUpForm
+              onSuccess={handleAuthSuccess}
+              onError={(error: string | null) => console.error(error)}
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
+              hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -308,12 +304,12 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm 
-              onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
-              preventRedirect={true} 
-              hideLinks={true}
+            <AuthForm
+              onSuccess={handleAuthSuccess}
+              onError={(error: string) => console.error(error)}
+              preventRedirect={true}
               redirectUrl={getCurrentUrl()}
+              hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
