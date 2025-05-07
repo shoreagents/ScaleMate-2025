@@ -68,155 +68,34 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Wait for session to be valid
-        const sessionValid = await waitForValidSession();
-        if (!sessionValid) {
-          setError('Failed to establish session. Please try again.');
-          return;
+        // Get the session from the URL
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          throw sessionError;
         }
 
-        // Get the session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          setError('Failed to get session. Please try again.');
-          return;
-        }
         if (!session) {
-          console.error('No session found');
           setError('No session found. Please try signing in again.');
           return;
         }
 
-        // Get the user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          console.error('User error:', userError);
-          setError('Failed to get user. Please try again.');
-          return;
-        }
-        if (!user) {
-          console.error('No user found');
-          setError('No user found. Please try signing in again.');
-          return;
-        }
-
-        // Check if this is a Google sign-in
-        const isGoogleUser = user.app_metadata?.provider === 'google';
-        console.log('Is Google user:', isGoogleUser);
-
-        // Create a client with service role key for admin operations
-        const serviceRoleClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
-
-        // Check if user exists in users table
-        const { data: existingUser, error: checkError } = await serviceRoleClient
-          .from('users')
-          .select('id')
-          .eq('id', user.id)
-          .single();
-
-        if (checkError && checkError.code !== 'PGRST116') {
-          console.error('Error checking existing user:', checkError);
-          setError('Failed to check existing user. Please try again.');
-          return;
-        }
-
-        // Only insert if user doesn't exist
-        if (!existingUser) {
-          const { error: userError } = await serviceRoleClient
-            .from('users')
-            .insert({
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata?.full_name || '',
-              is_active: true
-            });
-
-          if (userError) {
-            console.error('User creation error:', userError);
-            setError('Failed to create user record. Please try again.');
-            return;
-          }
-        }
-
-        // Get user's profile data
-        const { data: profile, error: profileError } = await serviceRoleClient
+        // Get the user profile
+        const { data: profile, error: profileError } = await supabase
           .from('user_profiles')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', session.user.id)
           .single();
 
         if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Profile error:', profileError);
-          setError('Failed to get profile. Please try again.');
-          return;
+          console.error('Error fetching profile:', profileError);
+          throw profileError;
         }
 
-        // Create profile if it doesn't exist
-        if (!profile) {
-          // Get high-quality profile picture URL
-          const avatarUrl = user.user_metadata?.avatar_url;
-          const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+        // Check if this is a Google sign-in
+        const isGoogleUser = session.user.app_metadata.provider === 'google';
 
-          const profileData = {
-            user_id: user.id,
-            username: null,
-            first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-            last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-            last_password_change: null,
-            profile_picture: highQualityAvatarUrl || null
-          };
-
-          const { error: profileError } = await serviceRoleClient
-            .from('user_profiles')
-            .insert(profileData);
-
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            setError('Failed to create profile. Please try again.');
-            return;
-          }
-        }
-
-        // Check if role exists
-        const { data: existingRole, error: roleCheckError } = await serviceRoleClient
-          .from('user_roles')
-          .select('user_id')
-          .eq('user_id', user.id)
-          .single();
-
-        if (roleCheckError && roleCheckError.code !== 'PGRST116') {
-          console.error('Error checking existing role:', roleCheckError);
-          setError('Failed to check role. Please try again.');
-          return;
-        }
-
-        // Only insert if role doesn't exist
-        if (!existingRole) {
-          const { error: roleError } = await serviceRoleClient
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
-              role: 'user'
-            });
-
-          if (roleError) {
-            console.error('Role assignment error:', roleError);
-            setError('Failed to assign role. Please try again.');
-            return;
-          }
-        }
-
-        // Check if we came from a modal
+        // Get the from parameter to determine where the user came from
         const fromBlueprintModal = router.query.from === 'blueprint-modal';
         const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
         const fromToolsModal = router.query.from === 'tools-modal';
@@ -250,12 +129,12 @@ export default function AuthCallback() {
                 router.push('/user/dashboard?showBlueprintModal=true');
               } else if (fromCostSavingsModal) {
                 router.push('/user/dashboard?showCostSavingsModal=true');
-          } else {
-            router.push('/user/dashboard');
-          }
-        } else {
-          router.push('/user/dashboard');
-        }
+              } else {
+                router.push('/user/dashboard');
+              }
+            } else {
+              router.push('/user/dashboard');
+            }
           }
         }
       } catch (err) {
