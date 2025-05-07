@@ -1,15 +1,30 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiLoader } from 'react-icons/fi';
-import { FaMale, FaFemale, FaTransgender, FaQuestion } from 'react-icons/fa';
+import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiLoader, FiActivity, FiClock, FiUsers, FiShield } from 'react-icons/fi';
+import { FaMale, FaFemale, FaTransgender, FaQuestion, FaHistory, FaUserPlus, FaUserEdit, FaUserMinus, FaUserCog, FaShieldAlt, FaKey, FaUserCircle } from 'react-icons/fa';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const Container = styled.div`
-  max-width: 700px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 1.5rem;
   width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+`;
+
+const LeftColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+const RightColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 `;
 
 const Section = styled.div`
@@ -509,6 +524,128 @@ const SpinningIcon = styled(FiLoader)`
   }
 `;
 
+const StatsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+`;
+
+const StatCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const StatValue = styled.div`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
+const StatLabel = styled.div`
+  font-size: 0.875rem;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const ActivityList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const ActivityGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const ActivityDate = styled.div`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6B7280;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+
+  &:hover {
+    color: #374151;
+  }
+`;
+
+const ActivityItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: #F9FAFB;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #F3F4F6;
+  }
+`;
+
+const ActivityIcon = styled.div`
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+`;
+
+const ActivityContent = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const ActivityTitle = styled.div`
+  font-weight: 500;
+  color: #1F2937;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const ActivityTime = styled.div`
+  font-size: 0.75rem;
+  color: #6B7280;
+`;
+
+const ShowMoreButton = styled.button`
+  background: none;
+  border: none;
+  color: #3B82F6;
+  font-size: 0.875rem;
+  padding: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  border-radius: 0.375rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background: #F3F4F6;
+  }
+`;
+
 interface AdminProfileData {
   first_name: string;
   last_name: string;
@@ -518,6 +655,22 @@ interface AdminProfileData {
   profile_picture: string;
   last_password_change: string;
   username: string;
+}
+
+interface PerformanceStats {
+  total_users: number;
+  active_users: number;
+  total_admins: number;
+  last_activity: string;
+}
+
+interface RecentActivity {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+  date: string;
+  time: string;
 }
 
 interface AdminProfileProps {
@@ -577,9 +730,22 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
   const [currentUsername, setCurrentUsername] = useState<string>('');
   const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
   const [isUpdatingProfilePicture, setIsUpdatingProfilePicture] = useState(false);
+  const [performanceStats, setPerformanceStats] = useState<PerformanceStats>({
+    total_users: 0,
+    active_users: 0,
+    total_admins: 0,
+    last_activity: ''
+  });
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(true);
+  const [visibleDates, setVisibleDates] = useState<Record<string, boolean>>({});
+  const [visibleItems, setVisibleItems] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchProfileData();
+    fetchPerformanceStats();
+    fetchRecentActivities();
   }, []);
 
   const fetchProfileData = async () => {
@@ -1067,125 +1233,364 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     setCurrentUsername('');
   };
 
+  const fetchPerformanceStats = async () => {
+    try {
+      setIsLoadingStats(true);
+      
+      // Fetch total users
+      const { count: totalUsers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch active users (users who logged in within last 30 days)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: activeUsers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .gte('last_sign_in', thirtyDaysAgo.toISOString());
+
+      // Fetch total admins
+      const { count: totalAdmins } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'admin');
+
+      // Get last activity
+      const { data: lastActivity } = await supabase
+        .from('admin_activities')
+        .select('timestamp')
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single();
+
+      setPerformanceStats({
+        total_users: totalUsers || 0,
+        active_users: activeUsers || 0,
+        total_admins: totalAdmins || 0,
+        last_activity: lastActivity?.timestamp || ''
+      });
+    } catch (error) {
+      console.error('Error fetching performance stats:', error);
+    } finally {
+      setIsLoadingStats(false);
+    }
+  };
+
+  const fetchRecentActivities = async () => {
+    try {
+      setIsLoadingActivities(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: activity, error } = await supabase
+        .from('user_activity')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedActivities = activity.map(item => {
+        const date = new Date(item.created_at);
+        return {
+          id: item.id,
+          type: item.type,
+          description: item.description,
+          timestamp: date.toLocaleString(),
+          date: date.toLocaleDateString(),
+          time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+      });
+
+      setRecentActivity(formattedActivities);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  };
+
+  // Group activities by date
+  const groupedActivities = React.useMemo(() => {
+    return recentActivity.reduce((groups, activity) => {
+      const date = activity.date;
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(activity);
+      return groups;
+    }, {} as Record<string, typeof recentActivity>);
+  }, [recentActivity]);
+
+  // Initialize visible dates when activities are loaded
+  React.useEffect(() => {
+    const dates = Object.keys(groupedActivities);
+    const initialVisibility = dates.reduce((acc, date) => {
+      acc[date] = false;
+      return acc;
+    }, {} as Record<string, boolean>);
+    setVisibleDates(initialVisibility);
+  }, [groupedActivities]);
+
+  // Initialize visible items when activities are loaded
+  React.useEffect(() => {
+    const dates = Object.keys(groupedActivities);
+    const initialVisibility = dates.reduce((acc, date) => {
+      acc[date] = 5; // Show first 5 items initially
+      return acc;
+    }, {} as Record<string, number>);
+    setVisibleItems(initialVisibility);
+  }, [groupedActivities]);
+
+  const toggleDateVisibility = (date: string) => {
+    setVisibleDates(prev => ({
+      ...prev,
+      [date]: !prev[date]
+    }));
+  };
+
+  const showMoreItems = (date: string) => {
+    setVisibleItems(prev => ({
+      ...prev,
+      [date]: prev[date] + 5
+    }));
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'user_management':
+        return <FaUserCog />;
+      case 'system_update':
+        return <FaShieldAlt />;
+      case 'security_change':
+        return <FaKey />;
+      case 'profile_picture_change':
+        return <FaUserCircle />;
+      default:
+        return <FaHistory />;
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
 
   return (
     <Container>
-      <ProfileSection>
-        <ProfileInfo>
-          <SectionTitle>
-            Basic Info
-          </SectionTitle>
-          {isEditing ? (
-            <>
-              <FormGroup>
-                <Label>
-                  Username
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <InputWrapper>
+      <LeftColumn>
+        <ProfileSection>
+          <ProfileInfo>
+            <SectionTitle>
+              Basic Info
+            </SectionTitle>
+            {isEditing ? (
+              <>
+                <FormGroup>
+                  <Label>
+                    Username
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <InputWrapper>
+                    <Input
+                      type="text"
+                      pattern="[a-zA-Z0-9._-]*"
+                      value={profileData.username}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        validateUsername(value);
+                        if (value === '' || e.target.validity.valid) {
+                          setProfileData({ ...profileData, username: value });
+                        }
+                      }}
+                      placeholder="Enter username"
+                    />
+                    {usernameError && (
+                      <HelperText style={{ color: '#dc2626' }}>
+                        <FiX size={14} />
+                        {usernameError}
+                      </HelperText>
+                    )}
+                    {checkingUsername && (
+                      <HelperText style={{ color: '#6b7280' }}>
+                        <FiLoader size={14} />
+                        Checking username...
+                      </HelperText>
+                    )}
+                    {!checkingUsername && !usernameError && usernameExists === false && (
+                      <HelperText style={{ color: '#059669' }}>
+                        <FiCheck size={14} />
+                        Username is available
+                      </HelperText>
+                    )}
+                    {!checkingUsername && !usernameError && usernameExists === true && profileData.username === currentUsername && (
+                      <HelperText style={{ color: '#6b7280' }}>
+                        <FiCheck size={14} />
+                        This is your current username
+                      </HelperText>
+                    )}
+                    {!checkingUsername && !usernameError && usernameExists === true && profileData.username !== currentUsername && (
+                      <HelperText style={{ color: '#dc2626' }}>
+                        <FiX size={14} />
+                        Username is already taken
+                      </HelperText>
+                    )}
+                  </InputWrapper>
+                </FormGroup>
+                <FormGroup>
+                  <Label>
+                    First Name
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
                   <Input
                     type="text"
-                    pattern="[a-zA-Z0-9._-]*"
-                    value={profileData.username}
+                    pattern="[A-Za-z ]+"
+                    value={profileData.first_name}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      validateUsername(value);
-                      if (value === '' || e.target.validity.valid) {
-                        setProfileData({ ...profileData, username: value });
+                      if (e.target.validity.valid) {
+                        setProfileData({ ...profileData, first_name: e.target.value });
                       }
                     }}
-                    placeholder="Enter username"
+                    placeholder="Enter your first name"
                   />
-                  {usernameError && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      {usernameError}
-                    </HelperText>
-                  )}
-                  {checkingUsername && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiLoader size={14} />
-                      Checking username...
-                    </HelperText>
-                  )}
-                  {!checkingUsername && !usernameError && usernameExists === false && (
-                    <HelperText style={{ color: '#059669' }}>
-                      <FiCheck size={14} />
-                      Username is available
-                    </HelperText>
-                  )}
-                  {!checkingUsername && !usernameError && usernameExists === true && profileData.username === currentUsername && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiCheck size={14} />
-                      This is your current username
-                    </HelperText>
-                  )}
-                  {!checkingUsername && !usernameError && usernameExists === true && profileData.username !== currentUsername && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      Username is already taken
-                    </HelperText>
-                  )}
+                </FormGroup>
+                <FormGroup>
+                  <Label>
+                    Last Name
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <Input
+                    type="text"
+                    pattern="[A-Za-z ]+"
+                    value={profileData.last_name}
+                    onChange={(e) => {
+                      if (e.target.validity.valid) {
+                        setProfileData({ ...profileData, last_name: e.target.value });
+                      }
+                    }}
+                    placeholder="Enter your last name"
+                  />
+                </FormGroup>
+                <FormGroup>
+                  <Label>Gender</Label>
+                  <GenderSelectContainer>
+                    <GenderSelect
+                      value={profileData.gender}
+                      onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
+                    >
+                      <option value="">Select your gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                      <option value="prefer-not-to-say">Prefer not to say</option>
+                    </GenderSelect>
+                    <GenderIcon>
+                      {profileData.gender === 'male' ? <FaMale size={18} /> :
+                       profileData.gender === 'female' ? <FaFemale size={18} /> :
+                       profileData.gender === 'other' ? <FaTransgender size={18} /> :
+                       profileData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
+                       <FaQuestion size={18} />}
+                    </GenderIcon>
+                  </GenderSelectContainer>
+                </FormGroup>
+                <ButtonGroup>
+                  <ChooseImageButton
+                    type="button"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </ChooseImageButton>
+                  <SaveButton 
+                    onClick={handleProfileUpdate}
+                    disabled={!isBasicInfoValid()}
+                  >
+                    Save Changes
+                  </SaveButton>
+                </ButtonGroup>
+                {basicInfoError && <ErrorMessage>{basicInfoError}</ErrorMessage>}
+                {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
+              </>
+            ) : (
+              <>
+                <InfoRow $isEditing={isEditing}>
+                  <InfoLabel $isEditing={isEditing}>Username</InfoLabel>
+                  <InfoValue $isEditing={isEditing}>{profileData.username || '-'}</InfoValue>
+                </InfoRow>
+                <InfoRow $isEditing={isEditing}>
+                  <InfoLabel $isEditing={isEditing}>First Name</InfoLabel>
+                  <InfoValue $isEditing={isEditing}>{profileData.first_name || '-'}</InfoValue>
+                </InfoRow>
+                <InfoRow $isEditing={isEditing}>
+                  <InfoLabel $isEditing={isEditing}>Last Name</InfoLabel>
+                  <InfoValue $isEditing={isEditing}>{profileData.last_name || '-'}</InfoValue>
+                </InfoRow>
+                <InfoRow $isEditing={isEditing} style={{ borderBottom: 'none' }}>
+                  <InfoLabel $isEditing={isEditing}>Gender</InfoLabel>
+                  <InfoValue $isEditing={isEditing}>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</InfoValue>
+                </InfoRow>
+                <div style={{ marginTop: '16px' }}>
+                  <EditButton onClick={() => setIsEditing(true)}>
+                    <FiEdit2 />
+                    Edit Basic Info
+                  </EditButton>
+                </div>
+                {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
+              </>
+            )}
+          </ProfileInfo>
+          <ProfilePicture>
+            {profileData.profile_picture ? (
+              <ProfileImage src={profileData.profile_picture} alt="Profile" />
+            ) : (
+              <FiUser size={80} color="#6b7280" />
+            )}
+            {isEditing && (
+              <UploadButton onClick={() => setIsProfileModalOpen(true)}>
+                <FiEdit2 size={16} />
+              </UploadButton>
+            )}
+          </ProfilePicture>
+        </ProfileSection>
+
+        <Section>
+          <SectionTitle>
+            Contact Info
+          </SectionTitle>
+          {isEditingContact ? (
+            <>
+              <FormGroup>
+                <Label>Email</Label>
+                <InputWrapper>
+                  <Input 
+                    value={profileData.email}
+                    disabled
+                    style={{ 
+                      backgroundColor: '#f9fafb',
+                      color: '#6b7280'
+                    }}
+                  />
+                  <HelperText>
+                    Email cannot be changed
+                  </HelperText>
                 </InputWrapper>
               </FormGroup>
               <FormGroup>
-                <Label>
-                  First Name
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <Input
-                  type="text"
-                  pattern="[A-Za-z ]+"
-                  value={profileData.first_name}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setProfileData({ ...profileData, first_name: e.target.value });
-                    }
-                  }}
-                  placeholder="Enter your first name"
-                />
-              </FormGroup>
-              <FormGroup>
-                <Label>
-                  Last Name
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <Input
-                  type="text"
-                  pattern="[A-Za-z ]+"
-                  value={profileData.last_name}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setProfileData({ ...profileData, last_name: e.target.value });
-                    }
-                  }}
-                  placeholder="Enter your last name"
-                />
-              </FormGroup>
-              <FormGroup>
-                <Label>Gender</Label>
-                <GenderSelectContainer>
-                  <GenderSelect
-                    value={profileData.gender}
-                    onChange={(e) => setProfileData({ ...profileData, gender: e.target.value })}
-                  >
-                    <option value="">Select your gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </GenderSelect>
-                  <GenderIcon>
-                    {profileData.gender === 'male' ? <FaMale size={18} /> :
-                     profileData.gender === 'female' ? <FaFemale size={18} /> :
-                     profileData.gender === 'other' ? <FaTransgender size={18} /> :
-                     profileData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
-                     <FaQuestion size={18} />}
-                  </GenderIcon>
-                </GenderSelectContainer>
+                <Label>Phone</Label>
+                <InputWrapper>
+                  <Input
+                    type="tel"
+                    pattern="[0-9]*"
+                    value={profileData.phone}
+                    onChange={(e) => {
+                      if (e.target.validity.valid) {
+                        setProfileData({ ...profileData, phone: e.target.value });
+                      }
+                    }}
+                    placeholder="Enter your phone number"
+                  />
+                </InputWrapper>
               </FormGroup>
               <ButtonGroup>
                 <ChooseImageButton
@@ -1194,292 +1599,283 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 >
                   Cancel
                 </ChooseImageButton>
+                <SaveButton onClick={() => {
+                  handleProfileUpdate();
+                  setIsEditingContact(false);
+                }}>
+                  Save Changes
+                </SaveButton>
+              </ButtonGroup>
+              {contactError && <ErrorMessage>{contactError}</ErrorMessage>}
+              {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+            </>
+          ) : (
+            <>
+              <InfoRow $isEditing={isEditingContact}>
+                <InfoLabel $isEditing={isEditingContact}>Email</InfoLabel>
+                <InfoValue $isEditing={isEditingContact}>{profileData.email}</InfoValue>
+              </InfoRow>
+              <InfoRow $isEditing={isEditingContact} style={{ borderBottom: 'none' }}>
+                <InfoLabel $isEditing={isEditingContact}>Phone</InfoLabel>
+                <InfoValue $isEditing={isEditingContact}>{profileData.phone || '-'}</InfoValue>
+              </InfoRow>
+              <div style={{ marginTop: '16px' }}>
+                <EditButton onClick={() => setIsEditingContact(true)}>
+                  <FiEdit2 />
+                  Edit Contact Info
+                </EditButton>
+              </div>
+              {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+            </>
+          )}
+        </Section>
+
+        <Section>
+          <SectionTitle>
+            Password
+          </SectionTitle>
+          {isEditingPassword ? (
+            <PasswordChangeForm onSubmit={handlePasswordChange}>
+              <PasswordColumn>
+                <Label>
+                  Current Password
+                  <RequiredAsterisk>*</RequiredAsterisk>
+                </Label>
+                <PasswordInputContainer>
+                  <PasswordInput
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={handleCurrentPasswordChange}
+                    placeholder="Enter your current password"
+                  />
+                  <ViewPasswordButton
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
+                    {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                  </ViewPasswordButton>
+                </PasswordInputContainer>
+                {validatingCurrentPassword ? (
+                  <PasswordMatchIndicator $matches={true}>
+                    <FiLoader size={14} />
+                    Verifying...
+                  </PasswordMatchIndicator>
+                ) : currentPasswordValid !== null && (
+                  <PasswordMatchIndicator $matches={currentPasswordValid}>
+                    {currentPasswordValid ? (
+                      <>
+                        <FiCheck size={14} />
+                        Current password is correct
+                      </>
+                    ) : (
+                      <>
+                        <FiX size={14} />
+                        Current password is incorrect
+                      </>
+                    )}
+                  </PasswordMatchIndicator>
+                )}
+              </PasswordColumn>
+
+              <PasswordRow>
+                <PasswordColumn>
+                  <Label>
+                    New Password
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <PasswordInputContainer>
+                    <PasswordInput
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={handleNewPasswordChange}
+                      placeholder="Enter your new password"
+                    />
+                    <ViewPasswordButton
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </ViewPasswordButton>
+                  </PasswordInputContainer>
+                  <PasswordValidations>
+                    {newPassword && (
+                      <PasswordMatchIndicator $matches={passwordLength === true}>
+                        {passwordLength ? (
+                          <>
+                            <FiCheck size={14} />
+                            Password length is valid
+                          </>
+                        ) : (
+                          <>
+                            <FiX size={14} />
+                            Password must be at least 8 characters
+                          </>
+                        )}
+                      </PasswordMatchIndicator>
+                    )}
+                    {passwordsMatch !== null && (
+                      <PasswordMatchIndicator $matches={passwordsMatch}>
+                        {passwordsMatch ? (
+                          <>
+                            <FiCheck size={14} />
+                            Passwords match
+                          </>
+                        ) : (
+                          <>
+                            <FiX size={14} />
+                            Passwords do not match
+                          </>
+                        )}
+                      </PasswordMatchIndicator>
+                    )}
+                  </PasswordValidations>
+                </PasswordColumn>
+
+                <PasswordColumn>
+                  <Label>
+                    Confirm New Password
+                    <RequiredAsterisk>*</RequiredAsterisk>
+                  </Label>
+                  <PasswordInputContainer>
+                    <PasswordInput
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={handleConfirmPasswordChange}
+                      placeholder="Confirm your new password"
+                    />
+                    <ViewPasswordButton
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                    </ViewPasswordButton>
+                  </PasswordInputContainer>
+                </PasswordColumn>
+              </PasswordRow>
+
+              <ButtonGroup>
+                <ChooseImageButton
+                  type="button"
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </ChooseImageButton>
                 <SaveButton 
-                  onClick={handleProfileUpdate}
-                  disabled={!isBasicInfoValid()}
+                  type="submit"
+                  disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
                 >
                   Save Changes
                 </SaveButton>
               </ButtonGroup>
-              {basicInfoError && <ErrorMessage>{basicInfoError}</ErrorMessage>}
-              {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
-            </>
+            </PasswordChangeForm>
           ) : (
             <>
-              <InfoRow $isEditing={isEditing}>
-                <InfoLabel $isEditing={isEditing}>Username</InfoLabel>
-                <InfoValue $isEditing={isEditing}>{profileData.username || '-'}</InfoValue>
-              </InfoRow>
-              <InfoRow $isEditing={isEditing}>
-                <InfoLabel $isEditing={isEditing}>First Name</InfoLabel>
-                <InfoValue $isEditing={isEditing}>{profileData.first_name || '-'}</InfoValue>
-              </InfoRow>
-              <InfoRow $isEditing={isEditing}>
-                <InfoLabel $isEditing={isEditing}>Last Name</InfoLabel>
-                <InfoValue $isEditing={isEditing}>{profileData.last_name || '-'}</InfoValue>
-              </InfoRow>
-              <InfoRow $isEditing={isEditing} style={{ borderBottom: 'none' }}>
-                <InfoLabel $isEditing={isEditing}>Gender</InfoLabel>
-                <InfoValue $isEditing={isEditing}>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</InfoValue>
+              <InfoRow style={{ borderBottom: 'none' }}>
+                <InfoLabel>Last Changed</InfoLabel>
+                <InfoValue>
+                  {profileData.last_password_change
+                    ? new Date(profileData.last_password_change).toLocaleDateString()
+                    : 'Never'}
+                </InfoValue>
               </InfoRow>
               <div style={{ marginTop: '16px' }}>
-                <EditButton onClick={() => setIsEditing(true)}>
+                <EditButton onClick={() => setIsEditingPassword(true)}>
                   <FiEdit2 />
-                  Edit Basic Info
+                  Change Password
                 </EditButton>
               </div>
-              {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
+              {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
             </>
           )}
-        </ProfileInfo>
-        <ProfilePicture>
-          {profileData.profile_picture ? (
-            <ProfileImage src={profileData.profile_picture} alt="Profile" />
+        </Section>
+      </LeftColumn>
+
+      <RightColumn>
+        <Section>
+          <SectionTitle>
+            <FiActivity />
+            Performance Stats
+          </SectionTitle>
+          {isLoadingStats ? (
+            <LoadingSpinner />
           ) : (
-            <FiUser size={80} color="#6b7280" />
+            <StatsGrid>
+              <StatCard>
+                <StatValue>{performanceStats.total_users}</StatValue>
+                <StatLabel>
+                  <FiUsers />
+                  Total Users
+                </StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>{performanceStats.active_users}</StatValue>
+                <StatLabel>
+                  <FiUser />
+                  Active Users
+                </StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>{performanceStats.total_admins}</StatValue>
+                <StatLabel>
+                  <FiShield />
+                  Total Admins
+                </StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>
+                  {performanceStats.last_activity ? new Date(performanceStats.last_activity).toLocaleDateString() : 'N/A'}
+                </StatValue>
+                <StatLabel>
+                  <FiClock />
+                  Last Activity
+                </StatLabel>
+              </StatCard>
+            </StatsGrid>
           )}
-          {isEditing && (
-            <UploadButton onClick={() => setIsProfileModalOpen(true)}>
-              <FiEdit2 size={16} />
-            </UploadButton>
+        </Section>
+
+        <Section>
+          <SectionTitle>
+            <FaHistory />
+            Recent Activities
+          </SectionTitle>
+          {isLoadingActivities ? (
+            <LoadingSpinner />
+          ) : recentActivity.length === 0 ? (
+            <div style={{ padding: '1rem', color: '#6B7280', textAlign: 'center' }}>
+              No recent activities found
+            </div>
+          ) : (
+            <ActivityList>
+              {Object.entries(groupedActivities).map(([date, activities]) => (
+                <ActivityGroup key={date}>
+                  <ActivityDate onClick={() => toggleDateVisibility(date)}>
+                    {date}
+                  </ActivityDate>
+                  {visibleDates[date] && activities
+                    .slice(0, visibleItems[date])
+                    .map((activity) => (
+                      <ActivityItem key={activity.id}>
+                        <ActivityIcon>
+                          {getActivityIcon(activity.type)}
+                        </ActivityIcon>
+                        <ActivityContent>
+                          <ActivityTitle>{activity.description}</ActivityTitle>
+                          <ActivityTime>{activity.time}</ActivityTime>
+                        </ActivityContent>
+                      </ActivityItem>
+                    ))}
+                  {visibleDates[date] && activities.length > visibleItems[date] && (
+                    <ShowMoreButton onClick={() => showMoreItems(date)}>
+                      Show more activities
+                    </ShowMoreButton>
+                  )}
+                </ActivityGroup>
+              ))}
+            </ActivityList>
           )}
-        </ProfilePicture>
-      </ProfileSection>
-
-      <Section>
-        <SectionTitle>
-          Contact Info
-        </SectionTitle>
-        {isEditingContact ? (
-          <>
-            <FormGroup>
-              <Label>Email</Label>
-              <InputWrapper>
-                <Input 
-                  value={profileData.email}
-                  disabled
-                  style={{ 
-                    backgroundColor: '#f9fafb',
-                    color: '#6b7280'
-                  }}
-                />
-                <HelperText>
-                  Email cannot be changed
-                </HelperText>
-              </InputWrapper>
-            </FormGroup>
-            <FormGroup>
-              <Label>Phone</Label>
-              <InputWrapper>
-                <Input
-                  type="tel"
-                  pattern="[0-9]*"
-                  value={profileData.phone}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setProfileData({ ...profileData, phone: e.target.value });
-                    }
-                  }}
-                  placeholder="Enter your phone number"
-                />
-              </InputWrapper>
-            </FormGroup>
-            <ButtonGroup>
-              <ChooseImageButton
-                type="button"
-                onClick={handleCancel}
-              >
-                Cancel
-              </ChooseImageButton>
-              <SaveButton onClick={() => {
-                handleProfileUpdate();
-                setIsEditingContact(false);
-              }}>
-                Save Changes
-              </SaveButton>
-            </ButtonGroup>
-            {contactError && <ErrorMessage>{contactError}</ErrorMessage>}
-            {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
-          </>
-        ) : (
-          <>
-            <InfoRow $isEditing={isEditingContact}>
-              <InfoLabel $isEditing={isEditingContact}>Email</InfoLabel>
-              <InfoValue $isEditing={isEditingContact}>{profileData.email}</InfoValue>
-            </InfoRow>
-            <InfoRow $isEditing={isEditingContact} style={{ borderBottom: 'none' }}>
-              <InfoLabel $isEditing={isEditingContact}>Phone</InfoLabel>
-              <InfoValue $isEditing={isEditingContact}>{profileData.phone || '-'}</InfoValue>
-            </InfoRow>
-            <div style={{ marginTop: '16px' }}>
-              <EditButton onClick={() => setIsEditingContact(true)}>
-                <FiEdit2 />
-                Edit Contact Info
-              </EditButton>
-            </div>
-            {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
-          </>
-        )}
-      </Section>
-
-      <Section>
-        <SectionTitle>
-          Password
-        </SectionTitle>
-        {isEditingPassword ? (
-          <PasswordChangeForm onSubmit={handlePasswordChange}>
-            <PasswordColumn>
-              <Label>
-                Current Password
-                <RequiredAsterisk>*</RequiredAsterisk>
-              </Label>
-              <PasswordInputContainer>
-                <PasswordInput
-                  type={showCurrentPassword ? "text" : "password"}
-                  value={currentPassword}
-                  onChange={handleCurrentPasswordChange}
-                  placeholder="Enter your current password"
-                />
-                <ViewPasswordButton
-                  type="button"
-                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                >
-                  {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </ViewPasswordButton>
-              </PasswordInputContainer>
-              {validatingCurrentPassword ? (
-                <PasswordMatchIndicator $matches={true}>
-                  <FiLoader size={14} />
-                  Verifying...
-                </PasswordMatchIndicator>
-              ) : currentPasswordValid !== null && (
-                <PasswordMatchIndicator $matches={currentPasswordValid}>
-                  {currentPasswordValid ? (
-                    <>
-                      <FiCheck size={14} />
-                      Current password is correct
-                    </>
-                  ) : (
-                    <>
-                      <FiX size={14} />
-                      Current password is incorrect
-                    </>
-                  )}
-                </PasswordMatchIndicator>
-              )}
-            </PasswordColumn>
-
-            <PasswordRow>
-              <PasswordColumn>
-                <Label>
-                  New Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <PasswordInputContainer>
-                  <PasswordInput
-                    type={showNewPassword ? "text" : "password"}
-                    value={newPassword}
-                    onChange={handleNewPasswordChange}
-                    placeholder="Enter your new password"
-                  />
-                  <ViewPasswordButton
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                  >
-                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                  </ViewPasswordButton>
-                </PasswordInputContainer>
-                <PasswordValidations>
-                  {newPassword && (
-                    <PasswordMatchIndicator $matches={passwordLength === true}>
-                      {passwordLength ? (
-                        <>
-                          <FiCheck size={14} />
-                          Password length is valid
-                        </>
-                      ) : (
-                        <>
-                          <FiX size={14} />
-                          Password must be at least 8 characters
-                        </>
-                      )}
-                    </PasswordMatchIndicator>
-                  )}
-                  {passwordsMatch !== null && (
-                    <PasswordMatchIndicator $matches={passwordsMatch}>
-                      {passwordsMatch ? (
-                        <>
-                          <FiCheck size={14} />
-                          Passwords match
-                        </>
-                      ) : (
-                        <>
-                          <FiX size={14} />
-                          Passwords do not match
-                        </>
-                      )}
-                    </PasswordMatchIndicator>
-                  )}
-                </PasswordValidations>
-              </PasswordColumn>
-
-              <PasswordColumn>
-                <Label>
-                  Confirm New Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <PasswordInputContainer>
-                  <PasswordInput
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={handleConfirmPasswordChange}
-                    placeholder="Confirm your new password"
-                  />
-                  <ViewPasswordButton
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  >
-                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                  </ViewPasswordButton>
-                </PasswordInputContainer>
-              </PasswordColumn>
-            </PasswordRow>
-
-            <ButtonGroup>
-              <ChooseImageButton
-                type="button"
-                onClick={handleCancel}
-              >
-                Cancel
-              </ChooseImageButton>
-              <SaveButton 
-                type="submit"
-                disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
-              >
-                Save Changes
-              </SaveButton>
-            </ButtonGroup>
-          </PasswordChangeForm>
-        ) : (
-          <>
-            <InfoRow style={{ borderBottom: 'none' }}>
-              <InfoLabel>Last Changed</InfoLabel>
-              <InfoValue>
-                {profileData.last_password_change
-                  ? new Date(profileData.last_password_change).toLocaleDateString()
-                  : 'Never'}
-              </InfoValue>
-            </InfoRow>
-            <div style={{ marginTop: '16px' }}>
-              <EditButton onClick={() => setIsEditingPassword(true)}>
-                <FiEdit2 />
-                Change Password
-              </EditButton>
-            </div>
-            {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
-          </>
-        )}
-      </Section>
+        </Section>
+      </RightColumn>
 
       <ProfileModal $isOpen={isProfileModalOpen}>
         <ProfileModalContent>
