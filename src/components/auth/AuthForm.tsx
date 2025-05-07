@@ -465,13 +465,18 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       setIsGoogleLoading(true);
       setError(null);
 
+      // Always redirect to the callback URL first
+      const callbackUrl = `${window.location.origin}/auth/callback`;
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl || `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',
+            // Pass the original redirect URL as a parameter
+            redirectTo: redirectUrl || window.location.href
           },
           scopes: 'email profile',
         }
@@ -480,18 +485,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       if (error) {
         throw error;
       }
-
-      // If we get here, the OAuth flow was initiated successfully
-      // The user will be redirected to Google's login page
-      // After successful authentication, they'll be redirected to the callback URL
-      // where we'll handle creating/linking the account
-      
-      // Note: No need to handle existing accounts here as Supabase will:
-      // 1. If email exists with password - Link the Google account
-      // 2. If email exists with Google - Sign them in
-      // 3. If email doesn't exist - Create new account
-      
-      // The callback URL will handle the final steps and redirection
     } catch (err) {
       console.error('Google sign in error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during Google sign in';

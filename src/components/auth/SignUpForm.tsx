@@ -728,13 +728,18 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     setError(null);
 
     try {
+      // Always redirect to the callback URL first
+      const callbackUrl = `${window.location.origin}/auth/callback`;
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl || `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl,
           queryParams: {
             access_type: 'offline',
-            prompt: 'consent'
+            prompt: 'consent',
+            // Pass the original redirect URL as a parameter
+            redirectTo: redirectUrl || window.location.href
           },
           scopes: 'email profile openid'
         }
