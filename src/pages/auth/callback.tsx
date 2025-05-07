@@ -68,42 +68,47 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // First, handle the OAuth callback
+        // Wait for session to be valid
+        const sessionValid = await waitForValidSession();
+        if (!sessionValid) {
+          setError('Failed to establish session. Please try again.');
+          return;
+        }
+
+        // Get the session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
         if (sessionError) {
           console.error('Session error:', sessionError);
           setError('Failed to get session. Please try again.');
           return;
         }
-
         if (!session) {
           console.error('No session found');
           setError('No session found. Please try signing in again.');
           return;
         }
 
-        // Get the user from the session
+        // Get the user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
         if (userError) {
           console.error('User error:', userError);
           setError('Failed to get user. Please try again.');
           return;
         }
-
         if (!user) {
           console.error('No user found');
           setError('No user found. Please try signing in again.');
           return;
         }
 
-        console.log('Debug - Google OAuth successful:', { user });
+        // Check if this is a Google sign-in
+        const isGoogleUser = user.app_metadata?.provider === 'google';
+        console.log('Is Google user:', isGoogleUser);
 
-        // Now create the user records
+        // Create a client with service role key for admin operations
         const serviceRoleClient = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
           {
             auth: {
               autoRefreshToken: false,
@@ -119,8 +124,6 @@ export default function AuthCallback() {
           .eq('id', user.id)
           .single();
 
-        console.log('Debug - Existing user check:', { existingUser, checkError });
-
         if (checkError && checkError.code !== 'PGRST116') {
           console.error('Error checking existing user:', checkError);
           setError('Failed to check existing user. Please try again.');
@@ -129,7 +132,6 @@ export default function AuthCallback() {
 
         // Only insert if user doesn't exist
         if (!existingUser) {
-          console.log('Debug - Creating new user record');
           const { error: userError } = await serviceRoleClient
             .from('users')
             .insert({
@@ -144,7 +146,6 @@ export default function AuthCallback() {
             setError('Failed to create user record. Please try again.');
             return;
           }
-          console.log('Debug - User record created successfully');
         }
 
         // Get user's profile data
@@ -154,8 +155,6 @@ export default function AuthCallback() {
           .eq('user_id', user.id)
           .single();
 
-        console.log('Debug - Profile check:', { profile, profileError });
-
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile error:', profileError);
           setError('Failed to get profile. Please try again.');
@@ -164,7 +163,6 @@ export default function AuthCallback() {
 
         // Create profile if it doesn't exist
         if (!profile) {
-          console.log('Debug - Creating new user profile');
           // Get high-quality profile picture URL
           const avatarUrl = user.user_metadata?.avatar_url;
           const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
@@ -187,7 +185,6 @@ export default function AuthCallback() {
             setError('Failed to create profile. Please try again.');
             return;
           }
-          console.log('Debug - User profile created successfully');
         }
 
         // Check if role exists
@@ -197,8 +194,6 @@ export default function AuthCallback() {
           .eq('user_id', user.id)
           .single();
 
-        console.log('Debug - Role check:', { existingRole, roleCheckError });
-
         if (roleCheckError && roleCheckError.code !== 'PGRST116') {
           console.error('Error checking existing role:', roleCheckError);
           setError('Failed to check role. Please try again.');
@@ -207,7 +202,6 @@ export default function AuthCallback() {
 
         // Only insert if role doesn't exist
         if (!existingRole) {
-          console.log('Debug - Creating new user role');
           const { error: roleError } = await serviceRoleClient
             .from('user_roles')
             .insert({
@@ -220,18 +214,24 @@ export default function AuthCallback() {
             setError('Failed to assign role. Please try again.');
             return;
           }
-          console.log('Debug - User role created successfully');
         }
 
         // Check if we came from a modal
-        const fromParam = router.query.from;
-        const isFromModal = fromParam && typeof fromParam === 'string' && fromParam.endsWith('-modal');
+        const fromBlueprintModal = router.query.from === 'blueprint-modal';
+        const fromCostSavingsModal = router.query.from === 'cost-savings-modal';
+        const fromToolsModal = router.query.from === 'tools-modal';
         const redirectTo = router.query.redirectTo as string;
 
-        console.log('Debug - Redirect info:', { fromParam, isFromModal, redirectTo });
+        // Verify session is still valid before redirecting
+        const finalSessionCheck = await isSessionValid();
+        if (!finalSessionCheck) {
+          setError('Session validation failed before redirect. Please try again.');
+          return;
+        }
 
-        if (isFromModal) {
-          // If we came from any modal, redirect back to the same page
+        if (fromBlueprintModal || fromCostSavingsModal || fromToolsModal) {
+          // If we came from a modal, redirect back to the same page
+          // The modal will be reopened automatically
           if (redirectTo) {
             router.push(redirectTo);
           } else {
@@ -244,7 +244,18 @@ export default function AuthCallback() {
           if (needsSetup) {
             router.push('/user/dashboard');
           } else {
+            // Only add showDownloadModal parameter if user came from a modal
+            if (isGoogleUser) {
+              if (fromBlueprintModal) {
+                router.push('/user/dashboard?showBlueprintModal=true');
+              } else if (fromCostSavingsModal) {
+                router.push('/user/dashboard?showCostSavingsModal=true');
+          } else {
             router.push('/user/dashboard');
+          }
+        } else {
+          router.push('/user/dashboard');
+        }
           }
         }
       } catch (err) {
