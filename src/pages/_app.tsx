@@ -26,8 +26,8 @@ export default function App({ Component, pageProps }: AppProps) {
       <ThemeProvider theme={theme}>
         <QuoteDownloadModalProvider>
           <CostSavingsDownloadModalProvider>
-            {showHeader && <Header />}
-            <Component {...pageProps} />
+        {showHeader && <Header />}
+        <Component {...pageProps} />
             <QuoteDownloadModal />
             <CostSavingsDownloadModal />
           </CostSavingsDownloadModalProvider>

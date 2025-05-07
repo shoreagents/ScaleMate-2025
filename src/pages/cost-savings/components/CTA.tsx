@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faPhone, faTimes } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { CostSavingsAuthModal } from '../../../components/cost-savings/CostSavingsAuthModal';
-import { CostSavingsDownloadModal, useDownloadModal } from '../../../components/cost-savings/CostSavingsDownloadModal';
+import { useDownloadModal } from '../../../components/cost-savings/CostSavingsDownloadModal';
 import { useAuth } from '@/hooks/useAuth';
 
 const Section = styled.section`
@@ -233,8 +233,6 @@ export default function CTA() {
         onClose={() => setIsLoginModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />
-
-      <CostSavingsDownloadModal />
     </>
   );
 } 

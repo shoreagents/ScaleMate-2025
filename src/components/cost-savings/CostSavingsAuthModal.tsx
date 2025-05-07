@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
@@ -7,6 +7,7 @@ import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useDownloadModal } from './CostSavingsDownloadModal';
+import { useRouter } from 'next/router';
 
 interface CostSavingsAuthModalProps {
   isOpen: boolean;
@@ -225,6 +226,24 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const [isVerifying, setIsVerifying] = useState(false);
   const { openModal } = useDownloadModal();
+  const router = useRouter();
+
+  // Check URL parameters on mount and after auth redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromParam = urlParams.get('from');
+      
+      if (fromParam === 'cost-savings-modal') {
+        // Remove the parameters from the URL
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, undefined, { shallow: true });
+        
+        // Open the download modal
+        openModal(handleDownloadModalClose);
+      }
+    }
+  }, [router.isReady]);
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
