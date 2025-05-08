@@ -12,7 +12,7 @@ const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean; $isModalOpen?: boolea
   border-right: 1px solid #E5E7EB;
   position: fixed;
   height: 100vh;
-  z-index: 40;
+  z-index: 20;
   transition: transform 0.3s ease;
   visibility: ${props => props.$isModalOpen ? 'hidden' : 'visible'};
 
