@@ -120,11 +120,23 @@ export default function AuthCallback() {
           
           // Update user's email in auth if it's different
           if (normalizedEmail !== user.email) {
-            const { error: updateError } = await supabase.auth.updateUser({
-              email: normalizedEmail
-            });
-            if (updateError) {
-              console.error('Error updating email:', updateError);
+            try {
+              const { error: updateError } = await supabase.auth.updateUser({
+                email: normalizedEmail
+              });
+              if (updateError) {
+                console.error('Error updating email:', updateError);
+                // Try to update the email in the users table directly
+                const { error: dbError } = await serviceRoleClient
+                  .from('users')
+                  .update({ email: normalizedEmail })
+                  .eq('id', user.id);
+                if (dbError) {
+                  console.error('Error updating email in users table:', dbError);
+                }
+              }
+            } catch (err) {
+              console.error('Error during email update:', err);
             }
           }
         }
