@@ -655,7 +655,7 @@ type UserToDelete = UserRole | Admin;
 
 type SortField = 'email' | 'name' | 'roles' | 'last_sign_in';
 
-type TabType = 'admins' | 'moderators' | 'users' | 'regular-users';
+type TabType = 'admins' | 'moderators' | 'users' | 'regular-users' | 'developers' | 'authors';
 
 interface AdminFormData {
   first_name: string;
@@ -666,13 +666,13 @@ interface AdminFormData {
   confirmPassword: string;
   phone: string;
   gender: string;
-  role: 'admin' | 'moderator' | 'user';
+  role: 'admin' | 'moderator' | 'user' | 'developer' | 'author';
 }
 
 interface UserEditFormData {
   email: string;
   password: string;
-  role: 'admin' | 'moderator' | 'user';
+  role: 'admin' | 'moderator' | 'user' | 'developer' | 'author';
   first_name: string;
   last_name: string;
   phone: string;
@@ -1828,6 +1828,22 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
         >
           Moderators
         </TabButton>
+
+        <TabButton 
+          $active={activeTab === 'developers'} 
+          onClick={() => setActiveTab('developers')}
+          $type="developer"
+        >
+          Developers
+        </TabButton>
+
+        <TabButton 
+          $active={activeTab === 'authors'} 
+          onClick={() => setActiveTab('authors')}
+          $type="author"
+        >
+          Authors
+        </TabButton>
        
         <TabButton 
           $active={activeTab === 'regular-users'} 
@@ -2277,6 +2293,326 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
           </Table>
           </TableContainer>
         </>
+      ) : activeTab === 'developers' ? (
+        <>
+          <FilterContainer>
+            <SearchInput>
+              <input
+                type="text"
+                placeholder="Search ..."
+                value={filterEmail}
+                onChange={(e) => setFilterEmail(e.target.value)}
+              />
+              <FaSearch />
+            </SearchInput>
+            {isCurrentUserAdmin && (
+              <Button $primary onClick={handleAddAdmin}>
+                <FiUserPlus />
+                Add User
+              </Button>
+            )}
+          </FilterContainer>
+          {!isCurrentUserAdmin && (
+            <InfoMessage>
+              <FiInfo />
+              You need admin privileges to manage user roles.
+            </InfoMessage>
+          )}
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                  <TableHeader 
+                    style={{ width: '200px' }}
+                    onClick={() => handleSort('name')}
+                    $sortable
+                  >
+                    <HeaderContent>
+                      <span>Name</span>
+                      <SortIcon 
+                        $active={sortField === 'name'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                    </HeaderContent>
+                  </TableHeader>
+                  <TableHeader 
+                    style={{ width: '300px' }}
+                    onClick={() => handleSort('email')}
+                    $sortable
+                  >
+                    <HeaderContent>
+                      <span>Email</span>
+                      <SortIcon 
+                        $active={sortField === 'email'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                    </HeaderContent>
+                  </TableHeader>
+                  <TableHeader style={{ width: '150px' }}>Roles</TableHeader>
+                  <TableHeader style={{ width: '150px' }}>Last Sign In</TableHeader>
+                  {isCurrentUserAdmin && (
+                    <TableHeader style={{ width: '120px' }}>Actions</TableHeader>
+                  )}
+                </tr>
+              </TableHead>
+              <tbody>
+                {allUsers
+                  .filter(user => user.roles.includes('developer'))
+                  .filter(user => 
+                    filterEmail === '' || 
+                    user.email.toLowerCase().includes(filterEmail.toLowerCase()) ||
+                    `${user.first_name} ${user.last_name}`.toLowerCase().includes(filterEmail.toLowerCase())
+                  )
+                  .sort((a, b) => {
+                    if (sortField === 'name') {
+                      const nameA = `${a.first_name} ${a.last_name}`.toLowerCase();
+                      const nameB = `${b.first_name} ${b.last_name}`.toLowerCase();
+                      return sortDirection === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+                    }
+                    if (sortField === 'email') {
+                      return sortDirection === 'asc' 
+                        ? a.email.localeCompare(b.email)
+                        : b.email.localeCompare(a.email);
+                    }
+                    return 0;
+                  })
+                  .map((user, index) => (
+                    <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
+                          >
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                          </Avatar>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
+                      </TableCell>
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        <RoleBadges>
+                          {user.roles.map((role: string, idx: number) => (
+                            <RoleBadge key={idx} $role={role}>
+                              {role}
+                            </RoleBadge>
+                          ))}
+                        </RoleBadges>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        {user.last_sign_in 
+                          ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                          : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                        }
+                      </TableCell>
+                      {isCurrentUserAdmin && (
+                        <TableCell style={{ width: '120px' }}>
+                          <ActionGroup>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditUser(user);
+                              }}
+                              title="Update Info"
+                            >
+                              <FiEdit2 size={18} />
+                            </ActionButton>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(user);
+                              }}
+                              title="Delete User"
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          </ActionGroup>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+              </tbody>
+            </Table>
+          </TableContainer>
+        </>
+      ) : activeTab === 'authors' ? (
+        <>
+          <FilterContainer>
+            <SearchInput>
+              <input
+                type="text"
+                placeholder="Search ..."
+                value={filterEmail}
+                onChange={(e) => setFilterEmail(e.target.value)}
+              />
+              <FaSearch />
+            </SearchInput>
+            {isCurrentUserAdmin && (
+              <Button $primary onClick={handleAddAdmin}>
+                <FiUserPlus />
+                Add User
+              </Button>
+            )}
+          </FilterContainer>
+          {!isCurrentUserAdmin && (
+            <InfoMessage>
+              <FiInfo />
+              You need admin privileges to manage user roles.
+            </InfoMessage>
+          )}
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                  <TableHeader 
+                    style={{ width: '200px' }}
+                    onClick={() => handleSort('name')}
+                    $sortable
+                  >
+                    <HeaderContent>
+                      <span>Name</span>
+                      <SortIcon 
+                        $active={sortField === 'name'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                    </HeaderContent>
+                  </TableHeader>
+                  <TableHeader 
+                    style={{ width: '300px' }}
+                    onClick={() => handleSort('email')}
+                    $sortable
+                  >
+                    <HeaderContent>
+                      <span>Email</span>
+                      <SortIcon 
+                        $active={sortField === 'email'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                    </HeaderContent>
+                  </TableHeader>
+                  <TableHeader style={{ width: '150px' }}>Roles</TableHeader>
+                  <TableHeader style={{ width: '150px' }}>Last Sign In</TableHeader>
+                  {isCurrentUserAdmin && (
+                    <TableHeader style={{ width: '120px' }}>Actions</TableHeader>
+                  )}
+                </tr>
+              </TableHead>
+              <tbody>
+                {allUsers
+                  .filter(user => user.roles.includes('author'))
+                  .filter(user => 
+                    filterEmail === '' || 
+                    user.email.toLowerCase().includes(filterEmail.toLowerCase()) ||
+                    `${user.first_name} ${user.last_name}`.toLowerCase().includes(filterEmail.toLowerCase())
+                  )
+                  .sort((a, b) => {
+                    if (sortField === 'name') {
+                      const nameA = `${a.first_name} ${a.last_name}`.toLowerCase();
+                      const nameB = `${b.first_name} ${b.last_name}`.toLowerCase();
+                      return sortDirection === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
+                    }
+                    if (sortField === 'email') {
+                      return sortDirection === 'asc' 
+                        ? a.email.localeCompare(b.email)
+                        : b.email.localeCompare(a.email);
+                    }
+                    return 0;
+                  })
+                  .map((user, index) => (
+                    <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
+                          >
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                          </Avatar>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
+                      </TableCell>
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        <RoleBadges>
+                          {user.roles.map((role: string, idx: number) => (
+                            <RoleBadge key={idx} $role={role}>
+                              {role}
+                            </RoleBadge>
+                          ))}
+                        </RoleBadges>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        {user.last_sign_in 
+                          ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                          : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                        }
+                      </TableCell>
+                      {isCurrentUserAdmin && (
+                        <TableCell style={{ width: '120px' }}>
+                          <ActionGroup>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditUser(user);
+                              }}
+                              title="Update Info"
+                            >
+                              <FiEdit2 size={18} />
+                            </ActionButton>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(user);
+                              }}
+                              title="Delete User"
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          </ActionGroup>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+              </tbody>
+            </Table>
+          </TableContainer>
+        </>
       ) : (
         <>
           <FilterContainer>
@@ -2683,16 +3019,20 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   <RoleSelect
                     id="role"
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'moderator' | 'user' | 'developer' | 'author' })}
                     required
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
                     <option value="moderator">Moderator</option>
+                    <option value="developer">Developer</option>
+                    <option value="author">Author</option>
                   </RoleSelect>
                   <RoleIcon>
                     {formData.role === 'admin' ? <FiShield size={18} /> : 
                      formData.role === 'moderator' ? <FiUserCheck size={18} /> : 
+                     formData.role === 'developer' ? <FiUser size={18} /> :
+                     formData.role === 'author' ? <FiUser size={18} /> :
                      <FiUser size={18} />}
                   </RoleIcon>
                 </RoleSelectContainer>
@@ -3029,17 +3369,21 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 <RoleSelect
                   id="edit-role"
                   value={editFormData.role}
-                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' })}
-                    required
+                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' | 'developer' | 'author' })}
+                  required
                 >
-                    <option value="">Select role</option>
+                  <option value="">Select role</option>
                   <option value="user">User</option>
                   <option value="admin">Admin</option>
-                    <option value="moderator">Moderator</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="developer">Developer</option>
+                  <option value="author">Author</option>
                 </RoleSelect>
                 <RoleIcon>
                     {editFormData.role === 'admin' ? <FiShield size={18} /> : 
                      editFormData.role === 'moderator' ? <FiUserCheck size={18} /> : 
+                     editFormData.role === 'developer' ? <FiUser size={18} /> :
+                     editFormData.role === 'author' ? <FiUser size={18} /> :
                      <FiUser size={18} />}
                 </RoleIcon>
               </RoleSelectContainer>
@@ -3220,30 +3564,38 @@ const TabButton = styled.button<{ $active: boolean; $type: string }>`
   background-color: ${props => {
       switch (props.$type) {
         case 'all':
-        return props.$active ? '#6B728010' : '#6B728010';
+          return props.$active ? '#6B728040' : '#6B728010';
         case 'admin':
-        return props.$active ? '#EC489910' : '#EC489910';
+          return props.$active ? '#EC489940' : '#EC489910';
         case 'moderator':
-        return props.$active ? '#00E91510' : '#00E91510';
+          return props.$active ? '#00E91540' : '#00E91510';
+        case 'developer':
+          return props.$active ? '#8B5CF640' : '#8B5CF610';
+        case 'author':
+          return props.$active ? '#F59E0B40' : '#F59E0B10';
         case 'user':
-        return props.$active ? '#3B82F610' : '#3B82F610';
+          return props.$active ? '#3B82F640' : '#3B82F610';
         default:
-        return props.$active ? '#3B82F610' : '#3B82F610';
-    }
+          return props.$active ? '#3B82F640' : '#3B82F610';
+      }
   }};
   color: ${props => {
       switch (props.$type) {
         case 'all':
-          return '#1F2937';
+          return props.$active ? '#1F2937' : '#4B5563';
         case 'admin':
-        return '#EC4899';
+          return props.$active ? '#EC4899' : '#EC4899';
         case 'moderator':
-        return '#00E915';
+          return props.$active ? '#00E915' : '#00E915';
+        case 'developer':
+          return props.$active ? '#8B5CF6' : '#8B5CF6';
+        case 'author':
+          return props.$active ? '#F59E0B' : '#F59E0B';
         case 'user':
-        return '#3B82F6';
+          return props.$active ? '#3B82F6' : '#3B82F6';
         default:
-        return '#3B82F6';
-    }
+          return props.$active ? '#3B82F6' : '#3B82F6';
+      }
   }};
   border: none;
   border-radius: 9999px;
@@ -3256,15 +3608,19 @@ const TabButton = styled.button<{ $active: boolean; $type: string }>`
     background-color: ${props => {
       switch (props.$type) {
         case 'all':
-          return '#6B728020';
+          return '#6B728040';
         case 'admin':
-          return '#EC489920';
+          return '#EC489940';
         case 'moderator':
-          return '#00E91520';
+          return '#00E91540';
+        case 'developer':
+          return '#8B5CF640';
+        case 'author':
+          return '#F59E0B40';
         case 'user':
-          return '#3B82F620';
+          return '#3B82F640';
         default:
-          return '#3B82F620';
+          return '#3B82F640';
       }
     }};
   }
@@ -3287,6 +3643,10 @@ const RoleBadge = styled.span<{ $role: string }>`
         return '#EC489910';
       case 'moderator':
         return '#00E91510';
+      case 'developer':
+        return '#8B5CF610';
+      case 'author':
+        return '#F59E0B10';
       case 'user':
         return '#3B82F610';
       default:
@@ -3299,6 +3659,10 @@ const RoleBadge = styled.span<{ $role: string }>`
         return '#EC4899';
       case 'moderator':
         return '#00E915';
+      case 'developer':
+        return '#8B5CF6';
+      case 'author':
+        return '#F59E0B';
       case 'user':
         return '#3B82F6';
       default:
@@ -3310,6 +3674,26 @@ const RoleBadge = styled.span<{ $role: string }>`
   line-height: 1;
   min-width: 60px;
   text-align: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: ${props => {
+      switch (props.$role) {
+        case 'admin':
+          return '#EC489920';
+        case 'moderator':
+          return '#00E91520';
+        case 'developer':
+          return '#8B5CF620';
+        case 'author':
+          return '#F59E0B20';
+        case 'user':
+          return '#3B82F620';
+        default:
+          return '#3B82F620';
+      }
+    }};
+  }
 `;
 
 const GenderSelectContainer = styled.div`
