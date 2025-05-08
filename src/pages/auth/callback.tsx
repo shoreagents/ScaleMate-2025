@@ -130,28 +130,6 @@ export default function AuthCallback() {
           emailToUse = normalizeEmail(user.email);
           console.log('Original email:', user.email);
           console.log('Normalized email:', emailToUse);
-          
-          // Update user's email in auth if it's different
-          if (emailToUse !== user.email) {
-            try {
-              const { error: updateError } = await supabase.auth.updateUser({
-                email: emailToUse
-              });
-              if (updateError) {
-                console.error('Error updating email:', updateError);
-                // Try to update the email in the users table directly
-                const { error: dbError } = await serviceRoleClient
-                  .from('users')
-                  .update({ email: emailToUse })
-                  .eq('id', user.id);
-                if (dbError) {
-                  console.error('Error updating email in users table:', dbError);
-                }
-              }
-            } catch (err) {
-              console.error('Error during email update:', err);
-            }
-          }
         }
 
         // Check if user exists in users table with normalized email
@@ -180,6 +158,28 @@ export default function AuthCallback() {
           if (userError) {
             console.error('User creation error:', userError);
             return;
+          }
+
+          // After creating the user record, update the email in auth if needed
+          if (emailToUse !== user.email) {
+            try {
+              const { error: updateError } = await supabase.auth.updateUser({
+                email: emailToUse
+              });
+              if (updateError) {
+                console.error('Error updating email:', updateError);
+                // Try to update the email in the users table directly
+                const { error: dbError } = await serviceRoleClient
+                  .from('users')
+                  .update({ email: emailToUse })
+                  .eq('id', user.id);
+                if (dbError) {
+                  console.error('Error updating email in users table:', dbError);
+                }
+              }
+            } catch (err) {
+              console.error('Error during email update:', err);
+            }
           }
         }
 
