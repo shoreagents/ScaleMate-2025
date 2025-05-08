@@ -12,7 +12,7 @@ const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean }>`
   border-right: 1px solid #E5E7EB;
   position: fixed;
   height: 100vh;
-  z-index: 20;
+  z-index: 201;
   transition: transform 0.3s ease;
 
   @media (max-width: 768px) {

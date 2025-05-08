@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaSearch, FaDownload, FaTimes, FaEye, FaFileAlt, FaCheck, FaCalendarAlt } from 'react-icons/fa';
+import { FaSearch, FaDownload, FaTimes, FaEye, FaFileAlt, FaCheck, FaCalendarAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const Container = styled.div`
   padding: 1.5rem;
+  padding-bottom: 5.5rem; /* Space for fixed action bar on mobile */
 `;
 
 const FiltersContainer = styled.div`
@@ -11,6 +12,9 @@ const FiltersContainer = styled.div`
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const FilterRow = styled.div`
@@ -108,6 +112,9 @@ const TableContainer = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const Table = styled.table`
@@ -288,11 +295,320 @@ const TaskText = styled.span`
   color: #0F172A;
 `;
 
+// Add mobile-specific styled components
+const MobileFilters = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  @media (max-width: 480px) {
+    display: flex;
+  }
+`;
+
+const MobileSearchInput = styled.div`
+  position: relative;
+  width: 100%;
+  input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 0.5rem;
+  }
+  svg {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(15, 23, 42, 0.4);
+  }
+`;
+
+const MobileFilterRow = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+  }
+`;
+
+const MobileFilterCol = styled.div`
+  flex: 1 1 0%;
+  @media (max-width: 480px) {
+    min-width: 0;
+  }
+  select {
+    width: 100%;
+  }
+`;
+
+const MobileLeads = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  @media (max-width: 480px) {
+    display: flex;
+  }
+`;
+
+const MobileLeadCard = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const MobileLeadHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const MobileLeadTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0;
+`;
+
+const MobileLeadDropdownButton = styled.button`
+  color: #3B82F6;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  margin-left: 1rem;
+  display: flex;
+  align-items: center;
+`;
+
+const MobileLeadDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const MobileLeadRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const MobileLeadCol = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const MobileLeadLabel = styled.span`
+  font-size: 0.75rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const MobileLeadValue = styled.span`
+  font-size: 0.875rem;
+  color: #0F172A;
+`;
+
+const MobileLeadActions = styled.div`
+  display: flex;
+  gap: 2rem;
+  margin-top: 1rem;
+  justify-content: center;
+`;
+
+const MobileActionButton = styled.button`
+  color: rgba(15, 23, 42, 0.7);
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  &:hover {
+    color: #0F172A;
+    background: #F1F5F9;
+  }
+`;
+
+const MobileActionLabel = styled.span`
+  font-size: 0.95rem;
+  color: #0F172A;
+  font-weight: 500;
+`;
+
+const MobileDateRow = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+  }
+`;
+
+const MobileDateToText = styled.span`
+  display: flex;
+  align-items: center;
+  color: rgba(15, 23, 42, 0.7);
+  font-size: 0.95rem;
+  padding: 0 0.25rem;
+`;
+
+const MobileExportContainer = styled.div`
+  display: none;
+  @media (max-width: 480px) {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    max-width: 100vw;
+    background: white;
+    padding: 0.75rem 0 1rem 0;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+    z-index: 100;
+    justify-content: center;
+  }
+`;
+
+const MobileExportButton = styled(Button)`
+  width: 100%;
+  max-width: 480px;
+  font-size: 1rem;
+  justify-content: center;
+`;
+
+const FixedActionBar = styled.div`
+  display: none;
+  @media (max-width: 480px) {
+    display: flex;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background: white;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+    padding: 0.75rem 1.5rem 1.25rem 1.5rem;
+    gap: 0.75rem;
+    z-index: 100; /* Sidebar should use z-index: 200+ to appear above */
+    border-top: 1px solid #E5E7EB;
+    justify-content: center;
+  }
+`;
+
+const MobileLeadDivider = styled.div`
+  border-bottom: 1px solid #E5E7EB;
+  margin: 0.5rem 0;
+`;
+
 const QuoteAnalyticsTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLeadExpanded, setIsLeadExpanded] = useState(false);
 
   return (
     <Container>
+      <MobileFilters>
+        <MobileSearchInput>
+          <FaSearch />
+          <input type="text" placeholder="Search roles..." />
+        </MobileSearchInput>
+        <MobileFilterRow>
+          <MobileFilterCol>
+            <Select>
+              <option>All Regions</option>
+              <option>North America</option>
+              <option>Europe</option>
+              <option>Asia Pacific</option>
+            </Select>
+          </MobileFilterCol>
+          <MobileFilterCol>
+            <Select>
+              <option>All Status</option>
+              <option>Saved</option>
+              <option>Abandoned</option>
+            </Select>
+          </MobileFilterCol>
+        </MobileFilterRow>
+        <MobileDateRow>
+          <DateInputWrapper style={{ flex: 1 }}>
+            <FaCalendarAlt />
+            <input type="date" placeholder="From" />
+          </DateInputWrapper>
+          <MobileDateToText>to</MobileDateToText>
+          <DateInputWrapper style={{ flex: 1 }}>
+            <FaCalendarAlt />
+            <input type="date" placeholder="To" />
+          </DateInputWrapper>
+        </MobileDateRow>
+      </MobileFilters>
+
+      <MobileLeads>
+        <MobileLeadCard>
+          <MobileLeadHeader>
+            <div>
+              <MobileLeadTitle>Senior Product Manager</MobileLeadTitle>
+              <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem', fontWeight: 500 }}>Mar 15, 2025</span>
+            </div>
+            <MobileLeadDropdownButton onClick={() => setIsLeadExpanded(!isLeadExpanded)} aria-label={isLeadExpanded ? 'Collapse' : 'Expand'}>
+              {isLeadExpanded ? <FaChevronUp /> : <FaChevronDown />}
+            </MobileLeadDropdownButton>
+          </MobileLeadHeader>
+          {isLeadExpanded && (
+            <MobileLeadDetails>
+              <MobileLeadRow>
+                <MobileLeadCol>
+                  <MobileLeadLabel>Currency</MobileLeadLabel>
+                  <MobileLeadValue>USD</MobileLeadValue>
+                </MobileLeadCol>
+                <MobileLeadCol>
+                  <MobileLeadLabel>User</MobileLeadLabel>
+                  <UserInfo>
+                    <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                    <UserEmail>alex.j@example.com</UserEmail>
+                  </UserInfo>
+                </MobileLeadCol>
+              </MobileLeadRow>
+              <MobileLeadDivider />
+              <MobileLeadRow>
+                <MobileLeadCol>
+                  <MobileLeadLabel>Offshore Cost</MobileLeadLabel>
+                  <MobileLeadValue>$45,000</MobileLeadValue>
+                </MobileLeadCol>
+                <MobileLeadCol>
+                  <MobileLeadLabel>Local Cost</MobileLeadLabel>
+                  <MobileLeadValue>$120,000</MobileLeadValue>
+                </MobileLeadCol>
+              </MobileLeadRow>
+              <MobileLeadDivider />
+              <MobileLeadActions>
+                <MobileActionButton title="View Details" onClick={() => setIsModalOpen(true)}>
+                  <FaEye />
+                  <MobileActionLabel>View Details</MobileActionLabel>
+                </MobileActionButton>
+                <MobileActionButton title="View Document">
+                  <FaFileAlt />
+                  <MobileActionLabel>View Document</MobileActionLabel>
+                </MobileActionButton>
+              </MobileLeadActions>
+            </MobileLeadDetails>
+          )}
+        </MobileLeadCard>
+      </MobileLeads>
+
+      <FixedActionBar>
+        <MobileExportButton $primary>
+          <FaDownload />
+          Export CSV
+        </MobileExportButton>
+      </FixedActionBar>
+
       <FiltersContainer>
         <FilterRow>
           <FilterGroup>
