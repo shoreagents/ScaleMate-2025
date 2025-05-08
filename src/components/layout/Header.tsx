@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FiUser, FiLogOut, FiChevronDown, FiMenu, FiX } from 'react-icons/fi';
 import { FaCalculator, FaChartLine, FaUsers, FaGraduationCap, FaDownload, FaToolbox, FaRegNewspaper, FaRegCircle } from 'react-icons/fa6';
+import { FaGripVertical } from 'react-icons/fa6';
+import { FaUser, FaSignOutAlt, FaHome } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
@@ -43,7 +45,7 @@ const Nav = styled.nav`
   display: none;
   gap: 2rem;
 
-  @media (min-width: 768px) {
+  @media (min-width: 995px) {
     display: flex;
   }
 `;
@@ -63,7 +65,7 @@ const AuthSection = styled.div`
   align-items: center;
   gap: 1rem;
 
-  @media (min-width: 1024px) {
+  @media (min-width: 995px) {
     display: flex;
   }
 `;
@@ -125,9 +127,9 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   overflow: hidden;
 `;
 
-const DropdownItem = styled.div`
+const DropdownItem = styled.div<{ $isLogout?: boolean }>`
   padding: 12px 16px;
-  color: #374151;
+  color: ${props => props.$isLogout ? '#EF4444' : '#374151'};
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -316,7 +318,7 @@ const MobileMenuButton = styled.button`
   border-radius: 0.5rem;
   transition: background-color 0.2s;
 
-  @media (max-width: 768px) {
+  @media (max-width: 994px) {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -333,42 +335,70 @@ const MobileMenu = styled.div<{ isOpen: boolean }>`
   top: 4rem;
   left: 0;
   right: 0;
+  bottom: 0;
   background: white;
   border-bottom: 1px solid #E5E7EB;
-  padding: 1rem;
   z-index: 40;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
 
-  @media (max-width: 768px) {
+  @media (max-width: 994px) {
     display: ${props => props.isOpen ? 'block' : 'none'};
+    height: calc(100vh - 4rem);
   }
 `;
 
 const MobileNav = styled.nav`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  min-height: 100%;
+`;
+
+const MobileMenuSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 0.375rem;
+
+  &:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+`;
+
+const MobileMenuSectionTitle = styled.h3`
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #3B82F6;
+  margin: 0;
+  padding: 0.375rem 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.25;
 `;
 
 const MobileNavItem = styled.div`
   color: #0F172A;
   cursor: pointer;
-  padding: 0.5rem;
+  padding: 0.375rem 0.5rem;
   border-radius: 0.5rem;
   transition: background-color 0.2s;
+  line-height: 1.25;
 
   &:hover {
     background-color: #F3F4F6;
   }
 `;
 
-const MobileAuthSection = styled.div`
+const MobileAuthRow = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #E5E7EB;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
 `;
 
 const MobileLoginButton = styled(Link)`
@@ -403,20 +433,40 @@ const MobileSignUpButton = styled.span`
   }
 `;
 
-const MobileMenuSection = styled.div`
+const MobileLogoutButton = styled.div`
+  color: #EF4444;
+  cursor: pointer;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  border-radius: 0.5rem;
+  text-align: left;
+  font-weight: 400;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  border-top: 1px solid #E5E7EB;
+  margin-top: 0.75rem;
+  transition: background 0.2s, color 0.2s;
+  &:hover {
+    background: #FEE2E2;
+    color: #B91C1C;
+  }
 `;
 
-const MobileMenuSectionTitle = styled.div`
-  font-weight: 600;
-  color: #6B7280;
-  font-size: 0.875rem;
+const MobileDashboardButton = styled.div`
+  color: #0F172A;
+  cursor: pointer;
   padding: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  border-radius: 0.5rem;
+  text-align: left;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.2s, color 0.2s;
+  &:hover {
+    background: #F3F4F6;
+    color: #2563EB;
+  }
 `;
 
 const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean }>`
@@ -448,6 +498,15 @@ const AvatarSpinner = styled.div`
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+`;
+
+const MobileAuthDivider = styled.div`
+  border-top: 1px solid #E5E7EB;
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 `;
 
 const Header = () => {
@@ -679,11 +738,11 @@ const Header = () => {
                 </IconButton>
                 <ProfileDropdown isOpen={isProfileOpen}>
                   <DropdownItem onClick={handleDashboardClick}>
-                    <FiUser size={16} />
+                    <FaGripVertical size={16} color="#3B82F6" style={{ minWidth: 16 }} />
                     Dashboard
                   </DropdownItem>
-                  <DropdownItem onClick={handleLogout}>
-                    <FiLogOut size={16} />
+                  <DropdownItem onClick={handleLogout} $isLogout>
+                    <FiLogOut size={16} color="#EF4444" style={{ minWidth: 16 }} />
                     Logout
                   </DropdownItem>
                 </ProfileDropdown>
@@ -702,6 +761,14 @@ const Header = () => {
       </Container>
       <MobileMenu isOpen={isMobileMenuOpen}>
         <MobileNav>
+          {isLoggedIn === null ? null : isLoggedIn ? (
+            <MobileAuthRow>
+              <MobileDashboardButton onClick={handleDashboardClick}>
+                <FaGripVertical size={18} style={{ minWidth: 18, color: '#3B82F6' }} />
+                Dashboard
+              </MobileDashboardButton>
+            </MobileAuthRow>
+          ) : null}
           <MobileMenuSection>
             <MobileNavItem onClick={() => handleMobileNavClick('/')}>Home</MobileNavItem>
           </MobileMenuSection>
@@ -726,39 +793,18 @@ const Header = () => {
             <MobileNavItem onClick={() => handleMobileNavClick('/about')}>About</MobileNavItem>
             <MobileNavItem onClick={() => handleMobileNavClick('/contact')}>Contact</MobileNavItem>
           </MobileMenuSection>
-        </MobileNav>
-        <MobileAuthSection>
           {isLoggedIn === null ? null : isLoggedIn ? (
-            <ProfileContainer id="profile-menu">
-              <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                <ProfileIcon $imageUrl={profilePicture} $isLoading={isLoading}>
-                  {isLoading ? (
-                    <AvatarSpinner />
-                  ) : profilePicture ? (
-                    <img src={profilePicture} alt="Profile" />
-                  ) : (
-                    <FiUser size={20} />
-                  )}
-                </ProfileIcon>
-              </IconButton>
-              <ProfileDropdown isOpen={isProfileOpen}>
-                <DropdownItem onClick={handleDashboardClick}>
-                  <FiUser size={16} />
-                  Dashboard
-                </DropdownItem>
-                <DropdownItem onClick={handleLogout}>
-                  <FiLogOut size={16} />
-                  Logout
-                </DropdownItem>
-              </ProfileDropdown>
-            </ProfileContainer>
+            <MobileLogoutButton onClick={handleLogout}>
+              <FiLogOut size={18} style={{ minWidth: 18 }} />
+              Logout
+            </MobileLogoutButton>
           ) : (
-            <>
+            <MobileAuthDivider>
               <MobileLoginButton href="/login">Login</MobileLoginButton>
               <MobileSignUpButton onClick={() => handleMobileNavClick('/signup')}>Sign Up</MobileSignUpButton>
-            </>
+            </MobileAuthDivider>
           )}
-        </MobileAuthSection>
+        </MobileNav>
       </MobileMenu>
     </HeaderContainer>
   );
