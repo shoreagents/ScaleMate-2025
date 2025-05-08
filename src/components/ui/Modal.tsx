@@ -14,14 +14,14 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
   inset: 0;
   background-color: rgba(15, 23, 42, 0.75);
   display: ${props => props.isOpen ? 'block' : 'none'};
-  z-index: 50;
+  z-index: 70;
   backdrop-filter: blur(2px);
 `;
 
 const ModalContainer = styled.div`
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 70;
   display: flex;
   min-height: 100vh;
   padding: 1rem;

@@ -679,6 +679,7 @@ const DashboardPage = () => {
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -725,10 +726,32 @@ const DashboardPage = () => {
     return tabItem ? tabItem.label : 'Dashboard';
   };
 
+  // Add a function to check if any modal is open
+  const checkModalState = () => {
+    // Check for any modal state in the current tab
+    switch (activeTab) {
+      case 'profile':
+        return false; // Profile tab has its own modal handling
+      case 'admin-management':
+        return isModalOpen; // Use the modal state from AdminManagementTab
+      default:
+        return false;
+    }
+  };
+
+  // Update modal state whenever activeTab changes
+  useEffect(() => {
+    setIsModalOpen(checkModalState());
+  }, [activeTab, isModalOpen]);
+
+  const handleModalStateChange = (isOpen: boolean) => {
+    setIsModalOpen(isOpen);
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'profile':
-        return <AdminProfile onProfilePictureChange={handleProfilePictureChange} />;
+        return <AdminProfile onProfilePictureChange={handleProfilePictureChange} onModalStateChange={handleModalStateChange} />;
       case 'dashboard':
         return <DashboardTab />;
       case 'lead-management':
@@ -738,7 +761,7 @@ const DashboardPage = () => {
       case 'role-management':
         return <RolesBlueprintTab />;
       case 'admin-management':
-        return <AdminManagementTab />;
+        return <AdminManagementTab onModalStateChange={handleModalStateChange} />;
       case 'analytics':
         return <QuoteAnalyticsTab />;
       case 'system-settings':
@@ -794,6 +817,7 @@ const DashboardPage = () => {
         navItems={navItems}
         activeTab={activeTab}
         onTabClick={handleTabClick}
+        isModalOpen={isModalOpen}
       />
       <MainContent>
         <DashboardHeader

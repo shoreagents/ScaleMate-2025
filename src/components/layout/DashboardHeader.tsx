@@ -122,7 +122,7 @@ const DropdownItem = styled.div<{ $isLogout?: boolean }>`
   border-radius: 6px;
 
   &:hover {
-    background-color: ${props => props.$isLogout ? '#FEE2E2' : '#f3f4f6'};
+    background-color: #f3f4f6;
   }
 
   &:first-child {
