@@ -131,16 +131,14 @@ export default function CourseGrid() {
       setIsAuthModalOpen(true);
       return;
     }
-    // Handle course start for authenticated users
-    // TODO: Implement course start logic
+    // Navigate to the course page for authenticated users
+    window.location.href = `/courses/${courseId}`;
   };
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    if (selectedCourseId) {
-      // Start the course after successful authentication
-      handleStartCourse(selectedCourseId);
-    }
+    // Update UI state to reflect authenticated user
+    // No page refresh needed as useAuth hook will update automatically
   };
 
   return (
