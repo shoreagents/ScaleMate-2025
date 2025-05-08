@@ -91,8 +91,8 @@ export default function FinalCTA() {
 
   const handleAuthSuccess = () => {
     setIsAuthModalOpen(false);
-    // Navigate after successful authentication
-    handleStartLearning();
+    // Update UI state to reflect authenticated user
+    // No page refresh needed as useAuth hook will update automatically
   };
 
   return (
