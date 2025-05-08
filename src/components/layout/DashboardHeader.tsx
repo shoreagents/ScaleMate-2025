@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FiBell, FiUser, FiLogOut, FiHome } from 'react-icons/fi';
+import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
+import { FaHome, FaBell, FaUser } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 
 const ContentHeader = styled.div`
@@ -17,6 +18,12 @@ const ContentHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   height: 3.5rem;
+
+  @media (max-width: 768px) {
+    left: 0;
+    padding: .25rem 1rem;
+    justify-content: space-between;
+  }
 `;
 
 const ContentTitle = styled.h1`
@@ -24,12 +31,28 @@ const ContentTitle = styled.h1`
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
 `;
 
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    display: flex;
+    gap: 12px;
+    margin-left: auto;
+    position: relative;
+    z-index: 2;
+  }
 `;
 
 const NotificationBadge = styled.div`
@@ -85,9 +108,9 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   overflow: hidden;
 `;
 
-const DropdownItem = styled.div`
+const DropdownItem = styled.div<{ $isLogout?: boolean }>`
   padding: 12px 16px;
-  color: #374151;
+  color: ${props => props.$isLogout ? '#EF4444' : '#374151'};
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -97,7 +120,7 @@ const DropdownItem = styled.div`
   border-radius: 6px;
 
   &:hover {
-    background-color: #f3f4f6;
+    background-color: ${props => props.$isLogout ? '#FEE2E2' : '#f3f4f6'};
   }
 
   &:first-child {
@@ -124,6 +147,17 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  @media (min-width: 769px) {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: transparent;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 `;
 
@@ -169,18 +203,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   const handleHomeClick = () => {
     router.push('/');
+    setIsProfileOpen(false);
   };
 
   return (
     <ContentHeader>
       <ContentTitle>{title}</ContentTitle>
       <HeaderActions>
-        <IconButton onClick={handleHomeClick}>
-          <FiHome size={20} />
-        </IconButton>
         <NotificationBadge>
           <IconButton>
-            <FiBell size={20} />
+            <FaBell size={20} />
           </IconButton>
         </NotificationBadge>
         <ProfileContainer id="profile-menu">
@@ -191,16 +223,20 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               ) : profilePicture ? (
                 <img src={profilePicture} alt="Profile" />
               ) : (
-                <FiUser size={20} />
+                <FaUser size={20} color="#6B7280" />
               )}
             </ProfileIcon>
           </IconButton>
           <ProfileDropdown isOpen={isProfileOpen}>
+            <DropdownItem onClick={handleHomeClick}>
+              <FaHome size={16} color="#6B7280" />
+              Home
+            </DropdownItem>
             <DropdownItem onClick={handleProfileClick}>
-              <FiUser size={16} />
+              <FaUser size={16} color="#6B7280" />
               Profile
             </DropdownItem>
-            <DropdownItem onClick={onLogout}>
+            <DropdownItem onClick={onLogout} $isLogout>
               <FiLogOut size={16} />
               Logout
             </DropdownItem>
