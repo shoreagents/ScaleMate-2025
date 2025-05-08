@@ -67,6 +67,12 @@ const MainContent = styled.main`
   padding-top: 5rem;
   background-color: #F9FAFB;
   min-height: 100vh;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    padding: 1rem;
+    padding-top: 4rem;
+  }
 `;
 
 const Sidebar = styled.aside`
