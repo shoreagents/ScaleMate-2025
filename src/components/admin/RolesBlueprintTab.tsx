@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaSearch, FaPlus, FaDownload, FaTimes, FaStar, FaPen, FaTrash, FaCheck } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaDownload, FaTimes, FaStar, FaPen, FaTrash, FaCheck, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const Container = styled.div`
   padding: 1.5rem;
@@ -11,6 +11,9 @@ const FiltersContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const FilterGroup = styled.div`
@@ -77,6 +80,9 @@ const TableContainer = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const Table = styled.table`
@@ -267,11 +273,226 @@ const TaskText = styled.span`
   color: #0F172A;
 `;
 
+// Mobile-specific styled components
+const MobileFilters = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  @media (max-width: 480px) {
+    display: flex;
+  }
+`;
+
+const MobileSearchInput = styled.div`
+  position: relative;
+  width: 100%;
+  input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 0.5rem;
+  }
+  svg {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(15, 23, 42, 0.4);
+  }
+`;
+
+const MobileFilterRow = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const MobileFilterCol = styled.div`
+  flex: 1 1 0%;
+  min-width: 0;
+  select {
+    width: 100%;
+  }
+`;
+
+const MobileRoles = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  @media (max-width: 480px) {
+    display: flex;
+  }
+`;
+
+const MobileRoleCard = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const MobileRoleHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const MobileRoleTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0;
+`;
+
+const MobileRoleActions = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+`;
+
+const MobileActionButton = styled.button`
+  color: rgba(15, 23, 42, 0.7);
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+  background: none;
+  border: none;
+  &:hover {
+    color: #0F172A;
+  }
+`;
+
+const MobileExportContainer = styled.div`
+  display: none;
+  @media (max-width: 480px) {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    background: white;
+    padding: 0.75rem 1rem 1rem 1rem;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+    z-index: 100;
+    justify-content: center;
+  }
+`;
+
+const MobileAddTemplateButton = styled(Button)`
+  flex: 1 1 0%;
+  font-size: 1rem;
+  justify-content: center;
+`;
+
+const MobileExportButton = styled(Button)`
+  flex: 1 1 0%;
+  font-size: 1rem;
+  justify-content: center;
+`;
+
+const MobileRoleExpandButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6B7280;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+  &:hover {
+    color: #0F172A;
+  }
+`;
+
 const RolesBlueprintTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRoleExpanded, setIsRoleExpanded] = useState(false);
 
   return (
     <Container>
+      <MobileFilters>
+        <MobileSearchInput>
+          <FaSearch />
+          <input type="text" placeholder="Search roles..." />
+        </MobileSearchInput>
+        <MobileFilterRow>
+          <MobileFilterCol>
+            <Select>
+              <option>All Departments</option>
+              <option>Engineering</option>
+              <option>Product</option>
+              <option>Design</option>
+            </Select>
+          </MobileFilterCol>
+        </MobileFilterRow>
+      </MobileFilters>
+
+      <MobileRoles>
+        <MobileRoleCard>
+          <MobileRoleHeader>
+            <div>
+              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Role Title</span><br />
+              <MobileRoleTitle>Senior Product Manager</MobileRoleTitle>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Tag $color="#EC297B">Featured</Tag>
+              <MobileRoleExpandButton onClick={() => setIsRoleExpanded(!isRoleExpanded)} aria-label={isRoleExpanded ? 'Collapse' : 'Expand'}>
+                {isRoleExpanded ? <FaChevronUp /> : <FaChevronDown />}
+              </MobileRoleExpandButton>
+            </div>
+          </MobileRoleHeader>
+          {isRoleExpanded && (
+            <>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Department</span><br />
+                <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem' }}>Product</span>
+              </div>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Created By</span><br />
+                <UserInfo>
+                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" />
+                  <UserEmail>michael.s@example.com</UserEmail>
+                </UserInfo>
+              </div>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Date</span><br />
+                <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem' }}>Mar 15, 2025</span>
+              </div>
+              <div>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Status</span><br />
+                <Tag $color="#00E915">Active</Tag>
+              </div>
+              <MobileRoleActions>
+                <MobileActionButton title="Star">
+                  <FaStar />
+                </MobileActionButton>
+                <MobileActionButton title="Edit">
+                  <FaPen />
+                </MobileActionButton>
+                <MobileActionButton title="Delete">
+                  <FaTrash />
+                </MobileActionButton>
+              </MobileRoleActions>
+            </>
+          )}
+        </MobileRoleCard>
+      </MobileRoles>
+
+      <MobileExportContainer>
+        <MobileAddTemplateButton>
+          <FaPlus />
+          Add to Templates
+        </MobileAddTemplateButton>
+        <MobileExportButton $primary>
+          <FaDownload />
+          Export Roles
+        </MobileExportButton>
+      </MobileExportContainer>
+
       <FiltersContainer>
         <FilterGroup>
           <SearchInput>
