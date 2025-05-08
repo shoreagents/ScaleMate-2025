@@ -711,7 +711,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       const callbackWithParams = new URL(callbackUrl);
       callbackWithParams.searchParams.set('from', fromParam || '');
       callbackWithParams.searchParams.set('redirectTo', currentUrl);
-      
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -797,7 +797,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     <VerificationInput
                       key={index}
                       id={`verification-${index}`}
-                      type="text"
+                  type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       maxLength={1}
@@ -813,9 +813,9 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
             <FormActions>
               <ButtonContainer>
                 {!preventRedirect && (
-                  <SecondaryButton type="button" onClick={() => setShowVerification(false)}>
-                    Back to Sign In
-                  </SecondaryButton>
+                <SecondaryButton type="button" onClick={() => setShowVerification(false)}>
+                  Back to Sign In
+                </SecondaryButton>
                 )}
                 <Button 
                   type="submit" 

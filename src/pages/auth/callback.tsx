@@ -13,15 +13,6 @@ const LoadingContainer = styled.div`
   background: #f5f5f5;
 `;
 
-const ErrorMessage = styled.div`
-  color: #ff4d4f;
-  text-align: center;
-  margin-top: 1rem;
-  padding: 1rem;
-  background: rgba(255, 77, 79, 0.1);
-  border-radius: 4px;
-`;
-
 // Helper function to check if session is properly set
 const isSessionValid = async () => {
   try {
@@ -85,7 +76,6 @@ const normalizeEmail = (email: string): string => {
 
 export default function AuthCallback() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -93,7 +83,6 @@ export default function AuthCallback() {
         // Wait for session to be valid
         const sessionValid = await waitForValidSession();
         if (!sessionValid) {
-          setError('Failed to establish session. Please try again.');
           return;
         }
 
@@ -101,12 +90,10 @@ export default function AuthCallback() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           console.error('Session error:', sessionError);
-          setError('Failed to get session. Please try again.');
           return;
         }
         if (!session) {
           console.error('No session found');
-          setError('No session found. Please try signing in again.');
           return;
         }
 
@@ -114,12 +101,10 @@ export default function AuthCallback() {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError) {
           console.error('User error:', userError);
-          setError('Failed to get user. Please try again.');
           return;
         }
         if (!user) {
           console.error('No user found');
-          setError('No user found. Please try signing in again.');
           return;
         }
 
@@ -165,7 +150,6 @@ export default function AuthCallback() {
 
         if (checkError && checkError.code !== 'PGRST116') {
           console.error('Error checking existing user:', checkError);
-          setError('Failed to check existing user. Please try again.');
           return;
         }
 
@@ -182,7 +166,6 @@ export default function AuthCallback() {
 
           if (userError) {
             console.error('User creation error:', userError);
-            setError('Failed to create user record. Please try again.');
             return;
           }
         }
@@ -196,7 +179,6 @@ export default function AuthCallback() {
 
         if (roleCheckError && roleCheckError.code !== 'PGRST116') {
           console.error('Error checking existing role:', roleCheckError);
-          setError('Failed to check existing role. Please try again.');
           return;
         }
 
@@ -211,7 +193,6 @@ export default function AuthCallback() {
 
           if (roleError) {
             console.error('Role creation error:', roleError);
-            setError('Failed to assign user role. Please try again.');
             return;
           }
         }
@@ -225,7 +206,6 @@ export default function AuthCallback() {
 
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile error:', profileError);
-          setError('Failed to get profile. Please try again.');
           return;
         }
 
@@ -249,7 +229,6 @@ export default function AuthCallback() {
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
-              setError('Failed to create profile. Please try again.');
               return;
             }
           }
@@ -257,7 +236,6 @@ export default function AuthCallback() {
         // Verify session is still valid before redirecting
         const finalSessionCheck = await isSessionValid();
         if (!finalSessionCheck) {
-          setError('Session validation failed before redirect. Please try again.');
           return;
         }
 
@@ -303,12 +281,8 @@ export default function AuthCallback() {
           // For non-modal sign-ins, redirect to dashboard
               router.push('/user/dashboard');
         }
-
-        // Show success message
-        setError('Authentication successful! You can now close this window and return to the application.');
       } catch (err) {
         console.error('Auth callback error:', err);
-        setError('An unexpected error occurred. Please try again.');
       }
     };
 
@@ -319,11 +293,7 @@ export default function AuthCallback() {
 
   return (
     <LoadingContainer>
-      {error ? (
-        <ErrorMessage>{error}</ErrorMessage>
-      ) : (
-        <LoadingSpinner />
-      )}
+      <LoadingSpinner />
     </LoadingContainer>
   );
 } 
