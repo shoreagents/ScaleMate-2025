@@ -108,6 +108,18 @@ export default function AuthCallback() {
           return;
         }
 
+        // Create a client with service role key for admin operations
+        const serviceRoleClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+          {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          }
+        );
+
         // Check if this is a Google sign-in
         const isGoogleUser = user.app_metadata?.provider === 'google';
         console.log('Is Google user:', isGoogleUser);
@@ -140,18 +152,6 @@ export default function AuthCallback() {
             }
           }
         }
-
-        // Create a client with service role key for admin operations
-        const serviceRoleClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
 
         // Check if user exists in users table
         const { data: existingUser, error: checkError } = await serviceRoleClient
