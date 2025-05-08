@@ -1531,7 +1531,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                   <InfoValue $isEditing={isEditing}>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</InfoValue>
                 </InfoRow>
                 <div style={{ marginTop: '16px' }}>
-                  <EditButton onClick={() => setIsEditing(true)}>
+                  <EditButton onClick={() => {
+                    setIsEditing(true);
+                    setIsEditingContact(false);
+                    setIsEditingPassword(false);
+                  }}>
                     <FiEdit2 />
                     Edit Basic Info
                   </EditButton>
@@ -1620,7 +1624,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 <InfoValue $isEditing={isEditingContact}>{profileData.phone || '-'}</InfoValue>
               </InfoRow>
               <div style={{ marginTop: '16px' }}>
-                <EditButton onClick={() => setIsEditingContact(true)}>
+                <EditButton onClick={() => {
+                  setIsEditingContact(true);
+                  setIsEditing(false);
+                  setIsEditingPassword(false);
+                }}>
                   <FiEdit2 />
                   Edit Contact Info
                 </EditButton>
@@ -1779,7 +1787,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
                 </InfoValue>
               </InfoRow>
               <div style={{ marginTop: '16px' }}>
-                <EditButton onClick={() => setIsEditingPassword(true)}>
+                <EditButton onClick={() => {
+                  setIsEditingPassword(true);
+                  setIsEditing(false);
+                  setIsEditingContact(false);
+                }}>
                   <FiEdit2 />
                   Change Password
                 </EditButton>

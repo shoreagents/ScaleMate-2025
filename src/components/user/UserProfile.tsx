@@ -1353,7 +1353,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                   <div>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</div>
                 </FormGroup>
                 <div style={{ marginTop: '16px' }}>
-                  <EditButton onClick={() => setIsEditing(true)}>
+                  <EditButton onClick={() => {
+                    setIsEditing(true);
+                    setIsEditingContact(false);
+                    setIsEditingPassword(false);
+                  }}>
                     <FiEdit2 />
                     Edit Basic Info
                   </EditButton>
@@ -1460,7 +1464,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 <div>{profileData.phone || '-'}</div>
               </FormGroup>
               <div style={{ marginTop: '16px' }}>
-                <EditButton onClick={() => setIsEditingContact(true)}>
+                <EditButton onClick={() => {
+                  setIsEditingContact(true);
+                  setIsEditing(false);
+                  setIsEditingPassword(false);
+                }}>
                   <FiEdit2 />
                   Edit Contact Info
                 </EditButton>
@@ -1626,7 +1634,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
                 </div>
               </FormGroup>
               <div style={{ marginTop: '16px' }}>
-                <EditButton onClick={() => setIsEditingPassword(true)}>
+                <EditButton onClick={() => {
+                  setIsEditingPassword(true);
+                  setIsEditing(false);
+                  setIsEditingContact(false);
+                }}>
                   <FiEdit2 />
                   Change Password
                 </EditButton>

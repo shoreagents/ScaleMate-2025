@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
@@ -239,6 +239,38 @@ const SignInLink = styled.div`
   }
 `;
 
+const ResendLink = styled.div`
+  text-align: center;
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+
+  button {
+    color: ${props => props.theme.colors.primary};
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 0.25rem;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+
+    &:hover {
+      color: ${props => props.theme.colors.primaryDark};
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  .timer {
+    color: ${props => props.theme.colors.primary};
+    font-weight: 500;
+  }
+`;
+
 const FormRow = styled.div`
   display: flex;
   gap: 1rem;
@@ -268,6 +300,48 @@ const PasswordSection = styled.div`
   gap: 8px;
 `;
 
+const VerificationContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-top: 1rem;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const VerificationInput = styled.input`
+  flex: 1;
+  height: 3.5rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border: 1.5px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  background: white;
+  color: ${props => props.theme.colors.text.primary};
+  transition: all 0.2s ease;
+  padding: 0;
+  min-width: 0;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${props => props.theme.colors.primary}15;
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    height: 3rem;
+    font-size: 1.125rem;
+  }
+`;
+
 interface SignUpFormProps {
   onSuccess?: (message: string) => void;
   onError?: (error: string | null) => void;
@@ -276,6 +350,33 @@ interface SignUpFormProps {
   redirectUrl?: string;
   onVerificationStateChange?: (isVerifying: boolean) => void;
 }
+
+const normalizeEmail = (email: string): string => {
+  if (!email) return '';
+  
+  // Convert to lowercase and trim
+  const normalized = email.toLowerCase().trim();
+  
+  // Split into local and domain parts
+  const [localPart, domain] = normalized.split('@');
+  
+  if (!domain) return normalized;
+  
+  // Handle Gmail addresses
+  if (domain === 'gmail.com') {
+    // Remove dots and everything after + in the local part
+    const cleanLocal = localPart.replace(/\./g, '').split('+')[0];
+    return `${cleanLocal}@gmail.com`;
+  }
+  
+  return normalized;
+};
+
+const isValidEmail = (email: string): boolean => {
+  const normalized = normalizeEmail(email);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(normalized);
+};
 
 export default function SignUpForm({ onSuccess, onError, hideLinks = false, preventRedirect = false, redirectUrl, onVerificationStateChange }: SignUpFormProps) {
   const router = useRouter();
@@ -287,11 +388,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     firstName: '',
     lastName: ''
   });
-  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCode, setVerificationCode] = useState<string[]>(Array(6).fill(''));
   const [showVerification, setShowVerification] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
   const [checkingUsername, setCheckingUsername] = useState(false);
@@ -303,6 +405,20 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [accountExists, setAccountExists] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+
+  // Add useEffect for countdown
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCountdown > 0) {
+      timer = setInterval(() => {
+        setResendCountdown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [resendCountdown]);
 
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
@@ -429,16 +545,50 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     onVerificationStateChange?.(value);
   };
 
+  const handleVerificationCodeChange = (index: number, value: string) => {
+    // Only allow numbers
+    if (!/^\d*$/.test(value)) return;
+
+    // Update the verification code array
+    const newCode = [...verificationCode];
+    newCode[index] = value;
+    setVerificationCode(newCode);
+
+    // Auto-focus next input if value is entered
+    if (value && index < 5) {
+        const nextInput = document.getElementById(`verification-${index + 1}`);
+        nextInput?.focus();
+    }
+  };
+
+  const handleVerificationKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+        const prevInput = document.getElementById(`verification-${index - 1}`);
+        prevInput?.focus();
+    }
+  };
+
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     try {
+      // Validate email format
+      if (!isValidEmail(formData.email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Normalize email before verification
+      const normalizedEmail = normalizeEmail(formData.email);
+
+      // Join the verification code digits
+      const fullCode = verificationCode.join('');
+
       const { error: verifyError } = await supabase.auth.verifyOtp({
-        email: formData.email,
-        token: verificationCode,
-        type: 'signup'
+        email: normalizedEmail,
+        token: fullCode,
+        type: 'email'
       });
 
       if (verifyError) {
@@ -484,17 +634,22 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       }
 
       // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        setError('Please enter a valid email address');
-        return;
+      if (!isValidEmail(formData.email)) {
+        throw new Error('Please enter a valid email address');
       }
 
-      // Check if email exists
-      if (emailExists) {
-        setError('An account with this email already exists');
-        onError?.('An account with this email already exists');
-        return;
+      // Normalize email before checking existence
+      const normalizedEmail = normalizeEmail(formData.email);
+
+      // Check if user already exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', normalizedEmail)
+        .single();
+
+      if (existingUser) {
+        throw new Error('An account with this email already exists');
       }
 
       // Validate password length
@@ -527,7 +682,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
       // 1. Sign up with Supabase Auth
       const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
+        email: normalizedEmail,
         password: formData.password,
         options: {
           data: {
@@ -557,7 +712,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       }
 
       // 2. Check if user already exists in users table
-      const { data: existingUser, error: checkError } = await serviceRoleClient
+      const { data: existingUserCheck, error: checkError } = await serviceRoleClient
         .from('users')
         .select('id')
         .eq('id', user.id)
@@ -569,12 +724,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       }
 
       // Only insert if user doesn't exist
-      if (!existingUser) {
+      if (!existingUserCheck) {
         const { error: userError } = await serviceRoleClient
           .from('users')
           .insert({
             id: user.id,
-            email: formData.email,
+            email: normalizedEmail,
             full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
             is_active: true
           });
@@ -686,7 +841,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         }
       }
 
-      setSuccess('Verification code sent to your email!');
+      // Remove success message and just show verification form
       setShowVerificationWithCallback(true);
     } catch (err) {
       console.error('Sign up error:', err);
@@ -768,6 +923,42 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     }
   };
 
+  const handleResendCode = async () => {
+    if (resendCountdown > 0) return;
+    
+    setError(null);
+    setIsResending(true);
+
+    try {
+      // Validate email format
+      if (!isValidEmail(formData.email)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Normalize email before sending
+      const normalizedEmail = normalizeEmail(formData.email);
+
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: normalizedEmail,
+      });
+
+      if (resendError) {
+        throw resendError;
+      }
+
+      setSuccess('New verification code sent!');
+      setResendCountdown(60); // Start countdown
+    } catch (err) {
+      console.error('Resend error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while resending the code';
+      setError(errorMessage);
+      onError?.(errorMessage);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   // Add this function to check if the form is valid
   const isFormValid = () => {
     return (
@@ -794,30 +985,40 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
           <InputGroup>
             <Label htmlFor="verificationCode">Verification Code</Label>
             <InputWrapper>
-              <Input
-                id="verificationCode"
-                type="text"
-                placeholder="Enter verification code"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                required
-              />
-              {error && (
-                <HelperText style={{ color: '#dc2626' }}>
-                  <FiX size={14} />
-                  {error}
-                </HelperText>
-              )}
+              <VerificationContainer>
+                {[...Array(6)].map((_, index) => (
+                  <VerificationInput
+                    key={index}
+                    id={`verification-${index}`}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    value={verificationCode[index] || ''}
+                    onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleVerificationKeyDown(index, e)}
+                    autoFocus={index === 0}
+                  />
+                ))}
+              </VerificationContainer>
             </InputWrapper>
           </InputGroup>
           <ButtonContainer>
             <Button 
               type="submit" 
-              disabled={isLoading || !verificationCode}
+              disabled={isLoading || verificationCode.join('').length !== 6}
+              style={preventRedirect ? { width: '100%' } : undefined}
             >
               {isLoading ? 'Verifying...' : 'Verify Email'}
             </Button>
           </ButtonContainer>
+          <ResendLink>
+            {resendCountdown > 0 ? (
+              <>Please wait <span className="timer">{resendCountdown}s</span> before requesting a new code</>
+            ) : (
+              <>Didn't receive the code? <button type="button" onClick={handleResendCode} disabled={isResending || resendCountdown > 0}>{isResending ? 'Sending...' : 'Resend Code'}</button></>
+            )}
+          </ResendLink>
         </Form>
       </FormContainer>
     );

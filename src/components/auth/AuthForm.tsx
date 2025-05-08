@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
@@ -294,6 +294,80 @@ const GoogleButton = styled.button`
   }
 `;
 
+const VerificationContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-top: 1rem;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const VerificationInput = styled.input`
+  flex: 1;
+  height: 3.5rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border: 1.5px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  background: white;
+  color: ${props => props.theme.colors.text.primary};
+  transition: all 0.2s ease;
+  padding: 0;
+  min-width: 0;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${props => props.theme.colors.primary}15;
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    height: 3rem;
+    font-size: 1.125rem;
+  }
+`;
+
+const ResendLink = styled.div`
+  text-align: center;
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+
+  button {
+    color: ${props => props.theme.colors.primary};
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 0.25rem;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+
+    &:hover {
+      color: ${props => props.theme.colors.primaryDark};
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+
+  .timer {
+    color: ${props => props.theme.colors.primary};
+    font-weight: 500;
+  }
+`;
+
 interface AuthFormProps {
   onSuccess?: (message: string) => void;
   onError?: (error: string) => void;
@@ -302,6 +376,35 @@ interface AuthFormProps {
   redirectUrl?: string;
 }
 
+// Add this function at the top level of the file, before the component
+const normalizeEmail = (email: string): string => {
+    if (!email) return '';
+    
+    // Convert to lowercase and trim
+    const normalized = email.toLowerCase().trim();
+    
+    // Split into local and domain parts
+    const [localPart, domain] = normalized.split('@');
+    
+    if (!domain) return normalized;
+    
+    // Handle Gmail addresses
+    if (domain === 'gmail.com') {
+        // Remove dots and everything after + in the local part
+        const cleanLocal = localPart.replace(/\./g, '').split('+')[0];
+        return `${cleanLocal}@gmail.com`;
+    }
+    
+    return normalized;
+};
+
+// Add email validation function
+const isValidEmail = (email: string): boolean => {
+    const normalized = normalizeEmail(email);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(normalized);
+};
+
 export default function AuthForm({ onSuccess, onError, preventRedirect = false, hideLinks = false, redirectUrl }: AuthFormProps) {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -309,11 +412,26 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationCode, setVerificationCode] = useState<string[]>(Array(6).fill(''));
   const [showVerification, setShowVerification] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
   const router = useRouter();
+
+  // Add useEffect for countdown
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCountdown > 0) {
+      timer = setInterval(() => {
+        setResendCountdown(prev => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [resendCountdown]);
 
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -321,9 +439,56 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     setIsLoading(true);
 
     try {
+      let emailToUse = loginIdentifier;
+
+      // If the identifier is not an email, try to find the email by username
+      if (!isValidEmail(loginIdentifier)) {
+        // Create a client with service role key for admin access
+        const serviceRoleClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+          {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
+          }
+        );
+
+        // Query the user_profiles table to get the user_id
+        const { data: profileData, error: profileError } = await serviceRoleClient
+          .from('user_profiles')
+          .select('user_id')
+          .eq('username', loginIdentifier)
+          .single();
+
+        if (profileError || !profileData) {
+          throw new Error('Invalid username or email');
+        }
+
+        // Query the users table to get the email
+        const { data: userData, error: userError } = await serviceRoleClient
+          .from('users')
+          .select('email')
+          .eq('id', profileData.user_id)
+          .single();
+
+        if (userError || !userData) {
+          throw new Error('Invalid username or email');
+        }
+
+        emailToUse = userData.email;
+      }
+
+      // Normalize email before verification
+      const normalizedEmail = normalizeEmail(emailToUse);
+
+      // Join the verification code digits
+      const fullCode = verificationCode.join('');
+
       const { error: verifyError } = await supabase.auth.verifyOtp({
-        email: loginIdentifier,
-        token: verificationCode,
+        email: normalizedEmail,
+        token: fullCode,
         type: 'email'
       });
 
@@ -350,6 +515,29 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     }
   };
 
+  const handleVerificationCodeChange = (index: number, value: string) => {
+    // Only allow numbers
+    if (!/^\d*$/.test(value)) return;
+
+    // Update the verification code array
+    const newCode = [...verificationCode];
+    newCode[index] = value;
+    setVerificationCode(newCode);
+
+    // Auto-focus next input if value is entered
+    if (value && index < 5) {
+      const nextInput = document.getElementById(`verification-${index + 1}`);
+      nextInput?.focus();
+    }
+  };
+
+  const handleVerificationKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      const prevInput = document.getElementById(`verification-${index - 1}`);
+      prevInput?.focus();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -357,50 +545,86 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     setIsLoading(true);
 
     try {
-      // Check if the input is a valid email
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginIdentifier);
-      
-      let loginEmail = loginIdentifier;
-      
-      // If not an email, try to get the email from the username
-      if (!isEmail) {
-        const { data: profile } = await supabase
-          .from('user_details')
-          .select('email')
+      let emailToUse = loginIdentifier;
+
+      // Create a client with service role key for admin access
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+
+      // If the identifier is not an email, try to find the email by username
+      if (!isValidEmail(loginIdentifier)) {
+        // Query the user_profiles table to get the user_id
+        const { data: profileData, error: profileError } = await serviceRoleClient
+          .from('user_profiles')
+          .select('user_id')
           .eq('username', loginIdentifier)
           .single();
 
-        if (!profile) {
+        if (profileError || !profileData) {
           throw new Error('Invalid username or email');
         }
-        loginEmail = profile.email;
+
+        // Query the users table to get the email
+        const { data: userData, error: userError } = await serviceRoleClient
+          .from('users')
+          .select('email')
+          .eq('id', profileData.user_id)
+          .single();
+
+        if (userError || !userData) {
+          throw new Error('Invalid username or email');
+        }
+
+        emailToUse = userData.email;
+      } else {
+        // Check if email exists in users table
+        const { data: userData, error: userError } = await serviceRoleClient
+          .from('users')
+          .select('id')
+          .eq('email', normalizeEmail(loginIdentifier))
+          .single();
+
+        if (userError || !userData) {
+          throw new Error('Invalid username or email');
+        }
       }
 
-      // Sign in with email and password
-      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
+      // Normalize email before sign in
+      const normalizedEmail = normalizeEmail(emailToUse);
+
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
         password
       });
 
       if (signInError) {
-        // Check if the error is due to unconfirmed email
+        // Check if error is due to unconfirmed email
         if (signInError.message.includes('Email not confirmed')) {
+          // Show verification form without error message
           setShowVerification(true);
-          setSuccess('Please verify your email address');
           return;
         }
-        throw signInError;
+        // If we got here, the email/username exists but password is wrong
+        throw new Error('Incorrect password');
       }
 
-      if (!user) {
-        throw new Error('No user found');
+      if (!data.user) {
+        throw new Error('Invalid username or email');
       }
 
       // Get user's role
       const { data: roles } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id);
+        .eq('user_id', data.user.id);
 
       if (!roles || roles.length === 0) {
         throw new Error('No role assigned to user');
@@ -425,7 +649,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         }
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Sign in error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign in';
       setError(errorMessage);
       onError?.(errorMessage);
@@ -441,7 +665,15 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(loginIdentifier, {
+      // Validate email format
+      if (!isValidEmail(loginIdentifier)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Normalize email before sending reset
+      const normalizedEmail = normalizeEmail(loginIdentifier);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo: `${window.location.origin}/admin`,
       });
 
@@ -505,6 +737,42 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     }
   };
 
+  const handleResendCode = async () => {
+    if (resendCountdown > 0) return;
+    
+    setError(null);
+    setIsResending(true);
+
+    try {
+      // Validate email format
+      if (!isValidEmail(loginIdentifier)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // Normalize email before sending
+      const normalizedEmail = normalizeEmail(loginIdentifier);
+
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: normalizedEmail,
+      });
+
+      if (resendError) {
+        throw resendError;
+      }
+
+      setSuccess('New verification code sent!');
+      setResendCountdown(60); // Start countdown
+    } catch (err) {
+      console.error('Resend error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while resending the code';
+      setError(errorMessage);
+      onError?.(errorMessage);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   // Add this function to check if the form is valid
   const isFormValid = () => {
     return (
@@ -524,34 +792,46 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
             <FormFields>
               <InputGroup>
                 <Label htmlFor="verificationCode">Verification Code</Label>
-                <Input
-                  id="verificationCode"
-                  type="text"
-                  placeholder="Enter verification code"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  required
-                />
-                {error && (
-                  <MessageContainer>
-                    <FiX size={14} />
-                    {error}
-                  </MessageContainer>
-                )}
+                <VerificationContainer>
+                  {[...Array(6)].map((_, index) => (
+                    <VerificationInput
+                      key={index}
+                      id={`verification-${index}`}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={1}
+                      value={verificationCode[index] || ''}
+                      onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
+                      onKeyDown={(e) => handleVerificationKeyDown(index, e)}
+                      autoFocus={index === 0}
+                    />
+                  ))}
+                </VerificationContainer>
               </InputGroup>
             </FormFields>
             <FormActions>
               <ButtonContainer>
-                <SecondaryButton type="button" onClick={() => setShowVerification(false)}>
-                  Back to Sign In
-                </SecondaryButton>
+                {!preventRedirect && (
+                  <SecondaryButton type="button" onClick={() => setShowVerification(false)}>
+                    Back to Sign In
+                  </SecondaryButton>
+                )}
                 <Button 
                   type="submit" 
-                  disabled={isLoading || !verificationCode}
+                  disabled={isLoading || verificationCode.join('').length !== 6}
+                  style={preventRedirect ? { width: '100%' } : undefined}
                 >
                   {isLoading ? 'Verifying...' : 'Verify Email'}
                 </Button>
               </ButtonContainer>
+              <ResendLink>
+                {resendCountdown > 0 ? (
+                  <>Please wait <span className="timer">{resendCountdown}s</span> before requesting a new code</>
+                ) : (
+                  <>Didn't receive the code? <button type="button" onClick={handleResendCode} disabled={isResending || resendCountdown > 0}>{isResending ? 'Sending...' : 'Resend Code'}</button></>
+                )}
+              </ResendLink>
             </FormActions>
           </FormContent>
         </Form>
