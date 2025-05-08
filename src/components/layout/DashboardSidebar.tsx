@@ -6,14 +6,15 @@ import { FaHome, FaBell, FaUser } from 'react-icons/fa';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
 
-const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean }>`
+const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean; $isModalOpen?: boolean }>`
   width: 16rem;
   background-color: white;
   border-right: 1px solid #E5E7EB;
   position: fixed;
   height: 100vh;
-  z-index: 201;
+  z-index: 40;
   transition: transform 0.3s ease;
+  visibility: ${props => props.$isModalOpen ? 'hidden' : 'visible'};
 
   @media (max-width: 768px) {
     transform: ${props => props.$isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)'};
@@ -217,6 +218,7 @@ interface DashboardSidebarProps {
   navItems: NavItem[];
   activeTab: string;
   onTabClick: (tabId: string) => void;
+  isModalOpen?: boolean;
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -224,6 +226,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   navItems,
   activeTab,
   onTabClick,
+  isModalOpen = false,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -255,7 +258,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         $isMobileMenuOpen={isMobileMenuOpen} 
         onClick={handleClose}
       />
-      <Sidebar $isMobileMenuOpen={isMobileMenuOpen}>
+      <Sidebar $isMobileMenuOpen={isMobileMenuOpen} $isModalOpen={isModalOpen}>
         <SidebarContent>
           <LogoContainer>
             <LogoText>{logoText}</LogoText>

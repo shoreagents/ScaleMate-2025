@@ -674,14 +674,15 @@ interface RecentActivity {
 }
 
 interface AdminProfileProps {
-  onProfilePictureChange?: (newPictureUrl: string) => void;
+  onProfilePictureChange?: (url: string) => void;
+  onModalStateChange?: (isOpen: boolean) => void;
 }
 
 const capitalizeFirstLetter = (string: string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) => {
+const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onModalStateChange }) => {
   const [originalProfileData, setOriginalProfileData] = useState<AdminProfileData>({
     first_name: '',
     last_name: '',
@@ -1221,17 +1222,13 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange }) =
     setIsProfileModalOpen(false);
     setPreviewImage(null);
     setSelectedFile(null);
-    setBasicInfoError(null);
-    setBasicInfoSuccess(null);
-    setContactError(null);
-    setContactSuccess(null);
-    setPasswordError(null);
-    setPasswordSuccess(null);
-    setUsernameError(null);
-    setUsernameExists(null);
-    setCheckingUsername(false);
-    setCurrentUsername('');
+    onModalStateChange?.(false);
   };
+
+  // Update modal state when it changes
+  useEffect(() => {
+    onModalStateChange?.(isProfileModalOpen);
+  }, [isProfileModalOpen, onModalStateChange]);
 
   const fetchPerformanceStats = async () => {
     try {

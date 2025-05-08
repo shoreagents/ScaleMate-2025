@@ -125,23 +125,24 @@ export default function AuthCallback() {
         console.log('Is Google user:', isGoogleUser);
 
         // Normalize email for Google users
+        let emailToUse = user.email;
         if (isGoogleUser && user.email) {
-          const normalizedEmail = normalizeEmail(user.email);
+          emailToUse = normalizeEmail(user.email);
           console.log('Original email:', user.email);
-          console.log('Normalized email:', normalizedEmail);
+          console.log('Normalized email:', emailToUse);
           
           // Update user's email in auth if it's different
-          if (normalizedEmail !== user.email) {
+          if (emailToUse !== user.email) {
             try {
               const { error: updateError } = await supabase.auth.updateUser({
-                email: normalizedEmail
+                email: emailToUse
               });
               if (updateError) {
                 console.error('Error updating email:', updateError);
                 // Try to update the email in the users table directly
                 const { error: dbError } = await serviceRoleClient
                   .from('users')
-                  .update({ email: normalizedEmail })
+                  .update({ email: emailToUse })
                   .eq('id', user.id);
                 if (dbError) {
                   console.error('Error updating email in users table:', dbError);
@@ -153,11 +154,11 @@ export default function AuthCallback() {
           }
         }
 
-        // Check if user exists in users table
+        // Check if user exists in users table with normalized email
         const { data: existingUser, error: checkError } = await serviceRoleClient
           .from('users')
           .select('id')
-          .eq('id', user.id)
+          .eq('email', emailToUse)
           .single();
 
         if (checkError && checkError.code !== 'PGRST116') {
@@ -171,7 +172,7 @@ export default function AuthCallback() {
             .from('users')
             .insert({
               id: user.id,
-              email: user.email,
+              email: emailToUse, // Use normalized email
               full_name: user.user_metadata?.full_name || '',
               is_active: true
             });
