@@ -61,6 +61,28 @@ const waitForValidSession = async (maxAttempts = 10) => {
   return false;
 };
 
+// Add the normalizeEmail function at the top of the file
+const normalizeEmail = (email: string): string => {
+  if (!email) return '';
+  
+  // Convert to lowercase and trim
+  const normalized = email.toLowerCase().trim();
+  
+  // Split into local and domain parts
+  const [localPart, domain] = normalized.split('@');
+  
+  if (!domain) return normalized;
+  
+  // Handle Gmail addresses
+  if (domain === 'gmail.com') {
+    // Remove dots and everything after + in the local part
+    const cleanLocal = localPart.replace(/\./g, '').split('+')[0];
+    return `${cleanLocal}@gmail.com`;
+  }
+  
+  return normalized;
+};
+
 export default function AuthCallback() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +126,23 @@ export default function AuthCallback() {
         // Check if this is a Google sign-in
         const isGoogleUser = user.app_metadata?.provider === 'google';
         console.log('Is Google user:', isGoogleUser);
+
+        // Normalize email for Google users
+        if (isGoogleUser && user.email) {
+          const normalizedEmail = normalizeEmail(user.email);
+          console.log('Original email:', user.email);
+          console.log('Normalized email:', normalizedEmail);
+          
+          // Update user's email in auth if it's different
+          if (normalizedEmail !== user.email) {
+            const { error: updateError } = await supabase.auth.updateUser({
+              email: normalizedEmail
+            });
+            if (updateError) {
+              console.error('Error updating email:', updateError);
+            }
+          }
+        }
 
         // Create a client with service role key for admin operations
         const serviceRoleClient = createClient(
