@@ -37,7 +37,7 @@ interface ProfileSidebarProps {
     joinedDate?: string;
     lastLogin?: string;
     avatar?: string;
-    role?: string;
+    role?: string | string[];
     gender?: string;
     user_id?: string;
     preferences?: {
@@ -198,10 +198,10 @@ const ProfileName = styled.h3`
   line-height: 1.3;
 `;
 
-const ProfileRole = styled.p`
+const ProfileRole = styled.span`
   font-size: 0.875rem;
   font-weight: 500;
-  margin: 0;
+  margin: 0 0.25rem 0.25rem 0;
   text-transform: capitalize;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
@@ -217,6 +217,10 @@ const ProfileRole = styled.p`
         return '#EC489910';
       case 'moderator':
         return '#00E91510';
+      case 'developer':
+        return '#8B5CF610';
+      case 'author':
+        return '#F59E0B10';
       case 'user':
         return '#3B82F610';
       default:
@@ -229,12 +233,23 @@ const ProfileRole = styled.p`
         return '#EC4899';
       case 'moderator':
         return '#00E915';
+      case 'developer':
+        return '#8B5CF6';
+      case 'author':
+        return '#F59E0B';
       case 'user':
         return '#3B82F6';
       default:
         return '#3B82F6';
     }
   }};
+`;
+
+const RolesContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
 `;
 
 const DividerWithText = styled.div<{ $isActive: boolean }>`
@@ -907,7 +922,15 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
               )}
               <ProfileInfo>
                 <ProfileName>{profile.name}</ProfileName>
-                <ProfileRole>{profile.role}</ProfileRole>
+                <RolesContainer>
+                  {Array.isArray(profile.role) ? (
+                    profile.role.map((role, index) => (
+                      <ProfileRole key={index}>{role}</ProfileRole>
+                    ))
+                  ) : (
+                    <ProfileRole>{profile.role}</ProfileRole>
+                  )}
+                </RolesContainer>
               </ProfileInfo>
             </ProfileHeader>
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader } from 'react-icons/fi';
+import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader, FiCode, FiEdit } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch, FaTimes } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
 import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -642,7 +642,7 @@ interface Admin extends BaseUser {
 }
 
 interface UserRole extends BaseUser {
-  role: 'user' | 'admin' | 'moderator';  // Update to allow all role types
+  role: 'user' | 'admin' | 'moderator' | 'developer' | 'author';  // Add developer and author roles
   last_sign_in: string | null;
   phone: string;
   gender: string;
@@ -931,20 +931,16 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted }): Rea
   };
 
   const handleEditUser = (user: UserRole) => {
-    setSelectedUser({
-      ...user,
-      role: 'user',
-      status: user.status || 'active'
-    });
+    setSelectedUser(user);
     setEditFormData({
       email: user.email,
       password: '',
-      role: user.roles.includes('admin') ? 'admin' : user.roles.includes('moderator') ? 'moderator' : 'user',
-      first_name: user.first_name || '',
-      last_name: user.last_name || '',
+      role: user.roles[0] as 'admin' | 'moderator' | 'user' | 'developer' | 'author', // Set the current role
+      first_name: user.first_name,
+      last_name: user.last_name,
       phone: user.phone || '',
       gender: user.gender || '',
-      username: user.username || ''
+      username: user.username
     });
     setIsEditModalOpen(true);
   };
@@ -3031,8 +3027,8 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   <RoleIcon>
                     {formData.role === 'admin' ? <FiShield size={18} /> : 
                      formData.role === 'moderator' ? <FiUserCheck size={18} /> : 
-                     formData.role === 'developer' ? <FiUser size={18} /> :
-                     formData.role === 'author' ? <FiUser size={18} /> :
+                     formData.role === 'developer' ? <FiCode size={18} /> :
+                     formData.role === 'author' ? <FiEdit size={18} /> :
                      <FiUser size={18} />}
                   </RoleIcon>
                 </RoleSelectContainer>
@@ -3382,8 +3378,8 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 <RoleIcon>
                     {editFormData.role === 'admin' ? <FiShield size={18} /> : 
                      editFormData.role === 'moderator' ? <FiUserCheck size={18} /> : 
-                     editFormData.role === 'developer' ? <FiUser size={18} /> :
-                     editFormData.role === 'author' ? <FiUser size={18} /> :
+                     editFormData.role === 'developer' ? <FiCode size={18} /> :
+                     editFormData.role === 'author' ? <FiEdit size={18} /> :
                      <FiUser size={18} />}
                 </RoleIcon>
               </RoleSelectContainer>
@@ -3528,8 +3524,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             name: `${selectedUser.first_name} ${selectedUser.last_name}`,
             email: selectedUser.email,
             username: selectedUser.username,
-            role: selectedUser.roles.includes('admin') ? 'admin' : 
-                  selectedUser.roles.includes('moderator') ? 'moderator' : 'user',
+            role: selectedUser.roles, // Pass the full array of roles
             phone: selectedUser.phone,
             gender: selectedUser.gender,
             joinedDate: formatDate(selectedUser.created_at),
