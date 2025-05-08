@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
 import { FaHome, FaBell, FaUser } from 'react-icons/fa';
@@ -57,7 +57,9 @@ const HeaderActions = styled.div`
 
 const NotificationBadge = styled.div`
   position: relative;
-  
+  @media (max-width: 768px) {
+    display: none;
+  }
   &::after {
     content: '';
     position: absolute;
@@ -193,6 +195,14 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 }) => {
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleProfileClick = () => {
     if (onProfileClick) {
@@ -228,13 +238,19 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </ProfileIcon>
           </IconButton>
           <ProfileDropdown isOpen={isProfileOpen}>
-            <DropdownItem onClick={handleHomeClick}>
-              <FaHome size={16} color="#6B7280" />
-              Home
-            </DropdownItem>
+            {isMobile && (
+              <DropdownItem>
+                <FaBell size={16} color="#6B7280" />
+                Notifications
+              </DropdownItem>
+            )}
             <DropdownItem onClick={handleProfileClick}>
               <FaUser size={16} color="#6B7280" />
               Profile
+            </DropdownItem>
+            <DropdownItem onClick={handleHomeClick}>
+              <FaHome size={16} color="#6B7280" />
+              Homepage
             </DropdownItem>
             <DropdownItem onClick={onLogout} $isLogout>
               <FiLogOut size={16} />

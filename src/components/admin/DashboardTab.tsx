@@ -40,6 +40,9 @@ const StatCard = styled.div`
   padding: 24px;
   border-radius: 12px;
   border: 1px solid #E5E7EB;
+  @media (max-width: 500px) {
+    padding: 12px;
+  }
 `;
 
 const StatHeader = styled.div`
@@ -47,6 +50,9 @@ const StatHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  @media (max-width: 500px) {
+    margin-bottom: 8px;
+  }
 `;
 
 const IconContainer = styled.div<{ $color: string }>`
@@ -59,6 +65,11 @@ const IconContainer = styled.div<{ $color: string }>`
   justify-content: center;
   color: ${props => props.$color};
   font-size: 1.25rem;
+  @media (max-width: 500px) {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+  }
 `;
 
 const TimeLabel = styled.span`
@@ -76,11 +87,17 @@ const StatValue = styled.h3`
   font-weight: 700;
   color: #0F172A;
   margin: 0;
+  @media (max-width: 500px) {
+    font-size: 1.1rem;
+  }
 `;
 
 const StatLabel = styled.p`
   color: rgba(15, 23, 42, 0.7);
   margin: 0;
+  @media (max-width: 500px) {
+    font-size: 0.85rem;
+  }
 `;
 
 const TrendIndicator = styled.div<{ $isPositive: boolean }>`
@@ -89,12 +106,19 @@ const TrendIndicator = styled.div<{ $isPositive: boolean }>`
   align-items: center;
   font-size: 0.875rem;
   color: ${props => props.$isPositive ? '#00E915' : '#EC297B'};
+  @media (max-width: 500px) {
+    font-size: 0.75rem;
+    margin-top: 4px;
+  }
 `;
 
 const TopRolesContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  @media (max-width: 500px) {
+    gap: 4px;
+  }
 `;
 
 const RoleItem = styled.div`
@@ -106,12 +130,18 @@ const RoleItem = styled.div`
 const RoleLabel = styled.span`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
+  @media (max-width: 500px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const RoleValue = styled.span`
   font-size: 0.875rem;
   font-weight: 700;
   color: #0F172A;
+  @media (max-width: 500px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const ContentGrid = styled.div`
@@ -132,6 +162,9 @@ const ActivityFeed = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
+  @media (max-width: 500px) {
+    padding: 12px;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -223,6 +256,9 @@ const QuickActions = styled.div`
   border-radius: 12px;
   border: 1px solid #E5E7EB;
   padding: 24px;
+  @media (max-width: 500px) {
+    padding: 12px;
+  }
 `;
 
 const ActionButton = styled.button<{ $primary?: boolean }>`

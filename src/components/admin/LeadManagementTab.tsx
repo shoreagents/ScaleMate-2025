@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaSearch, FaDownload, FaPlus, FaTimes, FaArrowRight } from 'react-icons/fa';
+import { FaSearch, FaDownload, FaPlus, FaTimes, FaArrowRight, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 const Container = styled.div`
   padding: 1.5rem;
+  padding-bottom: 5.5rem; /* Space for fixed action bar on mobile */
 `;
 
 const FiltersContainer = styled.div`
@@ -11,6 +12,9 @@ const FiltersContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const FilterGroup = styled.div`
@@ -51,10 +55,31 @@ const DateInput = styled.input`
   border-radius: 0.5rem;
 `;
 
+const FixedActionBar = styled.div`
+  display: none;
+  @media (max-width: 480px) {
+    display: flex;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background: white;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+    padding: 0.75rem 1.5rem 1.25rem 1.5rem;
+    gap: 0.75rem;
+    z-index: 100;
+    border-top: 1px solid #E5E7EB;
+    justify-content: center;
+  }
+`;
+
 const ActionButtons = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const Button = styled.button<{ $primary?: boolean }>`
@@ -66,7 +91,10 @@ const Button = styled.button<{ $primary?: boolean }>`
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
-
+  @media (max-width: 480px) {
+    flex: 1;
+    justify-content: center;
+  }
   ${props => props.$primary ? `
     background-color: #3B82F6;
     color: white;
@@ -89,6 +117,9 @@ const TableContainer = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 const Table = styled.table`
@@ -294,11 +325,247 @@ const TextArea = styled.textarea`
   min-height: 5rem;
 `;
 
+const MobileFilters = styled.div`
+  display: none;
+  @media (max-width: 480px) {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0;
+  }
+`;
+
+const MobileFilterRow = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const MobileFilterCol = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+`;
+
+const MobileLeads = styled.div`
+  display: none;
+  @media (max-width: 480px) {
+    display: block;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+`;
+
+const MobileLeadCard = styled.div`
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #E5E7EB;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+`;
+
+const MobileLeadHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+`;
+
+const MobileLeadInfo = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const MobileLeadAvatar = styled.img`
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  margin-right: 0.75rem;
+`;
+
+const MobileLeadName = styled.h3`
+  font-weight: 500;
+  color: #0F172A;
+  font-size: 1rem;
+  margin: 0;
+`;
+
+const MobileLeadEmail = styled.p`
+  color: rgba(15, 23, 42, 0.7);
+  font-size: 0.875rem;
+  margin: 0;
+`;
+
+const MobileLeadTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+`;
+
+const MobileTag = styled.span<{ $color: string }>`
+  padding: 0.25rem 0.5rem;
+  background-color: ${props => `${props.$color}10`};
+  color: ${props => props.$color};
+  border-radius: 9999px;
+  font-size: 0.875rem;
+`;
+
+const MobileLeadFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+`;
+
+const MobileAgentInfo = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const MobileAgentAvatar = styled.img`
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  margin-right: 0.5rem;
+`;
+
+const MobileAgentName = styled.span`
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const MobileLastAction = styled.span`
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+// For SearchInput on mobile
+const MobileSearchInput = styled(SearchInput)`
+  width: 100%;
+  input {
+    width: 100%;
+  }
+`;
+
+const MobileLeadDropdownButton = styled.button`
+  color: #3B82F6;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  margin-left: 1rem;
+  display: flex;
+  align-items: center;
+`;
+
+const MobileLeadLabel = styled.span`
+  display: block;
+  font-weight: 600;
+  color: #0F172A;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+`;
+
+const MobileLeadRow = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+`;
+
+const MobileLeadCol = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const MobileLeadDivider = styled.div`
+  border-bottom: 1px solid #E5E7EB;
+  margin: 0.5rem 0;
+`;
+
 const LeadManagementTab: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLeadExpanded, setIsLeadExpanded] = useState(false);
 
   return (
     <Container>
+      <MobileFilters>
+        <MobileSearchInput>
+          <FaSearch />
+          <input type="text" placeholder="Search leads..." />
+        </MobileSearchInput>
+        <MobileFilterRow>
+          <MobileFilterCol>
+            <Select>
+              <option>All Sources</option>
+              <option>Quote</option>
+              <option>Contact</option>
+              <option>Quiz</option>
+            </Select>
+          </MobileFilterCol>
+          <MobileFilterCol>
+            <Select>
+              <option>All Tags</option>
+              <option>Hot</option>
+              <option>Qualified</option>
+              <option>Quiz-ready</option>
+            </Select>
+          </MobileFilterCol>
+        </MobileFilterRow>
+        <DateInput type="date" style={{ width: '100%' }} />
+      </MobileFilters>
+      <MobileLeads>
+        <MobileLeadCard>
+          <MobileLeadHeader>
+            <MobileLeadInfo>
+              <MobileLeadAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Lead" />
+              <div>
+                <MobileLeadName>Name: Michael Cooper</MobileLeadName>
+                <MobileLeadEmail>Email: m.cooper@example.com</MobileLeadEmail>
+              </div>
+            </MobileLeadInfo>
+            <MobileLeadDropdownButton onClick={() => setIsLeadExpanded(v => !v)} aria-label={isLeadExpanded ? 'Collapse' : 'Expand'}>
+              {isLeadExpanded ? <FaChevronUp /> : <FaChevronDown />}
+            </MobileLeadDropdownButton>
+          </MobileLeadHeader>
+          {isLeadExpanded && (
+            <>
+              <MobileLeadRow>
+                <MobileLeadCol>
+                  <MobileLeadLabel>Source:</MobileLeadLabel>
+                  <MobileTag $color="#0098FF">Quote</MobileTag>
+                </MobileLeadCol>
+                <MobileLeadCol>
+                  <MobileLeadLabel>Tags:</MobileLeadLabel>
+                  <MobileLeadTags>
+                    <MobileTag $color="#00E915">Hot</MobileTag>
+                    <MobileTag $color="#0098FF">Qualified</MobileTag>
+                  </MobileLeadTags>
+                </MobileLeadCol>
+              </MobileLeadRow>
+              <MobileLeadDivider />
+              <MobileLeadRow>
+                <MobileLeadCol>
+                  <MobileLeadLabel>Assigned to:</MobileLeadLabel>
+                  <MobileAgentInfo>
+                    <MobileAgentAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Agent" />
+                    <MobileAgentName>Sarah M.</MobileAgentName>
+                  </MobileAgentInfo>
+                </MobileLeadCol>
+                <MobileLeadCol>
+                  <MobileLeadLabel>Last action:</MobileLeadLabel>
+                  <MobileLastAction>Viewed pricing</MobileLastAction>
+                </MobileLeadCol>
+              </MobileLeadRow>
+            </>
+          )}
+        </MobileLeadCard>
+      </MobileLeads>
+
       <FiltersContainer>
         <FilterGroup>
           <SearchInput>
@@ -422,6 +689,18 @@ const LeadManagementTab: React.FC = () => {
           </Card>
         </SidebarContent>
       </Sidebar>
+
+      { /* Fixed action bar for mobile */ }
+      <FixedActionBar>
+        <Button>
+          <FaDownload />
+          Export CSV
+        </Button>
+        <Button $primary>
+          <FaPlus />
+          Add Lead
+        </Button>
+      </FixedActionBar>
     </Container>
   );
 };
