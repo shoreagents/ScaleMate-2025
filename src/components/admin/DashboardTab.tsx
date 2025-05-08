@@ -760,7 +760,7 @@ const DashboardTab: React.FC = () => {
                     ? userStats.weekCount?.toLocaleString()
                     : userStats.monthCount?.toLocaleString()}
               </StatValue>
-              <StatLabel>Active Users</StatLabel>
+              <StatLabel>New Users</StatLabel>
               <TrendIndicator $isPositive={
                 timePeriod === 'today' 
                   ? userStats.trend >= 0 

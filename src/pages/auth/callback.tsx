@@ -190,30 +190,30 @@ export default function AuthCallback() {
           return;
         }
 
-        // Create profile if it doesn't exist
-        if (!profile) {
-          const avatarUrl = user.user_metadata?.avatar_url;
-          const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+          // Create profile if it doesn't exist
+          if (!profile) {
+            const avatarUrl = user.user_metadata?.avatar_url;
+            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
 
-          const profileData = {
-            user_id: user.id,
-            username: null,
-            first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-            last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-            last_password_change: null,
-            profile_picture: highQualityAvatarUrl || null
-          };
+            const profileData = {
+              user_id: user.id,
+              username: null,
+              first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+              last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+              last_password_change: null,
+              profile_picture: highQualityAvatarUrl || null
+            };
 
-          const { error: profileError } = await serviceRoleClient
-            .from('user_profiles')
-            .insert(profileData);
+            const { error: profileError } = await serviceRoleClient
+              .from('user_profiles')
+              .insert(profileData);
 
-          if (profileError) {
-            console.error('Profile creation error:', profileError);
-            setError('Failed to create profile. Please try again.');
-            return;
+            if (profileError) {
+              console.error('Profile creation error:', profileError);
+              setError('Failed to create profile. Please try again.');
+              return;
+            }
           }
-        }
 
         // Verify session is still valid before redirecting
         const finalSessionCheck = await isSessionValid();
@@ -262,7 +262,7 @@ export default function AuthCallback() {
         } else {
           console.log('Not from modal, going to dashboard');
           // For non-modal sign-ins, redirect to dashboard
-          router.push('/user/dashboard');
+              router.push('/user/dashboard');
         }
 
         // Show success message
