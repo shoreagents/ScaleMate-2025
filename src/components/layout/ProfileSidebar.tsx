@@ -119,6 +119,21 @@ const SidebarContent = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   flex: 1;
+  height: calc(100vh - 5rem); // Account for header height
+  position: relative;
+`;
+
+const LeftColumn = styled.div`
+  position: sticky;
+  top: 0;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const RightColumn = styled.div`
+  height: 100%;
   overflow-y: auto;
   padding-right: 0.5rem;
 
@@ -908,7 +923,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
       </SidebarHeader>
 
       <SidebarContent>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <LeftColumn>
           <Card>
             <ProfileHeader>
               {profile.avatar ? (
@@ -1012,53 +1027,55 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
               </StatsGrid>
             </Card>
           )}
-        </div>
+        </LeftColumn>
 
-        <Card>
-          <SectionTitle>
-            <FaHistory />
-            Recent Activities
-          </SectionTitle>
-          <ActivityList>
-            {recentActivity.length > 0 ? (
-              Object.entries(groupedActivities).map(([date, activities]) => (
-                <React.Fragment key={date}>
-                  <ActivityDate 
-                    onClick={() => toggleDateVisibility(date)}
-                    $isActive={visibleDates[date]}
-                  >
-                    {date}
-                  </ActivityDate>
-                  <ActivityGroup $isVisible={visibleDates[date]}>
-                    {activities.slice(0, visibleItems[date]).map((activity) => (
-                      <ActivityItem key={activity.id}>
-                        {getActivityIcon(activity.type, activity.description)}
-                        <ActivityContent>
-                          <p>{activity.description.replace('Removed Gender', 'Unset Gender')}</p>
-                          <span>{activity.time}</span>
-                        </ActivityContent>
-                      </ActivityItem>
-                    ))}
-                    {activities.length > visibleItems[date] && (
-                      <ShowMoreButton onClick={() => showMoreItems(date)}>
-                        Show More
-                      </ShowMoreButton>
-                    )}
-                  </ActivityGroup>
-                </React.Fragment>
-              ))
-            ) : (
-              <div style={{ 
-                textAlign: 'center', 
-                padding: '2rem', 
-                color: 'rgba(15,23,42,0.7)',
-                fontSize: '0.875rem'
-              }}>
-                No recent activities to show
-              </div>
-            )}
-          </ActivityList>
-        </Card>
+        <RightColumn>
+          <Card>
+            <SectionTitle>
+              <FaHistory />
+              Recent Activities
+            </SectionTitle>
+            <ActivityList>
+              {recentActivity.length > 0 ? (
+                Object.entries(groupedActivities).map(([date, activities]) => (
+                  <React.Fragment key={date}>
+                    <ActivityDate 
+                      onClick={() => toggleDateVisibility(date)}
+                      $isActive={visibleDates[date]}
+                    >
+                      {date}
+                    </ActivityDate>
+                    <ActivityGroup $isVisible={visibleDates[date]}>
+                      {activities.slice(0, visibleItems[date]).map((activity) => (
+                        <ActivityItem key={activity.id}>
+                          {getActivityIcon(activity.type, activity.description)}
+                          <ActivityContent>
+                            <p>{activity.description.replace('Removed Gender', 'Unset Gender')}</p>
+                            <span>{activity.time}</span>
+                          </ActivityContent>
+                        </ActivityItem>
+                      ))}
+                      {activities.length > visibleItems[date] && (
+                        <ShowMoreButton onClick={() => showMoreItems(date)}>
+                          Show More
+                        </ShowMoreButton>
+                      )}
+                    </ActivityGroup>
+                  </React.Fragment>
+                ))
+              ) : (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '2rem', 
+                  color: 'rgba(15,23,42,0.7)',
+                  fontSize: '0.875rem'
+                }}>
+                  No recent activities to show
+                </div>
+              )}
+            </ActivityList>
+          </Card>
+        </RightColumn>
       </SidebarContent>
     </Sidebar>
   );
