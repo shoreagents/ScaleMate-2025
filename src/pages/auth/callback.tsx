@@ -83,6 +83,8 @@ export default function AuthCallback() {
         // Wait for session to be valid
         const sessionValid = await waitForValidSession();
         if (!sessionValid) {
+          console.error('Session validation failed');
+          router.push('/login');
           return;
         }
 
@@ -90,10 +92,12 @@ export default function AuthCallback() {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
           console.error('Session error:', sessionError);
+          router.push('/login');
           return;
         }
         if (!session) {
           console.error('No session found');
+          router.push('/login');
           return;
         }
 
@@ -101,10 +105,12 @@ export default function AuthCallback() {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError) {
           console.error('User error:', userError);
+          router.push('/login');
           return;
         }
         if (!user) {
           console.error('No user found');
+          router.push('/login');
           return;
         }
 
@@ -124,6 +130,13 @@ export default function AuthCallback() {
         const isGoogleUser = user.app_metadata?.provider === 'google';
         console.log('Is Google user:', isGoogleUser);
 
+        // Get user metadata from auth
+        const userMetadata = user.user_metadata || {};
+        const fullName = userMetadata.full_name || '';
+        const firstName = userMetadata.first_name || fullName.split(' ')[0] || '';
+        const lastName = userMetadata.last_name || fullName.split(' ').slice(1).join(' ') || '';
+        const username = userMetadata.username || null;
+
         // Normalize email for Google users
         let emailToUse = user.email;
         if (isGoogleUser && user.email) {
@@ -141,6 +154,7 @@ export default function AuthCallback() {
 
         if (checkError && checkError.code !== 'PGRST116') {
           console.error('Error checking existing user:', checkError);
+          router.push('/login');
           return;
         }
 
@@ -150,36 +164,17 @@ export default function AuthCallback() {
             .from('users')
             .insert({
               id: user.id,
-              email: emailToUse, // Use normalized email
-              full_name: user.user_metadata?.full_name || '',
-              is_active: true
+              email: emailToUse,
+              full_name: fullName,
+              is_active: true,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             });
 
           if (userError) {
             console.error('User creation error:', userError);
+            router.push('/login');
             return;
-          }
-
-          // After creating the user record, update the email in auth if needed
-          if (emailToUse !== user.email) {
-            try {
-              const { error: updateError } = await supabase.auth.updateUser({
-                email: emailToUse
-              });
-              if (updateError) {
-                console.error('Error updating email:', updateError);
-                // Try to update the email in the users table directly
-                const { error: dbError } = await serviceRoleClient
-                  .from('users')
-                  .update({ email: emailToUse })
-                  .eq('id', user.id);
-                if (dbError) {
-                  console.error('Error updating email in users table:', dbError);
-                }
-              }
-            } catch (err) {
-              console.error('Error during email update:', err);
-            }
           }
         }
 
@@ -192,6 +187,7 @@ export default function AuthCallback() {
 
         if (roleCheckError && roleCheckError.code !== 'PGRST116') {
           console.error('Error checking existing role:', roleCheckError);
+          router.push('/login');
           return;
         }
 
@@ -201,11 +197,14 @@ export default function AuthCallback() {
             .from('user_roles')
             .insert({
               user_id: user.id,
-              role: 'user'
+              role: 'user',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             });
 
           if (roleError) {
             console.error('Role creation error:', roleError);
+            router.push('/login');
             return;
           }
         }
@@ -219,36 +218,55 @@ export default function AuthCallback() {
 
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('Profile error:', profileError);
+          router.push('/login');
           return;
         }
 
-          // Create profile if it doesn't exist
-          if (!profile) {
-            const avatarUrl = user.user_metadata?.avatar_url;
-            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+        // Create or update profile
+        const avatarUrl = user.user_metadata?.avatar_url;
+        const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
 
-            const profileData = {
-              user_id: user.id,
-              username: null,
-              first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-              last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-              last_password_change: null,
-              profile_picture: highQualityAvatarUrl || null
-            };
+        const profileData = {
+          user_id: user.id,
+          username: username || profile?.username || null,
+          first_name: firstName || profile?.first_name || '',
+          last_name: lastName || profile?.last_name || '',
+          last_password_change: profile?.last_password_change || null,
+          profile_picture: highQualityAvatarUrl || profile?.profile_picture || null,
+          created_at: profile?.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
 
-            const { error: profileError } = await serviceRoleClient
-              .from('user_profiles')
-              .insert(profileData);
+        if (!profile) {
+          // Create new profile
+          const { error: profileError } = await serviceRoleClient
+            .from('user_profiles')
+            .insert(profileData);
 
-            if (profileError) {
-              console.error('Profile creation error:', profileError);
-              return;
-            }
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+            router.push('/login');
+            return;
           }
+        } else {
+          // Update existing profile
+          const { error: profileError } = await serviceRoleClient
+            .from('user_profiles')
+            .update(profileData)
+            .eq('user_id', user.id);
+
+          if (profileError) {
+            console.error('Profile update error:', profileError);
+            router.push('/login');
+            return;
+          }
+        }
 
         // Verify session is still valid before redirecting
         const finalSessionCheck = await isSessionValid();
         if (!finalSessionCheck) {
+          console.error('Final session check failed');
+          router.push('/login');
           return;
         }
 
@@ -292,10 +310,11 @@ export default function AuthCallback() {
         } else {
           console.log('Not from modal, going to dashboard');
           // For non-modal sign-ins, redirect to dashboard
-              router.push('/user/dashboard');
+          router.push('/user/dashboard');
         }
       } catch (err) {
         console.error('Auth callback error:', err);
+        router.push('/login');
       }
     };
 
