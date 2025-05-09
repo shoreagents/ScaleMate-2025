@@ -15,6 +15,26 @@ const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean; $isModalOpen?: boolea
   z-index: 20;
   transition: transform 0.3s ease;
   visibility: ${props => props.$isModalOpen ? 'hidden' : 'visible'};
+  overflow-y: auto;
+
+  /* Custom scrollbar styles */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #F3F4F6;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #D1D5DB;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+  }
 
   @media (max-width: 768px) {
     transform: ${props => props.$isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)'};
@@ -28,7 +48,7 @@ const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean; $isModalOpen?: boolea
 
 const SidebarContent = styled.div`
   padding: 1.5rem;
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 
