@@ -31,13 +31,16 @@ const ContentTitle = styled.h1`
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
+  text-align: left;
 
   @media (max-width: 768px) {
     font-size: 1.25rem;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1;
+    padding-left: 56px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    padding-left: 56px;
   }
 `;
 
@@ -57,9 +60,6 @@ const HeaderActions = styled.div`
 
 const NotificationBadge = styled.div`
   position: relative;
-  @media (max-width: 768px) {
-    display: none;
-  }
   &::after {
     content: '';
     position: absolute;
@@ -238,12 +238,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </ProfileIcon>
           </IconButton>
           <ProfileDropdown isOpen={isProfileOpen}>
-            {isMobile && (
-              <DropdownItem>
-                <FaBell size={16} color="#6B7280" />
-                Notifications
-              </DropdownItem>
-            )}
             <DropdownItem onClick={handleProfileClick}>
               <FaUser size={16} color="#6B7280" />
               Profile

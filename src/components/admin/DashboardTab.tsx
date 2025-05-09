@@ -15,8 +15,20 @@ const DashboardContainer = styled.div`
 
 const MainContent = styled.main`
   flex: 1;
-  padding: 1.5rem;
+  padding: 2rem;
   background-color: #F9FAFB;
+  @media only screen and (max-width: 1023px) {
+    padding: 1.5rem;
+  }
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
+  @media only screen and (max-width: 480px) {
+    padding: 0.5rem;
+  }
+  @media only screen and (max-width: 320px) {
+    padding: 0.25rem;
+  }
 `;
 
 const Container = styled.div`
@@ -27,11 +39,27 @@ const Container = styled.div`
 
 const StatsPanel = styled.section`
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
 
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(4, 1fr);
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  @media only screen and (max-width: 480px) {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 10px;
+  }
+
+  @media only screen and (max-width: 320px) {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 4px;
   }
 `;
 
@@ -40,9 +68,7 @@ const StatCard = styled.div`
   padding: 24px;
   border-radius: 12px;
   border: 1px solid #E5E7EB;
-  @media (max-width: 500px) {
-    padding: 12px;
-  }
+  width: 100%;
 `;
 
 const StatHeader = styled.div`
@@ -50,9 +76,6 @@ const StatHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
-  @media (max-width: 500px) {
-    margin-bottom: 8px;
-  }
 `;
 
 const IconContainer = styled.div<{ $color: string }>`
@@ -65,11 +88,6 @@ const IconContainer = styled.div<{ $color: string }>`
   justify-content: center;
   color: ${props => props.$color};
   font-size: 1.25rem;
-  @media (max-width: 500px) {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-  }
 `;
 
 const TimeLabel = styled.span`
@@ -87,17 +105,11 @@ const StatValue = styled.h3`
   font-weight: 700;
   color: #0F172A;
   margin: 0;
-  @media (max-width: 500px) {
-    font-size: 1.1rem;
-  }
 `;
 
 const StatLabel = styled.p`
   color: rgba(15, 23, 42, 0.7);
   margin: 0;
-  @media (max-width: 500px) {
-    font-size: 0.85rem;
-  }
 `;
 
 const TrendIndicator = styled.div<{ $isPositive: boolean }>`
@@ -106,19 +118,12 @@ const TrendIndicator = styled.div<{ $isPositive: boolean }>`
   align-items: center;
   font-size: 0.875rem;
   color: ${props => props.$isPositive ? '#00E915' : '#EC297B'};
-  @media (max-width: 500px) {
-    font-size: 0.75rem;
-    margin-top: 4px;
-  }
 `;
 
 const TopRolesContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  @media (max-width: 500px) {
-    gap: 4px;
-  }
 `;
 
 const RoleItem = styled.div`
@@ -130,27 +135,34 @@ const RoleItem = styled.div`
 const RoleLabel = styled.span`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
-  @media (max-width: 500px) {
-    font-size: 0.75rem;
-  }
 `;
 
 const RoleValue = styled.span`
   font-size: 0.875rem;
   font-weight: 700;
   color: #0F172A;
-  @media (max-width: 500px) {
-    font-size: 0.75rem;
-  }
 `;
 
 const ContentGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
 
-  @media (min-width: 768px) {
-    grid-template-columns: 2fr 1fr;
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  @media only screen and (max-width: 767px) {
+    gap: 16px;
+  }
+
+  @media only screen and (max-width: 480px) {
+    gap: 10px;
+  }
+
+  @media only screen and (max-width: 320px) {
+    gap: 4px;
   }
 `;
 
@@ -162,9 +174,6 @@ const ActivityFeed = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  @media (max-width: 500px) {
-    padding: 12px;
-  }
 `;
 
 const SectionTitle = styled.h2`
@@ -180,7 +189,7 @@ const ActivityList = styled.div`
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
-  height: calc(5 * (48px + 16px)); /* 5 items * (item height + gap) */
+  height: calc(5 * (48px + 16px));
   padding-right: 16px;
 
   /* Custom scrollbar styles */
@@ -233,15 +242,22 @@ const ActivityContent = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
+
+  @media only screen and (max-width: 480px) {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
 `;
 
 const ActivityText = styled.p`
   color: #0F172A;
   margin: 0;
   white-space: normal;
-  word-wrap: break-word;
   line-height: 1.4;
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
 `;
 
 const ActivityTime = styled.p`
@@ -256,9 +272,6 @@ const QuickActions = styled.div`
   border-radius: 12px;
   border: 1px solid #E5E7EB;
   padding: 24px;
-  @media (max-width: 500px) {
-    padding: 12px;
-  }
 `;
 
 const ActionButton = styled.button<{ $primary?: boolean }>`
