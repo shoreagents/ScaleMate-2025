@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
 import { createClient } from '@supabase/supabase-js';
+import ResetPassword from './ResetPassword';
 
 const FormContainer = styled.div`
   max-width: 420px;
@@ -436,25 +437,26 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setIsLoading(true);
 
     try {
+      // Create a client with service role key for admin access
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+
       let emailToUse = loginIdentifier;
 
       // If the identifier is not an email, try to find the email by username
       if (!isValidEmail(loginIdentifier)) {
-        // Create a client with service role key for admin access
-        const serviceRoleClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
-
         // Query the user_profiles table to get the user_id
         const { data: profileData, error: profileError } = await serviceRoleClient
           .from('user_profiles')
@@ -463,7 +465,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (profileError || !profileData) {
-          throw new Error('Invalid username or email');
+          throw new Error('Invalid username or email!');
         }
 
         // Query the users table to get the email
@@ -474,10 +476,15 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (userError || !userData) {
-          throw new Error('Invalid username or email');
+          throw new Error('Invalid username or email!');
         }
 
         emailToUse = userData.email;
+      }
+
+      // Validate verification code
+      if (verificationCode.join('').length !== 6) {
+        throw new Error('Please enter the complete verification code!');
       }
 
       // Normalize email before verification
@@ -493,23 +500,64 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       });
 
       if (verifyError) {
-        throw verifyError;
+        // Handle specific error cases
+        if (verifyError.message.includes('Invalid OTP')) {
+          throw new Error('Token has expired or is invalid!');
+        } else if (verifyError.message.includes('expired')) {
+          throw new Error('Token has expired or is invalid!');
+        } else {
+          throw verifyError;
+        }
       }
 
-      setSuccess('Email verified successfully!');
+      // Remove success message since we're redirecting
+      onSuccess?.('Email verified successfully!');
       
       // If we're in the blueprint modal, stay in the modal
       if (preventRedirect) {
         onSuccess?.('Email verified successfully!');
       } else {
-        // Otherwise redirect to login
-        router.push('/login');
+        // Sign in the user after successful verification
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password
+        });
+
+        if (signInError) {
+          throw new Error('Failed to sign in after verification. Please try signing in manually.');
+        }
+
+        // Wait for session to be established
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          throw new Error('Failed to establish session. Please try signing in manually.');
+        }
+
+        // Use the callback URL for redirection
+        const callbackUrl = `${window.location.origin}/auth/callback`;
+        const currentUrl = redirectUrl || window.location.href;
+        
+        // Parse the current URL to get the from parameter
+        const url = new URL(currentUrl);
+        const fromParam = url.searchParams.get('from');
+        
+        // Create the callback URL with parameters
+        const callbackWithParams = new URL(callbackUrl);
+        callbackWithParams.searchParams.set('from', fromParam || '');
+        callbackWithParams.searchParams.set('redirectTo', currentUrl);
+        
+        // Only redirect after session is confirmed
+        router.push(callbackWithParams.toString());
       }
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
       setError(errorMessage);
+      setSuccess(null);
       onError?.(errorMessage);
+      // Clear verification code on error
+      setVerificationCode(Array(6).fill(''));
     } finally {
       setIsLoading(false);
     }
@@ -569,7 +617,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (profileError || !profileData) {
-          throw new Error('Invalid username or email');
+          throw new Error('Invalid username or email!');
         }
 
         // Query the users table to get the email
@@ -580,7 +628,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (userError || !userData) {
-          throw new Error('Invalid username or email');
+          throw new Error('Invalid username or email!');
         }
 
         emailToUse = userData.email;
@@ -593,7 +641,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (userError || !userData) {
-          throw new Error('Invalid username or email');
+          throw new Error('Invalid username or email!');
         }
       }
 
@@ -610,14 +658,20 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         if (signInError.message.includes('Email not confirmed')) {
           // Show verification form without error message
           setShowVerification(true);
+          // Automatically trigger resend of verification code
+          await supabase.auth.resend({
+            type: 'signup',
+            email: normalizedEmail,
+          });
+          setResendCountdown(60); // Start countdown
           return;
         }
         // If we got here, the email/username exists but password is wrong
-        throw new Error('Incorrect password');
+        throw new Error('Incorrect password!');
       }
 
       if (!data.user) {
-        throw new Error('Invalid username or email');
+        throw new Error('Invalid username or email!');
       }
 
       // Get user's role
@@ -632,7 +686,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
 
       const userRoles = roles.map(r => r.role);
 
-      setSuccess('Successfully signed in!');
+      // Remove success message since we're redirecting
       onSuccess?.('Successfully signed in!');
 
       // Only redirect if preventRedirect is false
@@ -652,41 +706,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       console.error('Sign in error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign in';
       setError(errorMessage);
+      setSuccess(null);
       onError?.(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    setIsLoading(true);
-
-    try {
-      // Validate email format
-      if (!isValidEmail(loginIdentifier)) {
-        throw new Error('Please enter a valid email address');
-      }
-
-      // Normalize email before sending reset
-      const normalizedEmail = normalizeEmail(loginIdentifier);
-
-      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}/admin`,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      setSuccess('Password reset email sent! Please check your inbox.');
-      setLoginIdentifier('');
-      setPassword('');
-      setShowResetForm(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while sending reset email');
     } finally {
       setIsLoading(false);
     }
@@ -741,16 +762,53 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     if (resendCountdown > 0) return;
     
     setError(null);
+    setSuccess(null);
     setIsResending(true);
 
     try {
-      // Validate email format
+      // Create a client with service role key for admin access
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+
+      let emailToUse = loginIdentifier;
+
+      // If the identifier is not an email, try to find the email by username
       if (!isValidEmail(loginIdentifier)) {
-        throw new Error('Please enter a valid email address');
+        // Query the user_profiles table to get the user_id
+        const { data: profileData, error: profileError } = await serviceRoleClient
+          .from('user_profiles')
+          .select('user_id')
+          .eq('username', loginIdentifier)
+          .single();
+
+        if (profileError || !profileData) {
+          throw new Error('Invalid username or email!');
+        }
+
+        // Query the users table to get the email
+        const { data: userData, error: userError } = await serviceRoleClient
+          .from('users')
+          .select('email')
+          .eq('id', profileData.user_id)
+          .single();
+
+        if (userError || !userData) {
+          throw new Error('Invalid username or email!');
+        }
+
+        emailToUse = userData.email;
       }
 
       // Normalize email before sending
-      const normalizedEmail = normalizeEmail(loginIdentifier);
+      const normalizedEmail = normalizeEmail(emailToUse);
 
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
@@ -758,15 +816,23 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       });
 
       if (resendError) {
-        throw resendError;
+        // Handle specific error cases
+        if (resendError.message.includes('rate limit') || resendError.message.includes('For security purposes')) {
+          throw new Error('Please wait a few minutes before requesting a new code.');
+        } else {
+          throw resendError;
+        }
       }
 
-      setSuccess('New verification code sent!');
+      // Remove success message since we're redirecting
+      onSuccess?.('New verification code sent!');
+      setError(null);
       setResendCountdown(60); // Start countdown
     } catch (err) {
       console.error('Resend error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while resending the code';
       setError(errorMessage);
+      setSuccess(null);
       onError?.(errorMessage);
     } finally {
       setIsResending(false);
@@ -780,6 +846,70 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       password &&
       password.length >= 8
     );
+  };
+
+  // Add the handleResetPassword function
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
+
+    try {
+      // Validate email format
+      if (!isValidEmail(loginIdentifier)) {
+        throw new Error('Please enter a valid email address!');
+      }
+
+      // Normalize email before sending reset
+      const normalizedEmail = normalizeEmail(loginIdentifier);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+
+      if (error) {
+        console.log('Reset password error:', error); // Debug log
+        if (error.status === 429 || 
+            error.message.toLowerCase().includes('too many requests') ||
+            error.message.toLowerCase().includes('rate limit') ||
+            error.message.toLowerCase().includes('security')) {
+          setError('Too many attempts. Please wait a few minutes before trying again.');
+          onError?.('Too many attempts. Please wait a few minutes before trying again.');
+          return;
+        }
+        throw error;
+      }
+
+      // Show success message and redirect to reset password page
+      setSuccess('Password reset email sent! Please check your inbox.');
+      onSuccess?.('Password reset email sent! Please check your inbox.');
+      
+      // Redirect to reset password page after a short delay
+      setTimeout(() => {
+        router.push('/reset-password');
+      }, 2000);
+    } catch (err) {
+      console.error('Reset password error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred while sending reset email';
+      if (errorMessage.toLowerCase().includes('too many requests') ||
+          errorMessage.toLowerCase().includes('rate limit') ||
+          errorMessage.toLowerCase().includes('security')) {
+        setError('Too many attempts. Please wait a few minutes before trying again.');
+        onError?.('Too many attempts. Please wait a few minutes before trying again.');
+      } else {
+        setError(errorMessage);
+        onError?.(errorMessage);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToSignIn = () => {
+    setShowResetForm(false);
+    setError(null);
+    setSuccess(null);
   };
 
   if (showVerification) {
@@ -797,7 +927,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     <VerificationInput
                       key={index}
                       id={`verification-${index}`}
-                  type="text"
+                      type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       maxLength={1}
@@ -808,14 +938,31 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     />
                   ))}
                 </VerificationContainer>
+                {error && (
+                  <MessageContainer>
+                    <FiX size={14} />
+                    {error}
+                  </MessageContainer>
+                )}
+                {success && (
+                  <MessageContainer $isSuccess>
+                    <FiCheck size={14} />
+                    {success}
+                  </MessageContainer>
+                )}
               </InputGroup>
             </FormFields>
             <FormActions>
               <ButtonContainer>
                 {!preventRedirect && (
-                <SecondaryButton type="button" onClick={() => setShowVerification(false)}>
-                  Back to Sign In
-                </SecondaryButton>
+                  <SecondaryButton type="button" onClick={() => {
+                    setShowVerification(false);
+                    setError(null);
+                    setSuccess(null);
+                    setVerificationCode(Array(6).fill(''));
+                  }}>
+                    Back to Sign In
+                  </SecondaryButton>
                 )}
                 <Button 
                   type="submit" 
@@ -844,16 +991,16 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       {showResetForm ? (
         <>
           <Title>Reset Password</Title>
-          <Subtitle>Enter your email address and we'll send you a link to reset your password.</Subtitle>
+          <Subtitle>Enter your email to receive a verification code</Subtitle>
           <Form onSubmit={handleResetPassword}>
             <FormContent>
               <FormFields>
                 <InputGroup>
-                  <Label htmlFor="reset-email">Email Address</Label>
+                  <Label htmlFor="loginIdentifier">Email</Label>
                   <Input
-                    id="reset-email"
-                    type="email"
-                    placeholder="your@email.com"
+                    id="loginIdentifier"
+                    type="text"
+                    placeholder="Enter your email"
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
                     required
@@ -865,23 +1012,96 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     {error}
                   </MessageContainer>
                 )}
+                {success && (
+                  <MessageContainer $isSuccess>
+                    <FiCheck size={14} />
+                    {success}
+                  </MessageContainer>
+                )}
               </FormFields>
               <FormActions>
                 <ButtonContainer>
-                  <SecondaryButton type="button" onClick={() => setShowResetForm(false)}>
+                  <SecondaryButton type="button" onClick={handleBackToSignIn}>
                     Back to Sign In
                   </SecondaryButton>
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading || !loginIdentifier}
-                  >
-                    {isLoading ? 'Sending Reset Link...' : 'Send Reset Link'}
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? 'Sending...' : 'Send Reset Link'}
                   </Button>
                 </ButtonContainer>
               </FormActions>
             </FormContent>
           </Form>
         </>
+      ) : showVerification ? (
+        <FormContainer>
+          <Title>Verify Your Email</Title>
+          <Subtitle>Please enter the verification code sent to your email</Subtitle>
+          <Form onSubmit={handleVerification}>
+            <FormContent>
+              <FormFields>
+                <InputGroup>
+                  <Label htmlFor="verificationCode">Verification Code</Label>
+                  <VerificationContainer>
+                    {[...Array(6)].map((_, index) => (
+                      <VerificationInput
+                        key={index}
+                        id={`verification-${index}`}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={1}
+                        value={verificationCode[index] || ''}
+                        onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
+                        onKeyDown={(e) => handleVerificationKeyDown(index, e)}
+                        autoFocus={index === 0}
+                      />
+                    ))}
+                  </VerificationContainer>
+                  {error && (
+                    <MessageContainer>
+                      <FiX size={14} />
+                      {error}
+                    </MessageContainer>
+                  )}
+                  {success && (
+                    <MessageContainer $isSuccess>
+                      <FiCheck size={14} />
+                      {success}
+                    </MessageContainer>
+                  )}
+                </InputGroup>
+              </FormFields>
+              <FormActions>
+                <ButtonContainer>
+                  {!preventRedirect && (
+                    <SecondaryButton type="button" onClick={() => {
+                      setShowVerification(false);
+                      setError(null);
+                      setSuccess(null);
+                      setVerificationCode(Array(6).fill(''));
+                    }}>
+                      Back to Sign In
+                    </SecondaryButton>
+                  )}
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading || verificationCode.join('').length !== 6}
+                    style={preventRedirect ? { width: '100%' } : undefined}
+                  >
+                    {isLoading ? 'Verifying...' : 'Verify Email'}
+                  </Button>
+                </ButtonContainer>
+                <ResendLink>
+                  {resendCountdown > 0 ? (
+                    <>Please wait <span className="timer">{resendCountdown}s</span> before requesting a new code</>
+                  ) : (
+                    <>Didn't receive the code? <button type="button" onClick={handleResendCode} disabled={isResending || resendCountdown > 0}>{isResending ? 'Sending...' : 'Resend Code'}</button></>
+                  )}
+                </ResendLink>
+              </FormActions>
+            </FormContent>
+          </Form>
+        </FormContainer>
       ) : (
         <>
           <Title>Login</Title>
@@ -911,7 +1131,10 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                 <InputGroup>
                   <PasswordLabelContainer>
                     <Label htmlFor="password">Password</Label>
-                    <ForgotPasswordLink type="button" onClick={() => setShowResetForm(true)}>
+                    <ForgotPasswordLink type="button" onClick={() => {
+                      setShowResetForm(true);
+                      setError(null);
+                    }}>
                       Forgot Your Password?
                     </ForgotPasswordLink>
                   </PasswordLabelContainer>
