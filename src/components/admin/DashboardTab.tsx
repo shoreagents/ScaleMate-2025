@@ -26,6 +26,9 @@ const MainContent = styled.main`
   @media only screen and (max-width: 480px) {
     padding: 0.5rem;
   }
+  @media only screen and (max-width: 320px) {
+    padding: 0.25rem;
+  }
 `;
 
 const Container = styled.div`
@@ -52,6 +55,11 @@ const StatsPanel = styled.section`
   @media only screen and (max-width: 480px) {
     grid-template-columns: repeat(1, 1fr);
     gap: 10px;
+  }
+
+  @media only screen and (max-width: 320px) {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 4px;
   }
 `;
 
@@ -152,6 +160,10 @@ const ContentGrid = styled.div`
   @media only screen and (max-width: 480px) {
     gap: 10px;
   }
+
+  @media only screen and (max-width: 320px) {
+    gap: 4px;
+  }
 `;
 
 const ActivityFeed = styled.div`
@@ -230,15 +242,22 @@ const ActivityContent = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   gap: 16px;
+
+  @media only screen and (max-width: 480px) {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
 `;
 
 const ActivityText = styled.p`
   color: #0F172A;
   margin: 0;
   white-space: normal;
-  word-wrap: break-word;
   line-height: 1.4;
   flex: 1;
+  min-width: 0;
+  max-width: 100%;
 `;
 
 const ActivityTime = styled.p`
