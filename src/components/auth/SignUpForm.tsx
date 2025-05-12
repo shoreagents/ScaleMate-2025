@@ -304,7 +304,6 @@ const VerificationContainer = styled.div`
   display: flex;
   gap: 0.5rem;
   justify-content: space-between;
-  margin-top: 1rem;
   width: 100%;
   margin-left: auto;
   margin-right: auto;
@@ -496,7 +495,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       return false;
     }
     if (password !== confirmPassword) {
-      setPasswordError('Passwords do not match');
+      setPasswordError('Passwords do not match.');
       return false;
     }
     setPasswordError(null);
@@ -1142,13 +1141,13 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
             {!checkingUsername && !usernameError && usernameExists === false && (
               <HelperText style={{ color: '#059669' }}>
                 <FiCheck size={14} />
-                Username is available
+                Username is available!
               </HelperText>
             )}
             {!checkingUsername && !usernameError && usernameExists === true && (
               <HelperText style={{ color: '#dc2626' }}>
                 <FiX size={14} />
-                Username is already taken
+                Username is already taken!
               </HelperText>
             )}
           </InputWrapper>
@@ -1255,19 +1254,19 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                 {formData.password && (
                   <HelperText style={{ color: formData.password.length >= 8 ? '#059669' : '#dc2626' }}>
                     {formData.password.length >= 8 ? <FiCheck size={14} /> : <FiX size={14} />}
-                    {formData.password.length >= 8 ? 'Password length is valid' : 'Password must be at least 8 characters'}
+                    {formData.password.length >= 8 ? 'Password length is valid.' : 'Password must be at least 8 characters.'}
                   </HelperText>
                 )}
                 {formData.confirmPassword && (
                   passwordError ? (
                     <HelperText style={{ color: '#dc2626' }}>
                       <FiX size={14} />
-                      Passwords do not match
+                      Passwords do not match!
                     </HelperText>
                   ) : (
                     <HelperText style={{ color: '#059669' }}>
                       <FiCheck size={14} />
-                      Passwords match
+                      Passwords match!
                     </HelperText>
                   )
                 )}

@@ -1311,7 +1311,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
                 // If we've exhausted retries, show a more helpful message
                 const retryDelay = 300000; // 5 minutes
                 startRateLimitCountdown(retryDelay);
-                setModalError('Too many attempts. Please wait 5 minutes or try using a different email address.');
+                setModalError('Too many attempts! Please wait a few minutes before trying again.');
                 return;
               }
               throw result.error;
