@@ -510,46 +510,38 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         }
       }
 
-      // Remove success message since we're redirecting
-      onSuccess?.('Email verified successfully!');
-      
-      // If we're in the blueprint modal, stay in the modal
-      if (preventRedirect) {
-        onSuccess?.('Email verified successfully!');
-      } else {
-        // Sign in the user after successful verification
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password
-        });
+      // Sign in the user after successful verification
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password
+      });
 
-        if (signInError) {
-          throw new Error('Failed to sign in after verification. Please try signing in manually.');
-        }
-
-        // Wait for session to be established
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError || !session) {
-          throw new Error('Failed to establish session. Please try signing in manually.');
-        }
-
-        // Use the callback URL for redirection
-        const callbackUrl = `${window.location.origin}/auth/callback`;
-        const currentUrl = redirectUrl || window.location.href;
-        
-        // Parse the current URL to get the from parameter
-        const url = new URL(currentUrl);
-        const fromParam = url.searchParams.get('from');
-        
-        // Create the callback URL with parameters
-        const callbackWithParams = new URL(callbackUrl);
-        callbackWithParams.searchParams.set('from', fromParam || '');
-        callbackWithParams.searchParams.set('redirectTo', currentUrl);
-        
-        // Only redirect after session is confirmed
-        router.push(callbackWithParams.toString());
+      if (signInError) {
+        throw new Error('Failed to sign in after verification. Please try signing in manually.');
       }
+
+      // Wait for session to be established
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Failed to establish session. Please try signing in manually.');
+      }
+
+      // Use the callback URL for redirection
+      const callbackUrl = `${window.location.origin}/auth/callback`;
+      const currentUrl = redirectUrl || window.location.href;
+      
+      // Parse the current URL to get the from parameter
+      const url = new URL(currentUrl);
+      const fromParam = url.searchParams.get('from');
+      
+      // Create the callback URL with parameters
+      const callbackWithParams = new URL(callbackUrl);
+      callbackWithParams.searchParams.set('from', fromParam || '');
+      callbackWithParams.searchParams.set('redirectTo', currentUrl);
+      
+      // Always redirect to callback to ensure profile/role creation
+      router.push(callbackWithParams.toString());
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
