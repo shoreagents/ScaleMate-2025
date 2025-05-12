@@ -981,16 +981,13 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     type="text"
                     placeholder="Enter your email"
                     value={loginIdentifier}
-                    onChange={(e) => {
-                      setLoginIdentifier(e.target.value);
-                      setSuccess(null);
-                    }}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
                     required
                   />
-                  {error && (
-                    <MessageContainer>
-                      <FiX size={14} />
-                      {error}
+                  {(error || success) && (
+                    <MessageContainer $isSuccess={!!success}>
+                      {success ? <FiCheck size={14} /> : <FiX size={14} />}
+                      {success || error}
                     </MessageContainer>
                   )}
                 </ResetPasswordInputGroup>
@@ -1049,12 +1046,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     }}
                     required
                   />
-                  {error && (
-                    <MessageContainer>
-                      <FiX size={14} />
-                      {error}
-                    </MessageContainer>
-                  )}
                 </InputGroup>
                 <InputGroup>
                   <PasswordLabelContainer>
@@ -1087,19 +1078,13 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                         {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                       </ViewPasswordButton>
                     </PasswordInputContainer>
-                    {error && (
-                      <MessageContainer>
-                        <FiX size={14} />
-                        {error}
-                      </MessageContainer>
-                    )}
-                    {success && (
-                      <MessageContainer $isSuccess>
-                        <FiCheck size={14} />
-                        {success}
-                      </MessageContainer>
-                    )}
                   </PasswordInputGroup>
+                  {(error || success) && (
+                    <MessageContainer $isSuccess={!!success}>
+                      {success ? <FiCheck size={14} /> : <FiX size={14} />}
+                      {success || error}
+                    </MessageContainer>
+                  )}
                 </InputGroup>
               </FormFields>
               <FormActions>
