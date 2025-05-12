@@ -342,6 +342,14 @@ const VerificationInput = styled.input`
   }
 `;
 
+const MessageContainer = styled.div<{ $isSuccess?: boolean }>`
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: ${props => props.$isSuccess ? props.theme.colors.success : props.theme.colors.error};
+`;
+
 interface SignUpFormProps {
   onSuccess?: (message: string) => void;
   onError?: (error: string | null) => void;
@@ -571,12 +579,18 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setIsLoading(true);
 
     try {
       // Validate email format
       if (!isValidEmail(formData.email)) {
-        throw new Error('Please enter a valid email address');
+        throw new Error('Please enter a valid email address!');
+      }
+
+      // Validate verification code
+      if (verificationCode.join('').length !== 6) {
+        throw new Error('Please enter the complete verification code!');
       }
 
       // Normalize email before verification
@@ -592,23 +606,64 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       });
 
       if (verifyError) {
-        throw verifyError;
+        // Handle specific error cases
+        if (verifyError.message.includes('Invalid OTP')) {
+          throw new Error('Token has expired or is invalid!');
+        } else if (verifyError.message.includes('expired')) {
+          throw new Error('Token has expired or is invalid!');
+        } else {
+          throw verifyError;
+        }
       }
 
       setSuccess('Email verified successfully!');
+      setError(null);
       
-      // If we're in a modal, stay in the modal and call onSuccess
+      // If we're in the blueprint modal, stay in the modal
       if (preventRedirect) {
         onSuccess?.('Email verified successfully!');
       } else {
-        // Keep showing verification view while redirecting
-        router.push('/user/dashboard');
+        // Sign in the user after successful verification
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password: formData.password
+        });
+
+        if (signInError) {
+          throw new Error('Failed to sign in after verification. Please try signing in manually.');
+        }
+
+        // Wait for session to be established
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !session) {
+          throw new Error('Failed to establish session. Please try signing in manually.');
+        }
+
+        // Use the callback URL for redirection
+        const callbackUrl = `${window.location.origin}/auth/callback`;
+        const currentUrl = redirectUrl || window.location.href;
+        
+        // Parse the current URL to get the from parameter
+        const url = new URL(currentUrl);
+        const fromParam = url.searchParams.get('from');
+        
+        // Create the callback URL with parameters
+        const callbackWithParams = new URL(callbackUrl);
+        callbackWithParams.searchParams.set('from', fromParam || '');
+        callbackWithParams.searchParams.set('redirectTo', currentUrl);
+        
+        // Only redirect after session is confirmed
+        router.push(callbackWithParams.toString());
       }
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
       setError(errorMessage);
+      setSuccess(null);
       onError?.(errorMessage);
+      // Clear verification code on error
+      setVerificationCode(Array(6).fill(''));
     } finally {
       setIsLoading(false);
     }
@@ -621,54 +676,46 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     setIsLoading(true);
 
     try {
-      // Validate passwords
-      if (!validatePasswords(formData.password, formData.confirmPassword)) {
-        setError('Passwords do not match');
+      // Validate email format
+      if (!isValidEmail(formData.email)) {
+        setError('Please enter a valid email address!');
+        setEmailError('Please enter a valid email address!');
+        onError?.('Please enter a valid email address!');
+        setIsLoading(false);
         return;
       }
 
       // Validate username
-      if (usernameExists) {
-        setError('Username is already taken');
+      if (!formData.username || formData.username.length < 3) {
+        setError('Username must be at least 3 characters long!');
+        setUsernameError('Username must be at least 3 characters long!');
+        onError?.('Username must be at least 3 characters long!');
+        setIsLoading(false);
         return;
       }
 
-      // Validate email format
-      if (!isValidEmail(formData.email)) {
-        throw new Error('Please enter a valid email address');
+      // Validate password
+      if (!formData.password || formData.password.length < 8) {
+        setError('Password must be at least 8 characters long!');
+        setPasswordError('Password must be at least 8 characters long!');
+        onError?.('Password must be at least 8 characters long!');
+        setIsLoading(false);
+        return;
       }
 
-      // Normalize email before checking existence
+      // Validate password match
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match!');
+        setPasswordError('Passwords do not match!');
+        onError?.('Passwords do not match!');
+        setIsLoading(false);
+        return;
+      }
+
+      // Normalize email before sign up
       const normalizedEmail = normalizeEmail(formData.email);
 
-      // Check if user already exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', normalizedEmail)
-        .single();
-
-      if (existingUser) {
-        throw new Error('An account with this email already exists');
-      }
-
-      // Validate password length
-      if (formData.password.length < 8) {
-        setError('Password must be at least 8 characters long');
-        return;
-      }
-
-      // Validate first name and last name
-      if (!formData.firstName.trim()) {
-        setError('First name is required');
-        return;
-      }
-      if (!formData.lastName.trim()) {
-        setError('Last name is required');
-        return;
-      }
-
-      // Create a client with service role key for admin operations
+      // Create a client with service role key for admin access
       const serviceRoleClient = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
@@ -680,12 +727,63 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         }
       );
 
-      // 1. Sign up with Supabase Auth
-      const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+      // Check if user exists in users table
+      const { data: existingUser, error: checkError } = await serviceRoleClient
+        .from('users')
+        .select('id')
+        .eq('email', normalizedEmail)
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking existing user:', checkError);
+        setError('An error occurred while checking for existing accounts.');
+        setEmailError('An error occurred while checking for existing accounts.');
+        onError?.('An error occurred while checking for existing accounts.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (existingUser) {
+        setError('An account with this email already exists!');
+        setEmailError('An account with this email already exists!');
+        setSuccess(null);
+        onError?.('An account with this email already exists!');
+        setIsLoading(false);
+        return;
+      }
+
+      // Check if username exists
+      const { data: existingUsername, error: usernameCheckError } = await serviceRoleClient
+        .from('user_profiles')
+        .select('username')
+        .eq('username', formData.username.toLowerCase())
+        .single();
+
+      if (usernameCheckError && usernameCheckError.code !== 'PGRST116') {
+        console.error('Error checking existing username:', usernameCheckError);
+        setError('An error occurred while checking for existing usernames.');
+        setUsernameError('An error occurred while checking for existing usernames.');
+        onError?.('An error occurred while checking for existing usernames.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (existingUsername) {
+        setError('This username is already taken!');
+        setUsernameError('This username is already taken!');
+        setSuccess(null);
+        onError?.('This username is already taken!');
+        setIsLoading(false);
+        return;
+      }
+
+      // First, create the auth user with metadata
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password: formData.password,
         options: {
           data: {
+            username: formData.username.toLowerCase(),
             full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
             first_name: formData.firstName.trim(),
             last_name: formData.lastName.trim()
@@ -695,158 +793,98 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
       if (signUpError) {
         console.error('Sign up error:', signUpError);
-        if (signUpError.message.includes('duplicate key value')) {
-          setError('An account with this email already exists');
-          onError?.('An account with this email already exists');
+        if (signUpError.message.includes('User already registered') || 
+            signUpError.message.includes('already exists') ||
+            signUpError.message.includes('already registered')) {
+          setError('An account with this email already exists!');
+          setEmailError('An account with this email already exists!');
+          setSuccess(null);
+          onError?.('An account with this email already exists!');
+          setIsLoading(false);
+          return;
+        } else {
+          setError(signUpError.message);
+          onError?.(signUpError.message);
+          setIsLoading(false);
           return;
         }
-        setError(signUpError.message || 'Failed to create account');
-        onError?.(signUpError.message || 'Failed to create account');
+      }
+
+      if (!data.user) {
+        setError('Failed to create account. Please try again!');
+        onError?.('Failed to create account. Please try again!');
+        setIsLoading(false);
         return;
       }
 
-      if (!user) {
-        setError('Failed to create user account');
-        onError?.('Failed to create user account');
-        return;
-      }
-
-      // 2. Check if user already exists in users table
-      const { data: existingUserCheck, error: checkError } = await serviceRoleClient
-        .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-        console.error('Error checking existing user:', checkError);
-        throw new Error('Failed to check existing user');
-      }
-
-      // Only insert if user doesn't exist
-      if (!existingUserCheck) {
+      try {
+        // Insert into users table with full user data
         const { error: userError } = await serviceRoleClient
           .from('users')
           .insert({
-            id: user.id,
+            id: data.user.id,
             email: normalizedEmail,
             full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
             is_active: true
           });
 
-        if (userError) {
-          console.error('User creation error:', userError);
-          // If user creation fails, try to delete the auth user to maintain consistency
-          await supabase.auth.admin.deleteUser(user.id);
-          if (userError.message.includes('duplicate key value')) {
-            setError('An account with this email already exists');
-            onError?.('An account with this email already exists');
-            return;
-          }
-          setError('Failed to create user record: ' + userError.message);
-          onError?.('Failed to create user record: ' + userError.message);
-          return;
-        }
-      }
+        if (userError) throw userError;
 
-      // 3. Check if profile exists
-      const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
-        .from('user_profiles')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
-        console.error('Error checking existing profile:', profileCheckError);
-        throw new Error('Failed to check existing profile');
-      }
-
-      // Only insert if profile doesn't exist
-      if (!existingProfile) {
-        // Double check username availability before creating profile
-        const { data: usernameCheck, error: usernameCheckError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('username')
-          .eq('username', formData.username)
-          .single();
-
-        if (usernameCheckError && usernameCheckError.code !== 'PGRST116') {
-          console.error('Error checking username:', usernameCheckError);
-          throw new Error('Failed to check username availability');
-        }
-
-        if (usernameCheck) {
-          // If username is taken, clean up and show error
-          await serviceRoleClient.from('users').delete().eq('id', user.id);
-          await supabase.auth.admin.deleteUser(user.id);
-          setError('Username is already taken. Please choose a different username.');
-          onError?.('Username is already taken. Please choose a different username.');
-          return;
-        }
-
+        // Insert into user_profiles table with complete profile data
         const { error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .insert({
-            user_id: user.id,
-            username: formData.username,
+            user_id: data.user.id,
+            username: formData.username.toLowerCase(),
             first_name: formData.firstName.trim(),
             last_name: formData.lastName.trim(),
-            phone: null,
-            gender: null,
-            last_password_change: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
 
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // If profile creation fails, try to delete the auth user and user record
-          await serviceRoleClient.from('users').delete().eq('id', user.id);
-          await supabase.auth.admin.deleteUser(user.id);
-          if (profileError.message.includes('duplicate key value')) {
-            setError('Username is already taken. Please choose a different username.');
-            onError?.('Username is already taken. Please choose a different username.');
-            return;
-          }
-          throw new Error('Failed to create user profile: ' + profileError.message);
-        }
-      }
+        if (profileError) throw profileError;
 
-      // 4. Check if role exists
-      const { data: existingRole, error: roleCheckError } = await serviceRoleClient
-        .from('user_roles')
-        .select('user_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (roleCheckError && roleCheckError.code !== 'PGRST116') {
-        console.error('Error checking existing role:', roleCheckError);
-        throw new Error('Failed to check existing role');
-      }
-
-      // Only insert if role doesn't exist
-      if (!existingRole) {
+        // Insert into user_roles table
         const { error: roleError } = await serviceRoleClient
           .from('user_roles')
           .insert({
-            user_id: user.id,
-            role: 'user'
+            user_id: data.user.id,
+            role: 'user',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
 
-        if (roleError) {
-          console.error('Role assignment error:', roleError);
-          // If role assignment fails, try to clean up
-          await serviceRoleClient.from('user_profiles').delete().eq('user_id', user.id);
-          await serviceRoleClient.from('users').delete().eq('id', user.id);
-          await supabase.auth.admin.deleteUser(user.id);
-          throw new Error('Failed to assign user role: ' + roleError.message);
-        }
-      }
+        if (roleError) throw roleError;
 
-      // Remove success message and just show verification form
-      setShowVerificationWithCallback(true);
+        // If we get here, everything was successful
+        setSuccess('Account created successfully! Please verify your email.');
+        setError(null);
+        setEmailError(null);
+        setUsernameError(null);
+        setPasswordError(null);
+        setShowVerificationWithCallback(true);
+        setResendCountdown(60);
+        onSuccess?.('Account created successfully! Please verify your email.');
+      } catch (dbError) {
+        console.error('Database error:', dbError);
+        // If database operations fail, we should still show the verification form
+        // since the auth user was created successfully
+        setSuccess('Account created! Please verify your email.');
+        setError(null);
+        setEmailError(null);
+        setUsernameError(null);
+        setPasswordError(null);
+        setShowVerificationWithCallback(true);
+        setResendCountdown(60);
+        onSuccess?.('Account created! Please verify your email.');
+      }
     } catch (err) {
       console.error('Sign up error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign up';
       setError(errorMessage);
+      setSuccess(null);
       onError?.(errorMessage);
     } finally {
       setIsLoading(false);
@@ -865,8 +903,9 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     }
 
     if (name === 'email') {
-      // Only check if email exists, no format validation
-      checkEmailExists(value);
+      // Remove real-time email validation
+      setEmailError(null);
+      setEmailExists(null);
     }
 
     // Check password match when either password field changes
@@ -927,12 +966,13 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     if (resendCountdown > 0) return;
     
     setError(null);
+    setSuccess(null);
     setIsResending(true);
 
     try {
       // Validate email format
       if (!isValidEmail(formData.email)) {
-        throw new Error('Please enter a valid email address');
+        throw new Error('Please enter a valid email address!');
       }
 
       // Normalize email before sending
@@ -944,15 +984,22 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       });
 
       if (resendError) {
-        throw resendError;
+        // Handle specific error cases
+        if (resendError.message.includes('rate limit') || resendError.message.includes('For security purposes')) {
+          throw new Error('Please wait a few minutes before requesting a new code.');
+        } else {
+          throw resendError;
+        }
       }
 
       setSuccess('New verification code sent!');
+      setError(null);
       setResendCountdown(60); // Start countdown
     } catch (err) {
       console.error('Resend error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while resending the code';
       setError(errorMessage);
+      setSuccess(null);
       onError?.(errorMessage);
     } finally {
       setIsResending(false);
@@ -984,29 +1031,33 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         <Form onSubmit={handleVerification}>
           <InputGroup>
             <Label htmlFor="verificationCode">Verification Code</Label>
-            <InputWrapper>
-              <VerificationContainer>
-                {[...Array(6)].map((_, index) => (
-                  <VerificationInput
-                    key={index}
-                    id={`verification-${index}`}
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={1}
-                    value={verificationCode[index] || ''}
-                    onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
-                    onKeyDown={(e) => handleVerificationKeyDown(index, e)}
-                    autoFocus={index === 0}
-                  />
-                ))}
-              </VerificationContainer>
-            </InputWrapper>
+            <VerificationContainer>
+              {[...Array(6)].map((_, index) => (
+                <VerificationInput
+                  key={index}
+                  id={`verification-${index}`}
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={1}
+                  value={verificationCode[index] || ''}
+                  onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
+                  onKeyDown={(e) => handleVerificationKeyDown(index, e)}
+                  autoFocus={index === 0}
+                />
+              ))}
+            </VerificationContainer>
+            {error && (
+              <MessageContainer>
+                <FiX size={14} />
+                {error}
+              </MessageContainer>
+            )}
           </InputGroup>
           <ButtonContainer>
             <Button 
               type="submit" 
-              disabled={isLoading || verificationCode.join('').length !== 6}
+              disabled={isLoading || verificationCode.some(code => !code)}
               style={preventRedirect ? { width: '100%' } : undefined}
             >
               {isLoading ? 'Verifying...' : 'Verify Email'}
@@ -1125,10 +1176,28 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
               onChange={handleChange}
               required
             />
-            {error && (
+            {emailError && (
               <HelperText style={{ color: '#dc2626' }}>
                 <FiX size={14} />
-                {error}
+                {emailError}
+              </HelperText>
+            )}
+            {checkingEmail && (
+              <HelperText style={{ color: '#6b7280' }}>
+                <FiLoader size={14} />
+                Checking email...
+              </HelperText>
+            )}
+            {!checkingEmail && !emailError && emailExists === false && (
+              <HelperText style={{ color: '#059669' }}>
+                <FiCheck size={14} />
+                Email is available
+              </HelperText>
+            )}
+            {!checkingEmail && !emailError && emailExists === true && (
+              <HelperText style={{ color: '#dc2626' }}>
+                <FiX size={14} />
+                Email is already registered
               </HelperText>
             )}
           </InputWrapper>
