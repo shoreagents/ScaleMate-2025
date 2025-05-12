@@ -242,7 +242,7 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from');
       
-      if (fromParam === 'blueprint-modal') {
+      if (fromParam === 'quote-modal') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -258,7 +258,7 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       // Add a query parameter to identify this is from the blueprint modal
-      url.searchParams.set('from', 'blueprint-modal');
+      url.searchParams.set('from', 'quote-modal');
       // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
