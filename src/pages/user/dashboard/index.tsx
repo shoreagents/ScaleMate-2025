@@ -389,19 +389,13 @@ const DashboardPage = () => {
         </MainContent>
 
       {showSetupForm && user && (
-        <Modal
+        <FirstTimeSetupForm
           isOpen={showSetupForm}
           onClose={() => setShowSetupForm(false)}
-          title="Complete Your Setup"
-        >
-          <FirstTimeSetupForm
-            isOpen={showSetupForm}
-            onClose={() => setShowSetupForm(false)}
-            userId={user.id}
-            currentUsername={userData?.username || ''}
-            onSetupComplete={handleSetupComplete}
-          />
-        </Modal>
+          userId={user.id}
+          currentUsername={userData?.username || ''}
+          onSetupComplete={handleSetupComplete}
+        />
       )}
 
       {showSuccessModal && (
