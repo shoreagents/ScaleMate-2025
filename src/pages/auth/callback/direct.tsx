@@ -150,6 +150,10 @@ export default function DirectAuthCallback() {
           const isGoogleUser = user.app_metadata?.provider === 'google';
           
           if (isGoogleUser) {
+            // Get high quality profile picture from Google
+            const avatarUrl = user.user_metadata?.avatar_url;
+            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+
             // Create user profile without username
             const { error: createProfileError } = await serviceRoleClient
               .from('user_profiles')
@@ -158,7 +162,7 @@ export default function DirectAuthCallback() {
                 username: null,
                 first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
                 last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                profile_picture: user.user_metadata?.avatar_url || null,
+                profile_picture: highQualityAvatarUrl || null,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               });
@@ -173,12 +177,14 @@ export default function DirectAuthCallback() {
           }
         } else if (user.app_metadata?.provider === 'google' && !profile.profile_picture) {
           // If profile exists but no profile picture, update it with Google's picture
-          const profilePicture = user.user_metadata?.avatar_url || null;
-          if (profilePicture) {
+          const avatarUrl = user.user_metadata?.avatar_url;
+          const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+          
+          if (highQualityAvatarUrl) {
             const { error: updateError } = await serviceRoleClient
               .from('user_profiles')
               .update({
-                profile_picture: profilePicture,
+                profile_picture: highQualityAvatarUrl,
                 updated_at: new Date().toISOString()
               })
               .eq('user_id', user.id);
