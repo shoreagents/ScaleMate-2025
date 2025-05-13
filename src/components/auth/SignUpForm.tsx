@@ -397,6 +397,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
   });
   const [verificationCode, setVerificationCode] = useState<string[]>(Array(6).fill(''));
   const [showVerification, setShowVerification] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -577,8 +578,11 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isVerifying) return; // Prevent multiple submissions
+    
     setError(null);
     setSuccess(null);
+    setIsVerifying(true);
     setIsLoading(true);
 
     try {
@@ -636,12 +640,14 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       const currentUrl = redirectUrl || window.location.pathname;
       const url = new URL(currentUrl, window.location.origin);
       
-      // Preserve the specific modal type if it exists, otherwise use 'modal'
-      const fromParam = url.searchParams.get('from') || 'modal';
-      const redirectTo = url.searchParams.get('redirectTo') || window.location.pathname;
+      // Preserve the specific modal type if it exists, otherwise use 'direct' or 'modal' based on preventRedirect
+      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
+      // Only use the pathname for redirectTo, not the full URL
+      const redirectTo = url.pathname;
 
-      // Create the callback URL with parameters
-      const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+      // Choose callback route based on context
+      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
+      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
       callbackUrl.searchParams.set('from', fromParam);
       callbackUrl.searchParams.set('redirectTo', redirectTo);
 
@@ -651,16 +657,19 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         callbackUrl: callbackUrl.toString()
       });
 
-      // Always redirect to callback to ensure proper profile/role creation
+      // Redirect to appropriate callback
       router.push(callbackUrl.toString());
+      // Don't reset isVerifying here since we're redirecting
+      return;
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
       setError(errorMessage);
       setSuccess(null);
       onError?.(errorMessage);
-      // Clear verification code on error
       setVerificationCode(Array(6).fill(''));
+      // Only reset isVerifying on error
+      setIsVerifying(false);
     } finally {
       setIsLoading(false);
     }
@@ -724,56 +733,6 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         }
       );
 
-      // Check if user exists in users table
-      const { data: existingUser, error: checkError } = await serviceRoleClient
-        .from('users')
-        .select('id')
-        .eq('email', normalizedEmail)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing user:', checkError);
-        setError('An error occurred while checking for existing accounts.');
-        setEmailError('An error occurred while checking for existing accounts.');
-        onError?.('An error occurred while checking for existing accounts.');
-        setIsLoading(false);
-        return;
-      }
-
-      if (existingUser) {
-        setError('An account with this email already exists!');
-        setEmailError('An account with this email already exists!');
-        setSuccess(null);
-        onError?.('An account with this email already exists!');
-        setIsLoading(false);
-        return;
-      }
-
-      // Check if username exists
-      const { data: existingUsername, error: usernameCheckError } = await serviceRoleClient
-        .from('user_profiles')
-        .select('username')
-        .eq('username', formData.username.toLowerCase())
-        .single();
-
-      if (usernameCheckError && usernameCheckError.code !== 'PGRST116') {
-        console.error('Error checking existing username:', usernameCheckError);
-        setError('An error occurred while checking for existing usernames.');
-        setUsernameError('An error occurred while checking for existing usernames.');
-        onError?.('An error occurred while checking for existing usernames.');
-        setIsLoading(false);
-        return;
-      }
-
-      if (existingUsername) {
-        setError('This username is already taken!');
-        setUsernameError('This username is already taken!');
-        setSuccess(null);
-        onError?.('This username is already taken!');
-        setIsLoading(false);
-        return;
-      }
-
       // First, create the auth user with metadata
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: normalizedEmail,
@@ -808,15 +767,110 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       }
 
       if (!data.user) {
+        console.error('SignUpForm - No user data returned from auth.signUp');
         setError('Failed to create account. Please try again!');
         onError?.('Failed to create account. Please try again!');
         setIsLoading(false);
         return;
       }
 
+      console.log('SignUpForm - Auth user created successfully:', data.user.id);
+
       try {
+        // First check if user already exists in database
+        const { data: existingUser, error: checkError } = await serviceRoleClient
+          .from('users')
+          .select('id')
+          .eq('id', data.user.id)
+          .single();
+
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+          console.error('SignUpForm - Error checking existing user:', checkError);
+          throw checkError;
+        }
+
+        if (existingUser) {
+          console.log('SignUpForm - User already exists in database, checking profile and role...');
+          
+          // Check if profile exists
+          const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
+            .from('user_profiles')
+            .select('user_id')
+            .eq('user_id', data.user.id)
+            .single();
+
+          if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+            console.error('SignUpForm - Error checking existing profile:', profileCheckError);
+            throw profileCheckError;
+          }
+
+          // Check if role exists
+          const { data: existingRole, error: roleCheckError } = await serviceRoleClient
+            .from('user_roles')
+            .select('user_id')
+            .eq('user_id', data.user.id)
+            .single();
+
+          if (roleCheckError && roleCheckError.code !== 'PGRST116') {
+            console.error('SignUpForm - Error checking existing role:', roleCheckError);
+            throw roleCheckError;
+          }
+
+          // If profile or role is missing, create them
+          if (!existingProfile) {
+            console.log('SignUpForm - Creating missing profile...');
+            const { error: profileError } = await serviceRoleClient
+              .from('user_profiles')
+              .insert({
+                user_id: data.user.id,
+                username: formData.username.toLowerCase(),
+                first_name: formData.firstName.trim(),
+                last_name: formData.lastName.trim(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+
+            if (profileError) {
+              console.error('SignUpForm - Error creating profile:', profileError);
+              throw profileError;
+            }
+          }
+
+          if (!existingRole) {
+            console.log('SignUpForm - Creating missing role...');
+            const { error: roleError } = await serviceRoleClient
+              .from('user_roles')
+              .insert({
+                user_id: data.user.id,
+                role: 'user',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+
+            if (roleError) {
+              console.error('SignUpForm - Error creating role:', roleError);
+              throw roleError;
+            }
+          }
+
+          // If we get here, either everything existed or we created what was missing
+          console.log('SignUpForm - User setup completed (existing user)');
+          setSuccess('Account created successfully! Please verify your email.');
+          setError(null);
+          setEmailError(null);
+          setUsernameError(null);
+          setPasswordError(null);
+          setShowVerificationWithCallback(true);
+          setResendCountdown(60);
+          return;
+        }
+
+        // If we get here, user doesn't exist in database, create everything
+        console.log('SignUpForm - Creating new user records...');
+
         // Insert into users table with full user data
-        const { error: userError } = await serviceRoleClient
+        console.log('SignUpForm - Attempting to insert into users table...');
+        const { data: userData, error: userError } = await serviceRoleClient
           .from('users')
           .insert({
             id: data.user.id,
@@ -825,12 +879,19 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             is_active: true
-          });
+          })
+          .select()
+          .single();
 
-        if (userError) throw userError;
+        if (userError) {
+          console.error('SignUpForm - Error inserting into users:', userError);
+          throw userError;
+        }
+        console.log('SignUpForm - Successfully inserted into users:', userData);
 
         // Insert into user_profiles table with complete profile data
-        const { error: profileError } = await serviceRoleClient
+        console.log('SignUpForm - Attempting to insert into user_profiles table...');
+        const { data: profileData, error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .insert({
             user_id: data.user.id,
@@ -839,23 +900,37 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
             last_name: formData.lastName.trim(),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          });
+          })
+          .select()
+          .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('SignUpForm - Error inserting into user_profiles:', profileError);
+          throw profileError;
+        }
+        console.log('SignUpForm - Successfully inserted into user_profiles:', profileData);
 
         // Insert into user_roles table
-        const { error: roleError } = await serviceRoleClient
+        console.log('SignUpForm - Attempting to insert into user_roles table...');
+        const { data: roleData, error: roleError } = await serviceRoleClient
           .from('user_roles')
           .insert({
             user_id: data.user.id,
             role: 'user',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          });
+          })
+          .select()
+          .single();
 
-        if (roleError) throw roleError;
+        if (roleError) {
+          console.error('SignUpForm - Error inserting into user_roles:', roleError);
+          throw roleError;
+        }
+        console.log('SignUpForm - Successfully inserted into user_roles:', roleData);
 
         // If we get here, everything was successful
+        console.log('SignUpForm - All database operations completed successfully');
         setSuccess('Account created successfully! Please verify your email.');
         setError(null);
         setEmailError(null);
@@ -864,7 +939,15 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         setShowVerificationWithCallback(true);
         setResendCountdown(60);
       } catch (dbError) {
-        console.error('Database error:', dbError);
+        console.error('SignUpForm - Database operation failed:', dbError);
+        // Log the specific error details
+        if (dbError instanceof Error) {
+          console.error('SignUpForm - Error details:', {
+            message: dbError.message,
+            name: dbError.name,
+            stack: dbError.stack
+          });
+        }
         // If database operations fail, we should still show the verification form
         // since the auth user was created successfully
         setSuccess('Account created! Please verify your email.');
@@ -917,20 +1000,23 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     setError(null);
 
     try {
-      // Always redirect to the callback URL first
-      const callbackUrl = `${window.location.origin}/auth/callback`;
+      // Choose callback route based on context
+      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
+      const callbackUrl = `${window.location.origin}${callbackBase}`;
       
       // Get the current URL for redirect
-      const currentUrl = redirectUrl || window.location.href;
+      const currentUrl = redirectUrl || window.location.pathname;
       
       // Parse the current URL to get the from parameter
-      const url = new URL(currentUrl);
-      const fromParam = url.searchParams.get('from');
+      const url = new URL(currentUrl, window.location.origin);
+      // Use 'direct' as default when preventRedirect is false, otherwise use 'modal'
+      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
       
       // Create the callback URL with parameters
       const callbackWithParams = new URL(callbackUrl);
       callbackWithParams.searchParams.set('from', fromParam || '');
-      callbackWithParams.searchParams.set('redirectTo', currentUrl);
+      // Only use the pathname for redirectTo
+      callbackWithParams.searchParams.set('redirectTo', url.pathname);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -1039,6 +1125,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
                   onKeyDown={(e) => handleVerificationKeyDown(index, e)}
                   autoFocus={index === 0}
+                  disabled={isVerifying}
                 />
               ))}
             </VerificationContainer>
@@ -1052,17 +1139,23 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
           <ButtonContainer>
             <Button 
               type="submit" 
-              disabled={isLoading || verificationCode.some(code => !code)}
+              disabled={isVerifying || verificationCode.some(code => !code)}
               style={preventRedirect ? { width: '100%' } : undefined}
             >
-              {isLoading ? 'Verifying...' : 'Verify Email'}
+              {isVerifying ? 'Verifying...' : 'Verify Email'}
             </Button>
           </ButtonContainer>
           <ResendLink>
             {resendCountdown > 0 ? (
               <>Please wait <span className="timer">{resendCountdown}s</span> before requesting a new code</>
             ) : (
-              <>Didn't receive the code? <button type="button" onClick={handleResendCode} disabled={isResending || resendCountdown > 0}>{isResending ? 'Sending...' : 'Resend Code'}</button></>
+              <button 
+                type="button" 
+                onClick={handleResendCode} 
+                disabled={isResending || resendCountdown > 0 || isVerifying}
+              >
+                {isResending ? 'Sending...' : 'Resend Code'}
+              </button>
             )}
           </ResendLink>
         </Form>

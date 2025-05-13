@@ -425,6 +425,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const [verificationCode, setVerificationCode] = useState<string[]>(Array(6).fill(''));
   const [showVerification, setShowVerification] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false);
   const router = useRouter();
 
   // Add useEffect for countdown
@@ -442,7 +443,10 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
 
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isVerifying) return; // Prevent multiple submissions
+    
     setError(null);
+    setIsVerifying(true);
     setIsLoading(true);
 
     try {
@@ -535,22 +539,36 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;
       const url = new URL(currentUrl, window.location.origin);
-      const fromParam = url.searchParams.get('from') || 'modal'; // Always set from=modal for modals
-      const redirectTo = url.searchParams.get('redirectTo') || window.location.pathname;
+      
+      // Use 'direct' as default when preventRedirect is false, otherwise use 'modal'
+      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
+      // Only use the pathname for redirectTo, not the full URL
+      const redirectTo = url.pathname;
 
-      // Create the callback URL with parameters
-      const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+      // Choose callback route based on context
+      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
+      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
       callbackUrl.searchParams.set('from', fromParam);
       callbackUrl.searchParams.set('redirectTo', redirectTo);
 
-      // Always redirect to callback to ensure proper profile/role creation
+      console.log('AuthForm - Callback URL params:', {
+        from: fromParam,
+        redirectTo,
+        callbackUrl: callbackUrl.toString()
+      });
+
+      // Redirect to appropriate callback
       router.push(callbackUrl.toString());
+      // Don't reset isVerifying here since we're redirecting
+      return;
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
       setError(errorMessage);
       onError?.(errorMessage);
       setVerificationCode(Array(6).fill(''));
+      // Only reset isVerifying on error
+      setIsVerifying(false);
     } finally {
       setIsLoading(false);
     }
@@ -709,20 +727,23 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       setIsGoogleLoading(true);
       setError(null);
 
-      // Always redirect to the callback URL first
-      const callbackUrl = `${window.location.origin}/auth/callback`;
+      // Choose callback route based on context
+      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
+      const callbackUrl = `${window.location.origin}${callbackBase}`;
       
       // Get the current URL for redirect
       const currentUrl = redirectUrl || window.location.pathname;
       
       // Parse the current URL to get the from parameter
-      const url = new URL(currentUrl);
-      const fromParam = url.searchParams.get('from');
+      const url = new URL(currentUrl, window.location.origin);
+      // Use 'direct' as default when preventRedirect is false, otherwise use 'modal'
+      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
       
       // Create the callback URL with parameters
       const callbackWithParams = new URL(callbackUrl);
       callbackWithParams.searchParams.set('from', fromParam || '');
-      callbackWithParams.searchParams.set('redirectTo', currentUrl);
+      // Only use the pathname for redirectTo
+      callbackWithParams.searchParams.set('redirectTo', url.pathname);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
