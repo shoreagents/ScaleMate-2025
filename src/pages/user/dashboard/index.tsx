@@ -187,14 +187,18 @@ const DashboardPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Add waitForValidSession helper
-  const waitForValidSession = async (maxAttempts = 10): Promise<boolean> => {
+  const waitForValidSession = async (maxAttempts = 30): Promise<boolean> => {
     for (let i = 0; i < maxAttempts; i++) {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        return true;
+        // Additional check to ensure session is fully established
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          return true;
+        }
       }
-      // Wait 200ms between attempts
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Wait 1 second between attempts
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
     return false;
   };
