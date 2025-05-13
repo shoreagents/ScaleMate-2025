@@ -709,7 +709,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
-    setError(null);
+      setError(null);
 
       // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;
@@ -724,14 +724,16 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
       const fromParam = url.searchParams.get('from') || 'role-builder-modal';
 
-      // Always use modal callback when preventRedirect is true
-      const callbackBase = '/auth/callback/modal';
+      // Choose callback based on context
+      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
       const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
-      callbackUrl.searchParams.set('from', fromParam);
-      callbackUrl.searchParams.set('redirectTo', redirectTo);
-
-      // Store current scroll position before redirect
-      sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+      
+      if (preventRedirect) {
+        callbackUrl.searchParams.set('from', fromParam);
+        callbackUrl.searchParams.set('redirectTo', redirectTo);
+        // Store current scroll position before redirect
+        sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+      }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
