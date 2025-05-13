@@ -77,18 +77,15 @@ export default function RoleBuilderHeroSection() {
   const { user } = useAuth();
 
   const handleTryRoleBuilder = () => {
-    if (user) {
-      // If user is logged in, navigate to the role builder
-      router.push('/role-builder/create');
-    } else {
+    if (!user) {
       // If user is not logged in, show the auth modal
       setIsAuthModalOpen(true);
     }
   };
 
   const handleAuthSuccess = () => {
+    // Simply close the modal
     setIsAuthModalOpen(false);
-    router.push('/user/dashboard?tab=role-builder');
   };
 
   return (

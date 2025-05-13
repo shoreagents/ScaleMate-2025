@@ -93,7 +93,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -224,17 +224,17 @@ const ExploreLink = styled.a`
 
 export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBuilderAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
-  const [isVerifying, setIsVerifying] = useState(false);
   const router = useRouter();
 
   // Check URL parameters on mount and after auth redirect
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
-      const fromParam = urlParams.get('from');
+      const showModal = urlParams.get('showModal');
+      const authSuccess = urlParams.get('authSuccess');
       
-      // Handle both specific modal type and generic 'modal' type
-      if (fromParam === 'role-builder-modal' || fromParam === 'modal') {
+      // If we have both showModal and authSuccess parameters
+      if (showModal === 'role-builder-modal' && authSuccess === 'true') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -245,7 +245,11 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
         }
       }
     }
-  }, [router.isReady, onAuthSuccess]);
+  }, [router.isReady, router.query, onAuthSuccess]);
+
+  const handleClose = () => {
+    onClose();
+  };
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -256,15 +260,27 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
       // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
-      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
     try {
-      // Close the auth modal first
+      // Wait for session to be established
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found after auth success');
+        return;
+      }
+
+      // Set URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'role-builder-modal');
+      url.searchParams.set('authSuccess', 'true');
+      
+      // Update URL and close modal
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
       
       // Call onAuthSuccess if provided
@@ -282,18 +298,14 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
     }
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
   const renderContent = () => {
     switch (currentView) {
       case 'signup':
         return (
           <FormWrapper>
             <SignUpForm 
-              onSuccess={() => handleAuthSuccess()} 
-              onError={(error: string | null) => console.error(error)}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
@@ -309,7 +321,7 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
           <FormWrapper>
             <AuthForm 
               onSuccess={handleAuthSuccess} 
-              onError={(error: string) => console.error(error)}
+              onError={handleAuthError} 
               preventRedirect={true} 
               hideLinks={true}
               redirectUrl={getCurrentUrl()}
@@ -326,14 +338,14 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the complete role builder, including detailed job descriptions, requirements, and salary benchmarks.
+              Create a free account to unlock the full role builder, including AI-powered role suggestions and detailed job descriptions.
             </Description>
 
             <IconContainer>
               <IconWrapper>
                 <UserGroupIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Complete Role Builder</IconText>
+              <IconText>AI Role Builder</IconText>
             </IconContainer>
 
             <ButtonContainer>
@@ -341,9 +353,9 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
                 Log In
               </LoginButton>
 
-            <SignUpButton onClick={() => setCurrentView('signup')}>
+              <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
-            </SignUpButton>
+              </SignUpButton>
             </ButtonContainer>
 
             <ExploreContainer>

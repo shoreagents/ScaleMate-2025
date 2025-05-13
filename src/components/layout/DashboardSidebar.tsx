@@ -42,7 +42,6 @@ const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean; $isModalOpen?: boolea
     max-width: 300px;
     height: 100%;
     min-height: 100vh;
-    overflow-y: auto;
   }
 `;
 

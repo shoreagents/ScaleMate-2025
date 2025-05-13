@@ -6,9 +6,8 @@ import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { useDownloadModal } from './QuoteDownloadModal';
 import { useRouter } from 'next/router';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface QuoteAuthModalProps {
   isOpen: boolean;
@@ -232,8 +231,6 @@ const ExploreLink = styled.a`
 
 export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const { openModal } = useDownloadModal();
   const router = useRouter();
 
   // Check URL parameters on mount and after auth redirect
@@ -249,50 +246,51 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
         
-        // Open the download modal
-        openModal(handleDownloadModalClose);
+        // Call onAuthSuccess if provided
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
       }
     }
-  }, [router.isReady]);
-
-  // Get the current URL for OAuth redirect
-  const getCurrentUrl = () => {
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      // Add a query parameter to identify this is from the blueprint modal
-      url.searchParams.set('from', 'quote-modal');
-      // Store the current URL to return to after auth
-      const currentPath = window.location.pathname + window.location.search;
-      url.searchParams.set('redirectTo', currentPath);
-      console.log('OAuth Redirect URL:', url.toString()); // Debug log
-      return url.toString();
-    }
-    return '';
-  };
+  }, [router.isReady, router.query, onAuthSuccess]);
 
   const handleClose = () => {
     onClose();
   };
 
-  const handleDownloadModalClose = () => {
-    onClose();
+  // Get the current URL for OAuth redirect
+  const getCurrentUrl = () => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      // Add a query parameter to identify this is from the quote modal
+      url.searchParams.set('from', 'quote-modal');
+      // Store the current URL to return to after auth
+      const currentPath = window.location.pathname + window.location.search;
+      url.searchParams.set('redirectTo', currentPath);
+      return url.toString();
+    }
+    return '';
   };
 
-  const handleAuthSuccess = async (message?: string) => {
+  const handleAuthSuccess = async () => {
     try {
-      console.log('Auth Success:', message); // Debug log
-      
-      // Wait for session to be established first
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('Session not established:', error);
+      // Wait for session to be established
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found after auth success');
         return;
       }
-
-      console.log('Session established:', session); // Debug log
       
-      // Only close modal and call onAuthSuccess after session is confirmed
+      // Set URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'quote-modal');
+      url.searchParams.set('authSuccess', 'true');
+      
+      // Update URL and close modal
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
+      
+      // Call onAuthSuccess if provided
       if (onAuthSuccess) {
         onAuthSuccess();
       }
@@ -318,14 +316,11 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
-              onVerificationStateChange={setIsVerifying}
             />
-            {!isVerifying && (
               <BackButton onClick={() => setCurrentView('initial')}>
                 <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
                 Go Back
               </BackButton>
-            )}
           </FormWrapper>
         );
       case 'login':
@@ -350,14 +345,14 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full job blueprint, including salary breakdowns, tools, and task lists.
+              Create a free account to unlock the full job blueprint, including detailed role specifications and cost breakdowns.
             </Description>
 
             <IconContainer>
               <IconWrapper>
                 <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Complete Job Blueprint</IconText>
+              <IconText>Job Blueprint</IconText>
             </IconContainer>
 
             <ButtonContainer>
