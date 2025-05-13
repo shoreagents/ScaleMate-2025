@@ -154,6 +154,10 @@ export default function DirectAuthCallback() {
             const avatarUrl = user.user_metadata?.avatar_url;
             const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
 
+            // Normalize email for Gmail addresses
+            const email = user.email;
+            const normalizedEmail = email ? normalizeEmail(email) : null;
+
             // Create user profile without username
             const { error: createProfileError } = await serviceRoleClient
               .from('user_profiles')
@@ -163,6 +167,7 @@ export default function DirectAuthCallback() {
                 first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
                 last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
                 profile_picture: highQualityAvatarUrl || null,
+                email: normalizedEmail || email, // Store normalized email
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               });
@@ -170,6 +175,19 @@ export default function DirectAuthCallback() {
             if (createProfileError) {
               handleError(createProfileError, 'Error creating user profile. Please contact support.');
               return;
+            }
+
+            // Update the auth user's email to the normalized version if it's different
+            if (normalizedEmail && normalizedEmail !== email) {
+              const { error: updateEmailError } = await serviceRoleClient.auth.admin.updateUserById(
+                user.id,
+                { email: normalizedEmail }
+              );
+
+              if (updateEmailError) {
+                console.error('Error updating normalized email:', updateEmailError);
+                // Don't return here as this is not critical
+              }
             }
           } else {
             handleError(null, 'User profile not found. Please contact support.');
