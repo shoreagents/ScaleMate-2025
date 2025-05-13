@@ -204,7 +204,7 @@ const DashboardPage = () => {
   };
 
   const checkAuth = async () => {
-    try {
+      try {
       // Wait for valid session first
       const hasValidSession = await waitForValidSession();
       if (!hasValidSession) {
@@ -212,11 +212,11 @@ const DashboardPage = () => {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
         router.push('/login');
-        return;
-      }
+          return;
+        }
 
       // Get user's profile data
       const { data: profile, error: profileError } = await supabase
@@ -228,8 +228,8 @@ const DashboardPage = () => {
       if (profileError) {
         console.error('Profile error:', profileError);
         setError('Error loading profile data');
-        return;
-      }
+          return;
+        }
 
       // Set user and show dashboard
       setUserData(profile);
@@ -238,14 +238,14 @@ const DashboardPage = () => {
       // Show setup form if username is null
       if (!profile?.username) {
         setShowSetupForm(true);
-      }
+        }
 
     } catch (err) {
       console.error('Auth check error:', err);
       setError('Error checking authentication');
       setLoading(false);
-    }
-  };
+      }
+    };
 
   useEffect(() => {
     checkAuth();
@@ -393,13 +393,13 @@ const DashboardPage = () => {
         </MainContent>
 
       {showSetupForm && user && (
-        <FirstTimeSetupForm
-          isOpen={showSetupForm}
-          onClose={() => setShowSetupForm(false)}
-          userId={user.id}
-          currentUsername={userData?.username || ''}
-          onSetupComplete={handleSetupComplete}
-        />
+          <FirstTimeSetupForm
+            isOpen={showSetupForm}
+            onClose={() => setShowSetupForm(false)}
+            userId={user.id}
+            currentUsername={userData?.username || ''}
+            onSetupComplete={handleSetupComplete}
+          />
       )}
 
       {showSuccessModal && (
