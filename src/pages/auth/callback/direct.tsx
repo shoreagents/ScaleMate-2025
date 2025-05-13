@@ -136,6 +136,33 @@ export default function DirectAuthCallback() {
           }
         );
 
+        // Check if user exists in users table
+        const { data: existingUser, error: userCheckError } = await serviceRoleClient
+          .from('users')
+          .select('id, email, full_name')
+          .eq('id', user.id)
+          .single();
+
+        // If user doesn't exist in users table, create it
+        if (userCheckError || !existingUser) {
+          console.log('Creating new user record for Google sign-up...');
+          const { error: createUserError } = await serviceRoleClient
+            .from('users')
+            .insert({
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              is_active: true
+            });
+
+          if (createUserError) {
+            handleError(createUserError, 'Error creating user record. Please contact support.');
+            return;
+          }
+        }
+
         // Check if user profile exists
         const { data: profile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
@@ -143,10 +170,29 @@ export default function DirectAuthCallback() {
           .eq('user_id', user.id)
           .single();
 
-        // If no profile exists, this is an error since profile should be created during signup
+        // If no profile exists, create it
         if (profileError || !profile?.username) {
-          handleError(null, 'User profile not found. Please contact support.');
-          return;
+          console.log('Creating new user profile for Google sign-up...');
+          // Generate a username from email if not available in metadata
+          const username = user.user_metadata?.username || 
+                          user.email?.split('@')[0]?.toLowerCase() || 
+                          `user${user.id.slice(0, 8)}`;
+
+          const { error: createProfileError } = await serviceRoleClient
+            .from('user_profiles')
+            .insert({
+              user_id: user.id,
+              username: username,
+              first_name: user.user_metadata?.first_name || user.email?.split('@')[0],
+              last_name: user.user_metadata?.last_name || '',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            });
+
+          if (createProfileError) {
+            handleError(createProfileError, 'Error creating user profile. Please contact support.');
+            return;
+          }
         }
 
         // Get user's role
@@ -159,13 +205,15 @@ export default function DirectAuthCallback() {
 
         // If no roles exist, assign default 'user' role
         if (roleError || !roles || roles.length === 0) {
+          console.log('Assigning default role for Google sign-up...');
           // Try to assign default role
           const { error: assignRoleError } = await serviceRoleClient
             .from('user_roles')
             .insert({
               user_id: user.id,
               role: 'user',
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             });
 
           if (assignRoleError) {
