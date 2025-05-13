@@ -569,6 +569,9 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       callbackUrl.searchParams.set('from', fromParam);
       callbackUrl.searchParams.set('redirectTo', redirectTo);
 
+      // Store current scroll position before redirect
+      sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+
       console.log('AuthForm - Callback URL params:', {
         from: fromParam,
         redirectTo,
@@ -697,17 +700,23 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         ? url.searchParams.get('redirectTo') || window.location.pathname
         : window.location.pathname;
 
-      // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
-      const fromParam = url.searchParams.get('from') || 'role-builder-modal';
-
-      // Always use modal callback when preventRedirect is true
-      const callbackBase = '/auth/callback/modal';
+      // Choose callback URL based on preventRedirect
+      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
       const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
-      callbackUrl.searchParams.set('from', fromParam);
-      callbackUrl.searchParams.set('redirectTo', redirectTo);
+      
+      if (preventRedirect) {
+        // Only add these parameters for modal callback
+        const fromParam = url.searchParams.get('from') || 'role-builder-modal';
+        callbackUrl.searchParams.set('from', fromParam);
+        callbackUrl.searchParams.set('redirectTo', redirectTo);
+
+        // Store current scroll position before redirect
+        sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+      }
 
       console.log('AuthForm - Callback URL params:', {
-        from: fromParam,
+        preventRedirect,
+        callbackBase,
         redirectTo,
         callbackUrl: callbackUrl.toString()
       });
@@ -728,7 +737,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
-      setError(null);
+    setError(null);
 
       // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;
@@ -748,6 +757,9 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
       callbackUrl.searchParams.set('from', fromParam);
       callbackUrl.searchParams.set('redirectTo', redirectTo);
+
+      // Store current scroll position before redirect
+      sessionStorage.setItem('scrollPosition', window.scrollY.toString());
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

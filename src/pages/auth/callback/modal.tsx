@@ -197,6 +197,13 @@ export default function ModalAuthCallback() {
         // Use router.replace instead of window.location.href to prevent full page reload
         await router.replace(redirectUrl.toString(), undefined, { shallow: true });
 
+        // After redirect, restore scroll position if it exists
+        const scrollY = sessionStorage.getItem('scrollPosition');
+        if (scrollY) {
+          window.scrollTo(0, parseInt(scrollY));
+          sessionStorage.removeItem('scrollPosition');
+        }
+
       } catch (err) {
         console.error('Modal auth callback error:', err);
       }

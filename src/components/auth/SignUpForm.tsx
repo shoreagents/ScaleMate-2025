@@ -869,6 +869,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
           setPasswordError(null);
           setShowVerificationWithCallback(true);
           setResendCountdown(60);
+
+          // Store current scroll position before showing verification
+          if (preventRedirect) {
+            sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+          }
+
           return;
         }
 
@@ -943,7 +949,13 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         setEmailError(null);
         setUsernameError(null);
         setPasswordError(null);
-      setShowVerificationWithCallback(true);
+
+        // Store current scroll position before showing verification
+        if (preventRedirect) {
+          sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+        }
+
+        setShowVerificationWithCallback(true);
         setResendCountdown(60);
       } catch (dbError) {
         console.error('SignUpForm - Database operation failed:', dbError);
