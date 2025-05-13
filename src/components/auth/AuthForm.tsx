@@ -737,7 +737,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
-    setError(null);
+      setError(null);
 
       // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;
@@ -769,7 +769,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
             access_type: 'offline',
             prompt: 'consent'
           },
-          scopes: 'email profile'
+          scopes: 'email profile openid'
         }
       });
 
