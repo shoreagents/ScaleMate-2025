@@ -229,16 +229,16 @@ const DashboardPage = () => {
 
       // Set user and show dashboard
       setUserData(profile);
+      setLoading(false);
 
-      // Check if username and last_password_change are null
-      if (!profile?.username && !profile?.last_password_change) {
+      // Show setup form if username is null
+      if (!profile?.username) {
         setShowSetupForm(true);
       }
 
     } catch (err) {
       console.error('Auth check error:', err);
       setError('Error checking authentication');
-    } finally {
       setLoading(false);
     }
   };
@@ -388,38 +388,38 @@ const DashboardPage = () => {
           {renderContent()}
         </MainContent>
 
-        {showSetupForm && user && (
-          <Modal
+      {showSetupForm && user && (
+        <Modal
+          isOpen={showSetupForm}
+          onClose={() => setShowSetupForm(false)}
+          title="Complete Your Setup"
+        >
+          <FirstTimeSetupForm
             isOpen={showSetupForm}
             onClose={() => setShowSetupForm(false)}
-            title="Complete Your Setup"
-          >
-            <FirstTimeSetupForm
-              isOpen={showSetupForm}
-              onClose={() => setShowSetupForm(false)}
-              userId={user.id}
-              currentUsername={userData?.username || ''}
-              onSetupComplete={handleSetupComplete}
-            />
-          </Modal>
-        )}
+            userId={user.id}
+            currentUsername={userData?.username || ''}
+            onSetupComplete={handleSetupComplete}
+          />
+        </Modal>
+      )}
 
-        {showSuccessModal && (
-          <SuccessModal $isOpen={showSuccessModal}>
-            <SuccessModalContent>
-              <SuccessIcon>
-                <FiCheck size={24} />
-              </SuccessIcon>
-              <SuccessTitle>Setup Complete!</SuccessTitle>
-              <SuccessMessage>
-                Your account has been successfully set up. You can now use your new credentials to log in.
-              </SuccessMessage>
-              <SuccessButton onClick={() => setShowSuccessModal(false)}>
-                Continue
-              </SuccessButton>
-            </SuccessModalContent>
-          </SuccessModal>
-        )}
+      {showSuccessModal && (
+        <SuccessModal $isOpen={showSuccessModal}>
+          <SuccessModalContent>
+            <SuccessIcon>
+              <FiCheck size={24} />
+            </SuccessIcon>
+            <SuccessTitle>Setup Complete!</SuccessTitle>
+            <SuccessMessage>
+              Your account has been successfully set up. You can now use your new credentials to log in.
+            </SuccessMessage>
+            <SuccessButton onClick={() => setShowSuccessModal(false)}>
+              Continue
+            </SuccessButton>
+          </SuccessModalContent>
+        </SuccessModal>
+      )}
       </DashboardContainer>
     </NoNavbarLayout>
   );

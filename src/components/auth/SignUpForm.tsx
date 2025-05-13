@@ -616,8 +616,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         } else if (verifyError.message.includes('expired')) {
           throw new Error('Token has expired or is invalid!');
         } else {
-          throw verifyError;
-        }
+        throw verifyError;
+      }
       }
 
       if (!data.user) {
@@ -775,7 +775,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
       try {
         // First check if user already exists in database
-        const { data: existingUser, error: checkError } = await serviceRoleClient
+      const { data: existingUser, error: checkError } = await serviceRoleClient
         .from('users')
         .select('id')
           .eq('id', data.user.id)
@@ -945,7 +945,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
           sessionStorage.setItem('scrollPosition', window.scrollY.toString());
         }
 
-        setShowVerificationWithCallback(true);
+      setShowVerificationWithCallback(true);
         setResendCountdown(60);
       } catch (dbError) {
         console.error('SignUpForm - Database operation failed:', dbError);
@@ -1127,7 +1127,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   <VerificationInput
                     key={index}
                     id={`verification-${index}`}
-                    type="text"
+                type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
@@ -1139,12 +1139,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   />
                 ))}
               </VerificationContainer>
-            {error && (
+              {error && (
               <MessageContainer>
-                <FiX size={14} />
-                {error}
+                  <FiX size={14} />
+                  {error}
               </MessageContainer>
-            )}
+              )}
           </InputGroup>
           <ButtonContainer>
             <Button 

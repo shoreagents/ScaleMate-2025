@@ -203,25 +203,25 @@ export default function CTA() {
   };
 
   return (
-    <Section>
-      <Container>
-        <CTAWrapper>
-          <Title>Ready to Start Saving?</Title>
-          <Description>
-            Download your savings report or schedule a call to discuss your needs
-          </Description>
-          <ButtonGroup>
+      <Section>
+        <Container>
+          <CTAWrapper>
+            <Title>Ready to Start Saving?</Title>
+            <Description>
+              Download your savings report or schedule a call to discuss your needs
+            </Description>
+            <ButtonGroup>
             <PrimaryButton onClick={handleDownloadClick}>
-              Download Report
-              <FontAwesomeIcon icon={faDownload} style={{ marginLeft: '0.5rem' }} />
-            </PrimaryButton>
+                Download Report
+                <FontAwesomeIcon icon={faDownload} style={{ marginLeft: '0.5rem' }} />
+              </PrimaryButton>
             <SecondaryButton onClick={handleBookStrategyClick}>
-              Book Strategy Call
-              <FontAwesomeIcon icon={faPhone} style={{ marginLeft: '0.5rem' }} />
-            </SecondaryButton>
-          </ButtonGroup>
-        </CTAWrapper>
-      </Container>
+                Book Strategy Call
+                <FontAwesomeIcon icon={faPhone} style={{ marginLeft: '0.5rem' }} />
+              </SecondaryButton>
+            </ButtonGroup>
+          </CTAWrapper>
+        </Container>
 
       {isModalOpen && (
         <ModalOverlay onClick={() => setIsModalOpen(false)}>
