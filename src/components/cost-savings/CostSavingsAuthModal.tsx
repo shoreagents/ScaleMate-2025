@@ -245,7 +245,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
         openModal(handleDownloadModalClose);
       }
     }
-  }, [router.isReady]);
+  }, [router.isReady, router.query]);
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -270,13 +270,29 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
     onClose();
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
     try {
-      // Close the auth modal first
+      console.log('Cost Savings Auth Success - Setting URL params...'); // Debug log
+      // Wait for session to be established
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found after auth success');
+        return;
+      }
+
+      // Set URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'cost-savings-modal');
+      url.searchParams.set('authSuccess', 'true');
+      console.log('Setting URL to:', url.toString()); // Debug log
+      
+      // Update URL and close modal
+      await router.replace(url.toString());
       onClose();
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
+        console.log('Calling onAuthSuccess callback'); // Debug log
         onAuthSuccess();
       }
     } catch (err) {

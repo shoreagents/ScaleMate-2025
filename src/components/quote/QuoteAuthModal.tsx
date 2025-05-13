@@ -236,6 +236,14 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
   const { openModal } = useDownloadModal();
   const router = useRouter();
 
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleDownloadModalClose = () => {
+    onClose();
+  };
+
   // Check URL parameters on mount and after auth redirect
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
@@ -243,8 +251,12 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
       const showModal = urlParams.get('showModal');
       const authSuccess = urlParams.get('authSuccess');
       
+      console.log('URL Params Check:', { showModal, authSuccess }); // Debug log
+      
       // If we have both showModal and authSuccess parameters
       if (showModal === 'quote-modal' && authSuccess === 'true') {
+        console.log('Opening download modal...'); // Debug log
+        
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -253,7 +265,7 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
         openModal(handleDownloadModalClose);
       }
     }
-  }, [router.isReady]);
+  }, [router.isReady, router.query, openModal, handleDownloadModalClose, onClose]); // Added onClose dependency
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -270,14 +282,6 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
     return '';
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  const handleDownloadModalClose = () => {
-    onClose();
-  };
-
   const handleAuthSuccess = async (message?: string) => {
     try {
       console.log('Auth Success:', message); // Debug log
@@ -291,8 +295,17 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
 
       console.log('Session established:', session); // Debug log
       
-      // Only close modal and call onAuthSuccess after session is confirmed
+      // Set URL parameters to trigger download modal using router
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'quote-modal');
+      url.searchParams.set('authSuccess', 'true');
+      console.log('Setting URL params:', url.toString()); // Debug log
+      await router.replace(url.toString(), undefined, { shallow: true });
+      
+      // Close the auth modal after URL is set
       onClose();
+      
+      // Call onAuthSuccess if provided
       if (onAuthSuccess) {
         onAuthSuccess();
       }

@@ -231,21 +231,27 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
-      const fromParam = urlParams.get('from');
+      const showModal = urlParams.get('showModal');
+      const authSuccess = urlParams.get('authSuccess');
       
-      // Handle both specific modal type and generic 'modal' type
-      if (fromParam === 'role-builder-modal' || fromParam === 'modal') {
+      console.log('URL Params Check:', { showModal, authSuccess }); // Debug log
+      
+      // If we have both showModal and authSuccess parameters
+      if (showModal === 'role-builder-modal' && authSuccess === 'true') {
+        console.log('Auth success detected, handling...'); // Debug log
+        
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
         
         // Call onAuthSuccess if provided
         if (onAuthSuccess) {
+          console.log('Calling onAuthSuccess callback'); // Debug log
           onAuthSuccess();
         }
       }
     }
-  }, [router.isReady, onAuthSuccess]);
+  }, [router.isReady, router.query, onAuthSuccess]);
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -262,15 +268,39 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
     return '';
   };
 
-  const handleAuthSuccess = () => {
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleAuthSuccess = async () => {
     try {
-      // Close the auth modal first
+      console.log('Role Builder Auth Success - Setting URL params...'); // Debug log
+      // Wait for session to be established
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found after auth success');
+        return;
+      }
+
+      // Set URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'role-builder-modal');
+      url.searchParams.set('authSuccess', 'true');
+      console.log('Setting URL to:', url.toString()); // Debug log
+      
+      // Update URL and close modal
+      await router.replace(url.toString());
       onClose();
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
+        console.log('Calling onAuthSuccess callback'); // Debug log
         onAuthSuccess();
       }
+
+      // Redirect to user dashboard with role builder tab
+      console.log('Redirecting to user dashboard role builder tab...'); // Debug log
+      await router.push('/user/dashboard?tab=role-builder');
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }
@@ -280,10 +310,6 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
     if (error) {
       console.error('Auth error:', error);
     }
-  };
-
-  const handleClose = () => {
-    onClose();
   };
 
   const renderContent = () => {
