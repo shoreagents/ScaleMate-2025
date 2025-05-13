@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faToolbox, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../ui/Modal';
-import AuthForm from '../auth/AuthForm';
-import SignUpForm from '../auth/SignUpForm';
 import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
+import SignUpForm from '../auth/SignUpForm';
+import AuthForm from '../auth/AuthForm';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
+
+interface ToolsAuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess?: () => void;
+}
+
+type ModalView = 'initial' | 'signup' | 'login';
 
 const Container = styled.div`
   display: flex;
@@ -85,7 +93,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -187,7 +195,7 @@ const BackButton = styled.button`
   @media (min-width: 640px) {
     margin-top: 1rem;
 
-  &:hover {
+    &:hover {
       color: #22C55E;
     }
   }
@@ -214,15 +222,7 @@ const ExploreLink = styled.a`
   }
 `;
 
-interface ToolsAuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAuthSuccess?: () => void;
-}
-
-type ModalView = 'initial' | 'signup' | 'login';
-
-export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
+export const ToolsAuthModal = ({ isOpen, onClose, onAuthSuccess }: ToolsAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
@@ -230,10 +230,11 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
-      const fromParam = urlParams.get('from');
+      const showModal = urlParams.get('showModal');
+      const authSuccess = urlParams.get('authSuccess');
       
-      // Handle both specific modal type and generic 'modal' type
-      if (fromParam === 'tools-modal' || fromParam === 'modal') {
+      // If we have both showModal and authSuccess parameters
+      if (showModal === 'tools-modal' && authSuccess === 'true') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -244,7 +245,11 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
         }
       }
     }
-  }, [router.isReady, onAuthSuccess]);
+  }, [router.isReady, router.query, onAuthSuccess]);
+
+  const handleClose = () => {
+    onClose();
+  };
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -260,13 +265,22 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
     return '';
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
     try {
-      // Close the auth modal first
+      // Wait for session to be established
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found after auth success');
+        return;
+      }
+
+      // Set URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'tools-modal');
+      url.searchParams.set('authSuccess', 'true');
+      
+      // Update URL and close modal
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
       
       // Call onAuthSuccess if provided
@@ -290,8 +304,8 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
         return (
           <FormWrapper>
             <SignUpForm 
-              onSuccess={() => handleAuthSuccess()} 
-              onError={(error: string | null) => console.error(error)}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
@@ -307,7 +321,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
           <FormWrapper>
             <AuthForm 
               onSuccess={handleAuthSuccess} 
-              onError={(error: string) => console.error(error)}
+              onError={handleAuthError} 
               preventRedirect={true} 
               hideLinks={true}
               redirectUrl={getCurrentUrl()}
@@ -324,14 +338,14 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock all tools, including the Role Builder, Readiness Quiz, and more.
+              Create a free account to unlock our full suite of AI-powered tools and resources.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <FontAwesomeIcon icon={faToolbox} style={{ width: '2.5rem', height: '2.5rem' }} />
+                <WrenchScrewdriverIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Tools Library</IconText>
+              <IconText>AI Tools Suite</IconText>
             </IconContainer>
 
             <ButtonContainer>
@@ -356,10 +370,12 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <Container>
-        {renderContent()}
-      </Container>
-    </Modal>
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose}>
+        <Container>
+          {renderContent()}
+        </Container>
+      </Modal>
+    </>
   );
 }; 

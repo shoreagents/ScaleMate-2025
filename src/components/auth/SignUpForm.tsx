@@ -615,8 +615,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         } else if (verifyError.message.includes('expired')) {
           throw new Error('Token has expired or is invalid!');
         } else {
-          throw verifyError;
-        }
+        throw verifyError;
+      }
       }
 
       // Sign in the user after successful verification
@@ -640,13 +640,17 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       const currentUrl = redirectUrl || window.location.pathname;
       const url = new URL(currentUrl, window.location.origin);
       
-      // Preserve the specific modal type if it exists, otherwise use 'direct' or 'modal' based on preventRedirect
-      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
-      // Only use the pathname for redirectTo, not the full URL
-      const redirectTo = url.pathname;
+      // When preventRedirect is true, we want to go back to the original page
+      // that opened the modal, not the current page
+      const redirectTo = preventRedirect 
+        ? url.searchParams.get('redirectTo') || window.location.pathname
+        : window.location.pathname;
 
-      // Choose callback route based on context
-      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
+      // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
+      const fromParam = url.searchParams.get('from') || 'role-builder-modal';
+
+      // Always use modal callback when preventRedirect is true
+      const callbackBase = '/auth/callback/modal';
       const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
       callbackUrl.searchParams.set('from', fromParam);
       callbackUrl.searchParams.set('redirectTo', redirectTo);
@@ -657,10 +661,9 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         callbackUrl: callbackUrl.toString()
       });
 
-      // Redirect to appropriate callback
+      // Keep isVerifying and isLoading true while redirecting
       router.push(callbackUrl.toString());
-      // Don't reset isVerifying here since we're redirecting
-      return;
+      return; // Don't reset states since we're redirecting
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
@@ -668,9 +671,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       setSuccess(null);
       onError?.(errorMessage);
       setVerificationCode(Array(6).fill(''));
-      // Only reset isVerifying on error
+      // Only reset states on error
       setIsVerifying(false);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -784,58 +786,58 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       try {
         // First check if user already exists in database
         const { data: existingUser, error: checkError } = await serviceRoleClient
-          .from('users')
-          .select('id')
+        .from('users')
+        .select('id')
           .eq('id', data.user.id)
-          .single();
+        .single();
 
-        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
           console.error('SignUpForm - Error checking existing user:', checkError);
           throw checkError;
-        }
+      }
 
         if (existingUser) {
           console.log('SignUpForm - User already exists in database, checking profile and role...');
           
           // Check if profile exists
-          const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
-            .from('user_profiles')
-            .select('user_id')
+      const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
+        .from('user_profiles')
+        .select('user_id')
             .eq('user_id', data.user.id)
-            .single();
+        .single();
 
-          if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
             console.error('SignUpForm - Error checking existing profile:', profileCheckError);
             throw profileCheckError;
-          }
+      }
 
           // Check if role exists
           const { data: existingRole, error: roleCheckError } = await serviceRoleClient
             .from('user_roles')
             .select('user_id')
             .eq('user_id', data.user.id)
-            .single();
+          .single();
 
           if (roleCheckError && roleCheckError.code !== 'PGRST116') {
             console.error('SignUpForm - Error checking existing role:', roleCheckError);
             throw roleCheckError;
-          }
+        }
 
           // If profile or role is missing, create them
           if (!existingProfile) {
             console.log('SignUpForm - Creating missing profile...');
-            const { error: profileError } = await serviceRoleClient
-              .from('user_profiles')
-              .insert({
+        const { error: profileError } = await serviceRoleClient
+          .from('user_profiles')
+          .insert({
                 user_id: data.user.id,
                 username: formData.username.toLowerCase(),
-                first_name: formData.firstName.trim(),
-                last_name: formData.lastName.trim(),
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
-              });
+          });
 
-            if (profileError) {
+        if (profileError) {
               console.error('SignUpForm - Error creating profile:', profileError);
               throw profileError;
             }
@@ -844,7 +846,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
           if (!existingRole) {
             console.log('SignUpForm - Creating missing role...');
             const { error: roleError } = await serviceRoleClient
-              .from('user_roles')
+        .from('user_roles')
               .insert({
                 user_id: data.user.id,
                 role: 'user',
@@ -867,6 +869,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
           setPasswordError(null);
           setShowVerificationWithCallback(true);
           setResendCountdown(60);
+
+          // Store current scroll position before showing verification
+          if (preventRedirect) {
+            sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+          }
+
           return;
         }
 
@@ -886,7 +894,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
             is_active: true
           })
           .select()
-          .single();
+        .single();
 
         if (userError) {
           console.error('SignUpForm - Error inserting into users:', userError);
@@ -941,6 +949,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         setEmailError(null);
         setUsernameError(null);
         setPasswordError(null);
+
+        // Store current scroll position before showing verification
+        if (preventRedirect) {
+          sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+        }
+
         setShowVerificationWithCallback(true);
         setResendCountdown(60);
       } catch (dbError) {
@@ -1005,28 +1019,29 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     setError(null);
 
     try {
-      // Choose callback route based on context
-      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
-      const callbackUrl = `${window.location.origin}${callbackBase}`;
-      
-      // Get the current URL for redirect
+      // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;
-      
-      // Parse the current URL to get the from parameter
       const url = new URL(currentUrl, window.location.origin);
-      // Use 'direct' as default when preventRedirect is false, otherwise use 'modal'
-      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
       
-      // Create the callback URL with parameters
-      const callbackWithParams = new URL(callbackUrl);
-      callbackWithParams.searchParams.set('from', fromParam || '');
-      // Only use the pathname for redirectTo
-      callbackWithParams.searchParams.set('redirectTo', url.pathname);
-      
+      // When preventRedirect is true, we want to go back to the original page
+      // that opened the modal, not the current page
+      const redirectTo = preventRedirect 
+        ? url.searchParams.get('redirectTo') || window.location.pathname
+        : window.location.pathname;
+
+      // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
+      const fromParam = url.searchParams.get('from') || 'role-builder-modal';
+
+      // Always use modal callback when preventRedirect is true
+      const callbackBase = '/auth/callback/modal';
+      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
+      callbackUrl.searchParams.set('from', fromParam);
+      callbackUrl.searchParams.set('redirectTo', redirectTo);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: callbackWithParams.toString(),
+          redirectTo: callbackUrl.toString(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -1074,7 +1089,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         if (resendError.message.includes('rate limit') || resendError.message.includes('For security purposes')) {
           throw new Error('Please wait a few minutes before requesting a new code.');
         } else {
-          throw resendError;
+        throw resendError;
         }
       }
 
@@ -1117,23 +1132,23 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         <Form onSubmit={handleVerification}>
           <InputGroup>
             <Label htmlFor="verificationCode">Verification Code</Label>
-            <VerificationContainer>
-              {[...Array(6)].map((_, index) => (
-                <VerificationInput
-                  key={index}
-                  id={`verification-${index}`}
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={1}
-                  value={verificationCode[index] || ''}
-                  onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
-                  onKeyDown={(e) => handleVerificationKeyDown(index, e)}
-                  autoFocus={index === 0}
+              <VerificationContainer>
+                {[...Array(6)].map((_, index) => (
+                  <VerificationInput
+                    key={index}
+                    id={`verification-${index}`}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    value={verificationCode[index] || ''}
+                    onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
+                    onKeyDown={(e) => handleVerificationKeyDown(index, e)}
+                    autoFocus={index === 0}
                   disabled={isVerifying}
-                />
-              ))}
-            </VerificationContainer>
+                  />
+                ))}
+              </VerificationContainer>
             {error && (
               <MessageContainer>
                 <FiX size={14} />
@@ -1147,20 +1162,20 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
               disabled={isVerifying || verificationCode.some(code => !code)}
               style={preventRedirect ? { width: '100%' } : undefined}
             >
-              {isVerifying ? 'Verifying...' : 'Verify Email'}
+              {isVerifying || isLoading ? 'Verifying...' : 'Verify Email'}
             </Button>
           </ButtonContainer>
           <ResendLink>
             {resendCountdown > 0 ? (
               <>Please wait <span className="timer">{resendCountdown}s</span> before requesting a new code</>
             ) : (
-              <button 
+              <>Didn't receive the code? <button 
                 type="button" 
                 onClick={handleResendCode} 
                 disabled={isResending || resendCountdown > 0 || isVerifying}
               >
                 {isResending ? 'Sending...' : 'Resend Code'}
-              </button>
+              </button></>
             )}
           </ResendLink>
         </Form>

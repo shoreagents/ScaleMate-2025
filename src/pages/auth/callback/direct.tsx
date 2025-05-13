@@ -48,17 +48,21 @@ const isSessionValid = async (): Promise<boolean> => {
   }
 };
 
-const waitForValidSession = async (maxAttempts = 10): Promise<boolean> => {
+const waitForValidSession = async (maxAttempts = 20): Promise<boolean> => {
   for (let i = 0; i < maxAttempts; i++) {
     if (await isSessionValid()) {
       // Double check session is persisted
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        return true;
+        // Additional check to ensure session is fully established
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          return true;
+        }
       }
     }
-    // Wait 200ms between attempts
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Wait 500ms between attempts (increased from 200ms)
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
   return false;
 };
@@ -136,114 +140,47 @@ export default function DirectAuthCallback() {
           }
         );
 
-        // Check if user exists in users table
-        const { data: existingUser, error: userCheckError } = await serviceRoleClient
-          .from('users')
-          .select('id, email, full_name')
-          .eq('id', user.id)
-          .single();
-
-        // If user doesn't exist in users table, create it
-        if (userCheckError || !existingUser) {
-          console.log('Creating new user record for Google sign-up...', { userId: user.id });
-          const { error: createUserError } = await serviceRoleClient
-            .from('users')
-            .insert({
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
-              avatar_url: user.user_metadata?.avatar_url || null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              is_active: true
-            });
-
-          if (createUserError) {
-            console.error('Error creating user record:', createUserError);
-            // Continue anyway as the user might exist in auth but not in users table
-          }
-        }
-
-        // Always check and create profile if needed
-        console.log('Checking user profile...', { userId: user.id });
+        // Check if user profile exists
         const { data: profile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .select('username')
           .eq('user_id', user.id)
           .single();
 
-        // Create profile if it doesn't exist or has no username
+        // If no profile exists, this is an error since profile should be created during signup
         if (profileError || !profile?.username) {
-          console.log('Creating new user profile...', { userId: user.id });
-          
-          // Extract name from Google metadata
-          const firstName = user.user_metadata?.given_name || 
-                          user.user_metadata?.name?.split(' ')[0] || 
-                          user.email?.split('@')[0] || '';
-          
-          const lastName = user.user_metadata?.family_name || 
-                         user.user_metadata?.name?.split(' ').slice(1).join(' ') || 
-                         '';
-
-          // Generate a username from email if not available in metadata
-          const username = user.user_metadata?.username || 
-                          user.email?.split('@')[0]?.toLowerCase() || 
-                          `user${user.id.slice(0, 8)}`;
-
-          const { error: createProfileError } = await serviceRoleClient
-            .from('user_profiles')
-            .insert({
-              user_id: user.id,
-              username: username,
-              first_name: firstName,
-              last_name: lastName,
-              avatar_url: user.user_metadata?.avatar_url || null,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-
-          if (createProfileError) {
-            console.error('Error creating user profile:', createProfileError);
-            // Continue anyway as we want to try role assignment
-          }
+          handleError(null, 'User profile not found. Please contact support.');
+          return;
         }
 
-        // Always check and create role if needed
-        console.log('Checking user roles...', { userId: user.id });
+        // Get user's role
         const { data: roles, error: roleError } = await serviceRoleClient
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id);
 
-        let userRoles: string[] = [];
+        let userRoles: string[];
 
-        // Create role if none exists
+        // If no roles exist, assign default 'user' role
         if (roleError || !roles || roles.length === 0) {
-          console.log('Assigning default role...', { userId: user.id });
+          // Try to assign default role
           const { error: assignRoleError } = await serviceRoleClient
             .from('user_roles')
             .insert({
               user_id: user.id,
               role: 'user',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              created_at: new Date().toISOString()
             });
 
           if (assignRoleError) {
-            console.error('Error assigning default role:', assignRoleError);
-            // Set default role anyway for redirect
-            userRoles = ['user'];
-          } else {
-            userRoles = ['user'];
+            handleError(assignRoleError, 'Error assigning default role. Please contact support.');
+            return;
           }
+
+          // Set roles to default after assignment
+          userRoles = ['user'];
         } else {
           userRoles = roles.map(r => r.role);
-        }
-
-        // Ensure we have at least one role for redirect
-        if (userRoles.length === 0) {
-          console.log('No roles found, using default role for redirect');
-          userRoles = ['user'];
         }
 
         // Determine redirect URL based on role
@@ -252,11 +189,13 @@ export default function DirectAuthCallback() {
           redirectUrl = '/admin/dashboard';
         } else if (userRoles.includes('moderator')) {
           redirectUrl = '/admin/dashboard';
-        } else {
+        } else if (userRoles.includes('user')) {
           redirectUrl = '/user/dashboard';
+        } else {
+          handleError(null, 'User has no valid role assigned. Please contact support.');
+          return;
         }
 
-        console.log('Redirecting user...', { userId: user.id, roles: userRoles, redirectUrl });
         window.location.href = redirectUrl;
 
       } catch (err) {

@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../ui/Modal';
-import AuthForm from '../auth/AuthForm';
+import { BookOpenIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../auth/SignUpForm';
+import AuthForm from '../auth/AuthForm';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/router';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
+
+interface ResourcesAuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess?: () => void;
+}
+
+type ModalView = 'initial' | 'signup' | 'login';
 
 const Container = styled.div`
   display: flex;
@@ -54,7 +63,7 @@ const Description = styled.p`
 
 const IconContainer = styled.div`
   width: 100%;
-  background-color: rgba(244, 114, 182, 0.1);
+  background-color: rgba(236, 72, 153, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
@@ -69,7 +78,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #F472B6;
+  color: #EC4899;
 
   @media (min-width: 640px) {
     width: 4rem;
@@ -106,7 +115,7 @@ const ButtonContainer = styled.div`
 
 const SignUpButton = styled.button`
   flex: 1;
-  background: #F472B6;
+  background: #EC4899;
   color: white;
   padding: 0.875rem;
   border-radius: 8px;
@@ -122,7 +131,7 @@ const SignUpButton = styled.button`
   }
 
   &:hover {
-    background: #EC4899;
+    background: #DB2777;
   }
 
   &:active {
@@ -168,7 +177,7 @@ const LoginButton = styled.button`
 `;
 
 const BackButton = styled.button`
-  color: #F472B6;
+  color: #EC4899;
   background: none;
   border: none;
   cursor: pointer;
@@ -187,7 +196,7 @@ const BackButton = styled.button`
     margin-top: 1rem;
 
     &:hover {
-      color: #EC4899;
+      color: #DB2777;
     }
   }
 `;
@@ -203,35 +212,29 @@ const ExploreContainer = styled.div`
 `;
 
 const ExploreLink = styled.a`
-  color: #F472B6;
+  color: #EC4899;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
   &:hover {
-    color: #EC4899;
+    color: #DB2777;
   }
 `;
 
-interface ResourcesAuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAuthSuccess?: () => void;
-}
-
-type ModalView = 'initial' | 'signup' | 'login';
-
-export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
+export const ResourcesAuthModal = ({ isOpen, onClose, onAuthSuccess }: ResourcesAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
+  // Check URL parameters on mount and after auth redirect
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
-      const fromParam = urlParams.get('from');
+      const showModal = urlParams.get('showModal');
+      const authSuccess = urlParams.get('authSuccess');
       
-      // Handle both specific modal type and generic 'modal' type
-      if (fromParam === 'resources-modal' || fromParam === 'modal') {
+      // If we have both showModal and authSuccess parameters
+      if (showModal === 'resources-modal' && authSuccess === 'true') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -242,12 +245,19 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
         }
       }
     }
-  }, [router.isReady, onAuthSuccess]);
+  }, [router.isReady, router.query, onAuthSuccess]);
 
+  const handleClose = () => {
+    onClose();
+  };
+
+  // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
+      // Add a query parameter to identify this is from the resources modal
       url.searchParams.set('from', 'resources-modal');
+      // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
       return url.toString();
@@ -255,17 +265,22 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
     return '';
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  const handleAuthSuccess = (message?: string) => {
+  const handleAuthSuccess = async () => {
     try {
-      if (message) {
-        console.log('Auth Success:', message); // Debug log
+      // Wait for session to be established
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found after auth success');
+        return;
       }
+
+      // Set URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'resources-modal');
+      url.searchParams.set('authSuccess', 'true');
       
-      // Close the auth modal first
+      // Update URL and close modal
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
       
       // Call onAuthSuccess if provided
@@ -277,17 +292,23 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
     }
   };
 
+  const handleAuthError = (error: string | null) => {
+    if (error) {
+      console.error('Auth error:', error);
+    }
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm
-              onSuccess={handleAuthSuccess}
-              onError={(error: string | null) => console.error(error)}
+            <SignUpForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
-              hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -298,12 +319,12 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm
-              onSuccess={handleAuthSuccess}
-              onError={(error: string) => console.error(error)}
-              preventRedirect={true}
-              redirectUrl={getCurrentUrl()}
+            <AuthForm 
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
+              preventRedirect={true} 
               hideLinks={true}
+              redirectUrl={getCurrentUrl()}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -317,12 +338,12 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full resource library, including AI-powered recommendations and custom resource collections.
+              Create a free account to unlock our full resource library, including AI-powered templates and guides.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <FontAwesomeIcon icon={faBook} style={{ width: '2.5rem', height: '2.5rem' }} />
+                <BookOpenIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
               <IconText>Resource Library</IconText>
             </IconContainer>
@@ -340,7 +361,7 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
             <ExploreContainer>
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
-                Keep exploring resources
+                Keep exploring tools
               </ExploreLink>
             </ExploreContainer>
           </>
@@ -349,10 +370,12 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <Container>
-        {renderContent()}
-      </Container>
-    </Modal>
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose}>
+        <Container>
+          {renderContent()}
+        </Container>
+      </Modal>
+    </>
   );
 }; 

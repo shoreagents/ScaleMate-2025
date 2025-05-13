@@ -38,7 +38,7 @@ import { withRoleProtection } from '@/components/auth/withRoleProtection';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
-import { useDownloadModal } from '@/components/quote/QuoteDownloadModal';
+import { useDownloadModal } from '@/hooks/useDownloadModal';
 import { Modal } from '@/components/ui/Modal';
 
 const DashboardContainer = styled.div`
@@ -132,6 +132,26 @@ const SuccessButton = styled.button`
   }
 `;
 
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f5f5;
+  gap: 1rem;
+`;
+
+const ErrorMessage = styled.div`
+  color: #dc2626;
+  text-align: center;
+  max-width: 400px;
+  padding: 1rem;
+  background: #fee2e2;
+  border-radius: 0.5rem;
+  border: 1px solid #fecaca;
+`;
+
 interface UserProfileData {
   user_id: string;
   first_name: string;
@@ -164,26 +184,35 @@ const DashboardPage = () => {
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { openModal } = useDownloadModal();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    // Check if we should show the download modal (e.g., after Google sign-in)
-    const showDownloadModal = router.query.showDownloadModal === 'true';
-    if (showDownloadModal) {
-      openModal(() => {
-        // Remove the query parameter
-        const { showDownloadModal, ...rest } = router.query;
-        router.replace({ query: rest });
-      });
+  // Add waitForValidSession helper
+  const waitForValidSession = async (maxAttempts = 10): Promise<boolean> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        return true;
+      }
+      // Wait 200ms between attempts
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
-  }, [router.query, openModal]);
+    return false;
+  };
 
   const checkAuth = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          return;
-        }
+    try {
+      // Wait for valid session first
+      const hasValidSession = await waitForValidSession();
+      if (!hasValidSession) {
+        router.push('/login');
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
       // Get user's profile data
       const { data: profile, error: profileError } = await supabase
@@ -194,8 +223,9 @@ const DashboardPage = () => {
 
       if (profileError) {
         console.error('Profile error:', profileError);
-          return;
-        }
+        setError('Error loading profile data');
+        return;
+      }
 
       // Set user and show dashboard
       setUserData(profile);
@@ -203,13 +233,15 @@ const DashboardPage = () => {
       // Check if username and last_password_change are null
       if (!profile?.username && !profile?.last_password_change) {
         setShowSetupForm(true);
-        }
+      }
 
-      setLoading(false);
     } catch (err) {
       console.error('Auth check error:', err);
-      }
-    };
+      setError('Error checking authentication');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     checkAuth();
@@ -217,8 +249,12 @@ const DashboardPage = () => {
 
   useEffect(() => {
     const { tab } = router.query;
-    if (tab && typeof tab === 'string' && ['dashboard', 'role-builder', 'readiness-quiz', 'quote-builder', 'course-library', 'quote-calculator'].includes(tab)) {
-      setActiveTab(tab);
+    if (tab && typeof tab === 'string') {
+      // Check if the tab exists in navItems
+      const isValidTab = navItems.some(item => item.id === tab);
+      if (isValidTab) {
+        setActiveTab(tab);
+      }
     }
   }, [router.query]);
 
@@ -303,8 +339,32 @@ const DashboardPage = () => {
     setShowSuccessModal(true);
   };
 
+  // Add a function to check if any modal is open
+  const checkModalState = () => {
+    return showSetupForm || showSuccessModal;
+  };
+
+  // Update modal state whenever relevant states change
+  useEffect(() => {
+    setIsModalOpen(checkModalState());
+  }, [showSetupForm, showSuccessModal]);
+
+  // Show loading spinner while checking auth
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <LoadingContainer>
+        <LoadingSpinner />
+      </LoadingContainer>
+    );
+  }
+
+  // Show error if there is one
+  if (error) {
+    return (
+      <LoadingContainer>
+        <ErrorMessage>{error}</ErrorMessage>
+      </LoadingContainer>
+    );
   }
 
   return (
@@ -315,6 +375,7 @@ const DashboardPage = () => {
           navItems={navItems}
           activeTab={activeTab}
           onTabClick={handleTabClick}
+          isModalOpen={isModalOpen}
         />
         <MainContent>
           <DashboardHeader
@@ -326,38 +387,40 @@ const DashboardPage = () => {
           />
           {renderContent()}
         </MainContent>
-      </DashboardContainer>
-      {showSetupForm && user && (
-        <Modal
-          isOpen={showSetupForm}
-          onClose={() => setShowSetupForm(false)}
-          title="Complete Your Setup"
-        >
-          <FirstTimeSetupForm
+
+        {showSetupForm && user && (
+          <Modal
             isOpen={showSetupForm}
             onClose={() => setShowSetupForm(false)}
-            userId={user.id}
-            currentUsername={userData?.username || ''}
-            onSetupComplete={handleSetupComplete}
-          />
-        </Modal>
-      )}
-      {showSuccessModal && (
-        <SuccessModal $isOpen={showSuccessModal}>
-          <SuccessModalContent>
-            <SuccessIcon>
-              <FiCheck size={24} />
-            </SuccessIcon>
-            <SuccessTitle>Setup Complete!</SuccessTitle>
-            <SuccessMessage>
-              Your account has been successfully set up. You can now use your new credentials to log in.
-            </SuccessMessage>
-            <SuccessButton onClick={() => setShowSuccessModal(false)}>
-              Continue
-            </SuccessButton>
-          </SuccessModalContent>
-        </SuccessModal>
-      )}
+            title="Complete Your Setup"
+          >
+            <FirstTimeSetupForm
+              isOpen={showSetupForm}
+              onClose={() => setShowSetupForm(false)}
+              userId={user.id}
+              currentUsername={userData?.username || ''}
+              onSetupComplete={handleSetupComplete}
+            />
+          </Modal>
+        )}
+
+        {showSuccessModal && (
+          <SuccessModal $isOpen={showSuccessModal}>
+            <SuccessModalContent>
+              <SuccessIcon>
+                <FiCheck size={24} />
+              </SuccessIcon>
+              <SuccessTitle>Setup Complete!</SuccessTitle>
+              <SuccessMessage>
+                Your account has been successfully set up. You can now use your new credentials to log in.
+              </SuccessMessage>
+              <SuccessButton onClick={() => setShowSuccessModal(false)}>
+                Continue
+              </SuccessButton>
+            </SuccessModalContent>
+          </SuccessModal>
+        )}
+      </DashboardContainer>
     </NoNavbarLayout>
   );
 };
