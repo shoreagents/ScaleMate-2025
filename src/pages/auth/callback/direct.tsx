@@ -243,7 +243,8 @@ export default function DirectAuthCallback() {
           return;
         }
 
-        window.location.href = redirectUrl;
+        // Use router.replace instead of window.location.href for smoother transition
+        await router.replace(redirectUrl);
 
       } catch (err) {
         console.error('Direct auth callback error:', err);
