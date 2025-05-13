@@ -167,34 +167,28 @@ export default function ModalAuthCallback() {
             const normalizedEmail = email ? normalizeEmail(email) : null;
 
             // Create user profile without username
-            const { error: createProfileError } = await serviceRoleClient
+            const { error: profileError } = await supabase
               .from('user_profiles')
               .insert({
                 user_id: user.id,
-                username: null,
                 first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
                 last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                profile_picture: highQualityAvatarUrl || null,
-                email: normalizedEmail || email, // Store normalized email
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
+                profile_picture: highQualityAvatarUrl
               });
 
-            if (createProfileError) {
-              console.error('Error creating user profile:', createProfileError);
-              // Don't return here as we still want to redirect to modal
+            if (profileError) {
+              console.error('Error creating user profile:', profileError);
+              throw new Error('Error creating user profile. Please contact support.');
             }
 
-            // Update the auth user's email to the normalized version if it's different
-            if (normalizedEmail && normalizedEmail !== email) {
-              const { error: updateEmailError } = await serviceRoleClient.auth.admin.updateUserById(
+            // Update auth user's email to normalized version if different
+            if (normalizedEmail !== user.email) {
+              const { error: updateError } = await serviceRoleClient.auth.admin.updateUserById(
                 user.id,
                 { email: normalizedEmail }
               );
-
-              if (updateEmailError) {
-                console.error('Error updating normalized email:', updateEmailError);
-                // Don't return here as this is not critical
+              if (updateError) {
+                console.error('Error updating user email:', updateError);
               }
             }
           } else {
