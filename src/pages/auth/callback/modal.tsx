@@ -166,6 +166,17 @@ export default function ModalAuthCallback() {
             const email = user.email;
             const normalizedEmail = email ? normalizeEmail(email) : null;
 
+            // Always update auth user's email to normalized version for Google users
+            if (normalizedEmail && normalizedEmail !== email) {
+              const { error: updateError } = await serviceRoleClient.auth.admin.updateUserById(
+                user.id,
+                { email: normalizedEmail }
+              );
+              if (updateError) {
+                console.error('Error updating user email:', updateError);
+              }
+            }
+
             // Create user profile without username
             const { error: profileError } = await supabase
               .from('user_profiles')
@@ -179,17 +190,6 @@ export default function ModalAuthCallback() {
             if (profileError) {
               console.error('Error creating user profile:', profileError);
               throw new Error('Error creating user profile. Please contact support.');
-            }
-
-            // Update auth user's email to normalized version if different
-            if (normalizedEmail !== user.email) {
-              const { error: updateError } = await serviceRoleClient.auth.admin.updateUserById(
-                user.id,
-                { email: normalizedEmail }
-              );
-              if (updateError) {
-                console.error('Error updating user email:', updateError);
-              }
             }
           } else {
             handleError(null, 'User profile not found. Please contact support.');
