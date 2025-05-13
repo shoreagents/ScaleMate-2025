@@ -721,7 +721,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       // Normalize email before sign up
       const normalizedEmail = normalizeEmail(formData.email);
 
-      // Create a client with service role key for admin access
+      // First check if email exists
       const serviceRoleClient = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
@@ -733,7 +733,23 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         }
       );
 
-      // First, create the auth user with metadata
+      // Check if email exists in users table
+      const { data: existingUser, error: checkError } = await serviceRoleClient
+        .from('users')
+        .select('id')
+        .eq('email', normalizedEmail)
+        .single();
+
+      if (existingUser) {
+        setError('An account with this email already exists!');
+        setEmailError('An account with this email already exists!');
+        setSuccess(null);
+        onError?.('An account with this email already exists!');
+        setIsLoading(false);
+        return;
+      }
+
+      // If email doesn't exist, proceed with sign up
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password: formData.password,
@@ -749,21 +765,10 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
       if (signUpError) {
         console.error('Sign up error:', signUpError);
-        if (signUpError.message.includes('User already registered') || 
-            signUpError.message.includes('already exists') ||
-            signUpError.message.includes('already registered')) {
-          setError('An account with this email already exists!');
-          setEmailError('An account with this email already exists!');
-          setSuccess(null);
-          onError?.('An account with this email already exists!');
-          setIsLoading(false);
-          return;
-        } else {
-          setError(signUpError.message);
-          onError?.(signUpError.message);
-          setIsLoading(false);
-          return;
-        }
+        setError(signUpError.message);
+        onError?.(signUpError.message);
+        setIsLoading(false);
+        return;
       }
 
       if (!data.user) {
