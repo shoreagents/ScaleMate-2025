@@ -63,7 +63,7 @@ const Description = styled.p`
 
 const IconContainer = styled.div`
   width: 100%;
-  background-color: rgba(244, 114, 182, 0.1);
+  background-color: rgba(139, 92, 246, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
@@ -78,7 +78,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #F472B6;
+  color: #8B5CF6;
 
   @media (min-width: 640px) {
     width: 4rem;
@@ -115,7 +115,7 @@ const ButtonContainer = styled.div`
 
 const SignUpButton = styled.button`
   flex: 1;
-  background: #F472B6;
+  background: #8B5CF6;
   color: white;
   padding: 0.875rem;
   border-radius: 8px;
@@ -131,7 +131,7 @@ const SignUpButton = styled.button`
   }
 
   &:hover {
-    background: #EC4899;
+    background: #7C3AED;
   }
 
   &:active {
@@ -177,7 +177,7 @@ const LoginButton = styled.button`
 `;
 
 const BackButton = styled.button`
-  color: #F472B6;
+  color: #8B5CF6;
   background: none;
   border: none;
   cursor: pointer;
@@ -197,7 +197,7 @@ const BackButton = styled.button`
   }
 
   &:hover {
-    color: #EC4899;
+    color: #7C3AED;
   }
 `;
 
@@ -212,13 +212,13 @@ const ExploreContainer = styled.div`
 `;
 
 const ExploreLink = styled.a`
-  color: #F472B6;
+  color: #8B5CF6;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
   &:hover {
-    color: #EC4899;
+    color: #7C3AED;
   }
 `;
 
@@ -231,21 +231,27 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
-      const fromParam = urlParams.get('from');
+      const showModal = urlParams.get('showModal');
+      const authSuccess = urlParams.get('authSuccess');
       
-      // Handle both specific modal type and generic 'modal' type
-      if (fromParam === 'readiness-modal' || fromParam === 'modal') {
+      console.log('URL Params Check:', { showModal, authSuccess }); // Debug log
+      
+      // If we have both showModal and authSuccess parameters
+      if (showModal === 'readiness-modal' && authSuccess === 'true') {
+        console.log('Auth success detected, handling...'); // Debug log
+        
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
         
         // Call onAuthSuccess if provided
         if (onAuthSuccess) {
+          console.log('Calling onAuthSuccess callback'); // Debug log
           onAuthSuccess();
         }
       }
     }
-  }, [router.isReady, onAuthSuccess]);
+  }, [router.isReady, router.query, onAuthSuccess]);
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -266,15 +272,35 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
     onClose();
   };
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = async () => {
     try {
-      // Close the auth modal first
+      console.log('Readiness Auth Success - Setting URL params...'); // Debug log
+      // Wait for session to be established
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found after auth success');
+        return;
+      }
+
+      // Set URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'readiness-modal');
+      url.searchParams.set('authSuccess', 'true');
+      console.log('Setting URL to:', url.toString()); // Debug log
+      
+      // Update URL and close modal
+      await router.replace(url.toString());
       onClose();
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
+        console.log('Calling onAuthSuccess callback'); // Debug log
         onAuthSuccess();
       }
+
+      // Redirect to user dashboard with readiness tab
+      console.log('Redirecting to user dashboard readiness tab...'); // Debug log
+      await router.push('/user/dashboard?tab=readiness-score');
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }

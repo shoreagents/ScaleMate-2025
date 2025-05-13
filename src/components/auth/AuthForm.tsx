@@ -557,19 +557,18 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         callbackUrl: callbackUrl.toString()
       });
 
+      // Keep isVerifying and isLoading true while redirecting
       // Redirect to appropriate callback
       router.push(callbackUrl.toString());
-      // Don't reset isVerifying here since we're redirecting
-      return;
+      return; // Don't reset states since we're redirecting
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
       setError(errorMessage);
       onError?.(errorMessage);
       setVerificationCode(Array(6).fill(''));
-      // Only reset isVerifying on error
+      // Only reset states on error
       setIsVerifying(false);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -701,13 +700,17 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
 
       // Only redirect if preventRedirect is false
       if (!preventRedirect) {
+        // Keep isLoading true while redirecting
         // Redirect based on role immediately
         if (userRoles.includes('admin')) {
           router.push('/admin/dashboard');
+          return; // Don't reset states since we're redirecting
         } else if (userRoles.includes('moderator')) {
           router.push('/admin/dashboard');
+          return; // Don't reset states since we're redirecting
         } else if (userRoles.includes('user')) {
           router.push('/user/dashboard');
+          return; // Don't reset states since we're redirecting
         } else {
           throw new Error('User has no valid role assigned. Please contact support.');
         }
@@ -717,7 +720,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign in';
       setError(errorMessage);
       onError?.(errorMessage);
-    } finally {
+      // Only reset loading state on error
       setIsLoading(false);
     }
   };
@@ -967,10 +970,10 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                 )}
                 <Button 
                   type="submit" 
-                  disabled={isLoading || verificationCode.join('').length !== 6}
+                  disabled={isLoading || verificationCode.join('').length !== 6 || isVerifying}
                   style={preventRedirect ? { width: '100%' } : undefined}
                 >
-                  {isLoading ? 'Verifying...' : 'Verify Email'}
+                  {isVerifying || isLoading ? 'Verifying...' : 'Verify Email'}
                 </Button>
               </ButtonContainer>
               <ResendLink>

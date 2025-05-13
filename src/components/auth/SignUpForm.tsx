@@ -657,10 +657,10 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         callbackUrl: callbackUrl.toString()
       });
 
+      // Keep isVerifying and isLoading true while redirecting
       // Redirect to appropriate callback
       router.push(callbackUrl.toString());
-      // Don't reset isVerifying here since we're redirecting
-      return;
+      return; // Don't reset states since we're redirecting
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
@@ -668,9 +668,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       setSuccess(null);
       onError?.(errorMessage);
       setVerificationCode(Array(6).fill(''));
-      // Only reset isVerifying on error
+      // Only reset states on error
       setIsVerifying(false);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -1147,20 +1146,20 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
               disabled={isVerifying || verificationCode.some(code => !code)}
               style={preventRedirect ? { width: '100%' } : undefined}
             >
-              {isVerifying ? 'Verifying...' : 'Verify Email'}
+              {isVerifying || isLoading ? 'Verifying...' : 'Verify Email'}
             </Button>
           </ButtonContainer>
           <ResendLink>
             {resendCountdown > 0 ? (
               <>Please wait <span className="timer">{resendCountdown}s</span> before requesting a new code</>
             ) : (
-              <button 
+              <>Didn't receive the code? <button 
                 type="button" 
                 onClick={handleResendCode} 
                 disabled={isResending || resendCountdown > 0 || isVerifying}
               >
                 {isResending ? 'Sending...' : 'Resend Code'}
-              </button>
+              </button></>
             )}
           </ResendLink>
         </Form>
