@@ -1,75 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
-import { supabase } from '@/lib/supabase';
 
-// Create context for modal state
-interface DownloadModalContextType {
+interface Props {
   isOpen: boolean;
-  openModal: (onClose?: () => void) => void;
-  closeModal: () => void;
-  onCloseCallback: (() => void) | null;
+  onClose: () => void;
 }
 
-const DownloadModalContext = createContext<DownloadModalContextType>({
-  isOpen: false,
-  openModal: () => {},
-  closeModal: () => {},
-  onCloseCallback: null
-});
-
-// Provider component
-export const DownloadModalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [onCloseCallback, setOnCloseCallback] = useState<(() => void) | null>(null);
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only close the modal on sign out
-      if (event === 'SIGNED_OUT' && isOpen) {
-        setIsOpen(false);
-        if (onCloseCallback) {
-          onCloseCallback();
-          setOnCloseCallback(null);
-        }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [isOpen, onCloseCallback]);
-
-  const openModal = (onClose?: () => void) => {
-    setIsOpen(true);
-    if (onClose) {
-      setOnCloseCallback(() => onClose);
-    }
-  };
-
-  const closeModal = () => {
-    setIsOpen(false);
-    if (onCloseCallback) {
-      onCloseCallback();
-      setOnCloseCallback(null);
-    }
-  };
-
-  return (
-    <DownloadModalContext.Provider value={{ isOpen, openModal, closeModal, onCloseCallback }}>
-      {children}
-    </DownloadModalContext.Provider>
-  );
-};
-
-// Hook to use the modal context
-export const useDownloadModal = () => useContext(DownloadModalContext);
-
-// Modal component
-export const QuoteDownloadModal = () => {
-  const { isOpen, closeModal } = useDownloadModal();
+export const QuoteDownloadModal = ({ isOpen, onClose }: Props) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -93,7 +32,7 @@ export const QuoteDownloadModal = () => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={closeModal}>
+    <Modal isOpen={isOpen} onClose={onClose}>
       <Container>
         <Title>Your Blueprint is Ready!</Title>
         
@@ -116,7 +55,7 @@ export const QuoteDownloadModal = () => {
 
         <ExploreContainer>
           <ExploreText>Want to have another quotation?</ExploreText>
-          <ExploreLink href="#" onClick={(e) => { e.preventDefault(); closeModal(); }}>
+          <ExploreLink href="#" onClick={(e) => { e.preventDefault(); onClose(); }}>
             Yes, please!
           </ExploreLink>
         </ExploreContainer>

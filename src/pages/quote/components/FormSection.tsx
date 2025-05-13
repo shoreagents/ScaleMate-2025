@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { useDownloadModal } from '../../../components/quote/QuoteDownloadModal';
+import { useDownloadModal } from '@/hooks/useDownloadModal';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
 import { QuoteAuthModal } from '../../../components/quote/QuoteAuthModal';
+import { QuoteDownloadModal } from '../../../components/quote/QuoteDownloadModal';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -174,7 +175,7 @@ const SummaryContainer = styled.div`
 export default function FormSection() {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const router = useRouter();
-  const { openModal } = useDownloadModal();
+  const { isOpen: isDownloadModalOpen, openModal, closeModal } = useDownloadModal();
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -315,6 +316,11 @@ export default function FormSection() {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
+      />
+
+      <QuoteDownloadModal
+        isOpen={isDownloadModalOpen}
+        onClose={closeModal}
       />
     </Section>
   );

@@ -38,7 +38,7 @@ import { withRoleProtection } from '@/components/auth/withRoleProtection';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
-import { useDownloadModal } from '@/components/quote/QuoteDownloadModal';
+import { useDownloadModal } from '@/hooks/useDownloadModal';
 import { Modal } from '@/components/ui/Modal';
 
 const DashboardContainer = styled.div`
@@ -330,38 +330,40 @@ const DashboardPage = () => {
           />
           {renderContent()}
         </MainContent>
-      </DashboardContainer>
-      {showSetupForm && user && (
-        <Modal
-          isOpen={showSetupForm}
-          onClose={() => setShowSetupForm(false)}
-          title="Complete Your Setup"
-        >
-          <FirstTimeSetupForm
+
+        {showSetupForm && user && (
+          <Modal
             isOpen={showSetupForm}
             onClose={() => setShowSetupForm(false)}
-            userId={user.id}
-            currentUsername={userData?.username || ''}
-            onSetupComplete={handleSetupComplete}
-          />
-        </Modal>
-      )}
-      {showSuccessModal && (
-        <SuccessModal $isOpen={showSuccessModal}>
-          <SuccessModalContent>
-            <SuccessIcon>
-              <FiCheck size={24} />
-            </SuccessIcon>
-            <SuccessTitle>Setup Complete!</SuccessTitle>
-            <SuccessMessage>
-              Your account has been successfully set up. You can now use your new credentials to log in.
-            </SuccessMessage>
-            <SuccessButton onClick={() => setShowSuccessModal(false)}>
-              Continue
-            </SuccessButton>
-          </SuccessModalContent>
-        </SuccessModal>
-      )}
+            title="Complete Your Setup"
+          >
+            <FirstTimeSetupForm
+              isOpen={showSetupForm}
+              onClose={() => setShowSetupForm(false)}
+              userId={user.id}
+              currentUsername={userData?.username || ''}
+              onSetupComplete={handleSetupComplete}
+            />
+          </Modal>
+        )}
+
+        {showSuccessModal && (
+          <SuccessModal $isOpen={showSuccessModal}>
+            <SuccessModalContent>
+              <SuccessIcon>
+                <FiCheck size={24} />
+              </SuccessIcon>
+              <SuccessTitle>Setup Complete!</SuccessTitle>
+              <SuccessMessage>
+                Your account has been successfully set up. You can now use your new credentials to log in.
+              </SuccessMessage>
+              <SuccessButton onClick={() => setShowSuccessModal(false)}>
+                Continue
+              </SuccessButton>
+            </SuccessModalContent>
+          </SuccessModal>
+        )}
+      </DashboardContainer>
     </NoNavbarLayout>
   );
 };

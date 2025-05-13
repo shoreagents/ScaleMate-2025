@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faPhone, faTimes } from '@fortawesome/free-solid-svg-icons';
-import Link from 'next/link';
-import { CostSavingsAuthModal } from '../../../components/cost-savings/CostSavingsAuthModal';
-import { useDownloadModal } from '../../../components/cost-savings/CostSavingsDownloadModal';
+import { useDownloadModal } from '@/hooks/useDownloadModal';
 import { supabase } from '@/lib/supabase';
+import { CostSavingsAuthModal } from '@/components/cost-savings/CostSavingsAuthModal';
+import { CostSavingsDownloadModal } from '@/components/cost-savings/CostSavingsDownloadModal';
+import Link from 'next/link';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -55,7 +56,7 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const PrimaryButton = styled(Link)`
+const PrimaryButton = styled.button`
   background-color: white;
   color: #3B82F6;
   padding: 1rem 2rem;
@@ -68,9 +69,13 @@ const PrimaryButton = styled(Link)`
   transition: background-color 0.2s;
   justify-content: center;
   width: 280px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  min-width: 280px;
 
   @media (min-width: 768px) {
-    width: auto;
+    width: 280px;
   }
 
   &:hover {
@@ -78,7 +83,7 @@ const PrimaryButton = styled(Link)`
   }
 `;
 
-const SecondaryButton = styled(Link)`
+const SecondaryButton = styled.button`
   background-color: #EC297B;
   color: white;
   padding: 1rem 2rem;
@@ -91,9 +96,13 @@ const SecondaryButton = styled(Link)`
   transition: background-color 0.2s;
   justify-content: center;
   width: 280px;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  min-width: 280px;
 
   @media (min-width: 768px) {
-    width: auto;
+    width: 280px;
   }
 
   &:hover {
@@ -164,9 +173,9 @@ const CalendlyContainer = styled.div`
 `;
 
 export default function CTA() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { openModal } = useDownloadModal();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { isOpen: isDownloadModalOpen, openModal, closeModal } = useDownloadModal();
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -194,27 +203,25 @@ export default function CTA() {
   };
 
   return (
-    <>
-      <Section>
-        <Container>
-          <CTAWrapper>
-            <Title>Ready to Start Saving?</Title>
-            <Description>
-              Download your savings report or schedule a call to discuss your needs
-            </Description>
-            <ButtonGroup>
-              <PrimaryButton href="#" onClick={handleDownloadClick}>
-                Download Report
-                <FontAwesomeIcon icon={faDownload} style={{ marginLeft: '0.5rem' }} />
-              </PrimaryButton>
-              <SecondaryButton href="#" onClick={handleBookStrategyClick}>
-                Book Strategy Call
-                <FontAwesomeIcon icon={faPhone} style={{ marginLeft: '0.5rem' }} />
-              </SecondaryButton>
-            </ButtonGroup>
-          </CTAWrapper>
-        </Container>
-      </Section>
+    <Section>
+      <Container>
+        <CTAWrapper>
+          <Title>Ready to Start Saving?</Title>
+          <Description>
+            Download your savings report or schedule a call to discuss your needs
+          </Description>
+          <ButtonGroup>
+            <PrimaryButton onClick={handleDownloadClick}>
+              Download Report
+              <FontAwesomeIcon icon={faDownload} style={{ marginLeft: '0.5rem' }} />
+            </PrimaryButton>
+            <SecondaryButton onClick={handleBookStrategyClick}>
+              Book Strategy Call
+              <FontAwesomeIcon icon={faPhone} style={{ marginLeft: '0.5rem' }} />
+            </SecondaryButton>
+          </ButtonGroup>
+        </CTAWrapper>
+      </Container>
 
       {isModalOpen && (
         <ModalOverlay onClick={() => setIsModalOpen(false)}>
@@ -238,6 +245,11 @@ export default function CTA() {
         onClose={() => setIsLoginModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />
-    </>
+
+      <CostSavingsDownloadModal
+        isOpen={isDownloadModalOpen}
+        onClose={closeModal}
+      />
+    </Section>
   );
 } 
