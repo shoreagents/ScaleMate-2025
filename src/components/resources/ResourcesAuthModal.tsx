@@ -230,7 +230,8 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from');
       
-      if (fromParam === 'resources-modal') {
+      // Handle both specific modal type and generic 'modal' type
+      if (fromParam === 'resources-modal' || fromParam === 'modal') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -256,25 +257,18 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
 
   const handleClose = () => {
     onClose();
-    // Reset to initial view after modal is closed
-    setTimeout(() => setCurrentView('initial'), 300);
   };
 
-  const handleAuthSuccess = async (message: string) => {
+  const handleAuthSuccess = (message?: string) => {
     try {
-      console.log('Auth Success:', message); // Debug log
-      
-      // Wait for session to be established first
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('Session not established:', error);
-        return;
+      if (message) {
+        console.log('Auth Success:', message); // Debug log
       }
-
-      console.log('Session established:', session); // Debug log
       
-      // Only close modal and call onAuthSuccess after session is confirmed
+      // Close the auth modal first
       onClose();
+      
+      // Call onAuthSuccess if provided
       if (onAuthSuccess) {
         onAuthSuccess();
       }
