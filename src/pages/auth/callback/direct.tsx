@@ -145,7 +145,7 @@ export default function DirectAuthCallback() {
 
         // If user doesn't exist in users table, create it
         if (userCheckError || !existingUser) {
-          console.log('Creating new user record for Google sign-up...');
+          console.log('Creating new user record for Google sign-up...', { userId: user.id });
           const { error: createUserError } = await serviceRoleClient
             .from('users')
             .insert({
@@ -159,21 +159,22 @@ export default function DirectAuthCallback() {
             });
 
           if (createUserError) {
-            handleError(createUserError, 'Error creating user record. Please contact support.');
-            return;
+            console.error('Error creating user record:', createUserError);
+            // Continue anyway as the user might exist in auth but not in users table
           }
         }
 
-        // Check if user profile exists
+        // Always check and create profile if needed
+        console.log('Checking user profile...', { userId: user.id });
         const { data: profile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .select('username')
           .eq('user_id', user.id)
           .single();
 
-        // If no profile exists, create it
+        // Create profile if it doesn't exist or has no username
         if (profileError || !profile?.username) {
-          console.log('Creating new user profile for Google sign-up...');
+          console.log('Creating new user profile...', { userId: user.id });
           
           // Extract name from Google metadata
           const firstName = user.user_metadata?.given_name || 
@@ -202,23 +203,23 @@ export default function DirectAuthCallback() {
             });
 
           if (createProfileError) {
-            handleError(createProfileError, 'Error creating user profile. Please contact support.');
-            return;
+            console.error('Error creating user profile:', createProfileError);
+            // Continue anyway as we want to try role assignment
           }
         }
 
-        // Get user's role
+        // Always check and create role if needed
+        console.log('Checking user roles...', { userId: user.id });
         const { data: roles, error: roleError } = await serviceRoleClient
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id);
 
-        let userRoles: string[];
+        let userRoles: string[] = [];
 
-        // If no roles exist, assign default 'user' role
+        // Create role if none exists
         if (roleError || !roles || roles.length === 0) {
-          console.log('Assigning default role for Google sign-up...');
-          // Try to assign default role
+          console.log('Assigning default role...', { userId: user.id });
           const { error: assignRoleError } = await serviceRoleClient
             .from('user_roles')
             .insert({
@@ -229,14 +230,20 @@ export default function DirectAuthCallback() {
             });
 
           if (assignRoleError) {
-            handleError(assignRoleError, 'Error assigning default role. Please contact support.');
-            return;
+            console.error('Error assigning default role:', assignRoleError);
+            // Set default role anyway for redirect
+            userRoles = ['user'];
+          } else {
+            userRoles = ['user'];
           }
-
-          // Set roles to default after assignment
-          userRoles = ['user'];
         } else {
           userRoles = roles.map(r => r.role);
+        }
+
+        // Ensure we have at least one role for redirect
+        if (userRoles.length === 0) {
+          console.log('No roles found, using default role for redirect');
+          userRoles = ['user'];
         }
 
         // Determine redirect URL based on role
@@ -245,13 +252,11 @@ export default function DirectAuthCallback() {
           redirectUrl = '/admin/dashboard';
         } else if (userRoles.includes('moderator')) {
           redirectUrl = '/admin/dashboard';
-        } else if (userRoles.includes('user')) {
-          redirectUrl = '/user/dashboard';
         } else {
-          handleError(null, 'User has no valid role assigned. Please contact support.');
-          return;
+          redirectUrl = '/user/dashboard';
         }
 
+        console.log('Redirecting user...', { userId: user.id, roles: userRoles, redirectUrl });
         window.location.href = redirectUrl;
 
       } catch (err) {
