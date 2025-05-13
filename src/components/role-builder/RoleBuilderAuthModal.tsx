@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
-import { UserGroupIcon } from '@heroicons/react/24/outline';
+import { DocumentIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -93,7 +93,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -222,9 +222,8 @@ const ExploreLink = styled.a`
   }
 `;
 
-export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBuilderAuthModalProps) => {
+export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
-  const [isVerifying, setIsVerifying] = useState(false);
   const router = useRouter();
 
   // Check URL parameters on mount and after auth redirect
@@ -289,7 +288,7 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
       console.log('Setting URL to:', url.toString()); // Debug log
       
       // Update URL and close modal
-      await router.replace(url.toString());
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
       
       // Call onAuthSuccess if provided
@@ -297,18 +296,8 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
         console.log('Calling onAuthSuccess callback'); // Debug log
         onAuthSuccess();
       }
-
-      // Redirect to user dashboard with role builder tab
-      console.log('Redirecting to user dashboard role builder tab...'); // Debug log
-      await router.push('/user/dashboard?tab=role-builder');
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
-    }
-  };
-
-  const handleAuthError = (error: string | null) => {
-    if (error) {
-      console.error('Auth error:', error);
     }
   };
 
@@ -352,14 +341,14 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the complete role builder, including detailed job descriptions, requirements, and salary benchmarks.
+              Create a free account to unlock your complete role builder analysis, including detailed role insights, market data, and implementation recommendations.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <UserGroupIcon style={{ width: '2.5rem', height: '2.5rem' }} />
+                <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Complete Role Builder</IconText>
+              <IconText>Complete Role Analysis</IconText>
             </IconContainer>
 
             <ButtonContainer>
@@ -367,9 +356,9 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
                 Log In
               </LoginButton>
 
-            <SignUpButton onClick={() => setCurrentView('signup')}>
+              <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
-            </SignUpButton>
+              </SignUpButton>
             </ButtonContainer>
 
             <ExploreContainer>
@@ -384,12 +373,10 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
   };
 
   return (
-    <>
     <Modal isOpen={isOpen} onClose={handleClose}>
       <Container>
         {renderContent()}
       </Container>
     </Modal>
-    </>
   );
 }; 

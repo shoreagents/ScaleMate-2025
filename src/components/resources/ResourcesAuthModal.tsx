@@ -1,12 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBook, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../ui/Modal';
-import AuthForm from '../auth/AuthForm';
+import { BookOpenIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../auth/SignUpForm';
+import AuthForm from '../auth/AuthForm';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/router';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
+
+interface ResourcesAuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess?: () => void;
+}
+
+type ModalView = 'initial' | 'signup' | 'login';
 
 const Container = styled.div`
   display: flex;
@@ -54,7 +63,7 @@ const Description = styled.p`
 
 const IconContainer = styled.div`
   width: 100%;
-  background-color: rgba(244, 114, 182, 0.1);
+  background-color: rgba(236, 72, 153, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
@@ -69,7 +78,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #F472B6;
+  color: #EC4899;
 
   @media (min-width: 640px) {
     width: 4rem;
@@ -106,7 +115,7 @@ const ButtonContainer = styled.div`
 
 const SignUpButton = styled.button`
   flex: 1;
-  background: #F472B6;
+  background: #EC4899;
   color: white;
   padding: 0.875rem;
   border-radius: 8px;
@@ -122,7 +131,7 @@ const SignUpButton = styled.button`
   }
 
   &:hover {
-    background: #EC4899;
+    background: #DB2777;
   }
 
   &:active {
@@ -168,7 +177,7 @@ const LoginButton = styled.button`
 `;
 
 const BackButton = styled.button`
-  color: #F472B6;
+  color: #EC4899;
   background: none;
   border: none;
   cursor: pointer;
@@ -187,7 +196,7 @@ const BackButton = styled.button`
     margin-top: 1rem;
 
     &:hover {
-      color: #EC4899;
+      color: #DB2777;
     }
   }
 `;
@@ -203,23 +212,15 @@ const ExploreContainer = styled.div`
 `;
 
 const ExploreLink = styled.a`
-  color: #F472B6;
+  color: #EC4899;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
   &:hover {
-    color: #EC4899;
+    color: #DB2777;
   }
 `;
-
-interface ResourcesAuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAuthSuccess?: () => void;
-}
-
-type ModalView = 'initial' | 'signup' | 'login';
 
 export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
@@ -270,13 +271,9 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
     onClose();
   };
 
-  const handleAuthSuccess = async (message?: string) => {
+  const handleAuthSuccess = async () => {
     try {
       console.log('Resources Auth Success - Setting URL params...'); // Debug log
-      if (message) {
-        console.log('Auth Success:', message); // Debug log
-      }
-      
       // Wait for session to be established
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -291,7 +288,7 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       console.log('Setting URL to:', url.toString()); // Debug log
       
       // Update URL and close modal
-      await router.replace(url.toString());
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
       
       // Call onAuthSuccess if provided
@@ -309,12 +306,12 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm
-              onSuccess={handleAuthSuccess}
+            <SignUpForm 
+              onSuccess={() => handleAuthSuccess()} 
               onError={(error: string | null) => console.error(error)}
+              hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
-              hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -325,12 +322,12 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm
-              onSuccess={handleAuthSuccess}
+            <AuthForm 
+              onSuccess={handleAuthSuccess} 
               onError={(error: string) => console.error(error)}
-              preventRedirect={true}
-              redirectUrl={getCurrentUrl()}
+              preventRedirect={true} 
               hideLinks={true}
+              redirectUrl={getCurrentUrl()}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -344,12 +341,12 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full resource library, including AI-powered recommendations and custom resource collections.
+              Create a free account to access our comprehensive resource library, including guides, templates, and best practices.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <FontAwesomeIcon icon={faBook} style={{ width: '2.5rem', height: '2.5rem' }} />
+                <BookOpenIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
               <IconText>Resource Library</IconText>
             </IconContainer>

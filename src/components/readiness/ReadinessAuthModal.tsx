@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
-import { DocumentIcon } from '@heroicons/react/24/outline';
+import { ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -93,7 +93,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -194,10 +194,10 @@ const BackButton = styled.button`
 
   @media (min-width: 640px) {
     margin-top: 1rem;
-  }
 
-  &:hover {
-    color: #7C3AED;
+    &:hover {
+      color: #7C3AED;
+    }
   }
 `;
 
@@ -222,9 +222,8 @@ const ExploreLink = styled.a`
   }
 `;
 
-export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: ReadinessAuthModalProps) => {
+export const ReadinessAuthModal: React.FC<ReadinessAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
-  const [isVerifying, setIsVerifying] = useState(false);
   const router = useRouter();
 
   // Check URL parameters on mount and after auth redirect
@@ -289,7 +288,7 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
       console.log('Setting URL to:', url.toString()); // Debug log
       
       // Update URL and close modal
-      await router.replace(url.toString());
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
       
       // Call onAuthSuccess if provided
@@ -297,18 +296,8 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
         console.log('Calling onAuthSuccess callback'); // Debug log
         onAuthSuccess();
       }
-
-      // Redirect to user dashboard with readiness tab
-      console.log('Redirecting to user dashboard readiness tab...'); // Debug log
-      await router.push('/user/dashboard?tab=readiness-score');
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
-    }
-  };
-
-  const handleAuthError = (error: string | null) => {
-    if (error) {
-      console.error('Auth error:', error);
     }
   };
 
@@ -352,12 +341,12 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the complete readiness assessment, including detailed insights and personalized recommendations.
+              Create a free account to unlock your complete readiness assessment, including personalized recommendations and implementation guidance.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
+                <ClipboardDocumentCheckIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
               <IconText>Readiness Assessment</IconText>
             </IconContainer>
@@ -367,9 +356,9 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
                 Log In
               </LoginButton>
 
-            <SignUpButton onClick={() => setCurrentView('signup')}>
+              <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
-            </SignUpButton>
+              </SignUpButton>
             </ButtonContainer>
 
             <ExploreContainer>

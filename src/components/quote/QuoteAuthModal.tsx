@@ -240,43 +240,15 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
     onClose();
   };
 
-  const handleDownloadModalClose = () => {
-    onClose();
-  };
-
-  // Check URL parameters on mount and after auth redirect
-  useEffect(() => {
-    if (typeof window !== 'undefined' && router.isReady) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const showModal = urlParams.get('showModal');
-      const authSuccess = urlParams.get('authSuccess');
-      
-      console.log('URL Params Check:', { showModal, authSuccess }); // Debug log
-      
-      // If we have both showModal and authSuccess parameters
-      if (showModal === 'quote-modal' && authSuccess === 'true') {
-        console.log('Opening download modal...'); // Debug log
-        
-        // Remove the parameters from the URL
-        const newUrl = window.location.pathname;
-        router.replace(newUrl, undefined, { shallow: true });
-        
-        // Open the download modal
-        openModal(handleDownloadModalClose);
-      }
-    }
-  }, [router.isReady, router.query, openModal, handleDownloadModalClose, onClose]); // Added onClose dependency
-
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      // Add a query parameter to identify this is from the blueprint modal
+      // Add a query parameter to identify this is from the quote modal
       url.searchParams.set('from', 'quote-modal');
       // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
-      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
@@ -284,28 +256,17 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
 
   const handleAuthSuccess = async (message?: string) => {
     try {
-      console.log('Auth Success:', message); // Debug log
-      
-      // Wait for session to be established first
+      // Wait for session to be established
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session) {
         console.error('Session not established:', error);
         return;
       }
-
-      console.log('Session established:', session); // Debug log
       
-      // Set URL parameters to trigger download modal using router
-      const url = new URL(window.location.href);
-      url.searchParams.set('showModal', 'quote-modal');
-      url.searchParams.set('authSuccess', 'true');
-      console.log('Setting URL params:', url.toString()); // Debug log
-      await router.replace(url.toString(), undefined, { shallow: true });
-      
-      // Close the auth modal after URL is set
+      // Close the auth modal
       onClose();
       
-      // Call onAuthSuccess if provided
+      // Call onAuthSuccess if provided (this will now open the download modal)
       if (onAuthSuccess) {
         onAuthSuccess();
       }

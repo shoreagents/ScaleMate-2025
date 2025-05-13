@@ -86,7 +86,7 @@ export const CostSavingsDownloadModal = () => {
       window.URL.revokeObjectURL(url);
       a.remove();
     } catch (error) {
-      console.error('Error downloading report:', error);
+      console.error('Error downloading cost savings report:', error);
     } finally {
       setIsDownloading(false);
     }
@@ -98,14 +98,14 @@ export const CostSavingsDownloadModal = () => {
         <Title>Your Cost Savings Report is Ready!</Title>
         
         <Description>
-          Get your complete cost savings analysis with detailed breakdowns, ROI calculations, and implementation recommendations.
+          Get your complete cost savings report PDF with detailed ROI analysis, implementation recommendations, and more.
         </Description>
 
         <IconContainer>
           <IconWrapper>
             <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
           </IconWrapper>
-          <IconText>Complete Cost Analysis</IconText>
+          <IconText>Complete Cost Savings Report</IconText>
         </IconContainer>
 
         <ButtonContainer>
@@ -115,7 +115,7 @@ export const CostSavingsDownloadModal = () => {
         </ButtonContainer>
 
         <ExploreContainer>
-          <ExploreText>Want to calculate another scenario?</ExploreText>
+          <ExploreText>Want to analyze another role?</ExploreText>
           <ExploreLink href="#" onClick={(e) => { e.preventDefault(); closeModal(); }}>
             Yes, please!
           </ExploreLink>
