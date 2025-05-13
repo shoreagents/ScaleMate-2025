@@ -475,7 +475,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (profileError || !profileData) {
-          throw new Error('Invalid username or email!');
+          throw new Error('Invalid login credentials');
         }
 
         // Query the users table to get the email
@@ -486,7 +486,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (userError || !userData) {
-          throw new Error('Invalid username or email!');
+          throw new Error('Invalid login credentials');
         }
 
         emailToUse = userData.email;
@@ -621,7 +621,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (profileError || !profileData) {
-          throw new Error('Invalid username or email!');
+          throw new Error('Invalid login credentials');
         }
 
         // Query the users table to get the email
@@ -632,7 +632,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (userError || !userData) {
-          throw new Error('Invalid username or email!');
+          throw new Error('Invalid login credentials');
         }
 
         emailToUse = userData.email;
@@ -707,10 +707,10 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   };
 
   const handleGoogleSignIn = async () => {
-    try {
-      setIsGoogleLoading(true);
-      setError(null);
+    setIsGoogleLoading(true);
+    setError(null);
 
+    try {
       // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;
       const url = new URL(currentUrl, window.location.origin);
@@ -734,6 +734,9 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         // Store current scroll position before redirect
         sessionStorage.setItem('scrollPosition', window.scrollY.toString());
       }
+
+      // Add email normalization state to the callback URL
+      callbackUrl.searchParams.set('normalizeEmail', 'true');
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -791,7 +794,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (profileError || !profileData) {
-          throw new Error('Invalid username or email!');
+          throw new Error('Invalid login credentials');
         }
 
         // Query the users table to get the email
@@ -802,7 +805,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           .single();
 
         if (userError || !userData) {
-          throw new Error('Invalid username or email!');
+          throw new Error('Invalid login credentials');
         }
 
         emailToUse = userData.email;

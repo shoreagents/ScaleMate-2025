@@ -158,6 +158,14 @@ export default function ModalAuthCallback() {
           const isGoogleUser = user.app_metadata?.provider === 'google';
           
           if (isGoogleUser) {
+            // Get high quality profile picture from Google
+            const avatarUrl = user.user_metadata?.avatar_url;
+            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+
+            // Normalize email for Gmail addresses
+            const email = user.email;
+            const normalizedEmail = email ? normalizeEmail(email) : null;
+
             // Create user profile without username
             const { error: createProfileError } = await serviceRoleClient
               .from('user_profiles')
@@ -166,7 +174,8 @@ export default function ModalAuthCallback() {
                 username: null,
                 first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
                 last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                profile_picture: user.user_metadata?.avatar_url || null,
+                profile_picture: highQualityAvatarUrl || null,
+                email: normalizedEmail || email, // Store normalized email
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               });
@@ -175,18 +184,33 @@ export default function ModalAuthCallback() {
               console.error('Error creating user profile:', createProfileError);
               // Don't return here as we still want to redirect to modal
             }
+
+            // Update the auth user's email to the normalized version if it's different
+            if (normalizedEmail && normalizedEmail !== email) {
+              const { error: updateEmailError } = await serviceRoleClient.auth.admin.updateUserById(
+                user.id,
+                { email: normalizedEmail }
+              );
+
+              if (updateEmailError) {
+                console.error('Error updating normalized email:', updateEmailError);
+                // Don't return here as this is not critical
+              }
+            }
           } else {
             handleError(null, 'User profile not found. Please contact support.');
             return;
           }
         } else if (user.app_metadata?.provider === 'google' && !profile.profile_picture) {
           // If profile exists but no profile picture, update it with Google's picture
-          const profilePicture = user.user_metadata?.avatar_url || null;
-          if (profilePicture) {
+          const avatarUrl = user.user_metadata?.avatar_url;
+          const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
+          
+          if (highQualityAvatarUrl) {
             const { error: updateError } = await serviceRoleClient
               .from('user_profiles')
               .update({
-                profile_picture: profilePicture,
+                profile_picture: highQualityAvatarUrl,
                 updated_at: new Date().toISOString()
               })
               .eq('user_id', user.id);
