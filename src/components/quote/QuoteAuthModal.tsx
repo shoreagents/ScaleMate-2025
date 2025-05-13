@@ -240,9 +240,11 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
-      const fromParam = urlParams.get('from');
+      const showModal = urlParams.get('showModal');
+      const authSuccess = urlParams.get('authSuccess');
       
-      if (fromParam === 'quote-modal') {
+      // If we have both showModal and authSuccess parameters
+      if (showModal === 'quote-modal' && authSuccess === 'true') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -276,7 +278,7 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
     onClose();
   };
 
-  const handleAuthSuccess = async (message: string) => {
+  const handleAuthSuccess = async (message?: string) => {
     try {
       console.log('Auth Success:', message); // Debug log
       
@@ -294,9 +296,6 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
       if (onAuthSuccess) {
         onAuthSuccess();
       }
-
-      // Show download modal after session is confirmed
-      openModal(handleDownloadModalClose);
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }

@@ -230,7 +230,8 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from');
       
-      if (fromParam === 'courses-modal') {
+      // Handle both specific modal type and generic 'modal' type
+      if (fromParam === 'courses-modal' || fromParam === 'modal') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -256,25 +257,14 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
 
   const handleClose = () => {
     onClose();
-    // Reset to initial view after modal is closed
-    setTimeout(() => setCurrentView('initial'), 300);
   };
 
-  const handleAuthSuccess = async (message: string) => {
+  const handleAuthSuccess = () => {
     try {
-      console.log('Auth Success:', message); // Debug log
-      
-      // Wait for session to be established first
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('Session not established:', error);
-        return;
-      }
-
-      console.log('Session established:', session); // Debug log
-      
-      // Only close modal and call onAuthSuccess after session is confirmed
+      // Close the auth modal first
       onClose();
+      
+      // Call onAuthSuccess if provided
       if (onAuthSuccess) {
         onAuthSuccess();
       }
@@ -288,12 +278,12 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
       case 'signup':
         return (
           <FormWrapper>
-            <SignUpForm
-              onSuccess={handleAuthSuccess}
+            <SignUpForm 
+              onSuccess={() => handleAuthSuccess()} 
               onError={(error: string | null) => console.error(error)}
+              hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
-              hideLinks={true}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
@@ -304,12 +294,12 @@ export const CoursesAuthModal: React.FC<CoursesAuthModalProps> = ({ isOpen, onCl
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm
-              onSuccess={handleAuthSuccess}
+            <AuthForm 
+              onSuccess={handleAuthSuccess} 
               onError={(error: string) => console.error(error)}
-              preventRedirect={true}
-              redirectUrl={getCurrentUrl()}
+              preventRedirect={true} 
               hideLinks={true}
+              redirectUrl={getCurrentUrl()}
             />
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />

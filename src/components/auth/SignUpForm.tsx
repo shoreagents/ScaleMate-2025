@@ -632,21 +632,27 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         throw new Error('Failed to establish session. Please try signing in manually.');
       }
 
-      // Use the callback URL for redirection
-      const callbackUrl = `${window.location.origin}/auth/callback`;
-      const currentUrl = redirectUrl || window.location.href;
+      // Get the current URL and its parameters
+      const currentUrl = redirectUrl || window.location.pathname;
+      const url = new URL(currentUrl, window.location.origin);
       
-      // Parse the current URL to get the from parameter
-      const url = new URL(currentUrl);
-      const fromParam = url.searchParams.get('from');
-      
+      // Preserve the specific modal type if it exists, otherwise use 'modal'
+      const fromParam = url.searchParams.get('from') || 'modal';
+      const redirectTo = url.searchParams.get('redirectTo') || window.location.pathname;
+
       // Create the callback URL with parameters
-      const callbackWithParams = new URL(callbackUrl);
-      callbackWithParams.searchParams.set('from', fromParam || '');
-      callbackWithParams.searchParams.set('redirectTo', currentUrl);
-      
-      // Always redirect to callback to ensure profile/role creation
-      router.push(callbackWithParams.toString());
+      const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+      callbackUrl.searchParams.set('from', fromParam);
+      callbackUrl.searchParams.set('redirectTo', redirectTo);
+
+      console.log('SignUpForm - Callback URL params:', {
+        from: fromParam,
+        redirectTo,
+        callbackUrl: callbackUrl.toString()
+      });
+
+      // Always redirect to callback to ensure proper profile/role creation
+      router.push(callbackUrl.toString());
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
@@ -857,7 +863,6 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         setPasswordError(null);
         setShowVerificationWithCallback(true);
         setResendCountdown(60);
-        onSuccess?.('Account created successfully! Please verify your email.');
       } catch (dbError) {
         console.error('Database error:', dbError);
         // If database operations fail, we should still show the verification form
@@ -869,7 +874,6 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         setPasswordError(null);
         setShowVerificationWithCallback(true);
         setResendCountdown(60);
-        onSuccess?.('Account created! Please verify your email.');
       }
     } catch (err) {
       console.error('Sign up error:', err);

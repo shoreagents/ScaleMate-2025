@@ -532,21 +532,19 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         throw new Error('Failed to establish session. Please try signing in manually.');
       }
 
-      // Use the callback URL for redirection
-      const callbackUrl = `${window.location.origin}/auth/callback`;
-      const currentUrl = redirectUrl || window.location.href;
-      
-      // Parse the current URL to get the from parameter
-      const url = new URL(currentUrl);
-      const fromParam = url.searchParams.get('from');
-      
+      // Get the current URL and its parameters
+      const currentUrl = redirectUrl || window.location.pathname;
+      const url = new URL(currentUrl, window.location.origin);
+      const fromParam = url.searchParams.get('from') || 'modal'; // Always set from=modal for modals
+      const redirectTo = url.searchParams.get('redirectTo') || window.location.pathname;
+
       // Create the callback URL with parameters
-      const callbackWithParams = new URL(callbackUrl);
-      callbackWithParams.searchParams.set('from', fromParam || '');
-      callbackWithParams.searchParams.set('redirectTo', currentUrl);
-      
-      // Always redirect to callback to ensure profile/role creation
-      router.push(callbackWithParams.toString());
+      const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+      callbackUrl.searchParams.set('from', fromParam);
+      callbackUrl.searchParams.set('redirectTo', redirectTo);
+
+      // Always redirect to callback to ensure proper profile/role creation
+      router.push(callbackUrl.toString());
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
@@ -680,6 +678,9 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
 
       const userRoles = roles.map(r => r.role);
 
+      // Call onSuccess without setting success message
+      onSuccess?.();
+
       // Only redirect if preventRedirect is false
       if (!preventRedirect) {
         // Redirect based on role immediately
@@ -712,7 +713,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       const callbackUrl = `${window.location.origin}/auth/callback`;
       
       // Get the current URL for redirect
-      const currentUrl = redirectUrl || window.location.href;
+      const currentUrl = redirectUrl || window.location.pathname;
       
       // Parse the current URL to get the from parameter
       const url = new URL(currentUrl);

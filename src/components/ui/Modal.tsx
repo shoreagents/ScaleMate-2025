@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
+import { FaTimes } from 'react-icons/fa';
 
 interface ModalProps {
   isOpen: boolean;
@@ -18,11 +19,11 @@ const ModalOverlay = styled.div<{ isOpen: boolean }>`
   backdrop-filter: blur(2px);
 `;
 
-const ModalContainer = styled.div`
+const ModalContainer = styled.div<{ isOpen: boolean }>`
   position: fixed;
   inset: 0;
   z-index: 70;
-  display: flex;
+  display: ${props => props.isOpen ? 'flex' : 'none'};
   min-height: 100vh;
   padding: 1rem;
   justify-content: center;
@@ -60,22 +61,49 @@ const ModalTitle = styled.h3`
   font-weight: 700;
   color: #0F172A;
   margin-bottom: 1rem;
+  padding-right: 2rem; // Make room for close button
 `;
 
-export const Modal = ({ isOpen, onClose, children, title, closeOnOverlayClick = true }: ModalProps) => {
+const CloseButton = styled.button`
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  z-index: 1;
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  &:hover {
+    color: #1F2937;
+  }
+`;
+
+export const Modal = ({ isOpen, onClose, children, title, closeOnOverlayClick = false }: ModalProps) => {
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();
     }
   };
 
-  if (!isOpen) return null;
-
   return (
     <>
       <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick} />
-      <ModalContainer onClick={handleOverlayClick}>
+      <ModalContainer isOpen={isOpen} onClick={handleOverlayClick}>
         <ModalContent onClick={(e) => e.stopPropagation()}>
+          <CloseButton onClick={onClose} aria-label="Close modal">
+            <FaTimes />
+          </CloseButton>
           {title && <ModalTitle>{title}</ModalTitle>}
           {children}
         </ModalContent>
