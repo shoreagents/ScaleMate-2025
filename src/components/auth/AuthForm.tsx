@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
 import { createClient } from '@supabase/supabase-js';
-import ResetPassword from './ResetPassword';
+import ResetPasswordForm from './ResetPasswordForm';
 
 const FormContainer = styled.div`
   max-width: 420px;
@@ -1006,7 +1006,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           </Form>
         </>
       ) : showResetPasswordModal ? (
-        <ResetPassword 
+        <ResetPasswordForm 
           email={resetEmail}
           onSuccess={() => {
             setShowResetPasswordModal(false);

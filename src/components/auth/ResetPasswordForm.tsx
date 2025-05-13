@@ -307,13 +307,13 @@ const normalizeEmail = (email: string): string => {
   return normalized;
 };
 
-interface ResetPasswordProps {
+interface ResetPasswordFormProps {
   email: string;
   onSuccess?: () => void;
   onError?: (error: string) => void;
 }
 
-export default function ResetPassword({ email, onSuccess, onError }: ResetPasswordProps) {
+export default function ResetPasswordForm({ email, onSuccess, onError }: ResetPasswordFormProps) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
