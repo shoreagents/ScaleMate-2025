@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import UpdateUsernameForm from '@/components/auth/UpdateUsernameForm';
 import styled from 'styled-components';
 
 const LoadingContainer = styled.div`
@@ -11,6 +12,15 @@ const LoadingContainer = styled.div`
   align-items: center;
   min-height: 100vh;
   background: #f5f5f5;
+`;
+
+const FormWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding: 1rem;
 `;
 
 // Helper function to check if session is properly set
@@ -76,6 +86,9 @@ const normalizeEmail = (email: string): string => {
 
 export default function AuthCallback() {
   const router = useRouter();
+  const [showUsernameForm, setShowUsernameForm] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -222,6 +235,30 @@ export default function AuthCallback() {
           return;
         }
 
+        // Check if username is taken by another user
+        if (username) {
+          const { data: existingUsername, error: usernameError } = await serviceRoleClient
+            .from('user_profiles')
+            .select('username')
+            .eq('username', username)
+            .neq('user_id', user.id)
+            .single();
+
+          if (usernameError && usernameError.code !== 'PGRST116') {
+            console.error('Username check error:', usernameError);
+            router.push('/login');
+            return;
+          }
+
+          if (existingUsername) {
+            // Username is taken, show the update form
+            setUserId(user.id);
+            setShowUsernameForm(true);
+            setIsLoading(false);
+            return;
+          }
+        }
+
         // Create or update profile
         const avatarUrl = user.user_metadata?.avatar_url;
         const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
@@ -321,7 +358,57 @@ export default function AuthCallback() {
     if (router.isReady) {
       handleCallback();
     }
-  }, [router.isReady]);
+  }, [router.isReady, showUsernameForm]);
+
+  const handleUsernameUpdateSuccess = async () => {
+    // After successful username update, proceed with normal redirect
+    setShowUsernameForm(false);
+    setIsLoading(true);
+
+    // Get the from parameter and redirectTo URL
+    const fromParam = router.query.from as string;
+    const redirectTo = router.query.redirectTo as string;
+
+    // List of valid modal types
+    const validModalTypes = [
+      'blueprint-modal',
+      'cost-savings-modal',
+      'tools-modal',
+      'readiness-modal',
+      'resources-modal',
+      'role-builder-modal',
+      'quote-modal',
+      'courses-modal'
+    ];
+
+    // Check if we came from a modal
+    const isFromModal = fromParam && validModalTypes.includes(fromParam);
+
+    // Handle redirects based on modal status
+    if (isFromModal) {
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.push('/');
+      }
+    } else {
+      router.push('/user/dashboard');
+    }
+  };
+
+  if (showUsernameForm && userId) {
+    return (
+      <FormWrapper>
+        <UpdateUsernameForm
+          userId={userId}
+          onSuccess={handleUsernameUpdateSuccess}
+          onError={(error) => {
+            console.error('Username update error:', error);
+          }}
+        />
+      </FormWrapper>
+    );
+  }
 
   return (
     <LoadingContainer>
