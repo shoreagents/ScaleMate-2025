@@ -132,6 +132,26 @@ const SuccessButton = styled.button`
   }
 `;
 
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: #f5f5f5;
+  gap: 1rem;
+`;
+
+const ErrorMessage = styled.div`
+  color: #dc2626;
+  text-align: center;
+  max-width: 400px;
+  padding: 1rem;
+  background: #fee2e2;
+  border-radius: 0.5rem;
+  border: 1px solid #fecaca;
+`;
+
 interface UserProfileData {
   user_id: string;
   first_name: string;
@@ -164,26 +184,35 @@ const DashboardPage = () => {
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { openModal } = useDownloadModal();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    // Check if we should show the download modal (e.g., after Google sign-in)
-    const showDownloadModal = router.query.showDownloadModal === 'true';
-    if (showDownloadModal) {
-      openModal(() => {
-        // Remove the query parameter
-        const { showDownloadModal, ...rest } = router.query;
-        router.replace({ query: rest });
-      });
+  // Add waitForValidSession helper
+  const waitForValidSession = async (maxAttempts = 10): Promise<boolean> => {
+    for (let i = 0; i < maxAttempts; i++) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        return true;
+      }
+      // Wait 200ms between attempts
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
-  }, [router.query, openModal]);
+    return false;
+  };
 
   const checkAuth = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          return;
-        }
+    try {
+      // Wait for valid session first
+      const hasValidSession = await waitForValidSession();
+      if (!hasValidSession) {
+        router.push('/login');
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
 
       // Get user's profile data
       const { data: profile, error: profileError } = await supabase
@@ -194,8 +223,9 @@ const DashboardPage = () => {
 
       if (profileError) {
         console.error('Profile error:', profileError);
-          return;
-        }
+        setError('Error loading profile data');
+        return;
+      }
 
       // Set user and show dashboard
       setUserData(profile);
@@ -203,13 +233,15 @@ const DashboardPage = () => {
       // Check if username and last_password_change are null
       if (!profile?.username && !profile?.last_password_change) {
         setShowSetupForm(true);
-        }
+      }
 
-      setLoading(false);
     } catch (err) {
       console.error('Auth check error:', err);
-      }
-    };
+      setError('Error checking authentication');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     checkAuth();
@@ -307,8 +339,32 @@ const DashboardPage = () => {
     setShowSuccessModal(true);
   };
 
+  // Add a function to check if any modal is open
+  const checkModalState = () => {
+    return showSetupForm || showSuccessModal;
+  };
+
+  // Update modal state whenever relevant states change
+  useEffect(() => {
+    setIsModalOpen(checkModalState());
+  }, [showSetupForm, showSuccessModal]);
+
+  // Show loading spinner while checking auth
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <LoadingContainer>
+        <LoadingSpinner />
+      </LoadingContainer>
+    );
+  }
+
+  // Show error if there is one
+  if (error) {
+    return (
+      <LoadingContainer>
+        <ErrorMessage>{error}</ErrorMessage>
+      </LoadingContainer>
+    );
   }
 
   return (
@@ -319,6 +375,7 @@ const DashboardPage = () => {
           navItems={navItems}
           activeTab={activeTab}
           onTabClick={handleTabClick}
+          isModalOpen={isModalOpen}
         />
         <MainContent>
           <DashboardHeader

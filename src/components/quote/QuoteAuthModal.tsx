@@ -280,7 +280,7 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
         console.error('No session found after auth success');
         return;
       }
-
+      
       // Set URL parameters
       const url = new URL(window.location.href);
       url.searchParams.set('showModal', 'quote-modal');
@@ -317,10 +317,10 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
             />
-            <BackButton onClick={() => setCurrentView('initial')}>
-              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-              Go Back
-            </BackButton>
+              <BackButton onClick={() => setCurrentView('initial')}>
+                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+                Go Back
+              </BackButton>
           </FormWrapper>
         );
       case 'login':
@@ -378,11 +378,11 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <Container>
-        {renderContent()}
-      </Container>
-    </Modal>
+      <Modal isOpen={isOpen} onClose={handleClose}>
+        <Container>
+          {renderContent()}
+        </Container>
+      </Modal>
     </>
   );
 };

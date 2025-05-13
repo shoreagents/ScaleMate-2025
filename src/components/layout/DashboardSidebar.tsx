@@ -14,7 +14,6 @@ const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean; $isModalOpen?: boolea
   height: 100vh;
   z-index: 20;
   transition: transform 0.3s ease;
-  visibility: ${props => props.$isModalOpen ? 'hidden' : 'visible'};
 
   @media (max-width: 768px) {
     transform: ${props => props.$isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)'};

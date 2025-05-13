@@ -48,17 +48,21 @@ const isSessionValid = async (): Promise<boolean> => {
   }
 };
 
-const waitForValidSession = async (maxAttempts = 10): Promise<boolean> => {
+const waitForValidSession = async (maxAttempts = 20): Promise<boolean> => {
   for (let i = 0; i < maxAttempts; i++) {
     if (await isSessionValid()) {
       // Double check session is persisted
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        return true;
+        // Additional check to ensure session is fully established
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          return true;
+        }
       }
     }
-    // Wait 200ms between attempts
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Wait 500ms between attempts (increased from 200ms)
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
   return false;
 };
