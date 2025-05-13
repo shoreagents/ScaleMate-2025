@@ -158,21 +158,15 @@ export default function ModalAuthCallback() {
           const isGoogleUser = user.app_metadata?.provider === 'google';
           
           if (isGoogleUser) {
-            // Create a username from email (remove domain and special chars)
-            const username = user.email?.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || '';
-            
-            // Get profile picture from Google metadata
-            const profilePicture = user.user_metadata?.avatar_url || null;
-            
-            // Create user profile
+            // Create user profile without username
             const { error: createProfileError } = await serviceRoleClient
               .from('user_profiles')
               .insert({
                 user_id: user.id,
-                username: username,
+                username: null,
                 first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
                 last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                profile_picture: profilePicture,
+                profile_picture: user.user_metadata?.avatar_url || null,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               });
