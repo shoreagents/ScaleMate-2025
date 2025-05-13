@@ -217,8 +217,12 @@ const DashboardPage = () => {
 
   useEffect(() => {
     const { tab } = router.query;
-    if (tab && typeof tab === 'string' && ['dashboard', 'role-builder', 'readiness-quiz', 'quote-builder', 'course-library', 'quote-calculator'].includes(tab)) {
-      setActiveTab(tab);
+    if (tab && typeof tab === 'string') {
+      // Check if the tab exists in navItems
+      const isValidTab = navItems.some(item => item.id === tab);
+      if (isValidTab) {
+        setActiveTab(tab);
+      }
     }
   }, [router.query]);
 

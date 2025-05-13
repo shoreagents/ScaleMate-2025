@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faToolbox, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Modal } from '../ui/Modal';
-import AuthForm from '../auth/AuthForm';
-import SignUpForm from '../auth/SignUpForm';
 import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
+import SignUpForm from '../auth/SignUpForm';
+import AuthForm from '../auth/AuthForm';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
+
+interface ToolsAuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess?: () => void;
+}
+
+type ModalView = 'initial' | 'signup' | 'login';
 
 const Container = styled.div`
   display: flex;
@@ -85,7 +93,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -187,7 +195,7 @@ const BackButton = styled.button`
   @media (min-width: 640px) {
     margin-top: 1rem;
 
-  &:hover {
+    &:hover {
       color: #22C55E;
     }
   }
@@ -213,14 +221,6 @@ const ExploreLink = styled.a`
     color: #22C55E;
   }
 `;
-
-interface ToolsAuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAuthSuccess?: () => void;
-}
-
-type ModalView = 'initial' | 'signup' | 'login';
 
 export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
@@ -288,7 +288,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       console.log('Setting URL to:', url.toString()); // Debug log
       
       // Update URL and close modal
-      await router.replace(url.toString());
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
       
       // Call onAuthSuccess if provided
@@ -298,12 +298,6 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       }
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
-    }
-  };
-
-  const handleAuthError = (error: string | null) => {
-    if (error) {
-      console.error('Auth error:', error);
     }
   };
 
@@ -347,14 +341,14 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock all tools, including the Role Builder, Readiness Quiz, and more.
+              Create a free account to unlock all our tools and resources, including templates, calculators, and implementation guides.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <FontAwesomeIcon icon={faToolbox} style={{ width: '2.5rem', height: '2.5rem' }} />
+                <WrenchScrewdriverIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Tools Library</IconText>
+              <IconText>Tools & Resources</IconText>
             </IconContainer>
 
             <ButtonContainer>

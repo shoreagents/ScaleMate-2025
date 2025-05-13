@@ -446,21 +446,22 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     if (isVerifying) return; // Prevent multiple submissions
     
     setError(null);
+    setSuccess(null);
     setIsVerifying(true);
     setIsLoading(true);
 
     try {
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
+        // Create a client with service role key for admin access
+        const serviceRoleClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+          {
+            auth: {
+              autoRefreshToken: false,
+              persistSession: false
+            }
           }
-        }
-      );
+        );
 
       let emailToUse = loginIdentifier;
 
@@ -515,8 +516,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         } else if (verifyError.message.includes('expired')) {
           throw new Error('Token has expired or is invalid!');
         } else {
-          throw verifyError;
-        }
+        throw verifyError;
+      }
       }
 
       // Sign in the user after successful verification
@@ -540,13 +541,17 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       const currentUrl = redirectUrl || window.location.pathname;
       const url = new URL(currentUrl, window.location.origin);
       
-      // Use 'direct' as default when preventRedirect is false, otherwise use 'modal'
-      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
-      // Only use the pathname for redirectTo, not the full URL
-      const redirectTo = url.pathname;
+      // When preventRedirect is true, we want to go back to the original page
+      // that opened the modal, not the current page
+      const redirectTo = preventRedirect 
+        ? url.searchParams.get('redirectTo') || window.location.pathname
+        : window.location.pathname;
 
-      // Choose callback route based on context
-      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
+      // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
+      const fromParam = url.searchParams.get('from') || 'role-builder-modal';
+
+      // Always use modal callback when preventRedirect is true
+      const callbackBase = '/auth/callback/modal';
       const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
       callbackUrl.searchParams.set('from', fromParam);
       callbackUrl.searchParams.set('redirectTo', redirectTo);
@@ -558,7 +563,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       });
 
       // Keep isVerifying and isLoading true while redirecting
-      // Redirect to appropriate callback
       router.push(callbackUrl.toString());
       return; // Don't reset states since we're redirecting
     } catch (err) {
@@ -698,23 +702,34 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       // Call onSuccess without setting success message
       onSuccess?.('Sign in successful');
 
-      // Only redirect if preventRedirect is false
-      if (!preventRedirect) {
-        // Keep isLoading true while redirecting
-        // Redirect based on role immediately
-        if (userRoles.includes('admin')) {
-          router.push('/admin/dashboard');
-          return; // Don't reset states since we're redirecting
-        } else if (userRoles.includes('moderator')) {
-          router.push('/admin/dashboard');
-          return; // Don't reset states since we're redirecting
-        } else if (userRoles.includes('user')) {
-          router.push('/user/dashboard');
-          return; // Don't reset states since we're redirecting
-        } else {
-          throw new Error('User has no valid role assigned. Please contact support.');
-        }
-      }
+      // Get the current URL and its parameters
+      const currentUrl = redirectUrl || window.location.pathname;
+      const url = new URL(currentUrl, window.location.origin);
+      
+      // When preventRedirect is true, we want to go back to the original page
+      // that opened the modal, not the current page
+      const redirectTo = preventRedirect 
+        ? url.searchParams.get('redirectTo') || window.location.pathname
+        : window.location.pathname;
+
+      // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
+      const fromParam = url.searchParams.get('from') || 'role-builder-modal';
+
+      // Always use modal callback when preventRedirect is true
+      const callbackBase = '/auth/callback/modal';
+      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
+      callbackUrl.searchParams.set('from', fromParam);
+      callbackUrl.searchParams.set('redirectTo', redirectTo);
+
+      console.log('AuthForm - Callback URL params:', {
+        from: fromParam,
+        redirectTo,
+        callbackUrl: callbackUrl.toString()
+      });
+
+      // Keep isLoading true while redirecting
+      router.push(callbackUrl.toString());
+      return; // Don't reset states since we're redirecting
     } catch (err) {
       console.error('Sign in error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign in';
@@ -730,28 +745,29 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       setIsGoogleLoading(true);
       setError(null);
 
-      // Choose callback route based on context
-      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
-      const callbackUrl = `${window.location.origin}${callbackBase}`;
-      
-      // Get the current URL for redirect
+      // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;
-      
-      // Parse the current URL to get the from parameter
       const url = new URL(currentUrl, window.location.origin);
-      // Use 'direct' as default when preventRedirect is false, otherwise use 'modal'
-      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
       
-      // Create the callback URL with parameters
-      const callbackWithParams = new URL(callbackUrl);
-      callbackWithParams.searchParams.set('from', fromParam || '');
-      // Only use the pathname for redirectTo
-      callbackWithParams.searchParams.set('redirectTo', url.pathname);
+      // When preventRedirect is true, we want to go back to the original page
+      // that opened the modal, not the current page
+      const redirectTo = preventRedirect 
+        ? url.searchParams.get('redirectTo') || window.location.pathname
+        : window.location.pathname;
+
+      // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
+      const fromParam = url.searchParams.get('from') || 'role-builder-modal';
+
+      // Always use modal callback when preventRedirect is true
+      const callbackBase = '/auth/callback/modal';
+      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
+      callbackUrl.searchParams.set('from', fromParam);
+      callbackUrl.searchParams.set('redirectTo', redirectTo);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: callbackWithParams.toString(),
+          redirectTo: callbackUrl.toString(),
           queryParams: {
             access_type: 'offline',
             prompt: 'consent'
@@ -834,7 +850,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         if (resendError.message.includes('rate limit') || resendError.message.includes('For security purposes')) {
           throw new Error('Please wait a few minutes before requesting a new code.');
         } else {
-          throw resendError;
+        throw resendError;
         }
       }
 
@@ -938,7 +954,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     <VerificationInput
                       key={index}
                       id={`verification-${index}`}
-                      type="text"
+                  type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
                       maxLength={1}
@@ -965,8 +981,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     setError(null);
                     setVerificationCode(Array(6).fill(''));
                   }}>
-                    Back to Sign In
-                  </SecondaryButton>
+                  Back to Sign In
+                </SecondaryButton>
                 )}
                 <Button 
                   type="submit" 
@@ -1013,8 +1029,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     <MessageContainer $isSuccess={!!success}>
                       {success ? <FiCheck size={14} /> : <FiX size={14} />}
                       {success || error}
-                    </MessageContainer>
-                  )}
+                  </MessageContainer>
+                )}
                 </ResetPasswordInputGroup>
               </FormFields>
               <FormActions>
@@ -1108,8 +1124,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     <MessageContainer $isSuccess={!!success}>
                       {success ? <FiCheck size={14} /> : <FiX size={14} />}
                       {success || error}
-                    </MessageContainer>
-                  )}
+                      </MessageContainer>
+                    )}
                 </InputGroup>
               </FormFields>
               <FormActions>

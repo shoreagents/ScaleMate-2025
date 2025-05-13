@@ -94,7 +94,7 @@ const IconText = styled.p`
   font-size: 1.125rem;
 
   @media (min-width: 640px) {
-  font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 `;
 
@@ -196,8 +196,8 @@ const BackButton = styled.button`
   @media (min-width: 640px) {
     margin-top: 1rem;
 
-  &:hover {
-    color: #EC4899;
+    &:hover {
+      color: #EC4899;
     }
   }
 `;
@@ -229,14 +229,27 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
   const { openModal } = useDownloadModal();
   const router = useRouter();
 
+  const handleClose = () => {
+    onClose();
+  };
+
+  const handleDownloadModalClose = () => {
+    onClose();
+  };
+
+  // Check URL parameters on mount and after auth redirect
   useEffect(() => {
     if (typeof window !== 'undefined' && router.isReady) {
       const urlParams = new URLSearchParams(window.location.search);
       const showModal = urlParams.get('showModal');
       const authSuccess = urlParams.get('authSuccess');
       
+      console.log('URL Params Check:', { showModal, authSuccess }); // Debug log
+      
       // If we have both showModal and authSuccess parameters
       if (showModal === 'cost-savings-modal' && authSuccess === 'true') {
+        console.log('Opening download modal...'); // Debug log
+        
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -245,7 +258,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
         openModal(handleDownloadModalClose);
       }
     }
-  }, [router.isReady, router.query]);
+  }, [router.isReady, router.query, openModal, handleDownloadModalClose, onClose]);
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -262,37 +275,31 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
     return '';
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  const handleDownloadModalClose = () => {
-    onClose();
-  };
-
-  const handleAuthSuccess = async () => {
+  const handleAuthSuccess = async (message?: string) => {
     try {
-      console.log('Cost Savings Auth Success - Setting URL params...'); // Debug log
-      // Wait for session to be established
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.error('No session found after auth success');
+      console.log('Auth Success:', message); // Debug log
+      
+      // Wait for session to be established first
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        console.error('Session not established:', error);
         return;
       }
 
-      // Set URL parameters
+      console.log('Session established:', session); // Debug log
+      
+      // Set URL parameters to trigger download modal using router
       const url = new URL(window.location.href);
       url.searchParams.set('showModal', 'cost-savings-modal');
       url.searchParams.set('authSuccess', 'true');
-      console.log('Setting URL to:', url.toString()); // Debug log
+      console.log('Setting URL params:', url.toString()); // Debug log
+      await router.replace(url.toString(), undefined, { shallow: true });
       
-      // Update URL and close modal
-      await router.replace(url.toString());
+      // Close the auth modal after URL is set
       onClose();
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
-        console.log('Calling onAuthSuccess callback'); // Debug log
         onAuthSuccess();
       }
     } catch (err) {
@@ -312,16 +319,19 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
         return (
           <FormWrapper>
             <SignUpForm 
-              onSuccess={() => handleAuthSuccess()} 
-              onError={(error: string | null) => console.error(error)}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
+              onVerificationStateChange={setIsVerifying}
             />
-            <BackButton onClick={() => setCurrentView('initial')}>
-              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-              Go Back
-            </BackButton>
+            {!isVerifying && (
+              <BackButton onClick={() => setCurrentView('initial')}>
+                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+                Go Back
+              </BackButton>
+            )}
           </FormWrapper>
         );
       case 'login':
@@ -329,7 +339,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
           <FormWrapper>
             <AuthForm 
               onSuccess={handleAuthSuccess} 
-              onError={(error: string) => console.error(error)}
+              onError={handleAuthError} 
               preventRedirect={true} 
               hideLinks={true}
               redirectUrl={getCurrentUrl()}
@@ -346,20 +356,20 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the complete cost savings analysis, including detailed breakdowns and ROI calculations.
+              Create a free account to unlock your complete cost savings report, including detailed ROI analysis and implementation recommendations.
             </Description>
 
             <IconContainer>
               <IconWrapper>
                 <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Complete Cost Analysis</IconText>
+              <IconText>Complete Cost Savings Report</IconText>
             </IconContainer>
 
             <ButtonContainer>
-            <LoginButton onClick={() => setCurrentView('login')}>
-              Log In
-            </LoginButton>
+              <LoginButton onClick={() => setCurrentView('login')}>
+                Log In
+              </LoginButton>
 
               <SignUpButton onClick={() => setCurrentView('signup')}>
                 Sign Up for Free
@@ -370,7 +380,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
                 Keep exploring tools
-            </ExploreLink>
+              </ExploreLink>
             </ExploreContainer>
           </>
         );
@@ -379,11 +389,11 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <Container>
-        {renderContent()}
-      </Container>
-    </Modal>
+      <Modal isOpen={isOpen} onClose={handleClose}>
+        <Container>
+          {renderContent()}
+        </Container>
+      </Modal>
     </>
   );
 }; 

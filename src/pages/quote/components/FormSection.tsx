@@ -192,6 +192,7 @@ export default function FormSection() {
 
   const handleAuthSuccess = () => {
     setIsLoginModalOpen(false);
+    openModal(() => setIsLoginModalOpen(false));
   };
 
   return (

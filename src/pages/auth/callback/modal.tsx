@@ -192,11 +192,11 @@ export default function ModalAuthCallback() {
         const redirectUrl = new URL(redirectTo, window.location.origin);
         redirectUrl.searchParams.set('showModal', fromParam);
         redirectUrl.searchParams.set('authSuccess', 'true');
-        
-        // Add role info to URL for modal context
         redirectUrl.searchParams.set('userRole', userRoles[0] || 'user');
 
-        window.location.href = redirectUrl.toString();
+        // Use router.replace instead of window.location.href to prevent full page reload
+        await router.replace(redirectUrl.toString(), undefined, { shallow: true });
+
       } catch (err) {
         console.error('Modal auth callback error:', err);
       }
