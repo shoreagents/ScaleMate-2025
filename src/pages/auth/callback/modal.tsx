@@ -241,8 +241,11 @@ export default function ModalAuthCallback() {
         redirectUrl.searchParams.set('authSuccess', 'true');
         redirectUrl.searchParams.set('userRole', userRoles[0] || 'user');
 
-        // Use router.replace instead of window.location.href to prevent full page reload
-        await router.replace(redirectUrl.toString(), undefined, { shallow: true });
+        // Use router.replace with shallow routing to prevent full page reload
+        await router.replace(redirectUrl.toString(), undefined, { 
+          shallow: true,
+          scroll: false // Prevent scroll reset
+        });
 
         // After redirect, restore scroll position if it exists
         const scrollY = sessionStorage.getItem('scrollPosition');
