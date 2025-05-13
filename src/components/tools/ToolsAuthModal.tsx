@@ -232,7 +232,8 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from');
       
-      if (fromParam === 'tools-modal') {
+      // Handle both specific modal type and generic 'modal' type
+      if (fromParam === 'tools-modal' || fromParam === 'modal') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -261,25 +262,14 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
 
   const handleClose = () => {
     onClose();
-    // Reset to initial view after modal is closed
-    setTimeout(() => setCurrentView('initial'), 300);
   };
 
-  const handleAuthSuccess = async (message: string) => {
+  const handleAuthSuccess = () => {
     try {
-      console.log('Auth Success:', message); // Debug log
-      
-      // Wait for session to be established first
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('Session not established:', error);
-        return;
-      }
-
-      console.log('Session established:', session); // Debug log
-      
-      // Only close modal and call onAuthSuccess after session is confirmed
+      // Close the auth modal first
       onClose();
+      
+      // Call onAuthSuccess if provided
       if (onAuthSuccess) {
         onAuthSuccess();
       }
@@ -300,7 +290,7 @@ export const ToolsAuthModal: React.FC<ToolsAuthModalProps> = ({ isOpen, onClose,
         return (
           <FormWrapper>
             <SignUpForm 
-              onSuccess={handleAuthSuccess} 
+              onSuccess={() => handleAuthSuccess()} 
               onError={(error: string | null) => console.error(error)}
               hideLinks={true} 
               preventRedirect={true}

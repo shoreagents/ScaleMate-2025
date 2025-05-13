@@ -5,12 +5,11 @@ import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
 import { createClient } from '@supabase/supabase-js';
-import ResetPassword from './ResetPassword';
+import ResetPasswordForm from './ResetPasswordForm';
 
 const FormContainer = styled.div`
   max-width: 420px;
   width: 100%;
-  min-height: 500px;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -41,7 +40,7 @@ const Form = styled.form`
 const FormContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
   flex: 1;
   min-height: 0;
 `;
@@ -51,7 +50,7 @@ const FormFields = styled.div`
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -72,7 +71,7 @@ const FormActions = styled.div`
   flex-direction: column;
   gap: 1rem;
   margin-top: auto;
-  padding-top: 1rem;
+  padding-top: 1.5rem;
   position: sticky;
   bottom: 0;
   z-index: 1;
@@ -112,9 +111,23 @@ const Input = styled.input`
   }
 `;
 
+const MessageContainer = styled.div<{ $isSuccess?: boolean }>`
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: ${props => props.$isSuccess ? props.theme.colors.success : props.theme.colors.error};
+`;
+
+// Add ResetPasswordInputGroup after MessageContainer
+const ResetPasswordInputGroup = styled(InputGroup)`
+  gap: 0.5rem;
+
+
+`;
+
 const ButtonContainer = styled.div`
   display: flex;
-  margin-top: 0.5rem;
   gap: 1rem;
   width: 100%;
 `;
@@ -170,14 +183,6 @@ const ForgotPasswordLink = styled.button`
   &:hover {
     color: ${props => props.theme.colors.primaryDark};
   }
-`;
-
-const MessageContainer = styled.div<{ $isSuccess?: boolean }>`
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: ${props => props.$isSuccess ? props.theme.colors.success : props.theme.colors.error};
 `;
 
 const PasswordInputContainer = styled.div`
@@ -299,7 +304,6 @@ const VerificationContainer = styled.div`
   display: flex;
   gap: 0.5rem;
   justify-content: space-between;
-  margin-top: 1rem;
   width: 100%;
   margin-left: auto;
   margin-right: auto;
@@ -370,7 +374,7 @@ const ResendLink = styled.div`
 `;
 
 interface AuthFormProps {
-  onSuccess?: (message: string) => void;
+  onSuccess?: (message?: string) => void;
   onError?: (error: string) => void;
   preventRedirect?: boolean;
   hideLinks?: boolean;
@@ -415,10 +419,13 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [showResetForm, setShowResetForm] = useState(false);
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [verificationCode, setVerificationCode] = useState<string[]>(Array(6).fill(''));
   const [showVerification, setShowVerification] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [isVerifying, setIsVerifying] = useState(false);
   const router = useRouter();
 
   // Add useEffect for countdown
@@ -436,8 +443,10 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
 
   const handleVerification = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isVerifying) return; // Prevent multiple submissions
+    
     setError(null);
-    setSuccess(null);
+    setIsVerifying(true);
     setIsLoading(true);
 
     try {
@@ -527,29 +536,39 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         throw new Error('Failed to establish session. Please try signing in manually.');
       }
 
-      // Use the callback URL for redirection
-      const callbackUrl = `${window.location.origin}/auth/callback`;
-      const currentUrl = redirectUrl || window.location.href;
+      // Get the current URL and its parameters
+      const currentUrl = redirectUrl || window.location.pathname;
+      const url = new URL(currentUrl, window.location.origin);
       
-      // Parse the current URL to get the from parameter
-      const url = new URL(currentUrl);
-      const fromParam = url.searchParams.get('from');
-      
-      // Create the callback URL with parameters
-      const callbackWithParams = new URL(callbackUrl);
-      callbackWithParams.searchParams.set('from', fromParam || '');
-      callbackWithParams.searchParams.set('redirectTo', currentUrl);
-      
-      // Always redirect to callback to ensure profile/role creation
-      router.push(callbackWithParams.toString());
+      // Use 'direct' as default when preventRedirect is false, otherwise use 'modal'
+      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
+      // Only use the pathname for redirectTo, not the full URL
+      const redirectTo = url.pathname;
+
+      // Choose callback route based on context
+      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
+      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
+      callbackUrl.searchParams.set('from', fromParam);
+      callbackUrl.searchParams.set('redirectTo', redirectTo);
+
+      console.log('AuthForm - Callback URL params:', {
+        from: fromParam,
+        redirectTo,
+        callbackUrl: callbackUrl.toString()
+      });
+
+      // Redirect to appropriate callback
+      router.push(callbackUrl.toString());
+      // Don't reset isVerifying here since we're redirecting
+      return;
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
       setError(errorMessage);
-      setSuccess(null);
       onError?.(errorMessage);
-      // Clear verification code on error
       setVerificationCode(Array(6).fill(''));
+      // Only reset isVerifying on error
+      setIsVerifying(false);
     } finally {
       setIsLoading(false);
     }
@@ -581,7 +600,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setIsLoading(true);
 
     try {
@@ -678,8 +696,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
 
       const userRoles = roles.map(r => r.role);
 
-      // Remove success message since we're redirecting
-      onSuccess?.('Successfully signed in!');
+      // Call onSuccess without setting success message
+      onSuccess?.('Sign in successful');
 
       // Only redirect if preventRedirect is false
       if (!preventRedirect) {
@@ -698,7 +716,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       console.error('Sign in error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign in';
       setError(errorMessage);
-      setSuccess(null);
       onError?.(errorMessage);
     } finally {
       setIsLoading(false);
@@ -710,20 +727,23 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       setIsGoogleLoading(true);
       setError(null);
 
-      // Always redirect to the callback URL first
-      const callbackUrl = `${window.location.origin}/auth/callback`;
+      // Choose callback route based on context
+      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
+      const callbackUrl = `${window.location.origin}${callbackBase}`;
       
       // Get the current URL for redirect
-      const currentUrl = redirectUrl || window.location.href;
+      const currentUrl = redirectUrl || window.location.pathname;
       
       // Parse the current URL to get the from parameter
-      const url = new URL(currentUrl);
-      const fromParam = url.searchParams.get('from');
+      const url = new URL(currentUrl, window.location.origin);
+      // Use 'direct' as default when preventRedirect is false, otherwise use 'modal'
+      const fromParam = url.searchParams.get('from') || (preventRedirect ? 'modal' : 'direct');
       
       // Create the callback URL with parameters
       const callbackWithParams = new URL(callbackUrl);
       callbackWithParams.searchParams.set('from', fromParam || '');
-      callbackWithParams.searchParams.set('redirectTo', currentUrl);
+      // Only use the pathname for redirectTo
+      callbackWithParams.searchParams.set('redirectTo', url.pathname);
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -754,7 +774,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     if (resendCountdown > 0) return;
     
     setError(null);
-    setSuccess(null);
     setIsResending(true);
 
     try {
@@ -817,14 +836,13 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       }
 
       // Remove success message since we're redirecting
-      onSuccess?.('New verification code sent!');
+      onSuccess?.('Verification code sent');
       setError(null);
       setResendCountdown(60); // Start countdown
     } catch (err) {
       console.error('Resend error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while resending the code';
       setError(errorMessage);
-      setSuccess(null);
       onError?.(errorMessage);
     } finally {
       setIsResending(false);
@@ -844,7 +862,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
     setIsLoading(true);
 
     try {
@@ -856,39 +873,39 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       // Normalize email before sending reset
       const normalizedEmail = normalizeEmail(loginIdentifier);
 
-      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail);
 
       if (error) {
-        console.log('Reset password error:', error); // Debug log
+        console.log('Reset password error:', error);
         if (error.status === 429 || 
             error.message.toLowerCase().includes('too many requests') ||
             error.message.toLowerCase().includes('rate limit') ||
             error.message.toLowerCase().includes('security')) {
-          setError('Too many attempts. Please wait a few minutes before trying again.');
-          onError?.('Too many attempts. Please wait a few minutes before trying again.');
+          const rateLimitMessage = 'Too many attempts! Please wait a few minutes before trying again.';
+          setError(rateLimitMessage);
+          onError?.(rateLimitMessage);
           return;
         }
         throw error;
       }
 
-      // Show success message and redirect to reset password page
-      setSuccess('Password reset email sent! Please check your inbox.');
-      onSuccess?.('Password reset email sent! Please check your inbox.');
+      // Show success message
+      onSuccess?.('Reset email sent');
       
-      // Redirect to reset password page after a short delay
-      setTimeout(() => {
-        router.push('/reset-password');
-      }, 2000);
+      // Store email and show reset password modal
+      setResetEmail(normalizedEmail);
+      setShowResetForm(false);
+      setShowResetPasswordModal(true);
+      setResendCountdown(60); // Start countdown timer
     } catch (err) {
       console.error('Reset password error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while sending reset email';
       if (errorMessage.toLowerCase().includes('too many requests') ||
           errorMessage.toLowerCase().includes('rate limit') ||
           errorMessage.toLowerCase().includes('security')) {
-        setError('Too many attempts. Please wait a few minutes before trying again.');
-        onError?.('Too many attempts. Please wait a few minutes before trying again.');
+        const rateLimitMessage = 'Too many attempts! Please wait a few minutes before trying again.';
+        setError(rateLimitMessage);
+        onError?.(rateLimitMessage);
       } else {
         setError(errorMessage);
         onError?.(errorMessage);
@@ -901,7 +918,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const handleBackToSignIn = () => {
     setShowResetForm(false);
     setError(null);
-    setSuccess(null);
   };
 
   if (showVerification) {
@@ -936,12 +952,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     {error}
                   </MessageContainer>
                 )}
-                {success && (
-                  <MessageContainer $isSuccess>
-                    <FiCheck size={14} />
-                    {success}
-                  </MessageContainer>
-                )}
               </InputGroup>
             </FormFields>
             <FormActions>
@@ -950,7 +960,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                   <SecondaryButton type="button" onClick={() => {
                     setShowVerification(false);
                     setError(null);
-                    setSuccess(null);
                     setVerificationCode(Array(6).fill(''));
                   }}>
                     Back to Sign In
@@ -987,7 +996,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
           <Form onSubmit={handleResetPassword}>
             <FormContent>
               <FormFields>
-                <InputGroup>
+                <ResetPasswordInputGroup>
                   <Label htmlFor="loginIdentifier">Email</Label>
                   <Input
                     id="loginIdentifier"
@@ -997,19 +1006,13 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     onChange={(e) => setLoginIdentifier(e.target.value)}
                     required
                   />
-                </InputGroup>
-                {error && (
-                  <MessageContainer>
-                    <FiX size={14} />
-                    {error}
-                  </MessageContainer>
-                )}
-                {success && (
-                  <MessageContainer $isSuccess>
-                    <FiCheck size={14} />
-                    {success}
-                  </MessageContainer>
-                )}
+                  {(error || success) && (
+                    <MessageContainer $isSuccess={!!success}>
+                      {success ? <FiCheck size={14} /> : <FiX size={14} />}
+                      {success || error}
+                    </MessageContainer>
+                  )}
+                </ResetPasswordInputGroup>
               </FormFields>
               <FormActions>
                 <ButtonContainer>
@@ -1024,76 +1027,19 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
             </FormContent>
           </Form>
         </>
-      ) : showVerification ? (
-        <FormContainer>
-          <Title>Verify Your Email</Title>
-          <Subtitle>Please enter the verification code sent to your email</Subtitle>
-          <Form onSubmit={handleVerification}>
-            <FormContent>
-              <FormFields>
-                <InputGroup>
-                  <Label htmlFor="verificationCode">Verification Code</Label>
-                  <VerificationContainer>
-                    {[...Array(6)].map((_, index) => (
-                      <VerificationInput
-                        key={index}
-                        id={`verification-${index}`}
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={1}
-                        value={verificationCode[index] || ''}
-                        onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
-                        onKeyDown={(e) => handleVerificationKeyDown(index, e)}
-                        autoFocus={index === 0}
-                      />
-                    ))}
-                  </VerificationContainer>
-                  {error && (
-                    <MessageContainer>
-                      <FiX size={14} />
-                      {error}
-                    </MessageContainer>
-                  )}
-                  {success && (
-                    <MessageContainer $isSuccess>
-                      <FiCheck size={14} />
-                      {success}
-                    </MessageContainer>
-                  )}
-                </InputGroup>
-              </FormFields>
-              <FormActions>
-                <ButtonContainer>
-                  {!preventRedirect && (
-                    <SecondaryButton type="button" onClick={() => {
-                      setShowVerification(false);
-                      setError(null);
-                      setSuccess(null);
-                      setVerificationCode(Array(6).fill(''));
-                    }}>
-                      Back to Sign In
-                    </SecondaryButton>
-                  )}
-                  <Button 
-                    type="submit" 
-                    disabled={isLoading || verificationCode.join('').length !== 6}
-                    style={preventRedirect ? { width: '100%' } : undefined}
-                  >
-                    {isLoading ? 'Verifying...' : 'Verify Email'}
-                  </Button>
-                </ButtonContainer>
-                <ResendLink>
-                  {resendCountdown > 0 ? (
-                    <>Please wait <span className="timer">{resendCountdown}s</span> before requesting a new code</>
-                  ) : (
-                    <>Didn't receive the code? <button type="button" onClick={handleResendCode} disabled={isResending || resendCountdown > 0}>{isResending ? 'Sending...' : 'Resend Code'}</button></>
-                  )}
-                </ResendLink>
-              </FormActions>
-            </FormContent>
-          </Form>
-        </FormContainer>
+      ) : showResetPasswordModal ? (
+        <ResetPasswordForm 
+          email={resetEmail}
+          onSuccess={() => {
+            setShowResetPasswordModal(false);
+            setSuccess('Password updated successfully!');
+            onSuccess?.();
+          }}
+          onError={(error) => {
+            setError(error);
+            onError?.(error);
+          }}
+        />
       ) : (
         <>
           <Title>Login</Title>
@@ -1116,7 +1062,10 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     type="text"
                     placeholder="Enter your username or email"
                     value={loginIdentifier}
-                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                    onChange={(e) => {
+                      setLoginIdentifier(e.target.value);
+                      setSuccess(null);
+                    }}
                     required
                   />
                 </InputGroup>
@@ -1126,6 +1075,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                     <ForgotPasswordLink type="button" onClick={() => {
                       setShowResetForm(true);
                       setError(null);
+                      setSuccess(null);
                     }}>
                       Forgot Your Password?
                     </ForgotPasswordLink>
@@ -1137,7 +1087,10 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                         type={showPassword ? "text" : "password"}
                         placeholder="Enter your password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          setSuccess(null);
+                        }}
                         required
                       />
                       <ViewPasswordButton
@@ -1147,13 +1100,13 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
                         {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                       </ViewPasswordButton>
                     </PasswordInputContainer>
-                    {error && (
-                      <MessageContainer>
-                        <FiX size={14} />
-                        {error}
-                      </MessageContainer>
-                    )}
                   </PasswordInputGroup>
+                  {(error || success) && (
+                    <MessageContainer $isSuccess={!!success}>
+                      {success ? <FiCheck size={14} /> : <FiX size={14} />}
+                      {success || error}
+                    </MessageContainer>
+                  )}
                 </InputGroup>
               </FormFields>
               <FormActions>

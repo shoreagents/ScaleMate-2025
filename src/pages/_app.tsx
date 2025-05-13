@@ -19,7 +19,7 @@ export default function App({ Component, pageProps }: AppProps) {
                     !router.pathname.startsWith('/user') && 
                     router.pathname !== '/login' &&
                     router.pathname !== '/signup' &&
-                    router.pathname !== '/auth/callback';
+                    !router.pathname.startsWith('/auth/callback');
 
   return (
     <AuthProvider>
