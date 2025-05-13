@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaSearch, FaDownload, FaPlus, FaTimes, FaArrowRight } from 'react-icons/fa';
 
@@ -29,7 +29,7 @@ const FiltersContainer = styled.div`
   justify-content: space-between;
   margin-bottom: 1.5rem;
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (max-width: 1023px) {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
@@ -41,9 +41,25 @@ const FilterGroup = styled.div`
   align-items: center;
   gap: 1rem;
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (min-width: 1024px) {
+    & > div:first-child {
+      flex: none;
+      width: 16rem;
+    }
+    & > *:not(:first-child) {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  @media only screen and (max-width: 1023px) {
     flex-direction: column;
     width: 100%;
+    & > * {
+      width: 100%;
+      flex: 1;
+      min-width: 0;
+    }
   }
 `;
 
@@ -51,8 +67,12 @@ const SearchInput = styled.div`
   position: relative;
   width: 16rem;
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (max-width: 1023px) {
     width: 100%;
+  }
+
+  @media only screen and (min-width: 1024px) {
+    width: 16rem;
   }
 
   input {
@@ -78,7 +98,13 @@ const Select = styled.select`
   width: 100%;
   font-size: 1rem;
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (min-width: 769px) and (max-width: 1023px) {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  @media only screen and (max-width: 1023px) {
     width: 100%;
   }
 `;
@@ -91,7 +117,13 @@ const DateInput = styled.input`
   width: 100%;
   font-size: 1rem;
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (min-width: 769px) and (max-width: 1023px) {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  @media only screen and (max-width: 1023px) {
     width: 100%;
   }
 `;
@@ -132,7 +164,14 @@ const Button = styled.button<{ $primary?: boolean }>`
     }
   `}
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (min-width: 769px) and (max-width: 1023px) {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    justify-content: center;
+  }
+
+  @media only screen and (max-width: 1023px) {
     flex: 1;
     justify-content: center;
   }
@@ -142,17 +181,26 @@ const TableContainer = styled.div`
   background-color: white;
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
-  overflow: hidden;
+  overflow: unset;
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (max-width: 1023px) {
+    overflow-x: auto;
     border-radius: 0.5rem;
+  }
+  @media only screen and (min-width: 1025px) and (max-width: 1180px) {
+    overflow-x: unset;
+    width: 100%;
   }
 `;
 
 const Table = styled.table`
   width: 100%;
-
-  @media only screen and (max-width: 768px) {
+  table-layout: fixed;
+  @media only screen and (min-width: 1025px) and (max-width: 1180px) {
+    min-width: 0;
+    width: 100%;
+  }
+  @media only screen and (max-width: 1023px) {
     display: none;
   }
 `;
@@ -168,6 +216,9 @@ const TableHeader = styled.th`
   font-size: 0.875rem;
   font-weight: 600;
   color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   @media only screen and (max-width: 1023px) {
     padding: 0.75rem 1rem;
@@ -189,6 +240,9 @@ const TableBody = styled.tbody`
 
 const TableCell = styled.td`
   padding: 1rem 1.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   @media only screen and (max-width: 1023px) {
     padding: 0.75rem 1rem;
@@ -300,17 +354,6 @@ const LeadHeader = styled.div`
   margin-bottom: 1rem;
 `;
 
-const LeadAvatar = styled.img`
-  width: 3rem;
-  height: 3rem;
-  border-radius: 50%;
-
-  @media only screen and (max-width: 480px) {
-    width: 2.5rem;
-    height: 2.5rem;
-  }
-`;
-
 const LeadDetails = styled.div`
   h3 {
     font-weight: 600;
@@ -397,7 +440,7 @@ const TextArea = styled.textarea`
 const MobileCardView = styled.div`
   display: none;
 
-  @media only screen and (max-width: 768px) {
+  @media only screen and (max-width: 1023px) {
     display: block;
   }
 `;
@@ -461,41 +504,388 @@ const MobileCardTags = styled.div`
   margin-top: 0.5rem;
 `;
 
+const MobileLeadCard = styled.div`
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  
+  &:first-child {
+    border-top: none !important;
+  }
+`;
+
+const MobileLeadHeader = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+`;
+
+const MobileLeadArrow = styled.span<{ isOpen: boolean }>`
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    transition: transform 0.2s;
+    color: #6b7280;
+  }
+`;
+
+const MobileLeadInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const MobileLeadName = styled.h3`
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const MobileLeadEmail = styled.p`
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const MobileLeadTags = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+`;
+
+const MobileLeadTag = styled.span`
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  background: #f3f4f6;
+  color: #374151;
+  white-space: nowrap;
+`;
+
+const MobileLeadSource = styled.span`
+  font-size: 0.625rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  white-space: nowrap;
+`;
+
+const MobileLeadDropdown = styled.div<{ isOpen: boolean }>`
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  display: ${props => props.isOpen ? 'block' : 'none'};
+`;
+
+const MobileLeadDetail = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  color: #4b5563;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const MobileLeadLabel = styled.span`
+  color: #6b7280;
+  min-width: 4rem;
+`;
+
+const MobileLeadValue = styled.span`
+  color: #111827;
+  font-weight: 500;
+`;
+
+const MobileLeadButton = styled.button`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.375rem;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+    transition: transform 0.2s;
+  }
+
+  &[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+`;
+
+const getTagColor = (tag: string) => {
+  switch (tag.toLowerCase()) {
+    case 'quote':
+    case 'qualified':
+      return '#0098FF'; // blue
+    case 'hot':
+      return '#00E915'; // green
+    default:
+      return '#374151'; // gray
+  }
+};
+
+// Add a new TabletFiltersRow styled component
+const TabletFiltersRow = styled.div`
+  display: none;
+  @media only screen and (min-width: 769px) and (max-width: 1023px) {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    & > * {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+`;
+
+// Add a new TabletActionsRow styled component
+const TabletActionsRow = styled.div`
+  display: none;
+  @media only screen and (min-width: 769px) and (max-width: 1023px) {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    align-items: center;
+    & > * {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+`;
+
+// Add a new TabletSearchRow styled component
+const TabletSearchRow = styled.div`
+  display: none;
+  @media only screen and (min-width: 769px) and (max-width: 1023px) {
+    display: flex;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+`;
+
+// Add a new TabletFAB styled component
+const TabletFAB = styled.button`
+  display: none;
+  @media only screen and (min-width: 769px) and (max-width: 1023px) {
+    display: flex;
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #3B82F6;
+    color: white;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.15);
+    border: none;
+    font-size: 2rem;
+    z-index: 2000;
+    cursor: pointer;
+    transition: background 0.2s;
+    &:hover {
+      background: #2563EB;
+    }
+  }
+`;
+
+// Add a new MobileFAB styled component
+const MobileFAB = styled.button`
+  display: none;
+  @media only screen and (max-width: 768px) {
+    display: flex;
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    background: #3B82F6;
+    color: white;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.15);
+    border: none;
+    font-size: 2rem;
+    z-index: 2000;
+    cursor: pointer;
+    transition: background 0.2s;
+    &:hover {
+      background: #2563EB;
+    }
+  }
+`;
+
+// Add a new MobileActionsRow styled component
+const MobileActionsRow = styled.div`
+  display: none;
+  @media only screen and (max-width: 768px) {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+    margin-bottom: 1rem;
+    & > * {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+`;
+
+// Add a custom hook for window width
+function useWindowWidth() {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  return width;
+}
+
 const LeadManagementTab: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
+
+  const width = useWindowWidth();
 
   return (
     <Container>
       <FiltersContainer>
-        <FilterGroup>
-          <SearchInput>
-            <FaSearch />
-            <input type="text" placeholder="Search leads..." />
-          </SearchInput>
-          <Select>
-            <option>All Sources</option>
-            <option>Quote</option>
-            <option>Contact</option>
-            <option>Quiz</option>
-          </Select>
-          <Select>
-            <option>All Tags</option>
-            <option>Hot</option>
-            <option>Qualified</option>
-            <option>Quiz-ready</option>
-          </Select>
-          <DateInput type="date" />
-        </FilterGroup>
-        <ActionButtons>
-          <Button>
-            <FaDownload />
-            Export CSV
-          </Button>
-          <Button $primary>
-            <FaPlus />
-            Add Lead
-          </Button>
-        </ActionButtons>
+        {width <= 768 ? (
+          <>
+            <FilterGroup>
+              <SearchInput>
+                <FaSearch />
+                <input type="text" placeholder="Search leads..." />
+              </SearchInput>
+              <Select>
+                <option>All Sources</option>
+                <option>Quote</option>
+                <option>Contact</option>
+                <option>Quiz</option>
+              </Select>
+              <Select>
+                <option>All Tags</option>
+                <option>Hot</option>
+                <option>Qualified</option>
+                <option>Quiz-ready</option>
+              </Select>
+            </FilterGroup>
+            <MobileActionsRow>
+              <DateInput type="date" />
+              <Button>
+                <FaDownload />
+                Export CSV
+              </Button>
+            </MobileActionsRow>
+            {/* Floating Add Lead Button for mobile */}
+            <MobileFAB>
+              <FaPlus />
+            </MobileFAB>
+          </>
+        ) : width >= 769 && width <= 1023 ? (
+          <>
+            <TabletSearchRow>
+              <SearchInput style={{ width: '100%' }}>
+                <FaSearch />
+                <input type="text" placeholder="Search leads..." />
+              </SearchInput>
+            </TabletSearchRow>
+            <TabletFiltersRow>
+              <Select>
+                <option>All Sources</option>
+                <option>Quote</option>
+                <option>Contact</option>
+                <option>Quiz</option>
+              </Select>
+              <Select>
+                <option>All Tags</option>
+                <option>Hot</option>
+                <option>Qualified</option>
+                <option>Quiz-ready</option>
+              </Select>
+            </TabletFiltersRow>
+            <TabletActionsRow>
+              <DateInput type="date" />
+              <Button>
+                <FaDownload />
+                Export CSV
+              </Button>
+            </TabletActionsRow>
+            {/* Floating Add Lead Button for tablet */}
+            <TabletFAB>
+              <FaPlus />
+            </TabletFAB>
+          </>
+        ) : (
+          <>
+            <FilterGroup>
+              <SearchInput>
+                <FaSearch />
+                <input type="text" placeholder="Search leads..." />
+              </SearchInput>
+              <Select>
+                <option>All Sources</option>
+                <option>Quote</option>
+                <option>Contact</option>
+                <option>Quiz</option>
+              </Select>
+              <Select>
+                <option>All Tags</option>
+                <option>Hot</option>
+                <option>Qualified</option>
+                <option>Quiz-ready</option>
+              </Select>
+              <DateInput type="date" />
+            </FilterGroup>
+            <ActionButtons>
+              <Button>
+                <FaDownload />
+                Export CSV
+              </Button>
+              <Button $primary>
+                <FaPlus />
+                Add Lead
+              </Button>
+            </ActionButtons>
+          </>
+        )}
       </FiltersContainer>
 
       {/* Desktop Table View */}
@@ -545,22 +935,76 @@ const LeadManagementTab: React.FC = () => {
 
       {/* Mobile Card View */}
       <MobileCardView>
-        <MobileCard onClick={() => setIsSidebarOpen(true)}>
-          <MobileCardHeader>
-            <MobileCardInfo>
-              <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Lead" />
-              <MobileCardDetails>
-                <MobileCardName>Michael Cooper</MobileCardName>
-                <MobileCardEmail>m.cooper@example.com</MobileCardEmail>
-              </MobileCardDetails>
-            </MobileCardInfo>
-          </MobileCardHeader>
-          <MobileCardTags>
-            <Tag $color="#0098FF">Quote</Tag>
-            <Tag $color="#00E915">Hot</Tag>
-            <Tag $color="#0098FF">Qualified</Tag>
-          </MobileCardTags>
-        </MobileCard>
+        {[
+          {
+            id: '1',
+            name: 'Michael Cooper',
+            email: 'm.cooper@example.com',
+            avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+            source: 'Quote',
+            tags: ['Hot', 'Qualified'],
+            lastAction: 'Viewed pricing',
+            assignedTo: 'Sarah M.',
+            assignedAvatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg',
+          },
+          // Add more leads here as needed
+        ].map((lead) => (
+          <MobileLeadCard key={lead.id}>
+            <MobileLeadHeader onClick={() => setExpandedLeadId(expandedLeadId === lead.id ? null : lead.id)}>
+              <Avatar src={lead.avatar} alt={lead.name} />
+              <MobileLeadInfo>
+                <MobileLeadName>{lead.name}</MobileLeadName>
+                <MobileLeadEmail>{lead.email}</MobileLeadEmail>
+                {expandedLeadId !== lead.id && (
+                  <MobileLeadTags>
+                    <MobileLeadSource style={{ color: '#0098FF', background: '#e6f2ff' }}>{lead.source}</MobileLeadSource>
+                    {lead.tags.map((tag, idx) => (
+                      <MobileLeadTag key={idx} style={{ color: getTagColor(tag), background: getTagColor(tag) + '10' }}>{tag}</MobileLeadTag>
+                    ))}
+                  </MobileLeadTags>
+                )}
+              </MobileLeadInfo>
+              <MobileLeadArrow isOpen={expandedLeadId === lead.id}>
+                {expandedLeadId === lead.id ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                )}
+              </MobileLeadArrow>
+            </MobileLeadHeader>
+            <MobileLeadDropdown isOpen={expandedLeadId === lead.id}>
+              <MobileLeadDetail>
+                <MobileLeadLabel>Last Action:</MobileLeadLabel>
+                <MobileLeadValue>{lead.lastAction}</MobileLeadValue>
+              </MobileLeadDetail>
+              <MobileLeadDetail>
+                <MobileLeadLabel>Assigned To:</MobileLeadLabel>
+                <MobileLeadValue>
+                  <Avatar src={lead.assignedAvatar} alt={lead.assignedTo} style={{ width: '1.5rem', height: '1.5rem', marginRight: '0.5rem' }} />
+                  {lead.assignedTo}
+                </MobileLeadValue>
+              </MobileLeadDetail>
+              <MobileLeadDetail>
+                <MobileLeadLabel>Source:</MobileLeadLabel>
+                <MobileLeadValue>
+                  <MobileLeadSource style={{ color: '#0098FF', background: '#e6f2ff' }}>{lead.source}</MobileLeadSource>
+                </MobileLeadValue>
+              </MobileLeadDetail>
+              <MobileLeadDetail>
+                <MobileLeadLabel>Tags:</MobileLeadLabel>
+                <MobileLeadValue>
+                  {lead.tags.map((tag, idx) => (
+                    <MobileLeadTag key={idx} style={{ color: getTagColor(tag), background: getTagColor(tag) + '10' }}>{tag}</MobileLeadTag>
+                  ))}
+                </MobileLeadValue>
+              </MobileLeadDetail>
+            </MobileLeadDropdown>
+          </MobileLeadCard>
+        ))}
       </MobileCardView>
 
       <Sidebar $isOpen={isSidebarOpen}>
@@ -573,7 +1017,7 @@ const LeadManagementTab: React.FC = () => {
         <SidebarContent>
           <Card>
             <LeadHeader>
-              <LeadAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Lead" />
+              <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Lead" />
               <LeadDetails>
                 <h3>Michael Cooper</h3>
                 <p>m.cooper@example.com</p>
