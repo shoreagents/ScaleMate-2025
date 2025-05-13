@@ -259,9 +259,11 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
     onClose();
   };
 
-  const handleAuthSuccess = (message: string) => {
+  const handleAuthSuccess = (message?: string) => {
     try {
-      console.log('Auth Success:', message); // Debug log
+      if (message) {
+        console.log('Auth Success:', message); // Debug log
+      }
       
       // Close the auth modal first
       onClose();
