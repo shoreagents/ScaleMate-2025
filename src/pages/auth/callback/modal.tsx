@@ -161,6 +161,7 @@ export default function ModalAuthCallback() {
               id: user.id,
               email: user.email,
               full_name: user.user_metadata?.full_name || user.email?.split('@')[0],
+              avatar_url: user.user_metadata?.avatar_url || null,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
               is_active: true
@@ -182,6 +183,16 @@ export default function ModalAuthCallback() {
         // If no profile exists, create it
         if (profileError || !profile?.username) {
           console.log('Creating new user profile for Google sign-up...');
+          
+          // Extract name from Google metadata
+          const firstName = user.user_metadata?.given_name || 
+                          user.user_metadata?.name?.split(' ')[0] || 
+                          user.email?.split('@')[0] || '';
+          
+          const lastName = user.user_metadata?.family_name || 
+                         user.user_metadata?.name?.split(' ').slice(1).join(' ') || 
+                         '';
+
           // Generate a username from email if not available in metadata
           const username = user.user_metadata?.username || 
                           user.email?.split('@')[0]?.toLowerCase() || 
@@ -192,8 +203,9 @@ export default function ModalAuthCallback() {
             .insert({
               user_id: user.id,
               username: username,
-              first_name: user.user_metadata?.first_name || user.email?.split('@')[0],
-              last_name: user.user_metadata?.last_name || '',
+              first_name: firstName,
+              last_name: lastName,
+              avatar_url: user.user_metadata?.avatar_url || null,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             });
