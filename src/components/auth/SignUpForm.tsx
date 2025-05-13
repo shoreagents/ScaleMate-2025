@@ -602,7 +602,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       // Join the verification code digits
       const fullCode = verificationCode.join('');
 
-      const { error: verifyError } = await supabase.auth.verifyOtp({
+      // Verify OTP and sign in in one step
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
         email: normalizedEmail,
         token: fullCode,
         type: 'email'
@@ -615,25 +616,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         } else if (verifyError.message.includes('expired')) {
           throw new Error('Token has expired or is invalid!');
         } else {
-        throw verifyError;
-      }
-      }
-
-      // Sign in the user after successful verification
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password: formData.password
-      });
-
-      if (signInError) {
-        throw new Error('Failed to sign in after verification. Please try signing in manually.');
+          throw verifyError;
+        }
       }
 
-      // Wait for session to be established
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error('Failed to establish session. Please try signing in manually.');
+      if (!data.user) {
+        throw new Error('No user data returned from verification');
       }
 
       // Get the current URL and its parameters
@@ -649,26 +637,28 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
       const fromParam = url.searchParams.get('from') || 'role-builder-modal';
 
-      // Always use modal callback when preventRedirect is true
-      const callbackBase = '/auth/callback/modal';
-      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
-      callbackUrl.searchParams.set('from', fromParam);
-      callbackUrl.searchParams.set('redirectTo', redirectTo);
+      if (preventRedirect) {
+        // For modal flow, update URL parameters and close modal
+        const url = new URL(window.location.href);
+        url.searchParams.set('showModal', fromParam);
+        url.searchParams.set('authSuccess', 'true');
+        
+        // Store current scroll position before redirect
+        sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+        
+        // Update URL and trigger success callback
+        await router.replace(url.toString(), undefined, { shallow: true });
+        onSuccess?.('Email verified successfully');
+      } else {
+        // For direct flow, redirect to dashboard
+        router.push('/user/dashboard');
+      }
 
-      console.log('SignUpForm - Callback URL params:', {
-        from: fromParam,
-        redirectTo,
-        callbackUrl: callbackUrl.toString()
-      });
-
-      // Keep isVerifying and isLoading true while redirecting
-      router.push(callbackUrl.toString());
       return; // Don't reset states since we're redirecting
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
       setError(errorMessage);
-      setSuccess(null);
       onError?.(errorMessage);
       setVerificationCode(Array(6).fill(''));
       // Only reset states on error
@@ -785,7 +775,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
       try {
         // First check if user already exists in database
-      const { data: existingUser, error: checkError } = await serviceRoleClient
+        const { data: existingUser, error: checkError } = await serviceRoleClient
         .from('users')
         .select('id')
           .eq('id', data.user.id)
@@ -955,7 +945,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
           sessionStorage.setItem('scrollPosition', window.scrollY.toString());
         }
 
-      setShowVerificationWithCallback(true);
+        setShowVerificationWithCallback(true);
         setResendCountdown(60);
       } catch (dbError) {
         console.error('SignUpForm - Database operation failed:', dbError);
@@ -1137,7 +1127,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   <VerificationInput
                     key={index}
                     id={`verification-${index}`}
-                type="text"
+                    type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
@@ -1149,12 +1139,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   />
                 ))}
               </VerificationContainer>
-              {error && (
+            {error && (
               <MessageContainer>
-                  <FiX size={14} />
-                  {error}
+                <FiX size={14} />
+                {error}
               </MessageContainer>
-              )}
+            )}
           </InputGroup>
           <ButtonContainer>
             <Button 

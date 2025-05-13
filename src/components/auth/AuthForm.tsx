@@ -503,7 +503,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       // Join the verification code digits
       const fullCode = verificationCode.join('');
 
-      const { error: verifyError } = await supabase.auth.verifyOtp({
+      // Verify OTP and sign in in one step
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
         email: normalizedEmail,
         token: fullCode,
         type: 'email'
@@ -520,34 +521,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       }
       }
 
-      // Sign in the user after successful verification
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password
-      });
-
-      if (signInError) {
-        // Handle specific error cases
-        if (signInError.message.includes('Email not confirmed')) {
-          // Show verification form without error message
-          setShowVerification(true);
-          // Automatically trigger resend of verification code
-          await supabase.auth.resend({
-            type: 'signup',
-            email: normalizedEmail,
-          });
-          setResendCountdown(60); // Start countdown
-          return;
-        }
-        // If we got here, the email/username exists but password is wrong
-        throw new Error('Incorrect password!');
-      }
-
-      // Wait for session to be established
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        throw new Error('Failed to establish session. Please try signing in manually.');
+      if (!data.user) {
+        throw new Error('No user data returned from verification');
       }
 
       // Get the current URL and its parameters
@@ -563,23 +538,23 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
       const fromParam = url.searchParams.get('from') || 'role-builder-modal';
 
-      // Always use modal callback when preventRedirect is true
-      const callbackBase = '/auth/callback/modal';
-      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
-      callbackUrl.searchParams.set('from', fromParam);
-      callbackUrl.searchParams.set('redirectTo', redirectTo);
+      if (preventRedirect) {
+        // For modal flow, update URL parameters and close modal
+        const url = new URL(window.location.href);
+        url.searchParams.set('showModal', fromParam);
+        url.searchParams.set('authSuccess', 'true');
+        
+        // Store current scroll position before redirect
+        sessionStorage.setItem('scrollPosition', window.scrollY.toString());
+        
+        // Update URL and trigger success callback
+        await router.replace(url.toString(), undefined, { shallow: true });
+        onSuccess?.('Email verified successfully');
+      } else {
+        // For direct flow, redirect to dashboard
+        router.push('/user/dashboard');
+      }
 
-      // Store current scroll position before redirect
-      sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-
-      console.log('AuthForm - Callback URL params:', {
-        from: fromParam,
-        redirectTo,
-        callbackUrl: callbackUrl.toString()
-      });
-
-      // Keep isVerifying and isLoading true while redirecting
-      router.push(callbackUrl.toString());
       return; // Don't reset states since we're redirecting
     } catch (err) {
       console.error('Verification error:', err);
@@ -700,29 +675,26 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         ? url.searchParams.get('redirectTo') || window.location.pathname
         : window.location.pathname;
 
-      // Choose callback URL based on preventRedirect
-      const callbackBase = preventRedirect ? '/auth/callback/modal' : '/auth/callback/direct';
-      const callbackUrl = new URL(`${window.location.origin}${callbackBase}`);
-      
-      if (preventRedirect) {
-        // Only add these parameters for modal callback
-        const fromParam = url.searchParams.get('from') || 'role-builder-modal';
-        callbackUrl.searchParams.set('from', fromParam);
-        callbackUrl.searchParams.set('redirectTo', redirectTo);
+      // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
+      const fromParam = url.searchParams.get('from') || 'role-builder-modal';
 
+      if (preventRedirect) {
+        // For modal flow, update URL parameters and close modal
+        const url = new URL(window.location.href);
+        url.searchParams.set('showModal', fromParam);
+        url.searchParams.set('authSuccess', 'true');
+        
         // Store current scroll position before redirect
         sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-      }
+        
+        // Update URL and trigger success callback
+        await router.replace(url.toString(), undefined, { shallow: true });
+        onSuccess?.('Signed in successfully');
+        } else {
+        // For direct flow, redirect to dashboard
+        router.push('/user/dashboard');
+        }
 
-      console.log('AuthForm - Callback URL params:', {
-        preventRedirect,
-        callbackBase,
-        from: callbackUrl.searchParams.get('from'),
-        redirectTo: callbackUrl.searchParams.get('redirectTo')
-      });
-
-      // Keep isLoading true while redirecting
-      router.push(callbackUrl.toString());
       return; // Don't reset states since we're redirecting
     } catch (err) {
       console.error('Sign in error:', err);
@@ -737,7 +709,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
   const handleGoogleSignIn = async () => {
     try {
       setIsGoogleLoading(true);
-      setError(null);
+    setError(null);
 
       // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;

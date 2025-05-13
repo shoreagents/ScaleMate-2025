@@ -152,10 +152,35 @@ export default function ModalAuthCallback() {
           .eq('user_id', user.id)
           .single();
 
-        // If no profile exists, this is an error since profile should be created during signup
+        // If no profile exists, create one for Google sign-in users
         if (profileError || !profile?.username) {
-          handleError(null, 'User profile not found. Please contact support.');
-          return;
+          // Check if this is a Google sign-in
+          const isGoogleUser = user.app_metadata?.provider === 'google';
+          
+          if (isGoogleUser) {
+            // Create a username from email (remove domain and special chars)
+            const username = user.email?.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || '';
+            
+            // Create user profile
+            const { error: createProfileError } = await serviceRoleClient
+              .from('user_profiles')
+              .insert({
+                user_id: user.id,
+                username: username,
+                first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
+                last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              });
+
+            if (createProfileError) {
+              console.error('Error creating user profile:', createProfileError);
+              // Don't return here as we still want to redirect to modal
+            }
+          } else {
+            handleError(null, 'User profile not found. Please contact support.');
+            return;
+          }
         }
 
         // After profile check, handle role assignment
@@ -174,7 +199,8 @@ export default function ModalAuthCallback() {
             .insert({
               user_id: user.id,
               role: 'user',
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             });
 
           if (assignRoleError) {
