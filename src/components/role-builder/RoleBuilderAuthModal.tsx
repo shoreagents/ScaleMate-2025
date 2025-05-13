@@ -233,7 +233,8 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from');
       
-      if (fromParam === 'role-builder-modal') {
+      // Handle both specific modal type and generic 'modal' type
+      if (fromParam === 'role-builder-modal' || fromParam === 'modal') {
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
@@ -261,26 +262,15 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
     return '';
   };
 
-  const handleAuthSuccess = async (message: string) => {
+  const handleAuthSuccess = () => {
     try {
-      console.log('Auth Success:', message); // Debug log
-      
       // Close the auth modal first
       onClose();
       
       // Call onAuthSuccess if provided
-    if (onAuthSuccess) {
-      onAuthSuccess();
+      if (onAuthSuccess) {
+        onAuthSuccess();
       }
-      
-      // Wait for session to be established
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('Session not established:', error);
-        return;
-      }
-
-      console.log('Session established:', session); // Debug log
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
     }
@@ -294,8 +284,6 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
 
   const handleClose = () => {
     onClose();
-    // Reset to initial view after modal is closed
-    setTimeout(() => setCurrentView('initial'), 300);
   };
 
   const renderContent = () => {
@@ -304,19 +292,16 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
         return (
           <FormWrapper>
             <SignUpForm 
-              onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
+              onSuccess={() => handleAuthSuccess()} 
+              onError={(error: string | null) => console.error(error)}
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
-              onVerificationStateChange={setIsVerifying}
             />
-            {!isVerifying && (
             <BackButton onClick={() => setCurrentView('initial')}>
               <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-                Go Back
+              Go Back
             </BackButton>
-            )}
           </FormWrapper>
         );
       case 'login':
@@ -324,7 +309,7 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
           <FormWrapper>
             <AuthForm 
               onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
+              onError={(error: string) => console.error(error)}
               preventRedirect={true} 
               hideLinks={true}
               redirectUrl={getCurrentUrl()}

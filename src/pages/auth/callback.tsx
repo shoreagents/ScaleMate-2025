@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import UpdateUsernameForm from '@/components/auth/UpdateUsernameForm';
 import styled from 'styled-components';
 
 const LoadingContainer = styled.div`
@@ -12,15 +11,6 @@ const LoadingContainer = styled.div`
   align-items: center;
   min-height: 100vh;
   background: #f5f5f5;
-`;
-
-const FormWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #f5f5f5;
-  padding: 1rem;
 `;
 
 // Helper function to check if session is properly set
@@ -84,46 +74,133 @@ const normalizeEmail = (email: string): string => {
   return normalized;
 };
 
+// Update the generateRandomUsername function to use full name
+const generateRandomUsername = (firstName: string, lastName: string): string => {
+  // Clean and normalize the name parts
+  const cleanName = (name: string) => name.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const first = cleanName(firstName);
+  const last = cleanName(lastName);
+  
+  // Generate a random number between 10-99
+  const randomNum = Math.floor(Math.random() * 90) + 10;
+  
+  // Combine parts: first + last + randomNum
+  // If the combined length is too long, truncate to fit within 20 chars (including randomNum)
+  const maxNameLength = 18; // 20 - 2 (for randomNum)
+  const combined = `${first}${last}`;
+  const truncated = combined.length > maxNameLength 
+    ? combined.slice(0, maxNameLength)
+    : combined;
+  
+  return `${truncated}${randomNum}`;
+};
+
+// Add this function at the top level of the file, before the component
+const generateRandomUsernameOriginal = (): string => {
+  const adjectives = ['happy', 'clever', 'brave', 'swift', 'bright', 'calm', 'eager', 'fair', 'kind', 'lively'];
+  const nouns = ['panda', 'tiger', 'eagle', 'dolphin', 'wolf', 'fox', 'bear', 'lion', 'hawk', 'owl'];
+  const randomNum = Math.floor(Math.random() * 1000);
+  const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+  return `${randomAdj}${randomNoun}${randomNum}`;
+};
+
+// Add this function to check username availability
+const isUsernameAvailable = async (serviceRoleClient: any, username: string): Promise<boolean> => {
+  const { data } = await serviceRoleClient
+    .from('user_profiles')
+    .select('username')
+    .eq('username', username)
+    .single();
+  return !data;
+};
+
+// Update the generateUniqueUsername function to accept name parameters
+const generateUniqueUsername = async (serviceRoleClient: any, firstName: string, lastName: string): Promise<string> => {
+  let username = generateRandomUsername(firstName, lastName);
+  let isAvailable = await isUsernameAvailable(serviceRoleClient, username);
+  
+  // Keep track of attempts to avoid infinite loops
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  while (!isAvailable && attempts < maxAttempts) {
+    username = generateRandomUsername(firstName, lastName);
+    isAvailable = await isUsernameAvailable(serviceRoleClient, username);
+    attempts++;
+  }
+  
+  // If we still couldn't find a unique username, fall back to the original random generator
+  if (!isAvailable) {
+    const adjectives = ['happy', 'clever', 'brave', 'swift', 'bright', 'calm', 'eager', 'fair', 'kind', 'lively'];
+    const nouns = ['panda', 'tiger', 'eagle', 'dolphin', 'wolf', 'fox', 'bear', 'lion', 'hawk', 'owl'];
+    const randomNum = Math.floor(Math.random() * 1000);
+    const randomAdj = adjectives[Math.floor(Math.random() * adjectives.length)];
+    const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+    username = `${randomAdj}${randomNoun}${randomNum}`;
+  }
+  
+  return username;
+};
+
 export default function AuthCallback() {
   const router = useRouter();
-  const [showUsernameForm, setShowUsernameForm] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const handleCallback = async () => {
+      // Prevent multiple navigation attempts
+      if (isNavigating) {
+        console.log('Navigation already in progress, skipping');
+        return;
+      }
+
       try {
+        // Get the from parameter and redirectTo URL early
+        const fromParam = router.query.from as string;
+        const redirectTo = router.query.redirectTo as string;
+
+        // Helper function to handle errors while preserving the flow
+        const handleError = (error: any, message: string) => {
+          console.error(message, error);
+          if (fromParam && redirectTo) {
+            // If we came from a modal, redirect back with error
+            const redirectUrl = new URL(redirectTo, window.location.origin);
+            redirectUrl.searchParams.set('showModal', fromParam);
+            redirectUrl.searchParams.set('authError', message);
+            window.location.href = redirectUrl.toString();
+          } else {
+            // Only go to login if we're not in a modal flow
+            window.location.href = '/login';
+          }
+        };
+
         // Wait for session to be valid
         const sessionValid = await waitForValidSession();
         if (!sessionValid) {
-          console.error('Session validation failed');
-          router.push('/login');
+          handleError(null, 'Session validation failed');
           return;
         }
 
         // Get the session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         if (sessionError) {
-          console.error('Session error:', sessionError);
-          router.push('/login');
+          handleError(sessionError, 'Session error');
           return;
         }
         if (!session) {
-          console.error('No session found');
-          router.push('/login');
+          handleError(null, 'No session found');
           return;
         }
 
         // Get the user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError) {
-          console.error('User error:', userError);
-          router.push('/login');
+          handleError(userError, 'User error');
           return;
         }
         if (!user) {
-          console.error('No user found');
-          router.push('/login');
+          handleError(null, 'No user found');
           return;
         }
 
@@ -148,7 +225,7 @@ export default function AuthCallback() {
         const fullName = userMetadata.full_name || '';
         const firstName = userMetadata.first_name || fullName.split(' ')[0] || '';
         const lastName = userMetadata.last_name || fullName.split(' ').slice(1).join(' ') || '';
-        const username = userMetadata.username || null;
+        let username = userMetadata.username || null;
 
         // Normalize email for Google users
         let emailToUse = user.email;
@@ -235,28 +312,19 @@ export default function AuthCallback() {
           return;
         }
 
-        // Check if username is taken by another user
+        // Check if username is taken (if it exists)
+        let needsUsernameUpdate = false;
         if (username) {
-          const { data: existingUsername, error: usernameError } = await serviceRoleClient
-            .from('user_profiles')
-            .select('username')
-            .eq('username', username)
-            .neq('user_id', user.id)
-            .single();
-
-          if (usernameError && usernameError.code !== 'PGRST116') {
-            console.error('Username check error:', usernameError);
-            router.push('/login');
-            return;
+          const isAvailable = await isUsernameAvailable(serviceRoleClient, username);
+          if (!isAvailable) {
+            // Username is taken, generate a new one based on name
+            username = await generateUniqueUsername(serviceRoleClient, firstName, lastName);
+            needsUsernameUpdate = true;
           }
-
-          if (existingUsername) {
-            // Username is taken, show the update form
-            setUserId(user.id);
-            setShowUsernameForm(true);
-            setIsLoading(false);
-            return;
-          }
+        } else {
+          // No username provided, generate one based on name
+          username = await generateUniqueUsername(serviceRoleClient, firstName, lastName);
+          needsUsernameUpdate = true;
         }
 
         // Create or update profile
@@ -265,7 +333,7 @@ export default function AuthCallback() {
 
         const profileData = {
           user_id: user.id,
-          username: username || profile?.username || null,
+          username: username,
           first_name: firstName || profile?.first_name || '',
           last_name: lastName || profile?.last_name || '',
           last_password_change: profile?.last_password_change || null,
@@ -310,16 +378,9 @@ export default function AuthCallback() {
         // Debug log the query parameters
         console.log('Callback query params:', router.query);
 
-        // Get the from parameter and redirectTo URL
-        const fromParam = router.query.from as string;
-        const redirectTo = router.query.redirectTo as string;
-
-        // Debug log the parameters
-        console.log('From param:', fromParam);
-        console.log('RedirectTo:', redirectTo);
-
         // List of valid modal types
         const validModalTypes = [
+          'modal', // Generic modal type
           'blueprint-modal',
           'cost-savings-modal',
           'tools-modal',
@@ -330,85 +391,83 @@ export default function AuthCallback() {
           'courses-modal'
         ];
 
-        // Check if we came from a modal
-        const isFromModal = fromParam && validModalTypes.includes(fromParam);
+        // Check if we came from a modal (either generic 'modal' or specific modal type)
+        const isFromModal = fromParam && (fromParam === 'modal' || validModalTypes.includes(fromParam));
+        console.log('Is from modal:', isFromModal);
+        console.log('Valid modal types:', validModalTypes);
+        console.log('From param matches:', fromParam ? (fromParam === 'modal' || validModalTypes.includes(fromParam)) : false);
 
-        // Handle redirects based on modal status
+        // Handle redirects based on modal status and username update needs
         if (isFromModal) {
           console.log('User came from modal:', fromParam);
           // If coming from a modal, redirect back to the original page
           if (redirectTo) {
             console.log('Redirecting to:', redirectTo);
-            router.push(redirectTo);
+            try {
+              const redirectUrl = new URL(redirectTo, window.location.origin);
+              // Add parameters to show the modal after redirect
+              redirectUrl.searchParams.set('showModal', fromParam);
+              if (needsUsernameUpdate) {
+                console.log('Setting showUsernameUpdate=true for modal redirect');
+                redirectUrl.searchParams.set('showUsernameUpdate', 'true');
+              }
+              // Add a success parameter to trigger success state
+              redirectUrl.searchParams.set('authSuccess', 'true');
+              console.log('Final redirect URL:', redirectUrl.toString());
+              window.location.href = redirectUrl.toString();
+              return;
+            } catch (err) {
+              handleError(err, 'Error creating redirect URL');
+              return;
+            }
           } else {
             console.log('No redirectTo URL, going to home');
-            router.push('/');
+            const homeUrl = new URL('/', window.location.origin);
+            homeUrl.searchParams.set('showModal', fromParam);
+            homeUrl.searchParams.set('authSuccess', 'true');
+            if (needsUsernameUpdate) {
+              console.log('Setting showUsernameUpdate=true for home redirect');
+              homeUrl.searchParams.set('showUsernameUpdate', 'true');
+            }
+            window.location.href = homeUrl.toString();
+            return;
           }
         } else {
           console.log('Not from modal, going to dashboard');
           // For non-modal sign-ins, redirect to dashboard
-          router.push('/user/dashboard');
+          const dashboardUrl = new URL('/user/dashboard', window.location.origin);
+          if (needsUsernameUpdate) {
+            console.log('Setting showUsernameUpdate=true for dashboard redirect');
+            dashboardUrl.searchParams.set('showUsernameUpdate', 'true');
+          }
+          console.log('Final dashboard URL:', dashboardUrl.toString());
+          window.location.href = dashboardUrl.toString();
+          return;
         }
       } catch (err) {
         console.error('Auth callback error:', err);
-        router.push('/login');
+        // Get the from parameter and redirectTo URL for error handling
+        const fromParam = router.query.from as string;
+        const redirectTo = router.query.redirectTo as string;
+        
+        if (fromParam && redirectTo) {
+          // If we came from a modal, redirect back with error
+          const redirectUrl = new URL(redirectTo, window.location.origin);
+          redirectUrl.searchParams.set('showModal', fromParam);
+          redirectUrl.searchParams.set('authError', 'Authentication failed');
+          window.location.href = redirectUrl.toString();
+        } else {
+          // Only go to login if we're not in a modal flow
+          window.location.href = '/login';
+        }
+        return;
       }
     };
 
-    if (router.isReady) {
+    if (router.isReady && !isNavigating) {
       handleCallback();
     }
-  }, [router.isReady, showUsernameForm]);
-
-  const handleUsernameUpdateSuccess = async () => {
-    // After successful username update, proceed with normal redirect
-    setShowUsernameForm(false);
-    setIsLoading(true);
-
-    // Get the from parameter and redirectTo URL
-    const fromParam = router.query.from as string;
-    const redirectTo = router.query.redirectTo as string;
-
-    // List of valid modal types
-    const validModalTypes = [
-      'blueprint-modal',
-      'cost-savings-modal',
-      'tools-modal',
-      'readiness-modal',
-      'resources-modal',
-      'role-builder-modal',
-      'quote-modal',
-      'courses-modal'
-    ];
-
-    // Check if we came from a modal
-    const isFromModal = fromParam && validModalTypes.includes(fromParam);
-
-    // Handle redirects based on modal status
-    if (isFromModal) {
-      if (redirectTo) {
-        router.push(redirectTo);
-      } else {
-        router.push('/');
-      }
-    } else {
-      router.push('/user/dashboard');
-    }
-  };
-
-  if (showUsernameForm && userId) {
-    return (
-      <FormWrapper>
-        <UpdateUsernameForm
-          userId={userId}
-          onSuccess={handleUsernameUpdateSuccess}
-          onError={(error) => {
-            console.error('Username update error:', error);
-          }}
-        />
-      </FormWrapper>
-    );
-  }
+  }, [router.isReady, isNavigating]);
 
   return (
     <LoadingContainer>

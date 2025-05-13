@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
+import { useAuth } from '@/hooks/useAuth';
 import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
 import DashboardTab from '@/components/user/DashboardTab';
 import RoleBuilderTab from '@/components/user/RoleBuilderTab';
@@ -34,11 +35,11 @@ import SavedToolStackTab from '@/components/user/SavedToolStackTab';
 import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
 import UserProfile from '@/components/user/UserProfile';
 import { withRoleProtection } from '@/components/auth/withRoleProtection';
-import { useAuth } from '@/contexts/AuthContext';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
 import { useDownloadModal } from '@/components/quote/QuoteDownloadModal';
+import { Modal } from '@/components/ui/Modal';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -153,7 +154,7 @@ interface DashboardUserData {
 
 const DashboardPage = () => {
   const router = useRouter();
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userData, setUserData] = useState<UserProfileData | null>(null);
@@ -197,7 +198,6 @@ const DashboardPage = () => {
         }
 
       // Set user and show dashboard
-      setUser(user);
       setUserData(profile);
 
       // Check if username and last_password_change are null
@@ -213,7 +213,7 @@ const DashboardPage = () => {
 
   useEffect(() => {
     checkAuth();
-  }, [setUser]);
+  }, []);
 
   useEffect(() => {
     const { tab } = router.query;
@@ -299,6 +299,10 @@ const DashboardPage = () => {
     { id: 'account-settings', label: 'System Settings', icon: <FaGear /> }
   ];
 
+  const handleSetupComplete = () => {
+    setShowSuccessModal(true);
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -324,19 +328,19 @@ const DashboardPage = () => {
         </MainContent>
       </DashboardContainer>
       {showSetupForm && user && (
-        <FirstTimeSetupForm
+        <Modal
           isOpen={showSetupForm}
-          onClose={() => {
-            setShowSetupForm(false);
-            // Refresh user data after setup
-            checkAuth();
-          }}
-          userId={user.id}
-          currentUsername=""
-          onSetupComplete={() => {
-            setShowSuccessModal(true);
-          }}
-        />
+          onClose={() => setShowSetupForm(false)}
+          title="Complete Your Setup"
+        >
+          <FirstTimeSetupForm
+            isOpen={showSetupForm}
+            onClose={() => setShowSetupForm(false)}
+            userId={user.id}
+            currentUsername={userData?.username || ''}
+            onSetupComplete={handleSetupComplete}
+          />
+        </Modal>
       )}
       {showSuccessModal && (
         <SuccessModal $isOpen={showSuccessModal}>
