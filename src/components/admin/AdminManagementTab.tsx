@@ -1295,7 +1295,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
               email: normalizedEmail,
               password: formData.password,
               options: {
-                emailRedirectTo: `${window.location.origin}/auth/callback`
+                emailRedirectTo: `${window.location.origin}/auth/callback/direct`
               }
             });
 
