@@ -57,7 +57,7 @@ const waitForValidSession = async (maxAttempts = 20): Promise<boolean> => {
         // Additional check to ensure session is fully established
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          return true;
+        return true;
         }
       }
     }

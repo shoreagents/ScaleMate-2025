@@ -661,17 +661,6 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         }
 
         emailToUse = userData.email;
-      } else {
-        // Check if email exists in users table
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('id')
-          .eq('email', normalizeEmail(loginIdentifier))
-          .single();
-
-        if (userError || !userData) {
-          throw new Error('Invalid username or email!');
-        }
       }
 
       // Normalize email before sign in
@@ -683,6 +672,17 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       });
 
       if (signInError) {
+        // If email is not confirmed, show verification form
+        if (signInError.message.includes('Email not confirmed')) {
+          setShowVerification(true);
+          // Automatically trigger resend of verification code
+          await supabase.auth.resend({
+            type: 'signup',
+            email: normalizedEmail,
+          });
+          setResendCountdown(60); // Start countdown
+          return;
+        }
         throw signInError;
       }
 
@@ -717,8 +717,8 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       console.log('AuthForm - Callback URL params:', {
         preventRedirect,
         callbackBase,
-        redirectTo,
-        callbackUrl: callbackUrl.toString()
+        from: callbackUrl.searchParams.get('from'),
+        redirectTo: callbackUrl.searchParams.get('redirectTo')
       });
 
       // Keep isLoading true while redirecting
@@ -729,7 +729,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign in';
       setError(errorMessage);
       onError?.(errorMessage);
-      // Only reset loading state on error
+    } finally {
       setIsLoading(false);
     }
   };
