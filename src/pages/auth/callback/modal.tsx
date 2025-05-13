@@ -148,7 +148,7 @@ export default function ModalAuthCallback() {
         // Check if user profile exists
         const { data: profile, error: profileError } = await serviceRoleClient
           .from('user_profiles')
-          .select('username')
+          .select('username, profile_picture')
           .eq('user_id', user.id)
           .single();
 
@@ -161,6 +161,9 @@ export default function ModalAuthCallback() {
             // Create a username from email (remove domain and special chars)
             const username = user.email?.split('@')[0].replace(/[^a-zA-Z0-9]/g, '') || '';
             
+            // Get profile picture from Google metadata
+            const profilePicture = user.user_metadata?.avatar_url || null;
+            
             // Create user profile
             const { error: createProfileError } = await serviceRoleClient
               .from('user_profiles')
@@ -169,6 +172,7 @@ export default function ModalAuthCallback() {
                 username: username,
                 first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
                 last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
+                profile_picture: profilePicture,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               });
@@ -180,6 +184,23 @@ export default function ModalAuthCallback() {
           } else {
             handleError(null, 'User profile not found. Please contact support.');
             return;
+          }
+        } else if (user.app_metadata?.provider === 'google' && !profile.profile_picture) {
+          // If profile exists but no profile picture, update it with Google's picture
+          const profilePicture = user.user_metadata?.avatar_url || null;
+          if (profilePicture) {
+            const { error: updateError } = await serviceRoleClient
+              .from('user_profiles')
+              .update({
+                profile_picture: profilePicture,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+
+            if (updateError) {
+              console.error('Error updating profile picture:', updateError);
+              // Don't return here as this is not critical
+            }
           }
         }
 
