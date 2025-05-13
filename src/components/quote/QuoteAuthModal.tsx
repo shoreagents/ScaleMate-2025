@@ -6,9 +6,8 @@ import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { useDownloadModal } from './QuoteDownloadModal';
 import { useRouter } from 'next/router';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface QuoteAuthModalProps {
   isOpen: boolean;
@@ -232,9 +231,28 @@ const ExploreLink = styled.a`
 
 export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const { openModal } = useDownloadModal();
   const router = useRouter();
+
+  // Check URL parameters on mount and after auth redirect
+  useEffect(() => {
+    if (typeof window !== 'undefined' && router.isReady) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const showModal = urlParams.get('showModal');
+      const authSuccess = urlParams.get('authSuccess');
+      
+      // If we have both showModal and authSuccess parameters
+      if (showModal === 'quote-modal' && authSuccess === 'true') {
+        // Remove the parameters from the URL
+        const newUrl = window.location.pathname;
+        router.replace(newUrl, undefined, { shallow: true });
+        
+        // Call onAuthSuccess if provided
+        if (onAuthSuccess) {
+          onAuthSuccess();
+        }
+      }
+    }
+  }, [router.isReady, router.query, onAuthSuccess]);
 
   const handleClose = () => {
     onClose();
@@ -254,19 +272,25 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
     return '';
   };
 
-  const handleAuthSuccess = async (message?: string) => {
+  const handleAuthSuccess = async () => {
     try {
       // Wait for session to be established
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session) {
-        console.error('Session not established:', error);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found after auth success');
         return;
       }
+
+      // Set URL parameters
+      const url = new URL(window.location.href);
+      url.searchParams.set('showModal', 'quote-modal');
+      url.searchParams.set('authSuccess', 'true');
       
-      // Close the auth modal
+      // Update URL and close modal
+      await router.replace(url.toString(), undefined, { shallow: true });
       onClose();
       
-      // Call onAuthSuccess if provided (this will now open the download modal)
+      // Call onAuthSuccess if provided
       if (onAuthSuccess) {
         onAuthSuccess();
       }
@@ -292,14 +316,11 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
-              onVerificationStateChange={setIsVerifying}
             />
-            {!isVerifying && (
-              <BackButton onClick={() => setCurrentView('initial')}>
-                <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
-                Go Back
-              </BackButton>
-            )}
+            <BackButton onClick={() => setCurrentView('initial')}>
+              <FontAwesomeIcon icon={faArrowLeft} style={{ fontSize: '0.875rem' }} />
+              Go Back
+            </BackButton>
           </FormWrapper>
         );
       case 'login':
@@ -324,14 +345,14 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock the full job blueprint, including salary breakdowns, tools, and task lists.
+              Create a free account to unlock the full job blueprint, including detailed role specifications and cost breakdowns.
             </Description>
 
             <IconContainer>
               <IconWrapper>
                 <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Complete Job Blueprint</IconText>
+              <IconText>Job Blueprint</IconText>
             </IconContainer>
 
             <ButtonContainer>
@@ -357,11 +378,11 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose}>
-        <Container>
-          {renderContent()}
-        </Container>
-      </Modal>
+    <Modal isOpen={isOpen} onClose={handleClose}>
+      <Container>
+        {renderContent()}
+      </Container>
+    </Modal>
     </>
   );
 };

@@ -222,7 +222,7 @@ const ExploreLink = styled.a`
   }
 `;
 
-export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
+export const ResourcesAuthModal = ({ isOpen, onClose, onAuthSuccess }: ResourcesAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
@@ -233,24 +233,23 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       const showModal = urlParams.get('showModal');
       const authSuccess = urlParams.get('authSuccess');
       
-      console.log('URL Params Check:', { showModal, authSuccess }); // Debug log
-      
       // If we have both showModal and authSuccess parameters
       if (showModal === 'resources-modal' && authSuccess === 'true') {
-        console.log('Auth success detected, handling...'); // Debug log
-        
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
         
         // Call onAuthSuccess if provided
         if (onAuthSuccess) {
-          console.log('Calling onAuthSuccess callback'); // Debug log
           onAuthSuccess();
         }
       }
     }
   }, [router.isReady, router.query, onAuthSuccess]);
+
+  const handleClose = () => {
+    onClose();
+  };
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -261,19 +260,13 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
-      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
   const handleAuthSuccess = async () => {
     try {
-      console.log('Resources Auth Success - Setting URL params...'); // Debug log
       // Wait for session to be established
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -285,7 +278,6 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       const url = new URL(window.location.href);
       url.searchParams.set('showModal', 'resources-modal');
       url.searchParams.set('authSuccess', 'true');
-      console.log('Setting URL to:', url.toString()); // Debug log
       
       // Update URL and close modal
       await router.replace(url.toString(), undefined, { shallow: true });
@@ -293,11 +285,16 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
-        console.log('Calling onAuthSuccess callback'); // Debug log
         onAuthSuccess();
       }
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
+    }
+  };
+
+  const handleAuthError = (error: string | null) => {
+    if (error) {
+      console.error('Auth error:', error);
     }
   };
 
@@ -307,8 +304,8 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
         return (
           <FormWrapper>
             <SignUpForm 
-              onSuccess={() => handleAuthSuccess()} 
-              onError={(error: string | null) => console.error(error)}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
@@ -324,7 +321,7 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
           <FormWrapper>
             <AuthForm 
               onSuccess={handleAuthSuccess} 
-              onError={(error: string) => console.error(error)}
+              onError={handleAuthError} 
               preventRedirect={true} 
               hideLinks={true}
               redirectUrl={getCurrentUrl()}
@@ -341,7 +338,7 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to access our comprehensive resource library, including guides, templates, and best practices.
+              Create a free account to unlock our full resource library, including AI-powered templates and guides.
             </Description>
 
             <IconContainer>
@@ -364,7 +361,7 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
             <ExploreContainer>
               <ExploreText>Not ready yet?</ExploreText>
               <ExploreLink href="#" onClick={(e) => { e.preventDefault(); handleClose(); }}>
-                Keep exploring resources
+                Keep exploring tools
               </ExploreLink>
             </ExploreContainer>
           </>
@@ -373,10 +370,12 @@ export const ResourcesAuthModal: React.FC<ResourcesAuthModalProps> = ({ isOpen, 
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <Container>
-        {renderContent()}
-      </Container>
-    </Modal>
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose}>
+        <Container>
+          {renderContent()}
+        </Container>
+      </Modal>
+    </>
   );
 }; 

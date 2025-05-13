@@ -527,7 +527,20 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       });
 
       if (signInError) {
-        throw new Error('Failed to sign in after verification. Please try signing in manually.');
+        // Handle specific error cases
+        if (signInError.message.includes('Email not confirmed')) {
+          // Show verification form without error message
+          setShowVerification(true);
+          // Automatically trigger resend of verification code
+          await supabase.auth.resend({
+            type: 'signup',
+            email: normalizedEmail,
+          });
+          setResendCountdown(60); // Start countdown
+          return;
+        }
+        // If we got here, the email/username exists but password is wrong
+        throw new Error('Incorrect password!');
       }
 
       // Wait for session to be established
@@ -626,7 +639,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         const { data: profileData, error: profileError } = await serviceRoleClient
           .from('user_profiles')
           .select('user_id')
-          .eq('username', loginIdentifier)
+          .eq('username', loginIdentifier.toLowerCase())
           .single();
 
         if (profileError || !profileData) {
@@ -667,40 +680,12 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       });
 
       if (signInError) {
-        // Check if error is due to unconfirmed email
-        if (signInError.message.includes('Email not confirmed')) {
-          // Show verification form without error message
-          setShowVerification(true);
-          // Automatically trigger resend of verification code
-          await supabase.auth.resend({
-            type: 'signup',
-            email: normalizedEmail,
-          });
-          setResendCountdown(60); // Start countdown
-          return;
-        }
-        // If we got here, the email/username exists but password is wrong
-        throw new Error('Incorrect password!');
+        throw signInError;
       }
 
       if (!data.user) {
-        throw new Error('Invalid username or email!');
+        throw new Error('No user data returned from sign in');
       }
-
-      // Get user's role
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', data.user.id);
-
-      if (!roles || roles.length === 0) {
-        throw new Error('No role assigned to user');
-      }
-
-      const userRoles = roles.map(r => r.role);
-
-      // Call onSuccess without setting success message
-      onSuccess?.('Sign in successful');
 
       // Get the current URL and its parameters
       const currentUrl = redirectUrl || window.location.pathname;

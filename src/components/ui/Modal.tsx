@@ -48,11 +48,6 @@ const ModalContent = styled.div`
 
   @media (min-width: 640px) {
     transform: scale(1);
-    transition: transform 0.2s ease-in-out;
-
-    &:hover {
-      transform: scale(1.01);
-    }
   }
 `;
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Modal } from '../ui/Modal';
-import { DocumentIcon } from '@heroicons/react/24/outline';
+import { UserGroupIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../auth/SignUpForm';
 import AuthForm from '../auth/AuthForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -222,7 +222,7 @@ const ExploreLink = styled.a`
   }
 `;
 
-export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOpen, onClose, onAuthSuccess }) => {
+export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBuilderAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
@@ -233,24 +233,23 @@ export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOp
       const showModal = urlParams.get('showModal');
       const authSuccess = urlParams.get('authSuccess');
       
-      console.log('URL Params Check:', { showModal, authSuccess }); // Debug log
-      
       // If we have both showModal and authSuccess parameters
       if (showModal === 'role-builder-modal' && authSuccess === 'true') {
-        console.log('Auth success detected, handling...'); // Debug log
-        
         // Remove the parameters from the URL
         const newUrl = window.location.pathname;
         router.replace(newUrl, undefined, { shallow: true });
         
         // Call onAuthSuccess if provided
         if (onAuthSuccess) {
-          console.log('Calling onAuthSuccess callback'); // Debug log
           onAuthSuccess();
         }
       }
     }
   }, [router.isReady, router.query, onAuthSuccess]);
+
+  const handleClose = () => {
+    onClose();
+  };
 
   // Get the current URL for OAuth redirect
   const getCurrentUrl = () => {
@@ -261,19 +260,13 @@ export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOp
       // Store the current URL to return to after auth
       const currentPath = window.location.pathname + window.location.search;
       url.searchParams.set('redirectTo', currentPath);
-      console.log('OAuth Redirect URL:', url.toString()); // Debug log
       return url.toString();
     }
     return '';
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
   const handleAuthSuccess = async () => {
     try {
-      console.log('Role Builder Auth Success - Setting URL params...'); // Debug log
       // Wait for session to be established
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
@@ -285,7 +278,6 @@ export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOp
       const url = new URL(window.location.href);
       url.searchParams.set('showModal', 'role-builder-modal');
       url.searchParams.set('authSuccess', 'true');
-      console.log('Setting URL to:', url.toString()); // Debug log
       
       // Update URL and close modal
       await router.replace(url.toString(), undefined, { shallow: true });
@@ -293,11 +285,16 @@ export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOp
       
       // Call onAuthSuccess if provided
       if (onAuthSuccess) {
-        console.log('Calling onAuthSuccess callback'); // Debug log
         onAuthSuccess();
       }
     } catch (err) {
       console.error('Error in handleAuthSuccess:', err);
+    }
+  };
+
+  const handleAuthError = (error: string | null) => {
+    if (error) {
+      console.error('Auth error:', error);
     }
   };
 
@@ -307,8 +304,8 @@ export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOp
         return (
           <FormWrapper>
             <SignUpForm 
-              onSuccess={() => handleAuthSuccess()} 
-              onError={(error: string | null) => console.error(error)}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true} 
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
@@ -324,7 +321,7 @@ export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOp
           <FormWrapper>
             <AuthForm 
               onSuccess={handleAuthSuccess} 
-              onError={(error: string) => console.error(error)}
+              onError={handleAuthError} 
               preventRedirect={true} 
               hideLinks={true}
               redirectUrl={getCurrentUrl()}
@@ -341,14 +338,14 @@ export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOp
             <Title>Almost there!</Title>
             
             <Description>
-              Create a free account to unlock your complete role builder analysis, including detailed role insights, market data, and implementation recommendations.
+              Create a free account to unlock the full role builder, including AI-powered role suggestions and detailed job descriptions.
             </Description>
 
             <IconContainer>
               <IconWrapper>
-                <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
+                <UserGroupIcon style={{ width: '2.5rem', height: '2.5rem' }} />
               </IconWrapper>
-              <IconText>Complete Role Analysis</IconText>
+              <IconText>AI Role Builder</IconText>
             </IconContainer>
 
             <ButtonContainer>
@@ -373,10 +370,12 @@ export const RoleBuilderAuthModal: React.FC<RoleBuilderAuthModalProps> = ({ isOp
   };
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={handleClose}>
       <Container>
         {renderContent()}
       </Container>
     </Modal>
+    </>
   );
 }; 
