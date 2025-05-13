@@ -5,7 +5,7 @@ import { faDownload, faPhone, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Link from 'next/link';
 import { CostSavingsAuthModal } from '../../../components/cost-savings/CostSavingsAuthModal';
 import { useDownloadModal } from '../../../components/cost-savings/CostSavingsDownloadModal';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 
 const Section = styled.section`
   padding: 5rem 0;
@@ -166,18 +166,23 @@ const CalendlyContainer = styled.div`
 export default function CTA() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const { user } = useAuth();
   const { openModal } = useDownloadModal();
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    return !!session;
+  };
 
   const handleBookStrategyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsModalOpen(true);
   };
 
-  const handleDownloadClick = (e: React.MouseEvent) => {
+  const handleDownloadClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (user) {
-      openModal();
+    const isAuthenticated = await checkAuth();
+    if (isAuthenticated) {
+      openModal(() => setIsLoginModalOpen(false));
     } else {
       setIsLoginModalOpen(true);
     }
@@ -185,7 +190,7 @@ export default function CTA() {
 
   const handleAuthSuccess = () => {
     setIsLoginModalOpen(false);
-    openModal();
+    openModal(() => setIsLoginModalOpen(false));
   };
 
   return (
