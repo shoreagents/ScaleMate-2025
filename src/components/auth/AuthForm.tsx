@@ -374,7 +374,7 @@ const ResendLink = styled.div`
 `;
 
 interface AuthFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (message?: string) => void;
   onError?: (error: string) => void;
   preventRedirect?: boolean;
   hideLinks?: boolean;
@@ -697,7 +697,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       const userRoles = roles.map(r => r.role);
 
       // Call onSuccess without setting success message
-      onSuccess?.();
+      onSuccess?.('Sign in successful');
 
       // Only redirect if preventRedirect is false
       if (!preventRedirect) {
@@ -836,7 +836,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       }
 
       // Remove success message since we're redirecting
-      onSuccess?.();
+      onSuccess?.('Verification code sent');
       setError(null);
       setResendCountdown(60); // Start countdown
     } catch (err) {
@@ -890,7 +890,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
       }
 
       // Show success message
-      onSuccess?.();
+      onSuccess?.('Reset email sent');
       
       // Store email and show reset password modal
       setResetEmail(normalizedEmail);
