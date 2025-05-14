@@ -385,6 +385,29 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(normalized);
 };
 
+// Add this debounce utility function somewhere in the file, e.g., after imports or before the component
+// If you have a project-wide utils file, it's better to put it there and import it.
+function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  const debounced = (...args: Parameters<F>) => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = setTimeout(() => func(...args), waitFor);
+  };
+
+  // Add a cancel method to the debounced function
+  debounced.cancel = () => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+  };
+
+  return debounced;
+}
+
 export default function SignUpForm({ onSuccess, onError, hideLinks = false, preventRedirect = false, redirectUrl, onVerificationStateChange }: SignUpFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -415,6 +438,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
   const [accountExists, setAccountExists] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
 
+  console.log('[SignUpForm Render] Current error state:', error, 'isLoading:', isLoading, 'showVerification:', showVerification);
+
   // Add useEffect for countdown
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -428,23 +453,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     };
   }, [resendCountdown]);
 
-  const validateUsername = (value: string) => {
-    // Allow empty value for backspace
-    if (!value) {
-      setUsernameError(null);
-      setUsernameExists(null);
-      return false;
-    }
-    if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
-      setUsernameError('Special characters are not allowed');
-      setUsernameExists(null);
-      return false;
-    }
-    setUsernameError(null);
-    checkUsernameExists(value);
-    return true;
-  };
-
+  // Original checkUsernameExists (should remain as it contains the core logic)
   const checkUsernameExists = async (username: string) => {
     if (!username) {
       setUsernameError(null); // Also clear usernameError if username is empty
@@ -452,16 +461,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       setCheckingUsername(false);
       return;
     }
-
-    // Basic client-side validation before hitting the API (optional, but good practice)
-    if (!/^[a-zA-Z0-9._-]*$/.test(username)) {
-      setUsernameError('Special characters are not allowed');
-      setUsernameExists(null);
-      setCheckingUsername(false);
-      return;
-    } else {
-      setUsernameError(null); // Clear error if format is now valid
-    }
+    // Basic client-side validation before hitting the API is good, but the main check is API-driven
+    // The regex check from the previous version of checkUsernameExists can be here or in validateUsername
 
     setCheckingUsername(true);
     try {
@@ -470,33 +471,63 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username: username.toLowerCase() }), // Send username to API
+        body: JSON.stringify({ username: username.toLowerCase() }),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
-        // Handle API errors (e.g., 500 from your API route)
         console.error('API error checking username:', data.error || response.statusText);
-        setUsernameExists(null); // Or set to true to be safe, preventing use of a possibly taken name
+        setUsernameExists(null);
         setUsernameError(data.error || 'Could not verify username.');
       } else {
-        // API call was successful
         if (data.exists) {
           setUsernameExists(true);
-          setUsernameError('Username is already taken!'); // Set error if taken
+          setUsernameError('Username is already taken!');
         } else {
           setUsernameExists(false);
-          setUsernameError(null); // Clear error if available
+          setUsernameError(null);
         }
       }
     } catch (error) {
       console.error('Network error checking username:', error);
-      setUsernameExists(null); // Or set to true to be safe
+      setUsernameExists(null);
       setUsernameError('Network error. Could not verify username.');
     } finally {
       setCheckingUsername(false);
     }
+  };
+
+  // Create a debounced version of the username check logic
+  // Note: checkUsernameExists itself is stable if its definition doesn't change based on props/state not in its deps array.
+  // If checkUsernameExists were to change often, it should be a dependency of this useCallback.
+  const debouncedUsernameCheck = React.useCallback(
+    debounce((usernameValue: string) => {
+      // Perform the actual check
+      if (!/^[a-zA-Z0-9._-]*$/.test(usernameValue)) {
+        setUsernameError('Special characters are not allowed');
+        setUsernameExists(null);
+        setCheckingUsername(false); // Ensure loading state is reset
+        return; // Don't proceed to API call if format is invalid
+      }
+      // If format is valid, clear format error and call the API
+      setUsernameError(null);
+      checkUsernameExists(usernameValue); 
+    }, 500), // 500ms delay
+    [] // Dependencies: if checkUsernameExists was unstable, add it here.
+  );
+
+  const validateUsername = (value: string) => {
+    // This function can now primarily be responsible for triggering the debounced check
+    // and perhaps some very immediate synchronous feedback if needed, but most logic is in debouncedUsernameCheck.
+    if (!value) {
+      setUsernameError(null);
+      setUsernameExists(null);
+      setCheckingUsername(false); // Ensure loading state is reset
+      debouncedUsernameCheck.cancel(); // Cancel any pending debounced call
+      return false;
+    }
+    // The debounced function will handle the regex and API call
+    debouncedUsernameCheck(value);
+    return true;
   };
 
   const validatePasswords = (password: string, confirmPassword: string) => {
@@ -721,14 +752,22 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
       // --- Optional: Call your /api/auth/check-email-signup ---
       try {
+        console.log('Checking email via API:', normalizedEmail); // Log email being checked
         const emailCheckResponse = await fetch('/api/auth/check-email-signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: normalizedEmail }),
         });
         const emailCheckData = await emailCheckResponse.json();
+
+        console.log('Email Check API Response Status:', emailCheckResponse.status);
+        console.log('Email Check API Response OK?:', emailCheckResponse.ok);
+        console.log('Email Check API Response Data (Body):', emailCheckData);
+
         if (!emailCheckResponse.ok || emailCheckData.exists) {
-          setError(emailCheckData.error || 'Email already exists or check failed.');
+          const errorMessage = emailCheckData.error || 'Email already exists or check failed.';
+          setError(errorMessage);
+          console.log('setError called for email exists/check failed. Message:', errorMessage);
           setIsLoading(false);
           return;
         }
@@ -843,6 +882,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null); // Clear general form errors when any input changes
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -850,16 +890,15 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     }));
 
     if (name === 'username') {
+      // validateUsername now calls the debounced checker
       validateUsername(value);
     }
 
     if (name === 'email') {
-      // Remove real-time email validation
       setEmailError(null);
       setEmailExists(null);
     }
 
-    // Check password match when either password field changes
     if (name === 'password' || name === 'confirmPassword') {
       validatePasswords(
         name === 'password' ? value : formData.password,
