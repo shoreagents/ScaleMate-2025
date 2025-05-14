@@ -349,16 +349,6 @@ const MessageContainer = styled.div<{ $isSuccess?: boolean }>`
   color: ${props => props.$isSuccess ? props.theme.colors.success : props.theme.colors.error};
 `;
 
-const ErrorMessage = styled.div`
-  font-size: 0.75rem;
-  color: #EF4444;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  text-align: left;
-  width: 100%;
-`;
-
 interface SignUpFormProps {
   onSuccess?: (message: string) => void;
   onError?: (error: string | null) => void;
@@ -457,35 +447,53 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
   const checkUsernameExists = async (username: string) => {
     if (!username) {
+      setUsernameError(null); // Also clear usernameError if username is empty
       setUsernameExists(null);
       setCheckingUsername(false);
       return;
     }
 
+    // Basic client-side validation before hitting the API (optional, but good practice)
+    if (!/^[a-zA-Z0-9._-]*$/.test(username)) {
+      setUsernameError('Special characters are not allowed');
+      setUsernameExists(null);
+      setCheckingUsername(false);
+      return;
+    } else {
+      setUsernameError(null); // Clear error if format is now valid
+    }
+
+    setCheckingUsername(true);
     try {
-      setCheckingUsername(true);
-      
       const response = await fetch('/api/auth/check-username', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          username,
-        }),
+        body: JSON.stringify({ username: username.toLowerCase() }), // Send username to API
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
-        console.error('Error checking username:', data.error);
-        setUsernameExists(null);
+        // Handle API errors (e.g., 500 from your API route)
+        console.error('API error checking username:', data.error || response.statusText);
+        setUsernameExists(null); // Or set to true to be safe, preventing use of a possibly taken name
+        setUsernameError(data.error || 'Could not verify username.');
       } else {
-        setUsernameExists(data.exists);
+        // API call was successful
+        if (data.exists) {
+          setUsernameExists(true);
+          setUsernameError('Username is already taken!'); // Set error if taken
+        } else {
+          setUsernameExists(false);
+          setUsernameError(null); // Clear error if available
+        }
       }
     } catch (error) {
-      console.error('Error checking username:', error);
-      setUsernameExists(null);
+      console.error('Network error checking username:', error);
+      setUsernameExists(null); // Or set to true to be safe
+      setUsernameError('Network error. Could not verify username.');
     } finally {
       setCheckingUsername(false);
     }
@@ -504,34 +512,48 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     return true;
   };
 
-  const checkEmailExists = async (emailToCheck: string): Promise<boolean> => {
-    if (!emailToCheck.trim()) {
-      setEmailError(null);
-      return false;
+  const checkEmailExists = async (email: string) => {
+    if (!email) {
+      setEmailExists(null);
+      setCheckingEmail(false);
+      return;
     }
-    setIsLoading(true);
+
     try {
-      const response = await fetch('/api/auth/check-email-signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailToCheck }),
-      });
-      const data = await response.json();
-      setIsLoading(false);
-      if (!response.ok) {
-        setEmailError(data.message || 'Error checking email.');
-        return true; // Indicates an error occurred, consider it as potentially existing or failed check
+      setCheckingEmail(true);
+      
+      // Create a client with service role key for admin access
+      const serviceRoleClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+        {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        }
+      );
+      
+      // Query the users table with service role
+      const { data, error } = await serviceRoleClient
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking email:', error);
+        setEmailExists(null);
+      } else if (data && data.length > 0) {
+        setEmailExists(true); // Email is taken
+      } else {
+        setEmailExists(false); // Email is available
       }
-      if (data.exists) {
-        setEmailError('This email address is already in use.');
-        return true;
-      }
-      setEmailError(null);
-      return false;
-    } catch (err) {
-      setIsLoading(false);
-      setEmailError('Failed to verify email. Please try again.');
-      return true; // Network or other error, consider it as potentially existing
+    } catch (error) {
+      console.error('Error checking email:', error);
+      setEmailExists(null);
+    } finally {
+      setCheckingEmail(false);
     }
   };
 
@@ -603,8 +625,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
         } else if (verifyError.message.includes('expired')) {
           throw new Error('Token has expired or is invalid!');
         } else {
-        throw verifyError;
-      }
+          throw verifyError;
+        }
       }
 
       if (!data.user) {
@@ -656,80 +678,167 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setEmailError(null);
-    setUsernameError(null);
-    setPasswordError(null);
+    setError(null); // Clear previous main errors
+    setSuccess(null); // Clear previous success messages
+    // Consider having a separate state for secondary errors, e.g., setProfileError(null)
     setIsLoading(true);
 
-    if (!validateForm()) {
-      setIsLoading(false);
-      return;
-    }
-
-    // Explicitly await the email check
-    const emailAlreadyExists = await checkEmailExists(formData.email);
-    if (emailAlreadyExists) {
-      setIsLoading(false);
-      // Error message is set by checkEmailExists, ensure it's displayed
-      // Optionally, scroll to the email field or error message
-      return;
-    }
-    
     try {
-      // Create user with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email.toLowerCase(),
+      // --- Start: Initial Client-Side Validations ---
+      if (!isValidEmail(formData.email)) {
+        setError('Please enter a valid email address!');
+        // setEmailError('Please enter a valid email address!'); // If you have specific field errors
+        // onError?.('Please enter a valid email address!'); // If you have a prop for this
+        setIsLoading(false); // Stop here
+        return;
+      }
+      // Add other client-side validations for username, password, password match etc.
+      // For example:
+      if (!formData.username || formData.username.length < 3) {
+        setError('Username must be at least 3 characters long!');
+        // setUsernameError('Username must be at least 3 characters long!');
+        // onError?.('Username must be at least 3 characters long!');
+        setIsLoading(false);
+        return;
+      }
+      if (!formData.password || formData.password.length < 8) {
+        setError('Password must be at least 8 characters long!');
+        // setPasswordError('Password must be at least 8 characters long!');
+        // onError?.('Password must be at least 8 characters long!');
+        setIsLoading(false);
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match!');
+        // setPasswordError('Passwords do not match!');
+        // onError?.('Passwords do not match!');
+        setIsLoading(false);
+        return;
+      }
+      // --- End: Initial Client-Side Validations ---
+
+      const normalizedEmail = normalizeEmail(formData.email);
+
+      // --- Optional: Call your /api/auth/check-email-signup ---
+      try {
+        const emailCheckResponse = await fetch('/api/auth/check-email-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalizedEmail }),
+        });
+        const emailCheckData = await emailCheckResponse.json();
+        if (!emailCheckResponse.ok || emailCheckData.exists) {
+          setError(emailCheckData.error || 'Email already exists or check failed.');
+          setIsLoading(false);
+          return;
+        }
+      } catch (emailCheckError) {
+        console.error('Email check API error:', emailCheckError);
+        setError('Could not verify email availability. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+      // --- End: Email Check ---
+
+
+      // --- Step 1: Core Supabase Authentication ---
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
         password: formData.password,
-      });
-
-      if (authError) {
-        throw authError;
-      }
-
-      if (!authData.user) {
-        throw new Error('No user data returned from signup');
-      }
-
-      // Create user records using the new API endpoint
-      const response = await fetch('/api/auth/create-user-records', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+        options: {
+          data: { // Data to be stored in auth.users.raw_user_meta_data
+            username: formData.username.toLowerCase(),
+            full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
+          },
+          // emailRedirectTo: `${window.location.origin}/auth/callback` // If needed
         },
-        body: JSON.stringify({
-          userId: authData.user.id,
-          email: formData.email.toLowerCase(),
-          username: formData.username.toLowerCase(),
-          firstName: formData.firstName.trim(),
-          lastName: formData.lastName.trim(),
-          fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-        }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create user records');
+      if (signUpError) {
+        console.error('Supabase sign up error:', signUpError);
+        setError(signUpError.message || 'Failed to initiate sign up with authentication service.');
+        // onError?.(signUpError.message);
+        setIsLoading(false); // Stop here
+        return;
       }
 
-      // Show success message and verification form
-      setSuccess('Account created successfully! Please verify your email.');
-      setError(null);
-      setEmailError(null);
-      setUsernameError(null);
-      setPasswordError(null);
-      setShowVerificationWithCallback(true);
-      setResendCountdown(60);
+      if (!signUpData.user) {
+        console.error('Supabase sign up did not return a user object.');
+        setError('Sign up process did not complete as expected. Please try again.');
+        // onError?.('Sign up process did not complete as expected.');
+        setIsLoading(false); // Stop here
+        return;
+      }
 
-      // Store current scroll position before showing verification
-      if (preventRedirect) {
+      console.log('Supabase auth user created successfully:', signUpData.user.id);
+
+      // --- Step 2: Create User Records via your API (Best Effort) ---
+      try {
+        const createUserRecordsResponse = await fetch('/api/auth/create-user-records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: signUpData.user.id,
+            email: normalizedEmail, // Ensure this is the same email used for signUp
+            username: formData.username.toLowerCase(),
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`
+          }),
+        });
+
+        if (!createUserRecordsResponse.ok) {
+          // API returned an HTTP error (e.g., 500)
+          const errorData = await createUserRecordsResponse.json();
+          console.error('API /create-user-records failed (HTTP error):', errorData.error || createUserRecordsResponse.statusText);
+          // You might want to set a non-blocking warning here, e.g.,
+          // setProfileError('Account created, but profile setup faced an issue. Please verify email.');
+        } else {
+          const result = await createUserRecordsResponse.json();
+          if (!result.success) {
+            // API returned 200 OK, but indicated logical failure
+            console.error('API /create-user-records indicated failure:', result.message);
+            // setProfileError('Account created, but profile setup faced an issue. Please verify email.');
+          } else {
+            console.log('Successfully called /api/auth/create-user-records:', result.message);
+          }
+        }
+      } catch (recordsApiError) {
+        // Network error or other issue calling /api/auth/create-user-records
+        console.error('Error calling /api/auth/create-user-records:', recordsApiError);
+        // setProfileError('Account created, but profile setup faced a network issue. Please verify email.');
+      }
+
+      // --- Step 3: Proceed to Email Verification ---
+      // This section is reached if supabase.auth.signUp() was successful,
+      // regardless of the outcome of /api/auth/create-user-records.
+      setSuccess('Account created! Please check your email to verify your account.');
+      setError(null); // Clear any previous main errors
+      // setEmailError(null); // Clear specific field errors if you use them
+      // setUsernameError(null);
+      // setPasswordError(null);
+
+      if (preventRedirect) { // Assuming preventRedirect is a prop
         sessionStorage.setItem('scrollPosition', window.scrollY.toString());
       }
-    } catch (error) {
-      console.error('Error in signup:', error);
-      setError(error instanceof Error ? error.message : 'An error occurred during signup');
-      onError?.(error instanceof Error ? error.message : 'An error occurred during signup');
+
+      setShowVerificationWithCallback(true); // This is the key call to switch UI
+      setResendCountdown(60); // Start OTP resend countdown
+
+    } catch (err) {
+      // This outer catch handles errors from initial validations, email check API, or unexpected errors
+      // It should NOT catch errors from supabase.auth.signUp() or /api/auth/create-user-records
+      // if they are handled and returned from within the try block as shown above.
+      // However, if signUpError or an unhandled exception from those phases occurs, it ends up here.
+      console.error('General sign up processing error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred during sign up.';
+      setError(errorMessage);
+      setSuccess(null);
+      // onError?.(errorMessage);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // This will now correctly execute AFTER setShowVerification has (or should have) been set
     }
   };
 
@@ -874,10 +983,6 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     );
   };
 
-  const validateForm = () => {
-    return isFormValid();
-  };
-
   if (showVerification) {
     return (
       <FormContainer>
@@ -891,7 +996,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   <VerificationInput
                     key={index}
                     id={`verification-${index}`}
-                type="text"
+                    type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     maxLength={1}
@@ -903,12 +1008,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   />
                 ))}
               </VerificationContainer>
-              {error && (
+            {error && (
               <MessageContainer>
-                  <FiX size={14} />
-                  {error}
+                <FiX size={14} />
+                {error}
               </MessageContainer>
-              )}
+            )}
           </InputGroup>
           <ButtonContainer>
             <Button 
@@ -996,9 +1101,13 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
               value={formData.username}
               onChange={handleChange}
               required
-              aria-describedby="username-error"
             />
-            {usernameError && <ErrorMessage id="username-error"><FiX size={14} /> {usernameError}</ErrorMessage>}
+            {usernameError && (
+              <HelperText style={{ color: '#dc2626' }}>
+                <FiX size={14} />
+                {usernameError}
+              </HelperText>
+            )}
             {checkingUsername && (
               <HelperText style={{ color: '#6b7280' }}>
                 <FiLoader size={14} />
@@ -1033,9 +1142,13 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
               value={formData.email}
               onChange={handleChange}
               required
-              aria-describedby="email-error"
             />
-            {emailError && <ErrorMessage id="email-error"><FiX size={14} /> {emailError}</ErrorMessage>}
+            {emailError && (
+              <HelperText style={{ color: '#dc2626' }}>
+                <FiX size={14} />
+                {emailError}
+              </HelperText>
+            )}
             {checkingEmail && (
               <HelperText style={{ color: '#6b7280' }}>
                 <FiLoader size={14} />
@@ -1073,7 +1186,6 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    aria-describedby="password-error"
                   />
                   <PasswordToggle
                     type="button"
@@ -1100,7 +1212,6 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
-                    aria-describedby="confirm-password-error"
                   />
                   <PasswordToggle
                     type="button"
@@ -1126,7 +1237,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   passwordError ? (
                     <HelperText style={{ color: '#dc2626' }}>
                       <FiX size={14} />
-                      {passwordError}
+                      Passwords do not match!
                     </HelperText>
                   ) : (
                     <HelperText style={{ color: '#059669' }}>
