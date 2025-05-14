@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaSearch, FaDownload, FaTimes, FaEye, FaFileAlt, FaCheck, FaCalendarAlt, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaSearch, FaDownload, FaTimes, FaEye, FaFileAlt, FaCheck, FaCalendarAlt, FaChevronDown, FaChevronUp, FaPlus } from 'react-icons/fa';
 
 const Container = styled.div`
   padding: 1.5rem;
   padding-bottom: 5.5rem; /* Space for fixed action bar on mobile */
+  @media (max-width: 320px) {
+    overflow-x: hidden;
+    width: 100vw;
+    box-sizing: border-box;
+  }
 `;
 
 const FiltersContainer = styled.div`
@@ -12,6 +17,9 @@ const FiltersContainer = styled.div`
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    gap: 0;
+  }
   @media (max-width: 480px) {
     display: none;
   }
@@ -27,19 +35,34 @@ const FilterGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+
+  @media only screen and (min-width: 1146px) {
+    & > * {
+      flex: 1;
+      min-width: 0;
+    }
+  }
 `;
 
 const SearchInput = styled.div`
   position: relative;
   width: 16rem;
-
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  @media only screen and (min-width: 1146px) {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
   input {
     width: 100%;
     padding: 0.5rem 1rem 0.5rem 2.5rem;
     border: 1px solid #E5E7EB;
     border-radius: 0.5rem;
+    box-sizing: border-box;
   }
-
   svg {
     position: absolute;
     left: 0.75rem;
@@ -64,6 +87,15 @@ const Button = styled.button<{ $primary?: boolean }>`
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
+
+  @media only screen and (max-width: 1145px) {
+    justify-content: center;
+    width: 100%;
+  }
+
+  @media (max-width: 320px) {
+    max-width: 100%;
+  }
 
   ${props => props.$primary ? `
     background-color: #3B82F6;
@@ -105,6 +137,10 @@ const DateInputWrapper = styled.div`
   svg {
     color: rgba(15, 23, 42, 0.7);
   }
+
+  @media (max-width: 320px) {
+    max-width: 100%;
+  }
 `;
 
 const TableContainer = styled.div`
@@ -112,6 +148,9 @@ const TableContainer = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    display: none;
+  }
   @media (max-width: 480px) {
     display: none;
   }
@@ -322,6 +361,10 @@ const MobileSearchInput = styled.div`
     transform: translateY(-50%);
     color: rgba(15, 23, 42, 0.4);
   }
+
+  @media (max-width: 320px) {
+    max-width: 100%;
+  }
 `;
 
 const MobileFilterRow = styled.div`
@@ -336,6 +379,9 @@ const MobileFilterCol = styled.div`
   flex: 1 1 0%;
   @media (max-width: 480px) {
     min-width: 0;
+  }
+  @media (max-width: 320px) {
+    max-width: 100%;
   }
   select {
     width: 100%;
@@ -359,6 +405,11 @@ const MobileLeadCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+
+  @media (max-width: 320px) {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 `;
 
 const MobileLeadHeader = styled.div`
@@ -508,274 +559,526 @@ const MobileLeadDivider = styled.div`
   margin: 0.5rem 0;
 `;
 
+// Add DesktopCardView and DesktopFAB styled components
+const DesktopCardView = styled.div`
+  display: none;
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    display: block;
+  }
+`;
+
+const DesktopFAB = styled.button`
+  display: none;
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    display: flex;
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #3B82F6;
+    color: white;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.15);
+    border: none;
+    font-size: 2rem;
+    z-index: 2000;
+    cursor: pointer;
+    transition: background 0.2s;
+    &:hover {
+      background: #2563EB;
+    }
+  }
+`;
+
+// Add for max-width: 320px
+const FilterRowXS = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  width: 100%;
+  @media (max-width: 320px) {
+    width: 100%;
+  }
+`;
+
+const FilterColXS = styled.div`
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  @media (max-width: 320px) {
+    max-width: 100%;
+  }
+`;
+
 const QuoteAnalyticsTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLeadExpanded, setIsLeadExpanded] = useState(false);
+  const width = typeof window !== 'undefined' ? window.innerWidth : 1200;
 
   return (
     <Container>
-      <MobileFilters>
-        <MobileSearchInput>
-          <FaSearch />
-          <input type="text" placeholder="Search roles..." />
-        </MobileSearchInput>
-        <MobileFilterRow>
-          <MobileFilterCol>
-            <Select>
-              <option>All Regions</option>
-              <option>North America</option>
-              <option>Europe</option>
-              <option>Asia Pacific</option>
-            </Select>
-          </MobileFilterCol>
-          <MobileFilterCol>
-            <Select>
-              <option>All Status</option>
-              <option>Saved</option>
-              <option>Abandoned</option>
-            </Select>
-          </MobileFilterCol>
-        </MobileFilterRow>
-        <MobileDateRow>
-          <DateInputWrapper style={{ flex: 1 }}>
-            <FaCalendarAlt />
-            <input type="date" placeholder="From" />
-          </DateInputWrapper>
-          <MobileDateToText>to</MobileDateToText>
-          <DateInputWrapper style={{ flex: 1 }}>
-            <FaCalendarAlt />
-            <input type="date" placeholder="To" />
-          </DateInputWrapper>
-        </MobileDateRow>
-      </MobileFilters>
-
-      <MobileLeads>
-        <MobileLeadCard>
-          <MobileLeadHeader>
-            <div>
-              <MobileLeadTitle>Senior Product Manager</MobileLeadTitle>
-              <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem', fontWeight: 500 }}>Mar 15, 2025</span>
-            </div>
-            <MobileLeadDropdownButton onClick={() => setIsLeadExpanded(!isLeadExpanded)} aria-label={isLeadExpanded ? 'Collapse' : 'Expand'}>
-              {isLeadExpanded ? <FaChevronUp /> : <FaChevronDown />}
-            </MobileLeadDropdownButton>
-          </MobileLeadHeader>
-          {isLeadExpanded && (
-            <MobileLeadDetails>
-              <MobileLeadRow>
-                <MobileLeadCol>
-                  <MobileLeadLabel>Currency</MobileLeadLabel>
-                  <MobileLeadValue>USD</MobileLeadValue>
-                </MobileLeadCol>
-                <MobileLeadCol>
-                  <MobileLeadLabel>User</MobileLeadLabel>
-                  <UserInfo>
-                    <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
-                    <UserEmail>alex.j@example.com</UserEmail>
-                  </UserInfo>
-                </MobileLeadCol>
-              </MobileLeadRow>
-              <MobileLeadDivider />
-              <MobileLeadRow>
-                <MobileLeadCol>
-                  <MobileLeadLabel>Offshore Cost</MobileLeadLabel>
-                  <MobileLeadValue>$45,000</MobileLeadValue>
-                </MobileLeadCol>
-                <MobileLeadCol>
-                  <MobileLeadLabel>Local Cost</MobileLeadLabel>
-                  <MobileLeadValue>$120,000</MobileLeadValue>
-                </MobileLeadCol>
-              </MobileLeadRow>
-              <MobileLeadDivider />
-              <MobileLeadActions>
-                <MobileActionButton title="View Details" onClick={() => setIsModalOpen(true)}>
-                  <FaEye />
-                  <MobileActionLabel>View Details</MobileActionLabel>
-                </MobileActionButton>
-                <MobileActionButton title="View Document">
-                  <FaFileAlt />
-                  <MobileActionLabel>View Document</MobileActionLabel>
-                </MobileActionButton>
-              </MobileLeadActions>
-            </MobileLeadDetails>
-          )}
-        </MobileLeadCard>
-      </MobileLeads>
-
-      <FixedActionBar>
-        <MobileExportButton $primary>
-          <FaDownload />
-          Export CSV
-        </MobileExportButton>
-      </FixedActionBar>
-
-      <FiltersContainer>
-        <FilterRow>
-          <FilterGroup>
-            <SearchInput>
+      {/* Extra Small Mobile (≤ 320px) custom layout */}
+      {width <= 320 ? (
+        <>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <MobileSearchInput style={{ width: '100%' }}>
               <FaSearch />
               <input type="text" placeholder="Search roles..." />
-            </SearchInput>
-            <Select>
-              <option>All Regions</option>
-              <option>North America</option>
-              <option>Europe</option>
-              <option>Asia Pacific</option>
-            </Select>
-            <Select>
-              <option>All Status</option>
-              <option>Saved</option>
-              <option>Abandoned</option>
-            </Select>
-          </FilterGroup>
-          <Button $primary>
+            </MobileSearchInput>
+          </div>
+          <FilterRowXS>
+            <FilterColXS>
+              <Select>
+                <option>All Regions</option>
+                <option>North America</option>
+                <option>Europe</option>
+                <option>Asia Pacific</option>
+              </Select>
+            </FilterColXS>
+            <FilterColXS>
+              <Select>
+                <option>All Status</option>
+                <option>Saved</option>
+                <option>Abandoned</option>
+              </Select>
+            </FilterColXS>
+          </FilterRowXS>
+          <FilterRowXS>
+            <FilterColXS>
+              <DateInputWrapper>
+                <FaCalendarAlt />
+                <input type="date" placeholder="From" />
+              </DateInputWrapper>
+            </FilterColXS>
+            <FilterColXS>
+              <DateInputWrapper>
+                <FaCalendarAlt />
+                <input type="date" placeholder="To" />
+              </DateInputWrapper>
+            </FilterColXS>
+          </FilterRowXS>
+          <Button $primary style={{ width: '100%', justifyContent: 'center', marginBottom: '1rem' }}>
             <FaDownload />
             Export CSV
           </Button>
-        </FilterRow>
-        <DateRangeContainer>
-          <DateInputWrapper>
-            <FaCalendarAlt />
-            <input type="date" />
-          </DateInputWrapper>
-          <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>to</span>
-          <DateInputWrapper>
-            <FaCalendarAlt />
-            <input type="date" />
-          </DateInputWrapper>
-        </DateRangeContainer>
-      </FiltersContainer>
-
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>Date</TableHeader>
-              <TableHeader>Role</TableHeader>
-              <TableHeader>Currency</TableHeader>
-              <TableHeader>Offshore Cost</TableHeader>
-              <TableHeader>Local Cost</TableHeader>
-              <TableHeader>User</TableHeader>
-              <TableHeader style={{ textAlign: 'right' }}>Actions</TableHeader>
-            </tr>
-          </TableHead>
-          <TableBody>
-            <tr onClick={() => setIsModalOpen(true)}>
-              <TableCell>
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>Mar 15, 2025</span>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: '#0F172A' }}>Senior Product Manager</span>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: '#0F172A' }}>USD</span>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: '#0F172A', fontWeight: 500 }}>$45,000</span>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: '#0F172A', fontWeight: 500 }}>$120,000</span>
-              </TableCell>
-              <TableCell>
-                <UserInfo>
-                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
-                  <UserEmail>alex.j@example.com</UserEmail>
-                </UserInfo>
-              </TableCell>
-              <TableCell>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                  <ActionButton title="View Details">
-                    <FaEye />
-                  </ActionButton>
-                  <ActionButton $color="#3B82F6" title="View Document">
-                    <FaFileAlt />
-                  </ActionButton>
+          {/* Card List (dropdown style) */}
+          <div style={{ width: '100%' }}>
+            <MobileLeadCard style={{ width: '100%' }}>
+              <MobileLeadHeader>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                  <MobileLeadTitle>Senior Product Manager</MobileLeadTitle>
+                  <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem', fontWeight: 500 }}>Mar 15, 2025</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" style={{ width: '1.5rem', height: '1.5rem' }} />
+                    <UserEmail style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>alex.j@example.com</UserEmail>
+                  </div>
                 </div>
-              </TableCell>
-            </tr>
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Modal $isOpen={isModalOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>Quote Details</ModalTitle>
-            <CloseButton onClick={() => setIsModalOpen(false)}>
-              <FaTimes />
-            </CloseButton>
-          </ModalHeader>
-
-          <ModalBody>
-            <Card>
-              <CardTitle>Quote Summary</CardTitle>
-              <InfoRow>
-                <InfoLabel>Role Title</InfoLabel>
-                <InfoValue>Senior Product Manager</InfoValue>
-              </InfoRow>
-              <InfoRow>
-                <InfoLabel>Experience Level</InfoLabel>
-                <Tag $color="#3B82F6">Senior (8+ years)</Tag>
-              </InfoRow>
-              <InfoRow>
-                <InfoLabel>Region</InfoLabel>
-                <InfoValue>North America</InfoValue>
-              </InfoRow>
-            </Card>
-
-            <Card>
-              <CardTitle>Cost Breakdown</CardTitle>
-              <InfoRow>
-                <InfoLabel>Base Salary</InfoLabel>
-                <InfoValue>$100,000</InfoValue>
-              </InfoRow>
-              <InfoRow>
-                <InfoLabel>Benefits</InfoLabel>
-                <InfoValue>$20,000</InfoValue>
-              </InfoRow>
-              <Divider>
-                <InfoRow>
-                  <InfoValue $bold>Total Cost</InfoValue>
-                  <InfoValue $bold $color="#3B82F6">$120,000</InfoValue>
-                </InfoRow>
-              </Divider>
-            </Card>
-
-            <Card>
-              <CardTitle>Tasks & Requirements</CardTitle>
-              <TaskItem>
-                <TaskIcon>
-                  <FaCheck />
-                </TaskIcon>
-                <TaskText>Product Strategy Development</TaskText>
-              </TaskItem>
-              <TaskItem>
-                <TaskIcon>
-                  <FaCheck />
-                </TaskIcon>
-                <TaskText>Team Leadership</TaskText>
-              </TaskItem>
-              <TaskItem>
-                <TaskIcon>
-                  <FaCheck />
-                </TaskIcon>
-                <TaskText>Stakeholder Management</TaskText>
-              </TaskItem>
-            </Card>
-
-            <Card>
-              <CardTitle>Quote Generated By</CardTitle>
-              <UserInfo>
-                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                <MobileLeadDropdownButton onClick={() => setIsLeadExpanded(!isLeadExpanded)} aria-label={isLeadExpanded ? 'Collapse' : 'Expand'}>
+                  {isLeadExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                </MobileLeadDropdownButton>
+              </MobileLeadHeader>
+              {isLeadExpanded && (
+                <MobileLeadDetails>
+                  <MobileLeadRow>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Currency</MobileLeadLabel>
+                      <MobileLeadValue>USD</MobileLeadValue>
+                    </MobileLeadCol>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>User</MobileLeadLabel>
+                      <UserInfo>
+                        <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                        <UserEmail>alex.j@example.com</UserEmail>
+                      </UserInfo>
+                    </MobileLeadCol>
+                  </MobileLeadRow>
+                  <MobileLeadDivider />
+                  <MobileLeadRow>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Offshore Cost</MobileLeadLabel>
+                      <MobileLeadValue>$45,000</MobileLeadValue>
+                    </MobileLeadCol>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Local Cost</MobileLeadLabel>
+                      <MobileLeadValue>$120,000</MobileLeadValue>
+                    </MobileLeadCol>
+                  </MobileLeadRow>
+                  <MobileLeadDivider />
+                  <MobileLeadActions>
+                    <MobileActionButton title="View Details" onClick={() => setIsModalOpen(true)}>
+                      <FaEye />
+                      <MobileActionLabel>View Details</MobileActionLabel>
+                    </MobileActionButton>
+                    <MobileActionButton title="View Document">
+                      <FaFileAlt />
+                      <MobileActionLabel>View Document</MobileActionLabel>
+                    </MobileActionButton>
+                  </MobileLeadActions>
+                </MobileLeadDetails>
+              )}
+            </MobileLeadCard>
+          </div>
+        </>
+      ) : width >= 1024 && width <= 1145 ? (
+        <>
+          <SearchInput>
+            <FaSearch />
+            <input type="text" placeholder="Search roles..." />
+          </SearchInput>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+            <Select>
+              <option>All Regions</option>
+              <option>North America</option>
+              <option>Europe</option>
+              <option>Asia Pacific</option>
+            </Select>
+            <Select>
+              <option>All Status</option>
+              <option>Saved</option>
+              <option>Abandoned</option>
+            </Select>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+            <DateInputWrapper style={{ flex: 1 }}>
+              <FaCalendarAlt />
+              <input type="date" placeholder="From" />
+            </DateInputWrapper>
+            <span style={{ color: 'rgba(15, 23, 42, 0.7)', alignSelf: 'center' }}>to</span>
+            <DateInputWrapper style={{ flex: 1 }}>
+              <FaCalendarAlt />
+              <input type="date" placeholder="To" />
+            </DateInputWrapper>
+            <Button $primary>
+              <FaDownload />
+              Export CSV
+            </Button>
+          </div>
+          <DesktopCardView>
+            {/* Reuse mobile card markup for each quote/lead */}
+            <MobileLeadCard>
+              <MobileLeadHeader>
                 <div>
-                  <div style={{ fontWeight: 500, color: '#0F172A' }}>Alex Johnson</div>
-                  <div style={{ fontSize: '0.875rem', color: 'rgba(15, 23, 42, 0.7)' }}>alex.j@example.com</div>
+                  <MobileLeadTitle>Senior Product Manager</MobileLeadTitle>
+                  <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem', fontWeight: 500 }}>Mar 15, 2025</span>
                 </div>
-              </UserInfo>
-            </Card>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+                <MobileLeadDropdownButton onClick={() => setIsLeadExpanded(!isLeadExpanded)} aria-label={isLeadExpanded ? 'Collapse' : 'Expand'}>
+                  {isLeadExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                </MobileLeadDropdownButton>
+              </MobileLeadHeader>
+              {isLeadExpanded && (
+                <MobileLeadDetails>
+                  <MobileLeadRow>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Currency</MobileLeadLabel>
+                      <MobileLeadValue>USD</MobileLeadValue>
+                    </MobileLeadCol>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>User</MobileLeadLabel>
+                      <UserInfo>
+                        <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                        <UserEmail>alex.j@example.com</UserEmail>
+                      </UserInfo>
+                    </MobileLeadCol>
+                  </MobileLeadRow>
+                  <MobileLeadDivider />
+                  <MobileLeadRow>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Offshore Cost</MobileLeadLabel>
+                      <MobileLeadValue>$45,000</MobileLeadValue>
+                    </MobileLeadCol>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Local Cost</MobileLeadLabel>
+                      <MobileLeadValue>$120,000</MobileLeadValue>
+                    </MobileLeadCol>
+                  </MobileLeadRow>
+                  <MobileLeadDivider />
+                  <MobileLeadActions>
+                    <MobileActionButton title="View Details" onClick={() => setIsModalOpen(true)}>
+                      <FaEye />
+                      <MobileActionLabel>View Details</MobileActionLabel>
+                    </MobileActionButton>
+                    <MobileActionButton title="View Document">
+                      <FaFileAlt />
+                      <MobileActionLabel>View Document</MobileActionLabel>
+                    </MobileActionButton>
+                  </MobileLeadActions>
+                </MobileLeadDetails>
+              )}
+            </MobileLeadCard>
+          </DesktopCardView>
+          <DesktopFAB>
+            <FaPlus />
+          </DesktopFAB>
+        </>
+      ) : (
+        <>
+          <MobileFilters>
+            <MobileSearchInput>
+              <FaSearch />
+              <input type="text" placeholder="Search roles..." />
+            </MobileSearchInput>
+            <MobileFilterRow>
+              <MobileFilterCol>
+                <Select>
+                  <option>All Regions</option>
+                  <option>North America</option>
+                  <option>Europe</option>
+                  <option>Asia Pacific</option>
+                </Select>
+              </MobileFilterCol>
+              <MobileFilterCol>
+                <Select>
+                  <option>All Status</option>
+                  <option>Saved</option>
+                  <option>Abandoned</option>
+                </Select>
+              </MobileFilterCol>
+            </MobileFilterRow>
+            <MobileDateRow>
+              <DateInputWrapper style={{ flex: 1 }}>
+                <FaCalendarAlt />
+                <input type="date" placeholder="From" />
+              </DateInputWrapper>
+              <MobileDateToText>to</MobileDateToText>
+              <DateInputWrapper style={{ flex: 1 }}>
+                <FaCalendarAlt />
+                <input type="date" placeholder="To" />
+              </DateInputWrapper>
+            </MobileDateRow>
+          </MobileFilters>
+
+          <MobileLeads>
+            <MobileLeadCard>
+              <MobileLeadHeader>
+                <div>
+                  <MobileLeadTitle>Senior Product Manager</MobileLeadTitle>
+                  <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem', fontWeight: 500 }}>Mar 15, 2025</span>
+                </div>
+                <MobileLeadDropdownButton onClick={() => setIsLeadExpanded(!isLeadExpanded)} aria-label={isLeadExpanded ? 'Collapse' : 'Expand'}>
+                  {isLeadExpanded ? <FaChevronUp /> : <FaChevronDown />}
+                </MobileLeadDropdownButton>
+              </MobileLeadHeader>
+              {isLeadExpanded && (
+                <MobileLeadDetails>
+                  <MobileLeadRow>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Currency</MobileLeadLabel>
+                      <MobileLeadValue>USD</MobileLeadValue>
+                    </MobileLeadCol>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>User</MobileLeadLabel>
+                      <UserInfo>
+                        <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                        <UserEmail>alex.j@example.com</UserEmail>
+                      </UserInfo>
+                    </MobileLeadCol>
+                  </MobileLeadRow>
+                  <MobileLeadDivider />
+                  <MobileLeadRow>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Offshore Cost</MobileLeadLabel>
+                      <MobileLeadValue>$45,000</MobileLeadValue>
+                    </MobileLeadCol>
+                    <MobileLeadCol>
+                      <MobileLeadLabel>Local Cost</MobileLeadLabel>
+                      <MobileLeadValue>$120,000</MobileLeadValue>
+                    </MobileLeadCol>
+                  </MobileLeadRow>
+                  <MobileLeadDivider />
+                  <MobileLeadActions>
+                    <MobileActionButton title="View Details" onClick={() => setIsModalOpen(true)}>
+                      <FaEye />
+                      <MobileActionLabel>View Details</MobileActionLabel>
+                    </MobileActionButton>
+                    <MobileActionButton title="View Document">
+                      <FaFileAlt />
+                      <MobileActionLabel>View Document</MobileActionLabel>
+                    </MobileActionButton>
+                  </MobileLeadActions>
+                </MobileLeadDetails>
+              )}
+            </MobileLeadCard>
+          </MobileLeads>
+
+          <FixedActionBar>
+            <MobileExportButton $primary>
+              <FaDownload />
+              Export CSV
+            </MobileExportButton>
+          </FixedActionBar>
+
+          <FiltersContainer>
+            <FilterRow>
+              <FilterGroup>
+                <SearchInput>
+                  <FaSearch />
+                  <input type="text" placeholder="Search roles..." />
+                </SearchInput>
+                <Select>
+                  <option>All Regions</option>
+                  <option>North America</option>
+                  <option>Europe</option>
+                  <option>Asia Pacific</option>
+                </Select>
+                <Select>
+                  <option>All Status</option>
+                  <option>Saved</option>
+                  <option>Abandoned</option>
+                </Select>
+              </FilterGroup>
+              <Button $primary>
+                <FaDownload />
+                Export CSV
+              </Button>
+            </FilterRow>
+            <DateRangeContainer>
+              <DateInputWrapper>
+                <FaCalendarAlt />
+                <input type="date" />
+              </DateInputWrapper>
+              <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>to</span>
+              <DateInputWrapper>
+                <FaCalendarAlt />
+                <input type="date" />
+              </DateInputWrapper>
+            </DateRangeContainer>
+          </FiltersContainer>
+
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeader>Date</TableHeader>
+                  <TableHeader>Role</TableHeader>
+                  <TableHeader>Currency</TableHeader>
+                  <TableHeader>Offshore Cost</TableHeader>
+                  <TableHeader>Local Cost</TableHeader>
+                  <TableHeader>User</TableHeader>
+                  <TableHeader style={{ textAlign: 'right' }}>Actions</TableHeader>
+                </tr>
+              </TableHead>
+              <TableBody>
+                <tr onClick={() => setIsModalOpen(true)}>
+                  <TableCell>
+                    <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>Mar 15, 2025</span>
+                  </TableCell>
+                  <TableCell>
+                    <span style={{ color: '#0F172A' }}>Senior Product Manager</span>
+                  </TableCell>
+                  <TableCell>
+                    <span style={{ color: '#0F172A' }}>USD</span>
+                  </TableCell>
+                  <TableCell>
+                    <span style={{ color: '#0F172A', fontWeight: 500 }}>$45,000</span>
+                  </TableCell>
+                  <TableCell>
+                    <span style={{ color: '#0F172A', fontWeight: 500 }}>$120,000</span>
+                  </TableCell>
+                  <TableCell>
+                    <UserInfo>
+                      <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                      <UserEmail>alex.j@example.com</UserEmail>
+                    </UserInfo>
+                  </TableCell>
+                  <TableCell>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                      <ActionButton title="View Details">
+                        <FaEye />
+                      </ActionButton>
+                      <ActionButton $color="#3B82F6" title="View Document">
+                        <FaFileAlt />
+                      </ActionButton>
+                    </div>
+                  </TableCell>
+                </tr>
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Modal $isOpen={isModalOpen}>
+            <ModalContent>
+              <ModalHeader>
+                <ModalTitle>Quote Details</ModalTitle>
+                <CloseButton onClick={() => setIsModalOpen(false)}>
+                  <FaTimes />
+                </CloseButton>
+              </ModalHeader>
+
+              <ModalBody>
+                <Card>
+                  <CardTitle>Quote Summary</CardTitle>
+                  <InfoRow>
+                    <InfoLabel>Role Title</InfoLabel>
+                    <InfoValue>Senior Product Manager</InfoValue>
+                  </InfoRow>
+                  <InfoRow>
+                    <InfoLabel>Experience Level</InfoLabel>
+                    <Tag $color="#3B82F6">Senior (8+ years)</Tag>
+                  </InfoRow>
+                  <InfoRow>
+                    <InfoLabel>Region</InfoLabel>
+                    <InfoValue>North America</InfoValue>
+                  </InfoRow>
+                </Card>
+
+                <Card>
+                  <CardTitle>Cost Breakdown</CardTitle>
+                  <InfoRow>
+                    <InfoLabel>Base Salary</InfoLabel>
+                    <InfoValue>$100,000</InfoValue>
+                  </InfoRow>
+                  <InfoRow>
+                    <InfoLabel>Benefits</InfoLabel>
+                    <InfoValue>$20,000</InfoValue>
+                  </InfoRow>
+                  <Divider>
+                    <InfoRow>
+                      <InfoValue $bold>Total Cost</InfoValue>
+                      <InfoValue $bold $color="#3B82F6">$120,000</InfoValue>
+                    </InfoRow>
+                  </Divider>
+                </Card>
+
+                <Card>
+                  <CardTitle>Tasks & Requirements</CardTitle>
+                  <TaskItem>
+                    <TaskIcon>
+                      <FaCheck />
+                    </TaskIcon>
+                    <TaskText>Product Strategy Development</TaskText>
+                  </TaskItem>
+                  <TaskItem>
+                    <TaskIcon>
+                      <FaCheck />
+                    </TaskIcon>
+                    <TaskText>Team Leadership</TaskText>
+                  </TaskItem>
+                  <TaskItem>
+                    <TaskIcon>
+                      <FaCheck />
+                    </TaskIcon>
+                    <TaskText>Stakeholder Management</TaskText>
+                  </TaskItem>
+                </Card>
+
+                <Card>
+                  <CardTitle>Quote Generated By</CardTitle>
+                  <UserInfo>
+                    <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                    <div>
+                      <div style={{ fontWeight: 500, color: '#0F172A' }}>Alex Johnson</div>
+                      <div style={{ fontSize: '0.875rem', color: 'rgba(15, 23, 42, 0.7)' }}>alex.j@example.com</div>
+                    </div>
+                  </UserInfo>
+                </Card>
+              </ModalBody>
+            </ModalContent>
+          </Modal>
+        </>
+      )}
     </Container>
   );
 };

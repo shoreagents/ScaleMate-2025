@@ -29,7 +29,13 @@ const FiltersContainer = styled.div`
   justify-content: space-between;
   margin-bottom: 1.5rem;
 
-  @media only screen and (max-width: 1023px) {
+  @media only screen and (min-width: 1146px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  @media only screen and (max-width: 1145px) {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
@@ -41,22 +47,21 @@ const FilterGroup = styled.div`
   align-items: center;
   gap: 1rem;
 
-  @media only screen and (min-width: 1024px) {
-    & > div:first-child {
-      flex: none;
-      width: 16rem;
-    }
-    & > *:not(:first-child) {
+  @media only screen and (min-width: 1146px) {
+    & > * {
       flex: 1;
       min-width: 0;
     }
   }
+`;
 
-  @media only screen and (max-width: 1023px) {
-    flex-direction: column;
-    width: 100%;
+const FilterRow = styled.div`
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
     & > * {
-      width: 100%;
       flex: 1;
       min-width: 0;
     }
@@ -66,22 +71,24 @@ const FilterGroup = styled.div`
 const SearchInput = styled.div`
   position: relative;
   width: 16rem;
-
-  @media only screen and (max-width: 1023px) {
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
     width: 100%;
   }
-
-  @media only screen and (min-width: 1024px) {
-    width: 16rem;
+  @media only screen and (min-width: 1146px) {
+    width: auto;
+    flex: 1;
+    min-width: 0;
   }
-
+  @media only screen and (max-width: 768px) {
+    width: 100%;
+  }
   input {
     width: 100%;
     padding: 0.5rem 1rem 0.5rem 2.5rem;
     border: 1px solid #E5E7EB;
     border-radius: 0.5rem;
+    box-sizing: border-box;
   }
-
   svg {
     position: absolute;
     left: 0.75rem;
@@ -97,6 +104,12 @@ const Select = styled.select`
   border-radius: 0.5rem;
   width: 100%;
   font-size: 1rem;
+
+  @media only screen and (min-width: 1146px) {
+    width: auto;
+    flex: 1;
+    min-width: 0;
+  }
 
   @media only screen and (min-width: 769px) and (max-width: 1023px) {
     flex: 1;
@@ -116,15 +129,10 @@ const DateInput = styled.input`
   flex: 1;
   width: 100%;
   font-size: 1rem;
-
-  @media only screen and (min-width: 769px) and (max-width: 1023px) {
+  @media only screen and (min-width: 1146px) {
+    width: auto;
     flex: 1;
     min-width: 0;
-    width: auto;
-  }
-
-  @media only screen and (max-width: 1023px) {
-    width: 100%;
   }
 `;
 
@@ -132,6 +140,15 @@ const ActionButtons = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+
+  @media only screen and (max-width: 1145px) {
+    width: 100%;
+    justify-content: stretch;
+    & > * {
+      flex: 1;
+      min-width: 0;
+    }
+  }
 
   @media only screen and (max-width: 768px) {
     width: 100%;
@@ -148,6 +165,16 @@ const Button = styled.button<{ $primary?: boolean }>`
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s;
+  @media only screen and (max-width: 1145px) {
+    justify-content: center;
+    width: 100%;
+  }
+  @media only screen and (min-width: 1146px) {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    justify-content: center;
+  }
   ${props => props.$primary ? `
     background-color: #3B82F6;
     color: white;
@@ -163,43 +190,45 @@ const Button = styled.button<{ $primary?: boolean }>`
       background-color: #F9FAFB;
     }
   `}
-
-  @media only screen and (min-width: 769px) and (max-width: 1023px) {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    justify-content: center;
-  }
-
-  @media only screen and (max-width: 1023px) {
-    flex: 1;
-    justify-content: center;
-  }
 `;
 
 const TableContainer = styled.div`
   background-color: white;
   border-radius: 0.75rem;
-  border: 1px solid #E5E7EB;
-  overflow: unset;
+
+  width: 100%;
+  overflow: hidden;
+
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    display: none;
+  }
 
   @media only screen and (max-width: 1023px) {
-    overflow-x: auto;
     border-radius: 0.5rem;
-  }
-  @media only screen and (min-width: 1025px) and (max-width: 1180px) {
-    overflow-x: unset;
-    width: 100%;
   }
 `;
 
 const Table = styled.table`
   width: 100%;
   table-layout: fixed;
-  @media only screen and (min-width: 1025px) and (max-width: 1180px) {
-    min-width: 0;
-    width: 100%;
+  border-collapse: collapse;
+
+  @media only screen and (min-width: 1146px) {
+    th, td {
+      padding: 1rem;
+      &:first-child { width: 20%; }
+      &:nth-child(2) { width: 20%; }
+      &:nth-child(3) { width: 15%; }
+      &:nth-child(4) { width: 20%; }
+      &:nth-child(5) { width: 15%; }
+      &:last-child { width: 10%; }
+    }
   }
+
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    min-width: 800px;
+  }
+
   @media only screen and (max-width: 1023px) {
     display: none;
   }
@@ -778,6 +807,39 @@ function useWindowWidth() {
   return width;
 }
 
+const DesktopFAB = styled.button`
+  display: none;
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    display: flex;
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #3B82F6;
+    color: white;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.15);
+    border: none;
+    font-size: 2rem;
+    z-index: 2000;
+    cursor: pointer;
+    transition: background 0.2s;
+    &:hover {
+      background: #2563EB;
+    }
+  }
+`;
+
+const DesktopCardView = styled.div`
+  display: none;
+  @media only screen and (min-width: 1024px) and (max-width: 1145px) {
+    display: block;
+  }
+`;
+
 const LeadManagementTab: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
@@ -787,13 +849,46 @@ const LeadManagementTab: React.FC = () => {
   return (
     <Container>
       <FiltersContainer>
-        {width <= 768 ? (
+        {width >= 1024 && width <= 1145 ? (
           <>
-            <FilterGroup>
+            <SearchInput>
+              <FaSearch />
+              <input type="text" placeholder="Search leads..." />
+            </SearchInput>
+            <FilterRow>
+              <Select>
+                <option>All Sources</option>
+                <option>Quote</option>
+                <option>Contact</option>
+                <option>Quiz</option>
+              </Select>
+              <Select>
+                <option>All Tags</option>
+                <option>Hot</option>
+                <option>Qualified</option>
+                <option>Quiz-ready</option>
+              </Select>
+            </FilterRow>
+            <FilterRow>
+              <DateInput type="date" />
+              <Button>
+                <FaDownload />
+                Export CSV
+              </Button>
+            </FilterRow>
+            <DesktopFAB>
+              <FaPlus />
+            </DesktopFAB>
+          </>
+        ) : width <= 768 ? (
+          <>
+            <div style={{ marginBottom: '1rem' }}>
               <SearchInput>
                 <FaSearch />
                 <input type="text" placeholder="Search leads..." />
               </SearchInput>
+            </div>
+            <FilterGroup>
               <Select>
                 <option>All Sources</option>
                 <option>Quote</option>
@@ -855,11 +950,13 @@ const LeadManagementTab: React.FC = () => {
           </>
         ) : (
           <>
-            <FilterGroup>
+            <div style={{ marginBottom: '1rem' }}>
               <SearchInput>
                 <FaSearch />
                 <input type="text" placeholder="Search leads..." />
               </SearchInput>
+            </div>
+            <FilterGroup>
               <Select>
                 <option>All Sources</option>
                 <option>Quote</option>
@@ -873,8 +970,6 @@ const LeadManagementTab: React.FC = () => {
                 <option>Quiz-ready</option>
               </Select>
               <DateInput type="date" />
-            </FilterGroup>
-            <ActionButtons>
               <Button>
                 <FaDownload />
                 Export CSV
@@ -883,12 +978,88 @@ const LeadManagementTab: React.FC = () => {
                 <FaPlus />
                 Add Lead
               </Button>
-            </ActionButtons>
+            </FilterGroup>
           </>
         )}
       </FiltersContainer>
 
-      {/* Desktop Table View */}
+      {/* Desktop Card View for 1024px-1145px */}
+      {width >= 1024 && width <= 1145 && (
+        <DesktopCardView>
+          {[
+            {
+              id: '1',
+              name: 'Michael Cooper',
+              email: 'm.cooper@example.com',
+              avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+              source: 'Quote',
+              tags: ['Hot', 'Qualified'],
+              lastAction: 'Viewed pricing',
+              assignedTo: 'Sarah M.',
+              assignedAvatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg',
+            },
+            // Add more leads here as needed
+          ].map((lead) => (
+            <MobileLeadCard key={lead.id}>
+              <MobileLeadHeader onClick={() => setExpandedLeadId(expandedLeadId === lead.id ? null : lead.id)}>
+                <Avatar src={lead.avatar} alt={lead.name} />
+                <MobileLeadInfo>
+                  <MobileLeadName>{lead.name}</MobileLeadName>
+                  <MobileLeadEmail>{lead.email}</MobileLeadEmail>
+                  {expandedLeadId !== lead.id && (
+                    <MobileLeadTags>
+                      <MobileLeadSource style={{ color: '#0098FF', background: '#e6f2ff' }}>{lead.source}</MobileLeadSource>
+                      {lead.tags.map((tag, idx) => (
+                        <MobileLeadTag key={idx} style={{ color: getTagColor(tag), background: getTagColor(tag) + '10' }}>{tag}</MobileLeadTag>
+                      ))}
+                    </MobileLeadTags>
+                  )}
+                </MobileLeadInfo>
+                <MobileLeadArrow isOpen={expandedLeadId === lead.id}>
+                  {expandedLeadId === lead.id ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
+                </MobileLeadArrow>
+              </MobileLeadHeader>
+              <MobileLeadDropdown isOpen={expandedLeadId === lead.id}>
+                <MobileLeadDetail>
+                  <MobileLeadLabel>Last Action:</MobileLeadLabel>
+                  <MobileLeadValue>{lead.lastAction}</MobileLeadValue>
+                </MobileLeadDetail>
+                <MobileLeadDetail>
+                  <MobileLeadLabel>Assigned To:</MobileLeadLabel>
+                  <MobileLeadValue>
+                    <Avatar src={lead.assignedAvatar} alt={lead.assignedTo} style={{ width: '1.5rem', height: '1.5rem', marginRight: '0.5rem' }} />
+                    {lead.assignedTo}
+                  </MobileLeadValue>
+                </MobileLeadDetail>
+                <MobileLeadDetail>
+                  <MobileLeadLabel>Source:</MobileLeadLabel>
+                  <MobileLeadValue>
+                    <MobileLeadSource style={{ color: '#0098FF', background: '#e6f2ff' }}>{lead.source}</MobileLeadSource>
+                  </MobileLeadValue>
+                </MobileLeadDetail>
+                <MobileLeadDetail>
+                  <MobileLeadLabel>Tags:</MobileLeadLabel>
+                  <MobileLeadValue>
+                    {lead.tags.map((tag, idx) => (
+                      <MobileLeadTag key={idx} style={{ color: getTagColor(tag), background: getTagColor(tag) + '10' }}>{tag}</MobileLeadTag>
+                    ))}
+                  </MobileLeadValue>
+                </MobileLeadDetail>
+              </MobileLeadDropdown>
+            </MobileLeadCard>
+          ))}
+        </DesktopCardView>
+      )}
+
+      {/* Existing Table View */}
       <TableContainer>
         <Table>
           <TableHead>
@@ -933,7 +1104,7 @@ const LeadManagementTab: React.FC = () => {
         </Table>
       </TableContainer>
 
-      {/* Mobile Card View */}
+      {/* Existing Mobile Card View */}
       <MobileCardView>
         {[
           {
