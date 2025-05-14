@@ -20,17 +20,17 @@ if (result.error) {
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 console.log('Environment variables loaded:');
 console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✅ Present' : '❌ Missing');
-console.log('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '✅ Present' : '❌ Missing');
+console.log('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? '✅ Present' : '❌ Missing');
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing required environment variables');
   console.error('Please make sure your .env.local file contains:');
   console.error('NEXT_PUBLIC_SUPABASE_URL');
-  console.error('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY');
+  console.error('SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
 }
 

@@ -2,13 +2,16 @@ const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-if (!supabaseUrl || !supabaseServiceKey) {
+if (!supabaseUrl || !supabaseAdmin) {
   console.error('Missing Supabase environment variables');
   console.error('Please make sure you have:');
   console.error('1. NEXT_PUBLIC_SUPABASE_URL');
-  console.error('2. NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY (not the anon key)');
+  console.error('2. SUPABASE_SERVICE_ROLE_KEY');
   console.error('\nTo get the service role key:');
   console.error('1. Go to https://app.supabase.com');
   console.error('2. Select your project');
@@ -16,13 +19,6 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.error('4. Copy the "service_role key" (not the anon key)');
   process.exit(1);
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
 
 async function assignAdminRole() {
   try {
@@ -36,7 +32,7 @@ async function assignAdminRole() {
     }
 
     // Get the user
-    const { data: { users }, error: userError } = await supabase.auth.admin.listUsers();
+    const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (userError) {
       throw userError;
@@ -50,7 +46,7 @@ async function assignAdminRole() {
     }
 
     // Create admin role
-    const { error: roleError } = await supabase
+    const { error: roleError } = await supabaseAdmin
       .from('user_roles')
       .upsert({
         user_id: targetUser.id,

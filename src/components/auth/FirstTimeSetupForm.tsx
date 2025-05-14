@@ -321,6 +321,7 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
     length: false,
     match: false
   });
+  const [existingUserId, setExistingUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (currentUsername) {
@@ -368,50 +369,29 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
 
   const checkUsernameExists = async (username: string) => {
     if (!username) {
-      setUsernameExists(null);
+      setUsernameExists(false);
       setCheckingUsername(false);
       return;
     }
 
     try {
       setCheckingUsername(true);
-      
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-      
-      // Query the user_profiles table with service role
-      const { data, error } = await serviceRoleClient
-        .from('user_profiles')
-        .select('username, user_id')
-        .eq('username', username)
-        .limit(1);
+      const response = await fetch('/api/auth/check-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username }),
+      });
 
-      if (error) {
-        console.error('Error checking username:', error);
-        setUsernameExists(null);
-      } else if (data && data.length > 0) {
-        // If we found a user with this username, check if it's the same user we're editing
-        const foundUser = data[0] as UserProfile;
-        if (foundUser.user_id === userId) {
-          setUsernameExists(true); // It's the same user's current username
-        } else {
-          setUsernameExists(true); // Username is taken by another user
-        }
-      } else {
-        setUsernameExists(false); // Username is available
+      const data = await response.json();
+      setUsernameExists(data.exists);
+      if (data.exists && data.userId) {
+        setExistingUserId(data.userId);
       }
     } catch (error) {
       console.error('Error checking username:', error);
-      setUsernameExists(null);
+      setUsernameExists(false);
     } finally {
       setCheckingUsername(false);
     }
@@ -430,7 +410,7 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
     return (
       formData.username &&
       !usernameError &&
-      !usernameExists &&
+      (!usernameExists || (usernameExists && existingUserId === userId)) &&
       passwordValidation.length &&
       passwordValidation.match
     );
@@ -443,7 +423,7 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
 
     try {
       // Validate username
-      if (usernameExists && formData.username !== currentUsername) {
+      if (usernameExists && existingUserId !== userId) {
         throw new Error('Username is already taken');
       }
 

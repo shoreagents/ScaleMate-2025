@@ -1254,8 +1254,8 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
       try {
         if (!formData.email || !formData.password || !formData.first_name || !formData.last_name) {
           setModalError('Email, password, first name, and last name are required');
-          return;
-        }
+        return;
+      }
 
         // Validate email format
         if (!isValidEmail(formData.email)) {
@@ -1293,7 +1293,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
           try {
             const result = await supabase.auth.signUp({
               email: normalizedEmail,
-              password: formData.password,
+            password: formData.password,
               options: {
                 emailRedirectTo: `${window.location.origin}/auth/callback/direct`
               }
@@ -2165,96 +2165,96 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               </TableHead>
               <TableBody>
               {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
-                <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                  <TableCell style={{ width: '200px' }}>
-                    <UserInfo>
-                      <Avatar 
-                        $imageUrl={user.profile_picture} 
-                        $isLoading={Boolean(loadingProfilePictures[user.id])}
-                      >
-                        {user.profile_picture && (
-                          <img
-                            src={user.profile_picture}
-                            alt={`${user.first_name}'s profile`}
-                            onLoad={() => handleImageLoad(user.id)}
-                            onError={() => handleImageError(user.id)}
-                            style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                          />
-                        )}
-                        {!user.profile_picture && <FiUser />}
-                        {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                      </Avatar>
-                      <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                    </UserInfo>
-                  </TableCell>
-                  <TableCell style={{ width: '300px' }}>
-                    <UserEmail>{user.email}</UserEmail>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
-                    ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
-                  </TableCell>
-                  {isCurrentUserAdmin && (
-                    <TableCell style={{ width: '120px' }}>
-                    <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
                         >
-                        <FiEdit2 size={18} />
-                      </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(user);
-                            }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
-                      <ActionButton 
-                        $variant="danger"
-                      onClick={(e) => {
-                            e.stopPropagation();
-                              setUserToDelete(user);
-                          setIsDeleteModalOpen(true);
-                        }}
-                      >
-                        <FiTrash2 size={18} />
-                      </ActionButton>
-                        )}
-                    </ActionGroup>
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      {user.last_sign_in 
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </TableCell>
+                    {isCurrentUserAdmin && (
+                      <TableCell style={{ width: '120px' }}>
+                      <ActionGroup>
+                          <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
+                            title="Update Info"
+                          >
+                          <FiEdit2 size={18} />
+                        </ActionButton>
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                        <ActionButton 
+                          $variant="danger"
+                        onClick={(e) => {
+                              e.stopPropagation();
+                                setUserToDelete(user);
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
+                          <FiTrash2 size={18} />
+                        </ActionButton>
+                          )}
+                      </ActionGroup>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
               </TableBody>
           </Table>
           <PaginationControls>
@@ -2382,96 +2382,96 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               </TableHead>
               <TableBody>
               {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
-                <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                  <TableCell style={{ width: '200px' }}>
-                    <UserInfo>
-                      <Avatar 
-                        $imageUrl={user.profile_picture} 
-                        $isLoading={Boolean(loadingProfilePictures[user.id])}
-                      >
-                        {user.profile_picture && (
-                          <img
-                            src={user.profile_picture}
-                            alt={`${user.first_name}'s profile`}
-                            onLoad={() => handleImageLoad(user.id)}
-                            onError={() => handleImageError(user.id)}
-                            style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                          />
-                        )}
-                        {!user.profile_picture && <FiUser />}
-                        {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                      </Avatar>
-                      <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                    </UserInfo>
-                  </TableCell>
-                  <TableCell style={{ width: '300px' }}>
-                    <UserEmail>{user.email}</UserEmail>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
-                    ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
-                  </TableCell>
-                  {isCurrentUserAdmin && (
-                    <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
                         >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(user);
-                            }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      {user.last_sign_in 
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </TableCell>
+                    {isCurrentUserAdmin && (
+                      <TableCell style={{ width: '120px' }}>
+                        <ActionGroup>
                           <ActionButton 
-                            $variant="danger"
                           onClick={(e) => {
                             e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
-                            }}
+                            handleEditUser(user);
+                          }}
+                            title="Update Info"
                           >
-                            <FiTrash2 size={18} />
+                            <FiEdit2 size={18} />
                           </ActionButton>
-                        )}
-                      </ActionGroup>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                            <ActionButton 
+                              $variant="danger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                                setUserToDelete(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          )}
+                        </ActionGroup>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
               </TableBody>
           </Table>
           <PaginationControls>
@@ -2573,73 +2573,73 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               </TableHead>
               <tbody>
                 {getPaginatedData(allUsers.filter(user => user.roles.includes('developer'))).map((user, index) => (
-                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                    <TableCell style={{ width: '200px' }}>
-                      <UserInfo>
-                        <Avatar 
-                          $imageUrl={user.profile_picture} 
-                          $isLoading={Boolean(loadingProfilePictures[user.id])}
-                        >
-                          {user.profile_picture && (
-                            <img
-                              src={user.profile_picture}
-                              alt={`${user.first_name}'s profile`}
-                              onLoad={() => handleImageLoad(user.id)}
-                              onError={() => handleImageError(user.id)}
-                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                            />
-                          )}
-                          {!user.profile_picture && <FiUser />}
-                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                        </Avatar>
-                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                      </UserInfo>
-                    </TableCell>
-                    <TableCell style={{ width: '300px' }}>
-                      <UserEmail>{user.email}</UserEmail>
-                    </TableCell>
-                    <TableCell style={{ width: '150px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string, idx: number) => (
-                          <RoleBadge key={idx} $role={role}>
-                            {role}
-                          </RoleBadge>
-                        ))}
-                      </RoleBadges>
-                    </TableCell>
-                    <TableCell style={{ width: '150px' }}>
-                      {user.last_sign_in 
-                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                      }
-                    </TableCell>
-                    {isCurrentUserAdmin && (
-                      <TableCell style={{ width: '120px' }}>
-                        <ActionGroup>
-                          <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditUser(user);
-                            }}
-                            title="Update Info"
+                    <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
                           >
-                            <FiEdit2 size={18} />
-                          </ActionButton>
-                          <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(user);
-                            }}
-                            title="Delete User"
-                          >
-                            <FiTrash2 size={18} />
-                          </ActionButton>
-                        </ActionGroup>
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                          </Avatar>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))}
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        <RoleBadges>
+                          {user.roles.map((role: string, idx: number) => (
+                            <RoleBadge key={idx} $role={role}>
+                              {role}
+                            </RoleBadge>
+                          ))}
+                        </RoleBadges>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        {user.last_sign_in 
+                          ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                          : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                        }
+                      </TableCell>
+                      {isCurrentUserAdmin && (
+                        <TableCell style={{ width: '120px' }}>
+                          <ActionGroup>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditUser(user);
+                              }}
+                              title="Update Info"
+                            >
+                              <FiEdit2 size={18} />
+                            </ActionButton>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(user);
+                              }}
+                              title="Delete User"
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          </ActionGroup>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
               </tbody>
             </Table>
             <PaginationControls>
@@ -2741,73 +2741,73 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               </TableHead>
               <tbody>
                 {getPaginatedData(allUsers.filter(user => user.roles.includes('author'))).map((user, index) => (
-                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                    <TableCell style={{ width: '200px' }}>
-                      <UserInfo>
-                        <Avatar 
-                          $imageUrl={user.profile_picture} 
-                          $isLoading={Boolean(loadingProfilePictures[user.id])}
-                        >
-                          {user.profile_picture && (
-                            <img
-                              src={user.profile_picture}
-                              alt={`${user.first_name}'s profile`}
-                              onLoad={() => handleImageLoad(user.id)}
-                              onError={() => handleImageError(user.id)}
-                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                            />
-                          )}
-                          {!user.profile_picture && <FiUser />}
-                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                        </Avatar>
-                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                      </UserInfo>
-                    </TableCell>
-                    <TableCell style={{ width: '300px' }}>
-                      <UserEmail>{user.email}</UserEmail>
-                    </TableCell>
-                    <TableCell style={{ width: '150px' }}>
-                      <RoleBadges>
-                        {user.roles.map((role: string, idx: number) => (
-                          <RoleBadge key={idx} $role={role}>
-                            {role}
-                          </RoleBadge>
-                        ))}
-                      </RoleBadges>
-                    </TableCell>
-                    <TableCell style={{ width: '150px' }}>
-                      {user.last_sign_in 
-                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                      }
-                    </TableCell>
-                    {isCurrentUserAdmin && (
-                      <TableCell style={{ width: '120px' }}>
-                        <ActionGroup>
-                          <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditUser(user);
-                            }}
-                            title="Update Info"
+                    <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
                           >
-                            <FiEdit2 size={18} />
-                          </ActionButton>
-                          <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(user);
-                            }}
-                            title="Delete User"
-                          >
-                            <FiTrash2 size={18} />
-                          </ActionButton>
-                        </ActionGroup>
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                          </Avatar>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
                       </TableCell>
-                    )}
-                  </TableRow>
-                ))}
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        <RoleBadges>
+                          {user.roles.map((role: string, idx: number) => (
+                            <RoleBadge key={idx} $role={role}>
+                              {role}
+                            </RoleBadge>
+                          ))}
+                        </RoleBadges>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        {user.last_sign_in 
+                          ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                          : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                        }
+                      </TableCell>
+                      {isCurrentUserAdmin && (
+                        <TableCell style={{ width: '120px' }}>
+                          <ActionGroup>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditUser(user);
+                              }}
+                              title="Update Info"
+                            >
+                              <FiEdit2 size={18} />
+                            </ActionButton>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(user);
+                              }}
+                              title="Delete User"
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          </ActionGroup>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
               </tbody>
             </Table>
             <PaginationControls>
@@ -2935,96 +2935,96 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               </TableHead>
               <TableBody>
               {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
-                <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                  <TableCell style={{ width: '200px' }}>
-                    <UserInfo>
-                      <Avatar 
-                        $imageUrl={user.profile_picture} 
-                        $isLoading={Boolean(loadingProfilePictures[user.id])}
-                      >
-                        {user.profile_picture && (
-                          <img
-                            src={user.profile_picture}
-                            alt={`${user.first_name}'s profile`}
-                            onLoad={() => handleImageLoad(user.id)}
-                            onError={() => handleImageError(user.id)}
-                            style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                          />
-                        )}
-                        {!user.profile_picture && <FiUser />}
-                        {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                      </Avatar>
-                      <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                    </UserInfo>
-                  </TableCell>
-                  <TableCell style={{ width: '300px' }}>
-                    <UserEmail>{user.email}</UserEmail>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
-                    ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
-                  </TableCell>
-                  {isCurrentUserAdmin && (
-                    <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
                         >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(user);
-                            }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      {user.last_sign_in 
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </TableCell>
+                    {isCurrentUserAdmin && (
+                      <TableCell style={{ width: '120px' }}>
+                        <ActionGroup>
                           <ActionButton 
-                            $variant="danger"
                           onClick={(e) => {
                             e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
-                            }}
+                            handleEditUser(user);
+                          }}
+                            title="Update Info"
                           >
-                            <FiTrash2 size={18} />
+                            <FiEdit2 size={18} />
                           </ActionButton>
-                        )}
-                      </ActionGroup>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                            <ActionButton 
+                              $variant="danger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                                setUserToDelete(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          )}
+                        </ActionGroup>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
               </TableBody>
           </Table>
           <PaginationControls>

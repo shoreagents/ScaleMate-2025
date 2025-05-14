@@ -2,24 +2,20 @@ const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-if (!supabaseUrl || !supabaseServiceKey) {
+if (!supabaseUrl || !supabaseAdmin) {
   console.error('Missing Supabase environment variables');
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
-
 async function cleanupUserRoles() {
   try {
     // Get the user
-    const { data: { users }, error: userError } = await supabase.auth.admin.listUsers();
+    const { data: { users }, error: userError } = await supabaseAdmin.auth.admin.listUsers();
     
     if (userError) {
       throw userError;
@@ -33,7 +29,7 @@ async function cleanupUserRoles() {
     }
 
     // Remove the 'user' role
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin
       .from('user_roles')
       .delete()
       .eq('user_id', devUser.id)

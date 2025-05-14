@@ -213,6 +213,7 @@ const PreviewText = styled.p`
 
 const RoleBuilderTab: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = React.useState<string>('sales');
+  const [selectedRoleTitle, setSelectedRoleTitle] = React.useState<string>('');
   const [currentStep, setCurrentStep] = React.useState<number>(1);
 
   const handleContinue = () => {
@@ -281,7 +282,9 @@ const RoleBuilderTab: React.FC = () => {
         {currentStep === 1 && (
           <Step1
             selectedDepartment={selectedDepartment}
+            selectedRoleTitle={selectedRoleTitle}
             onDepartmentSelect={setSelectedDepartment}
+            onRoleTitleSelect={setSelectedRoleTitle}
             onContinue={handleContinue}
           />
         )}

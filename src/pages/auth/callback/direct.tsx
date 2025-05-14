@@ -128,7 +128,7 @@ export default function DirectAuthCallback() {
         // Create service role client for admin operations
         const serviceRoleClient = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           {
             auth: {
               autoRefreshToken: false,
@@ -157,17 +157,6 @@ export default function DirectAuthCallback() {
             // Normalize email for Gmail addresses
             const email = user.email;
             const normalizedEmail = email ? normalizeEmail(email) : null;
-
-            // Always update auth user's email to normalized version for Google users
-            if (normalizedEmail && normalizedEmail !== email) {
-              const { error: updateError } = await serviceRoleClient.auth.admin.updateUserById(
-                user.id,
-                { email: normalizedEmail }
-              );
-              if (updateError) {
-                console.error('Error updating user email:', updateError);
-              }
-            }
 
             // Create user profile without username
             const { error: profileError } = await supabase
@@ -218,19 +207,21 @@ export default function DirectAuthCallback() {
 
         // If no roles exist, assign default 'user' role
         if (roleError || !roles || roles.length === 0) {
-          // Try to assign default role
-          const { error: assignRoleError } = await serviceRoleClient
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
+          // Try to assign default role using API
+          const response = await fetch('/api/auth/assign-role', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
               role: 'user',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
+            }),
+          });
 
-          if (assignRoleError) {
-            handleError(assignRoleError, 'Error assigning default role. Please contact support.');
-            return;
+          if (!response.ok) {
+            console.error('Error assigning default role');
+            // Don't return here as we still want to redirect to modal
           }
 
           // Set roles to default after assignment

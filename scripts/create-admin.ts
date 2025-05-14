@@ -5,13 +5,13 @@ import { createClient } from '@supabase/supabase-js';
 dotenv.config({ path: '.env.local' });
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('Missing Supabase environment variables');
   console.error('Please make sure you have:');
   console.error('1. NEXT_PUBLIC_SUPABASE_URL');
-  console.error('2. NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY (not the anon key)');
+  console.error('2. SUPABASE_SERVICE_ROLE_KEY (not the anon key)');
   console.error('\nTo get the service role key:');
   console.error('1. Go to https://app.supabase.com');
   console.error('2. Select your project');

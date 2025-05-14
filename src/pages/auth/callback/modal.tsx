@@ -136,7 +136,7 @@ export default function ModalAuthCallback() {
         // Create service role client for admin operations
         const serviceRoleClient = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
           {
             auth: {
               autoRefreshToken: false,
@@ -166,14 +166,21 @@ export default function ModalAuthCallback() {
             const email = user.email;
             const normalizedEmail = email ? normalizeEmail(email) : null;
 
-            // Always update auth user's email to normalized version for Google users
+            // Update user email if needed
             if (normalizedEmail && normalizedEmail !== email) {
-              const { error: updateError } = await serviceRoleClient.auth.admin.updateUserById(
-                user.id,
-                { email: normalizedEmail }
-              );
-              if (updateError) {
-                console.error('Error updating user email:', updateError);
+              const response = await fetch('/api/auth/update-user', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  userId: user.id,
+                  email: normalizedEmail,
+                }),
+              });
+
+              if (!response.ok) {
+                console.error('Error updating user email');
               }
             }
 
@@ -226,18 +233,20 @@ export default function ModalAuthCallback() {
 
         // If no roles exist, assign default 'user' role
         if (roleError || !roles || roles.length === 0) {
-          // Try to assign default role
-          const { error: assignRoleError } = await serviceRoleClient
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
+          // Try to assign default role using API
+          const response = await fetch('/api/auth/assign-role', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
               role: 'user',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
+            }),
+          });
 
-          if (assignRoleError) {
-            console.error('Error assigning default role:', assignRoleError);
+          if (!response.ok) {
+            console.error('Error assigning default role');
             // Don't return here as we still want to redirect to modal
           }
 

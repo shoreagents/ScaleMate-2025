@@ -451,111 +451,44 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     setIsLoading(true);
 
     try {
-        // Create a client with service role key for admin access
-        const serviceRoleClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
+        // Call the API endpoint for verification
+        const response = await fetch('/api/auth/verify-user', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            loginIdentifier,
+            verificationCode: verificationCode.join(''),
+          }),
+        });
 
-      let emailToUse = loginIdentifier;
+        const data = await response.json();
 
-      // If the identifier is not an email, try to find the email by username
-      if (!isValidEmail(loginIdentifier)) {
-        // Query the user_profiles table to get the user_id
-        const { data: profileData, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('user_id')
-          .eq('username', loginIdentifier)
-          .single();
-
-        if (profileError || !profileData) {
-          throw new Error('Invalid login credentials');
+        if (!response.ok) {
+          throw new Error(data.error || 'Verification failed');
         }
 
-        // Query the users table to get the email
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('email')
-          .eq('id', profileData.user_id)
-          .single();
+        // If verification successful, proceed with sign in
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password,
+        });
 
-        if (userError || !userData) {
-          throw new Error('Invalid login credentials');
+        if (signInError) {
+          throw new Error(signInError.message);
         }
 
-        emailToUse = userData.email;
-      }
+        setSuccess('Successfully verified and signed in!');
+        if (onSuccess) {
+          onSuccess('Successfully verified and signed in!');
+        }
 
-      // Validate verification code
-      if (verificationCode.join('').length !== 6) {
-        throw new Error('Please enter the complete verification code!');
-      }
+        if (!preventRedirect) {
+          router.push(redirectUrl || '/dashboard');
+        }
 
-      // Normalize email before verification
-      const normalizedEmail = normalizeEmail(emailToUse);
-
-      // Join the verification code digits
-      const fullCode = verificationCode.join('');
-
-      // Verify OTP and sign in in one step
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        email: normalizedEmail,
-        token: fullCode,
-        type: 'email'
-      });
-
-      if (verifyError) {
-        // Handle specific error cases
-        if (verifyError.message.includes('Invalid OTP')) {
-          throw new Error('Token has expired or is invalid!');
-        } else if (verifyError.message.includes('expired')) {
-          throw new Error('Token has expired or is invalid!');
-        } else {
-        throw verifyError;
-      }
-      }
-
-      if (!data.user) {
-        throw new Error('No user data returned from verification');
-      }
-
-      // Get the current URL and its parameters
-      const currentUrl = redirectUrl || window.location.pathname;
-      const url = new URL(currentUrl, window.location.origin);
-      
-      // When preventRedirect is true, we want to go back to the original page
-      // that opened the modal, not the current page
-      const redirectTo = preventRedirect 
-        ? url.searchParams.get('redirectTo') || window.location.pathname
-        : window.location.pathname;
-
-      // Preserve the specific modal type if it exists, otherwise use 'modal' for preventRedirect
-      const fromParam = url.searchParams.get('from') || 'role-builder-modal';
-
-      if (preventRedirect) {
-        // For modal flow, update URL parameters and close modal
-        const url = new URL(window.location.href);
-        url.searchParams.set('showModal', fromParam);
-        url.searchParams.set('authSuccess', 'true');
-        
-        // Store current scroll position before redirect
-        sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-        
-        // Update URL and trigger success callback
-        await router.replace(url.toString(), undefined, { shallow: true });
-        onSuccess?.('Email verified successfully');
-      } else {
-        // For direct flow, redirect to dashboard
-        router.push('/user/dashboard');
-      }
-
-      return; // Don't reset states since we're redirecting
+        return; // Don't reset states since we're redirecting
     } catch (err) {
       console.error('Verification error:', err);
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during verification';
@@ -597,45 +530,24 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     setIsLoading(true);
 
     try {
+      // Look up email if needed
       let emailToUse = loginIdentifier;
-
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
-      // If the identifier is not an email, try to find the email by username
       if (!isValidEmail(loginIdentifier)) {
-        // Query the user_profiles table to get the user_id
-        const { data: profileData, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('user_id')
-          .eq('username', loginIdentifier.toLowerCase())
-          .single();
+        const response = await fetch('/api/auth/lookup-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            loginIdentifier,
+          }),
+        });
 
-        if (profileError || !profileData) {
-          throw new Error('Invalid login credentials');
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Invalid login credentials');
         }
-
-        // Query the users table to get the email
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('email')
-          .eq('id', profileData.user_id)
-          .single();
-
-        if (userError || !userData) {
-          throw new Error('Invalid login credentials');
-        }
-
-        emailToUse = userData.email;
+        emailToUse = data.email;
       }
 
       // Normalize email before sign in
@@ -690,10 +602,10 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         // Update URL and trigger success callback
         await router.replace(url.toString(), undefined, { shallow: true });
         onSuccess?.('Signed in successfully');
-        } else {
+      } else {
         // For direct flow, redirect to dashboard
         router.push('/user/dashboard');
-        }
+      }
 
       return; // Don't reset states since we're redirecting
     } catch (err) {
@@ -770,45 +682,24 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     setIsResending(true);
 
     try {
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
+      // Look up email if needed
       let emailToUse = loginIdentifier;
-
-      // If the identifier is not an email, try to find the email by username
       if (!isValidEmail(loginIdentifier)) {
-        // Query the user_profiles table to get the user_id
-        const { data: profileData, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('user_id')
-          .eq('username', loginIdentifier)
-          .single();
+        const response = await fetch('/api/auth/lookup-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            loginIdentifier,
+          }),
+        });
 
-        if (profileError || !profileData) {
-          throw new Error('Invalid login credentials');
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Invalid login credentials');
         }
-
-        // Query the users table to get the email
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('email')
-          .eq('id', profileData.user_id)
-          .single();
-
-        if (userError || !userData) {
-          throw new Error('Invalid login credentials');
-        }
-
-        emailToUse = userData.email;
+        emailToUse = data.email;
       }
 
       // Normalize email before sending
@@ -824,7 +715,7 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
         if (resendError.message.includes('rate limit') || resendError.message.includes('For security purposes')) {
           throw new Error('Please wait a few minutes before requesting a new code.');
         } else {
-        throw resendError;
+          throw resendError;
         }
       }
 

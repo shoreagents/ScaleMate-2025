@@ -349,6 +349,16 @@ const MessageContainer = styled.div<{ $isSuccess?: boolean }>`
   color: ${props => props.$isSuccess ? props.theme.colors.success : props.theme.colors.error};
 `;
 
+const ErrorMessage = styled.div`
+  font-size: 0.75rem;
+  color: #EF4444;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-align: left;
+  width: 100%;
+`;
+
 interface SignUpFormProps {
   onSuccess?: (message: string) => void;
   onError?: (error: string | null) => void;
@@ -455,32 +465,23 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     try {
       setCheckingUsername(true);
       
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-      
-      // Query the user_profiles table with service role
-      const { data, error } = await serviceRoleClient
-        .from('user_profiles')
-        .select('username')
-        .eq('username', username)
-        .limit(1);
+      const response = await fetch('/api/auth/check-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+        }),
+      });
 
-      if (error) {
-        console.error('Error checking username:', error);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Error checking username:', data.error);
         setUsernameExists(null);
-      } else if (data && data.length > 0) {
-        setUsernameExists(true); // Username is taken
       } else {
-        setUsernameExists(false); // Username is available
+        setUsernameExists(data.exists);
       }
     } catch (error) {
       console.error('Error checking username:', error);
@@ -503,48 +504,34 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     return true;
   };
 
-  const checkEmailExists = async (email: string) => {
-    if (!email) {
-      setEmailExists(null);
-      setCheckingEmail(false);
-      return;
+  const checkEmailExists = async (emailToCheck: string): Promise<boolean> => {
+    if (!emailToCheck.trim()) {
+      setEmailError(null);
+      return false;
     }
-
+    setIsLoading(true);
     try {
-      setCheckingEmail(true);
-      
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-      
-      // Query the users table with service role
-      const { data, error } = await serviceRoleClient
-        .from('users')
-        .select('email')
-        .eq('email', email)
-        .limit(1);
-
-      if (error) {
-        console.error('Error checking email:', error);
-        setEmailExists(null);
-      } else if (data && data.length > 0) {
-        setEmailExists(true); // Email is taken
-      } else {
-        setEmailExists(false); // Email is available
+      const response = await fetch('/api/auth/check-email-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToCheck }),
+      });
+      const data = await response.json();
+      setIsLoading(false);
+      if (!response.ok) {
+        setEmailError(data.message || 'Error checking email.');
+        return true; // Indicates an error occurred, consider it as potentially existing or failed check
       }
-    } catch (error) {
-      console.error('Error checking email:', error);
-      setEmailExists(null);
-    } finally {
-      setCheckingEmail(false);
+      if (data.exists) {
+        setEmailError('This email address is already in use.');
+        return true;
+      }
+      setEmailError(null);
+      return false;
+    } catch (err) {
+      setIsLoading(false);
+      setEmailError('Failed to verify email. Please try again.');
+      return true; // Network or other error, consider it as potentially existing
     }
   };
 
@@ -670,309 +657,77 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setSuccess(null);
+    setEmailError(null);
+    setUsernameError(null);
+    setPasswordError(null);
     setIsLoading(true);
 
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
+
+    // Explicitly await the email check
+    const emailAlreadyExists = await checkEmailExists(formData.email);
+    if (emailAlreadyExists) {
+      setIsLoading(false);
+      // Error message is set by checkEmailExists, ensure it's displayed
+      // Optionally, scroll to the email field or error message
+      return;
+    }
+    
     try {
-      // Validate email format
-      if (!isValidEmail(formData.email)) {
-        setError('Please enter a valid email address!');
-        setEmailError('Please enter a valid email address!');
-        onError?.('Please enter a valid email address!');
-        setIsLoading(false);
-        return;
-      }
-
-      // Validate username
-      if (!formData.username || formData.username.length < 3) {
-        setError('Username must be at least 3 characters long!');
-        setUsernameError('Username must be at least 3 characters long!');
-        onError?.('Username must be at least 3 characters long!');
-        setIsLoading(false);
-        return;
-      }
-
-      // Validate password
-      if (!formData.password || formData.password.length < 8) {
-        setError('Password must be at least 8 characters long!');
-        setPasswordError('Password must be at least 8 characters long!');
-        onError?.('Password must be at least 8 characters long!');
-        setIsLoading(false);
-        return;
-      }
-
-      // Validate password match
-      if (formData.password !== formData.confirmPassword) {
-        setError('Passwords do not match!');
-        setPasswordError('Passwords do not match!');
-        onError?.('Passwords do not match!');
-        setIsLoading(false);
-        return;
-      }
-
-      // Normalize email before sign up
-      const normalizedEmail = normalizeEmail(formData.email);
-
-      // First check if email exists
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
-      // Check if email exists in users table
-      const { data: existingUser, error: checkError } = await serviceRoleClient
-        .from('users')
-        .select('id')
-        .eq('email', normalizedEmail)
-        .single();
-
-      if (existingUser) {
-        setError('An account with this email already exists!');
-        setEmailError('An account with this email already exists!');
-        setSuccess(null);
-        onError?.('An account with this email already exists!');
-        setIsLoading(false);
-        return;
-      }
-
-      // If email doesn't exist, proceed with sign up
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: normalizedEmail,
+      // Create user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email.toLowerCase(),
         password: formData.password,
-        options: {
-          data: {
-            username: formData.username.toLowerCase(),
-            full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim()
-          }
-        }
       });
 
-      if (signUpError) {
-        console.error('Sign up error:', signUpError);
-        setError(signUpError.message);
-        onError?.(signUpError.message);
-        setIsLoading(false);
-        return;
+      if (authError) {
+        throw authError;
       }
 
-      if (!data.user) {
-        console.error('SignUpForm - No user data returned from auth.signUp');
-        setError('Failed to create account. Please try again!');
-        onError?.('Failed to create account. Please try again!');
-        setIsLoading(false);
-        return;
+      if (!authData.user) {
+        throw new Error('No user data returned from signup');
       }
 
-      console.log('SignUpForm - Auth user created successfully:', data.user.id);
+      // Create user records using the new API endpoint
+      const response = await fetch('/api/auth/create-user-records', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: authData.user.id,
+          email: formData.email.toLowerCase(),
+          username: formData.username.toLowerCase(),
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        }),
+      });
 
-      try {
-        // First check if user already exists in database
-      const { data: existingUser, error: checkError } = await serviceRoleClient
-        .from('users')
-        .select('id')
-          .eq('id', data.user.id)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-          console.error('SignUpForm - Error checking existing user:', checkError);
-          throw checkError;
+      if (!response.ok) {
+        throw new Error('Failed to create user records');
       }
 
-        if (existingUser) {
-          console.log('SignUpForm - User already exists in database, checking profile and role...');
-          
-          // Check if profile exists
-      const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
-        .from('user_profiles')
-        .select('user_id')
-            .eq('user_id', data.user.id)
-        .single();
-
-      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
-            console.error('SignUpForm - Error checking existing profile:', profileCheckError);
-            throw profileCheckError;
-      }
-
-          // Check if role exists
-          const { data: existingRole, error: roleCheckError } = await serviceRoleClient
-            .from('user_roles')
-            .select('user_id')
-            .eq('user_id', data.user.id)
-          .single();
-
-          if (roleCheckError && roleCheckError.code !== 'PGRST116') {
-            console.error('SignUpForm - Error checking existing role:', roleCheckError);
-            throw roleCheckError;
-        }
-
-          // If profile or role is missing, create them
-          if (!existingProfile) {
-            console.log('SignUpForm - Creating missing profile...');
-        const { error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .insert({
-                user_id: data.user.id,
-                username: formData.username.toLowerCase(),
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim(),
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-          });
-
-        if (profileError) {
-              console.error('SignUpForm - Error creating profile:', profileError);
-              throw profileError;
-            }
-          }
-
-          if (!existingRole) {
-            console.log('SignUpForm - Creating missing role...');
-            const { error: roleError } = await serviceRoleClient
-        .from('user_roles')
-              .insert({
-                user_id: data.user.id,
-                role: 'user',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              });
-
-            if (roleError) {
-              console.error('SignUpForm - Error creating role:', roleError);
-              throw roleError;
-            }
-          }
-
-          // If we get here, either everything existed or we created what was missing
-          console.log('SignUpForm - User setup completed (existing user)');
-          setSuccess('Account created successfully! Please verify your email.');
-          setError(null);
-          setEmailError(null);
-          setUsernameError(null);
-          setPasswordError(null);
-          setShowVerificationWithCallback(true);
-          setResendCountdown(60);
-
-          // Store current scroll position before showing verification
-          if (preventRedirect) {
-            sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-          }
-
-          return;
-        }
-
-        // If we get here, user doesn't exist in database, create everything
-        console.log('SignUpForm - Creating new user records...');
-
-        // Insert into users table with full user data
-        console.log('SignUpForm - Attempting to insert into users table...');
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .insert({
-            id: data.user.id,
-            email: normalizedEmail,
-            full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            is_active: true
-          })
-          .select()
-        .single();
-
-        if (userError) {
-          console.error('SignUpForm - Error inserting into users:', userError);
-          throw userError;
-        }
-        console.log('SignUpForm - Successfully inserted into users:', userData);
-
-        // Insert into user_profiles table with complete profile data
-        console.log('SignUpForm - Attempting to insert into user_profiles table...');
-        const { data: profileData, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .insert({
-            user_id: data.user.id,
-            username: formData.username.toLowerCase(),
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (profileError) {
-          console.error('SignUpForm - Error inserting into user_profiles:', profileError);
-          throw profileError;
-        }
-        console.log('SignUpForm - Successfully inserted into user_profiles:', profileData);
-
-        // Insert into user_roles table
-        console.log('SignUpForm - Attempting to insert into user_roles table...');
-        const { data: roleData, error: roleError } = await serviceRoleClient
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: 'user',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (roleError) {
-          console.error('SignUpForm - Error inserting into user_roles:', roleError);
-          throw roleError;
-        }
-        console.log('SignUpForm - Successfully inserted into user_roles:', roleData);
-
-        // If we get here, everything was successful
-        console.log('SignUpForm - All database operations completed successfully');
-        setSuccess('Account created successfully! Please verify your email.');
-        setError(null);
-        setEmailError(null);
-        setUsernameError(null);
-        setPasswordError(null);
-
-        // Store current scroll position before showing verification
-        if (preventRedirect) {
-          sessionStorage.setItem('scrollPosition', window.scrollY.toString());
-        }
-
+      // Show success message and verification form
+      setSuccess('Account created successfully! Please verify your email.');
+      setError(null);
+      setEmailError(null);
+      setUsernameError(null);
+      setPasswordError(null);
       setShowVerificationWithCallback(true);
-        setResendCountdown(60);
-      } catch (dbError) {
-        console.error('SignUpForm - Database operation failed:', dbError);
-        // Log the specific error details
-        if (dbError instanceof Error) {
-          console.error('SignUpForm - Error details:', {
-            message: dbError.message,
-            name: dbError.name,
-            stack: dbError.stack
-          });
-        }
-        // If database operations fail, we should still show the verification form
-        // since the auth user was created successfully
-        setSuccess('Account created! Please verify your email.');
-        setError(null);
-        setEmailError(null);
-        setUsernameError(null);
-        setPasswordError(null);
-        setShowVerificationWithCallback(true);
-        setResendCountdown(60);
+      setResendCountdown(60);
+
+      // Store current scroll position before showing verification
+      if (preventRedirect) {
+        sessionStorage.setItem('scrollPosition', window.scrollY.toString());
       }
-    } catch (err) {
-      console.error('Sign up error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'An error occurred during sign up';
-      setError(errorMessage);
-      setSuccess(null);
-      onError?.(errorMessage);
+    } catch (error) {
+      console.error('Error in signup:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred during signup');
+      onError?.(error instanceof Error ? error.message : 'An error occurred during signup');
     } finally {
       setIsLoading(false);
     }
@@ -1119,6 +874,10 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     );
   };
 
+  const validateForm = () => {
+    return isFormValid();
+  };
+
   if (showVerification) {
     return (
       <FormContainer>
@@ -1237,13 +996,9 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
               value={formData.username}
               onChange={handleChange}
               required
+              aria-describedby="username-error"
             />
-            {usernameError && (
-              <HelperText style={{ color: '#dc2626' }}>
-                <FiX size={14} />
-                {usernameError}
-              </HelperText>
-            )}
+            {usernameError && <ErrorMessage id="username-error"><FiX size={14} /> {usernameError}</ErrorMessage>}
             {checkingUsername && (
               <HelperText style={{ color: '#6b7280' }}>
                 <FiLoader size={14} />
@@ -1278,13 +1033,9 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
               value={formData.email}
               onChange={handleChange}
               required
+              aria-describedby="email-error"
             />
-            {emailError && (
-              <HelperText style={{ color: '#dc2626' }}>
-                <FiX size={14} />
-                {emailError}
-              </HelperText>
-            )}
+            {emailError && <ErrorMessage id="email-error"><FiX size={14} /> {emailError}</ErrorMessage>}
             {checkingEmail && (
               <HelperText style={{ color: '#6b7280' }}>
                 <FiLoader size={14} />
@@ -1322,6 +1073,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                     value={formData.password}
                     onChange={handleChange}
                     required
+                    aria-describedby="password-error"
                   />
                   <PasswordToggle
                     type="button"
@@ -1348,6 +1100,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     required
+                    aria-describedby="confirm-password-error"
                   />
                   <PasswordToggle
                     type="button"
@@ -1373,7 +1126,7 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
                   passwordError ? (
                     <HelperText style={{ color: '#dc2626' }}>
                       <FiX size={14} />
-                      Passwords do not match!
+                      {passwordError}
                     </HelperText>
                   ) : (
                     <HelperText style={{ color: '#059669' }}>
