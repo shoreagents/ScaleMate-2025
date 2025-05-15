@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
 import DashboardTab from '@/components/user/DashboardTab';
 import RoleBuilderTab from '@/components/user/RoleBuilderTab';
 import QuoteCalculatorTab from '@/components/user/QuoteCalculatorTab';

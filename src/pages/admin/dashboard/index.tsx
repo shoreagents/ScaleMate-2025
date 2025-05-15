@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
-import NoNavbarLayout from '@/components/layout/NoNavbarLayout';
 import DashboardHeader from '@/components/layout/DashboardHeader';
 import DashboardSidebar, { NavItem } from '@/components/layout/DashboardSidebar';
 import { supabase } from '@/lib/supabase';
@@ -810,10 +809,9 @@ const DashboardPage = () => {
   ];
 
   return (
-    <NoNavbarLayout>
     <DashboardContainer>
       <DashboardSidebar
-          logoText="ScaleMate Admin"
+        logoText="ScaleMate Admin"
         navItems={navItems}
         activeTab={activeTab}
         onTabClick={handleTabClick}
@@ -821,17 +819,16 @@ const DashboardPage = () => {
       />
       <MainContent>
         <DashboardHeader
-            title={getTabTitle(activeTab)}
+          title={getTabTitle(activeTab)}
           profilePicture={profilePicture}
           onLogout={handleLogout}
-            onProfileClick={() => setActiveTab('profile')}
-            showProfile={activeTab === 'profile'}
-            isLoading={isLoadingProfile}
+          onProfileClick={() => setActiveTab('profile')}
+          showProfile={activeTab === 'profile'}
+          isLoading={isLoadingProfile}
         />
-          {renderContent()}
+        {renderContent()}
       </MainContent>
     </DashboardContainer>
-    </NoNavbarLayout>
   );
 };
 
