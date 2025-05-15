@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import { FiEye, FiEyeOff, FiLoader, FiCheck, FiX } from 'react-icons/fi';
-import { createClient } from '@supabase/supabase-js';
+import { FiEye, FiEyeOff, FiLoader, FiCheck, FiX, FiAlertCircle } from 'react-icons/fi';
+import debounce from 'lodash.debounce';
 
 const FormContainer = styled.div`
   max-width: 420px;
@@ -349,6 +349,42 @@ const MessageContainer = styled.div<{ $isSuccess?: boolean }>`
   color: ${props => props.$isSuccess ? props.theme.colors.success : props.theme.colors.error};
 `;
 
+const InputFieldContainer = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const spin = keyframes`
+  100% { transform: rotate(360deg); }
+`;
+
+const SpinningLoader = styled.div`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  pointer-events: none;
+  z-index: 2;
+  svg {
+    animation: ${spin} 1s linear infinite;
+  }
+`;
+
+const InputStatusIcon = styled.div<{ $color?: string }>`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: ${props => props.$color || '#6b7280'};
+  pointer-events: none;
+  z-index: 2;
+`;
+
 interface SignUpFormProps {
   onSuccess?: (message: string) => void;
   onError?: (error: string | null) => void;
@@ -415,79 +451,72 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
   const [accountExists, setAccountExists] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
 
-  // Add useEffect for countdown
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (resendCountdown > 0) {
-      timer = setInterval(() => {
-        setResendCountdown(prev => prev - 1);
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [resendCountdown]);
+  const checkedUsernames = useRef<{ [username: string]: boolean }>({});
+  const lastCheckedUsername = useRef<string>('');
+
+  const debouncedCheckUsernameExists = useRef(
+    debounce(async (username: string) => {
+      // Only check if value changed and not cached
+      if (checkedUsernames.current[username] !== undefined) {
+        setUsernameExists(checkedUsernames.current[username]);
+        setCheckingUsername(false);
+        return;
+      }
+      setCheckingUsername(true);
+      try {
+        // Call the API route for username check
+        const res = await fetch('/api/auth/check-username', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const result = await res.json();
+        if (res.ok && result.exists !== undefined) {
+          checkedUsernames.current[username] = result.exists;
+          setUsernameExists(result.exists);
+        } else {
+          setUsernameExists(null);
+          console.error('Error checking username:', result.error || result);
+        }
+      } catch (error) {
+        console.error('Error checking username:', error);
+        setUsernameExists(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 2000)
+  ).current;
 
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
     if (!value) {
       setUsernameError(null);
       setUsernameExists(null);
+      setCheckingUsername(false);
       return false;
     }
-    if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
+    // Disallow hyphens: only allow letters, numbers, dot, underscore
+    if (!/^[a-zA-Z0-9._]*$/.test(value)) {
       setUsernameError('Special characters are not allowed');
       setUsernameExists(null);
+      setCheckingUsername(false);
+      return false;
+    }
+    // Enforce maximum length of 15 characters
+    if (value.length > 15) {
+      setUsernameError('Must be 15 characters or less');
+      setUsernameExists(null);
+      setCheckingUsername(false);
       return false;
     }
     setUsernameError(null);
-    checkUsernameExists(value);
-    return true;
-  };
-
-  const checkUsernameExists = async (username: string) => {
-    if (!username) {
-      setUsernameExists(null);
-      setCheckingUsername(false);
-      return;
-    }
-
-    try {
+    // Only check if value changed
+    if (value !== lastCheckedUsername.current) {
+      lastCheckedUsername.current = value;
       setCheckingUsername(true);
-      
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-      
-      // Query the user_profiles table with service role
-      const { data, error } = await serviceRoleClient
-        .from('user_profiles')
-        .select('username')
-        .eq('username', username)
-        .limit(1);
-
-      if (error) {
-        console.error('Error checking username:', error);
-        setUsernameExists(null);
-      } else if (data && data.length > 0) {
-        setUsernameExists(true); // Username is taken
-      } else {
-        setUsernameExists(false); // Username is available
-      }
-    } catch (error) {
-      console.error('Error checking username:', error);
-      setUsernameExists(null);
-    } finally {
-      setCheckingUsername(false);
+      debouncedCheckUsernameExists(value);
     }
+    return true;
   };
 
   const validatePasswords = (password: string, confirmPassword: string) => {
@@ -513,24 +542,8 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
     try {
       setCheckingEmail(true);
       
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-      
-      // Query the users table with service role
-      const { data, error } = await serviceRoleClient
-        .from('users')
-        .select('email')
-        .eq('email', email)
-        .limit(1);
+      // Query the users table with anon key
+      const { data, error } = await supabase.from('users').select('email').eq('email', email).limit(1);
 
       if (error) {
         console.error('Error checking email:', error);
@@ -714,25 +727,20 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
       const normalizedEmail = normalizeEmail(formData.email);
 
       // First check if email exists
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
+      const res = await fetch('/api/auth/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+      const result = await res.json();
+      if (res.ok && typeof result.exists === 'boolean') {
+        setAccountExists(result.exists);
+      } else {
+        console.error('Unexpected response from email check:', result);
+        setAccountExists(false);
+      }
 
-      // Check if email exists in users table
-      const { data: existingUser, error: checkError } = await serviceRoleClient
-        .from('users')
-        .select('id')
-        .eq('email', normalizedEmail)
-        .single();
-
-      if (existingUser) {
+      if (accountExists) {
         setError('An account with this email already exists!');
         setEmailError('An account with this email already exists!');
         setSuccess(null);
@@ -775,74 +783,58 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
       try {
         // First check if user already exists in database
-      const { data: existingUser, error: checkError } = await serviceRoleClient
-        .from('users')
-        .select('id')
-          .eq('id', data.user.id)
-        .single();
+        const { data: existingUser, error: checkError } = await supabase.from('users').select('id').eq('id', data.user.id).single();
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
-          console.error('SignUpForm - Error checking existing user:', checkError);
-          throw checkError;
-      }
+        if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+            console.error('SignUpForm - Error checking existing user:', checkError);
+            throw checkError;
+        }
 
         if (existingUser) {
           console.log('SignUpForm - User already exists in database, checking profile and role...');
           
           // Check if profile exists
-      const { data: existingProfile, error: profileCheckError } = await serviceRoleClient
-        .from('user_profiles')
-        .select('user_id')
-            .eq('user_id', data.user.id)
-        .single();
+          const { data: existingProfile, error: profileCheckError } = await supabase.from('user_profiles').select('user_id').eq('user_id', data.user.id).single();
 
-      if (profileCheckError && profileCheckError.code !== 'PGRST116') {
-            console.error('SignUpForm - Error checking existing profile:', profileCheckError);
-            throw profileCheckError;
-      }
+          if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+                console.error('SignUpForm - Error checking existing profile:', profileCheckError);
+                throw profileCheckError;
+          }
 
           // Check if role exists
-          const { data: existingRole, error: roleCheckError } = await serviceRoleClient
-            .from('user_roles')
-            .select('user_id')
-            .eq('user_id', data.user.id)
-          .single();
+          const { data: existingRole, error: roleCheckError } = await supabase.from('user_roles').select('user_id').eq('user_id', data.user.id).single();
 
           if (roleCheckError && roleCheckError.code !== 'PGRST116') {
             console.error('SignUpForm - Error checking existing role:', roleCheckError);
             throw roleCheckError;
-        }
+          }
 
           // If profile or role is missing, create them
           if (!existingProfile) {
             console.log('SignUpForm - Creating missing profile...');
-        const { error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .insert({
-                user_id: data.user.id,
-                username: formData.username.toLowerCase(),
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim(),
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-          });
+            const { error: profileError } = await supabase.from('user_profiles').insert({
+                  user_id: data.user.id,
+                  username: formData.username.toLowerCase(),
+              first_name: formData.firstName.trim(),
+              last_name: formData.lastName.trim(),
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString()
+            }).single();
 
-        if (profileError) {
-              console.error('SignUpForm - Error creating profile:', profileError);
-              throw profileError;
-            }
+            if (profileError) {
+                  console.error('SignUpForm - Error creating profile:', profileError);
+                  throw profileError;
+                }
           }
 
           if (!existingRole) {
             console.log('SignUpForm - Creating missing role...');
-            const { error: roleError } = await serviceRoleClient
-        .from('user_roles')
-              .insert({
-                user_id: data.user.id,
-                role: 'user',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              });
+            const { error: roleError } = await supabase.from('user_roles').insert({
+              user_id: data.user.id,
+              role: 'user',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }).single();
 
             if (roleError) {
               console.error('SignUpForm - Error creating role:', roleError);
@@ -873,18 +865,14 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
         // Insert into users table with full user data
         console.log('SignUpForm - Attempting to insert into users table...');
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .insert({
-            id: data.user.id,
-            email: normalizedEmail,
-            full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            is_active: true
-          })
-          .select()
-        .single();
+        const { data: userData, error: userError } = await supabase.from('users').insert({
+          id: data.user.id,
+          email: normalizedEmail,
+          full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          is_active: true
+        }).select().single();
 
         if (userError) {
           console.error('SignUpForm - Error inserting into users:', userError);
@@ -894,18 +882,14 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
         // Insert into user_profiles table with complete profile data
         console.log('SignUpForm - Attempting to insert into user_profiles table...');
-        const { data: profileData, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .insert({
-            user_id: data.user.id,
-            username: formData.username.toLowerCase(),
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim(),
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+        const { data: profileData, error: profileError } = await supabase.from('user_profiles').insert({
+          user_id: data.user.id,
+          username: formData.username.toLowerCase(),
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }).select().single();
 
         if (profileError) {
           console.error('SignUpForm - Error inserting into user_profiles:', profileError);
@@ -915,16 +899,12 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
 
         // Insert into user_roles table
         console.log('SignUpForm - Attempting to insert into user_roles table...');
-        const { data: roleData, error: roleError } = await serviceRoleClient
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: 'user',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select()
-          .single();
+        const { data: roleData, error: roleError } = await supabase.from('user_roles').insert({
+          user_id: data.user.id,
+          role: 'user',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }).select().single();
 
         if (roleError) {
           console.error('SignUpForm - Error inserting into user_roles:', roleError);
@@ -1229,36 +1209,42 @@ export default function SignUpForm({ onSuccess, onError, hideLinks = false, prev
             <RequiredAsterisk>*</RequiredAsterisk>
           </Label>
           <InputWrapper>
-            <Input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="Choose a username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-            />
+            <InputFieldContainer>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                placeholder="Choose a username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                style={
+                  checkingUsername || (!checkingUsername && !usernameError && usernameExists !== null) ? { paddingRight: '2.5rem' } : {}
+                }
+              />
+              {checkingUsername && (
+                <SpinningLoader>
+                  <FiLoader size={18} />
+                </SpinningLoader>
+              )}
+              {!checkingUsername && !usernameError && usernameExists === false && (
+                <InputStatusIcon $color="#059669">
+                  <FiCheck size={18} />
+                </InputStatusIcon>
+              )}
+              {!checkingUsername && (usernameError || usernameExists === true) && (
+                <InputStatusIcon $color="#dc2626">
+                  <FiAlertCircle size={18} />
+                </InputStatusIcon>
+              )}
+            </InputFieldContainer>
             {usernameError && (
               <HelperText style={{ color: '#dc2626' }}>
-                <FiX size={14} />
                 {usernameError}
-              </HelperText>
-            )}
-            {checkingUsername && (
-              <HelperText style={{ color: '#6b7280' }}>
-                <FiLoader size={14} />
-                Checking username...
-              </HelperText>
-            )}
-            {!checkingUsername && !usernameError && usernameExists === false && (
-              <HelperText style={{ color: '#059669' }}>
-                <FiCheck size={14} />
-                Username is available!
               </HelperText>
             )}
             {!checkingUsername && !usernameError && usernameExists === true && (
               <HelperText style={{ color: '#dc2626' }}>
-                <FiX size={14} />
                 Username is already taken!
               </HelperText>
             )}

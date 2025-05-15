@@ -158,7 +158,7 @@ export default function ReadinessHeroSection() {
       </Container>
 
       <ReadinessAuthModal
-        isOpen={isAuthModalOpen}
+        $isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />

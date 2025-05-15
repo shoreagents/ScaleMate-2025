@@ -4,11 +4,11 @@ import { Modal } from '../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 
 interface CostSavingsDownloadModalProps {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
 }
 
-export const CostSavingsDownloadModal = ({ isOpen, onClose }: CostSavingsDownloadModalProps) => {
+export const CostSavingsDownloadModal = ({ $isOpen, onClose }: CostSavingsDownloadModalProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -32,7 +32,7 @@ export const CostSavingsDownloadModal = ({ isOpen, onClose }: CostSavingsDownloa
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal $isOpen={$isOpen} onClose={onClose}>
       <Container>
         <Title>Your Cost Savings Report is Ready!</Title>
         

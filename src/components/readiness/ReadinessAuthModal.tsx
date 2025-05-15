@@ -10,7 +10,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
 
 interface ReadinessAuthModalProps {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: () => void;
 }
@@ -222,7 +222,7 @@ const ExploreLink = styled.a`
   }
 `;
 
-export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: ReadinessAuthModalProps) => {
+export const ReadinessAuthModal = ({ $isOpen, onClose, onAuthSuccess }: ReadinessAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
@@ -371,11 +371,11 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={handleClose}>
-      <Container>
-        {renderContent()}
-      </Container>
-    </Modal>
+      <Modal $isOpen={$isOpen} onClose={handleClose}>
+        <Container>
+          {renderContent()}
+        </Container>
+      </Modal>
     </>
   );
 }; 

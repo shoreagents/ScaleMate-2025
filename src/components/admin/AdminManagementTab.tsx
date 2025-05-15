@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader, FiCode, FiEdit } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch, FaTimes } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
 import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import ProfileSidebar from '@/components/layout/ProfileSidebar';
+import debounce from 'lodash.debounce';
 
 const Container = styled.div`
   padding: 24px;
@@ -314,10 +315,11 @@ const Label = styled.label`
 `;
 
 const Input = styled.input`
-   padding: 8px 12px;
+  padding: 8px 12px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.875rem;
+  width: 100%;
 
   &:focus {
     outline: none;
@@ -557,7 +559,7 @@ const PasswordInput = styled(Input)`
 const ViewPasswordButton = styled.button`
   position: absolute;
   right: .5rem;
-  top: 50%;
+  top: calc(50% - 1px);
   transform: translateY(-50%);
   background: none;
   border: none;
@@ -1740,100 +1742,75 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
     };
   }, []);
 
+  // Add a ref to cache checked usernames for the session
+  const checkedUsernames = useRef<{ [username: string]: boolean }>({});
+  const lastCheckedUsername = useRef<string>('');
+
+  // Debounced username check (2s)
+  const debouncedCheckUsernameExists = useRef(
+    debounce(async (username: string) => {
+      // Only check if value changed and not cached
+      if (checkedUsernames.current[username] !== undefined) {
+        setUsernameExists(checkedUsernames.current[username]);
+        setCheckingUsername(false);
+        return;
+      }
+      setCheckingUsername(true);
+      try {
+        // Call the API route for username check
+        const res = await fetch('/api/auth/check-username', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username })
+        });
+        const result = await res.json();
+        if (res.ok && result.exists !== undefined) {
+          checkedUsernames.current[username] = result.exists;
+          setUsernameExists(result.exists);
+        } else {
+          setUsernameExists(null);
+          console.error('Error checking username:', result.error || result);
+        }
+      } catch (error) {
+        console.error('Error checking username:', error);
+        setUsernameExists(null);
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 2000)
+  ).current;
+
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
     if (!value) {
       setUsernameError(null);
       setUsernameExists(null);
+      setCheckingUsername(false);
       return false;
     }
-    if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
+    // Disallow hyphens: only allow letters, numbers, dot, underscore
+    if (!/^[a-zA-Z0-9._]*$/.test(value)) {
       setUsernameError('Special characters are not allowed');
       setUsernameExists(null);
+      setCheckingUsername(false);
+      return false;
+    }
+    // Enforce maximum length of 15 characters
+    if (value.length > 15) {
+      setUsernameError('Must be 15 characters or less');
+      setUsernameExists(null);
+      setCheckingUsername(false);
       return false;
     }
     setUsernameError(null);
-    checkUsernameExists(value);
+    // Only check if value changed
+    if (value !== lastCheckedUsername.current) {
+      lastCheckedUsername.current = value;
+      setCheckingUsername(true); // Show 'Checking username...' immediately during debounce
+      // James/Lovell: Debounced (2s) and cached username check to avoid rate limits and redundant API calls (see techContext.md)
+      debouncedCheckUsernameExists(value);
+    }
     return true;
-  };
-
-  const checkUsernameExists = async (username: string) => {
-    if (!username) {
-      setUsernameExists(null);
-      setCheckingUsername(false);
-      return;
-    }
-
-    try {
-      setCheckingUsername(true);
-
-      // Get the profile of the user being edited from user_details view
-      const { data: userProfile } = await supabase
-        .from('user_details')
-        .select('username')
-        .eq('user_id', selectedUser?.id)
-        .single();
-
-      console.log('User being edited:', {
-        selectedUserId: selectedUser?.id,
-        currentUsername: userProfile?.username,
-        inputUsername: username
-      });
-
-      // Store current username for UI comparison
-      if (userProfile?.username) {
-        setCurrentUsername(userProfile.username);
-      }
-
-      // If username is the same as the user being edited, set exists to true and return early
-      if (userProfile?.username === username) {
-        console.log('Username matches current user being edited');
-        setUsernameExists(true);
-        setCheckingUsername(false);
-        return;
-      }
-
-      console.log('Checking username:', username);
-      
-      // Query the user_details view with a simpler approach
-      const { data, error } = await supabase
-        .from('user_details')
-        .select('username, user_id')
-        .eq('username', username)
-        .limit(1);
-
-      console.log('Query response:', { data, error });
-
-      if (error) {
-        console.error('Error checking username:', error);
-        setUsernameExists(null);
-      } else if (data && data.length > 0) {
-        // If we found a user with this username, check if it's the same user we're editing
-        const foundUser = data[0];
-        console.log('Found user:', {
-          foundUserId: foundUser.user_id,
-          selectedUserId: selectedUser?.id,
-          isSameUser: foundUser.user_id === selectedUser?.id
-        });
-
-        // Only set usernameExists to true for "This is the current username" if it's the same user
-        if (foundUser.user_id === selectedUser?.id) {
-          console.log('Username belongs to the same user being edited');
-          setUsernameExists(true); // It's the same user's current username
-        } else {
-          console.log('Username belongs to a different user');
-          setUsernameExists(true); // Username is taken by another user
-        }
-      } else {
-        console.log('Username is available');
-        setUsernameExists(false); // Username is available
-      }
-    } catch (error) {
-      console.error('Error checking username:', error);
-      setUsernameExists(null);
-    } finally {
-      setCheckingUsername(false);
-    }
   };
 
   // Update isBasicInfoValid function
@@ -1916,11 +1893,8 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
   };
 
   // Update the showSuccess function
-  const showSuccess = (title: string, message: string) => {
-    setSuccessMessage({
-      title,
-      description: message
-    });
+  const showSuccess = (title: string, description: string) => {
+    setSuccessMessage({ title, description });
     setShowSuccessModal(true);
   };
 
@@ -2166,7 +2140,9 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               <TableBody>
               {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
                 <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>
+                    {(currentPage - 1) * rowsPerPage + index + 1}
+                  </TableCell>
                   <TableCell style={{ width: '200px' }}>
                     <UserInfo>
                       <Avatar 
@@ -2383,7 +2359,9 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               <TableBody>
               {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
                 <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>
+                    {(currentPage - 1) * rowsPerPage + index + 1}
+                  </TableCell>
                   <TableCell style={{ width: '200px' }}>
                     <UserInfo>
                       <Avatar 
@@ -2574,7 +2552,9 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               <tbody>
                 {getPaginatedData(allUsers.filter(user => user.roles.includes('developer'))).map((user, index) => (
                   <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>
+                      {(currentPage - 1) * rowsPerPage + index + 1}
+                    </TableCell>
                     <TableCell style={{ width: '200px' }}>
                       <UserInfo>
                         <Avatar 
@@ -2742,7 +2722,9 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               <tbody>
                 {getPaginatedData(allUsers.filter(user => user.roles.includes('author'))).map((user, index) => (
                   <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>
+                      {(currentPage - 1) * rowsPerPage + index + 1}
+                    </TableCell>
                     <TableCell style={{ width: '200px' }}>
                       <UserInfo>
                         <Avatar 
@@ -2936,7 +2918,9 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
               <TableBody>
               {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
                 <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>
+                    {(currentPage - 1) * rowsPerPage + index + 1}
+                  </TableCell>
                   <TableCell style={{ width: '200px' }}>
                     <UserInfo>
                       <Avatar 
@@ -3201,11 +3185,11 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   Username
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <InputWrapper>
+                <InputFieldContainer>
                   <Input
                     id="username"
                     type="text"
-                    pattern="[a-zA-Z0-9._-]*"
+                    pattern="[a-zA-Z0-9._\-]*"
                     value={formData.username}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -3217,32 +3201,36 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                     placeholder="Enter username"
                     required
                     disabled={isSubmitting || rateLimitCountdown !== null}
+                    style={
+                      checkingUsername || (!checkingUsername && !usernameError && usernameExists !== null) ? { paddingRight: '2.5rem' } : {}
+                    }
                   />
-                  {usernameError && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      {usernameError}
-                    </HelperText>
-                  )}
                   {checkingUsername && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiLoader size={14} />
-                      Checking username...
-                    </HelperText>
+                    <SpinningLoader>
+                      <FiLoader size={18} />
+                    </SpinningLoader>
                   )}
                   {!checkingUsername && !usernameError && usernameExists === false && (
-                    <HelperText style={{ color: '#059669' }}>
-                      <FiCheck size={14} />
-                      Username is available
-                    </HelperText>
+                    <InputStatusIcon $color="#059669">
+                      <FiCheck size={18} />
+                    </InputStatusIcon>
                   )}
-                  {!checkingUsername && !usernameError && usernameExists === true && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      Username is already taken
-                    </HelperText>
+                  {!checkingUsername && (usernameError || usernameExists === true) && (
+                    <InputStatusIcon $color="#dc2626">
+                      <FiAlertCircle size={18} />
+                    </InputStatusIcon>
                   )}
-                </InputWrapper>
+                </InputFieldContainer>
+                {usernameError && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    {usernameError}
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    Username is already taken
+                  </HelperText>
+                )}
               </FormGroup>
 
               <FormGroup>
@@ -3545,11 +3533,11 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   Username
                   <RequiredAsterisk>*</RequiredAsterisk>
                 </Label>
-                <InputWrapper>
-              <Input
+                <InputFieldContainer>
+                  <Input
                     id="edit-username"
                     type="text"
-                    pattern="[a-zA-Z0-9._-]*"
+                    pattern="[a-zA-Z0-9._\-]*"
                     value={editFormData.username}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -3560,40 +3548,43 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                     }}
                     placeholder="Enter username"
                     required
-                    style={{ width: '100%' }}
+                    style={
+                      checkingUsername || (!checkingUsername && !usernameError && usernameExists !== null) ? { paddingRight: '2.5rem' } : {}
+                    }
                   />
-                  {usernameError && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      {usernameError}
-                    </HelperText>
-                  )}
                   {checkingUsername && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiLoader size={14} />
-                      Checking username...
-                    </HelperText>
+                    <SpinningLoader>
+                      <FiLoader size={18} />
+                    </SpinningLoader>
                   )}
                   {!checkingUsername && !usernameError && usernameExists === false && (
-                    <HelperText style={{ color: '#059669' }}>
-                      <FiCheck size={14} />
-                      Username is available
-                    </HelperText>
+                    <InputStatusIcon $color="#059669">
+                      <FiCheck size={18} />
+                    </InputStatusIcon>
                   )}
-                  {!checkingUsername && !usernameError && usernameExists === true && editFormData.username === currentUsername && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiCheck size={14} />
-                      This is the current username
-                    </HelperText>
+                  {!checkingUsername && (usernameError || (usernameExists === true && editFormData.username !== currentUsername)) && (
+                    <InputStatusIcon $color="#dc2626">
+                      <FiAlertCircle size={18} />
+                    </InputStatusIcon>
                   )}
-                  {!checkingUsername && !usernameError && usernameExists === true && editFormData.username !== currentUsername && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      Username is already taken
-                    </HelperText>
-                  )}
-                </InputWrapper>
-            </FormGroup>
+                </InputFieldContainer>
+                {usernameError && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    {usernameError}
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && editFormData.username === currentUsername && (
+                  <HelperText style={{ color: '#6b7280' }}>
+                    <FiCheck size={14} />
+                    This is the current username
+                  </HelperText>
+                )}
+                {!checkingUsername && !usernameError && usernameExists === true && editFormData.username !== currentUsername && (
+                  <HelperText style={{ color: '#dc2626' }}>
+                    Username is already taken
+                  </HelperText>
+                )}
+              </FormGroup>
 
             <FormGroup>
                 <Label htmlFor="edit-role">
@@ -3656,7 +3647,8 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   !editFormData.role || 
                   !editFormData.username.trim() || 
                   usernameError ||
-                  (usernameExists === true && editFormData.username !== currentUsername)
+                  (usernameExists === true && editFormData.username !== currentUsername) ||
+                  checkingUsername // Disable while checking username
                 )}
               >
                 Save Changes
@@ -4126,6 +4118,55 @@ const DeleteCancelButton = styled(ModalButton)`
     background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
   }
+`;
+
+const MobileLeadArrow = styled.span<{ $isOpen: boolean }>`
+  transform: rotate(${props => props.$isOpen ? '90deg' : '0deg'});
+  transition: transform 0.2s;
+`;
+
+const MobileLeadDropdown = styled.div<{ $isOpen: boolean }>`
+  display: ${props => props.$isOpen ? 'block' : 'none'};
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
+`;
+
+const spin = keyframes`
+  100% { transform: rotate(360deg); }
+`;
+
+const SpinningLoader = styled.div`
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  pointer-events: none;
+  z-index: 2;
+  svg {
+    animation: ${spin} 1s linear infinite;
+  }
+`;
+
+const InputStatusIcon = styled.div<{ $color?: string }>`
+  position: absolute;
+  right: 12px;
+  top: calc(50% - 1px);
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  color: ${props => props.$color || '#6b7280'};
+  pointer-events: none;
+  z-index: 2;
+`;
+
+const InputFieldContainer = styled.div`
+  position: relative;
+  width: 100%;
 `;
 
 export default AdminManagementTab; 

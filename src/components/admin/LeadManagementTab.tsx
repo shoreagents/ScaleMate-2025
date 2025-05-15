@@ -554,16 +554,9 @@ const MobileLeadHeader = styled.div`
   cursor: pointer;
 `;
 
-const MobileLeadArrow = styled.span<{ isOpen: boolean }>`
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  svg {
-    width: 1.25rem;
-    height: 1.25rem;
-    transition: transform 0.2s;
-    color: #6b7280;
-  }
+const MobileLeadArrow = styled.span<{ $isOpen: boolean }>`
+  transform: rotate(${props => props.$isOpen ? '90deg' : '0deg'});
+  transition: transform 0.2s;
 `;
 
 const MobileLeadInfo = styled.div`
@@ -615,10 +608,12 @@ const MobileLeadSource = styled.span`
   white-space: nowrap;
 `;
 
-const MobileLeadDropdown = styled.div<{ isOpen: boolean }>`
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  display: ${props => props.isOpen ? 'block' : 'none'};
+const MobileLeadDropdown = styled.div<{ $isOpen: boolean }>`
+  display: ${props => props.$isOpen ? 'block' : 'none'};
+  background: #f9fafb;
+  border-radius: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 1rem;
 `;
 
 const MobileLeadDetail = styled.div`
@@ -1015,7 +1010,7 @@ const LeadManagementTab: React.FC = () => {
                     </MobileLeadTags>
                   )}
                 </MobileLeadInfo>
-                <MobileLeadArrow isOpen={expandedLeadId === lead.id}>
+                <MobileLeadArrow $isOpen={expandedLeadId === lead.id}>
                   {expandedLeadId === lead.id ? (
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -1027,7 +1022,7 @@ const LeadManagementTab: React.FC = () => {
                   )}
                 </MobileLeadArrow>
               </MobileLeadHeader>
-              <MobileLeadDropdown isOpen={expandedLeadId === lead.id}>
+              <MobileLeadDropdown $isOpen={expandedLeadId === lead.id}>
                 <MobileLeadDetail>
                   <MobileLeadLabel>Last Action:</MobileLeadLabel>
                   <MobileLeadValue>{lead.lastAction}</MobileLeadValue>
@@ -1135,7 +1130,7 @@ const LeadManagementTab: React.FC = () => {
                   </MobileLeadTags>
                 )}
               </MobileLeadInfo>
-              <MobileLeadArrow isOpen={expandedLeadId === lead.id}>
+              <MobileLeadArrow $isOpen={expandedLeadId === lead.id}>
                 {expandedLeadId === lead.id ? (
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -1147,7 +1142,7 @@ const LeadManagementTab: React.FC = () => {
                 )}
               </MobileLeadArrow>
             </MobileLeadHeader>
-            <MobileLeadDropdown isOpen={expandedLeadId === lead.id}>
+            <MobileLeadDropdown $isOpen={expandedLeadId === lead.id}>
               <MobileLeadDetail>
                 <MobileLeadLabel>Last Action:</MobileLeadLabel>
                 <MobileLeadValue>{lead.lastAction}</MobileLeadValue>

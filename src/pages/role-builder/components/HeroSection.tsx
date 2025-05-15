@@ -106,7 +106,7 @@ export default function RoleBuilderHeroSection() {
       </Container>
 
       <RoleBuilderAuthModal
-        isOpen={isAuthModalOpen}
+        $isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />

@@ -378,7 +378,7 @@ export default function ResourceContent() {
       </Container>
 
       <ResourcesAuthModal
-        isOpen={isAuthModalOpen}
+        $isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />

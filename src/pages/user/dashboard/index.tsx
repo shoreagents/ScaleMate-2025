@@ -394,7 +394,7 @@ const DashboardPage = () => {
 
       {showSetupForm && user && (
           <FirstTimeSetupForm
-            isOpen={showSetupForm}
+            $isOpen={showSetupForm}
             onClose={() => setShowSetupForm(false)}
             userId={user.id}
             currentUsername={userData?.username || ''}

@@ -142,7 +142,7 @@ export default function FinalCTA() {
       </Container>
 
       <ToolsAuthModal
-        isOpen={isAuthModalOpen}
+        $isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />

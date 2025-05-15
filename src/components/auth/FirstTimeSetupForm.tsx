@@ -278,7 +278,7 @@ const PasswordSection = styled.div`
 `;
 
 interface FirstTimeSetupFormProps {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
   userId: string;
   currentUsername: string;
@@ -297,7 +297,7 @@ interface FormData {
 }
 
 const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
-  isOpen,
+  $isOpen,
   onClose,
   userId,
   currentUsername,
@@ -330,14 +330,14 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
 
   useEffect(() => {
     // Ensure the form is shown when component mounts
-    if (isOpen) {
+    if ($isOpen) {
       setShowSuccessModal(false);
     }
-  }, [isOpen]);
+  }, [$isOpen]);
 
   // Add effect to handle body scroll
   useEffect(() => {
-    if (isOpen) {
+    if ($isOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -347,7 +347,7 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [$isOpen]);
 
   const validateUsername = (value: string) => {
     // Allow empty value for backspace
@@ -488,7 +488,7 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
     router.push('/user/dashboard');
   };
 
-  if (!isOpen) return null;
+  if (!$isOpen) return null;
 
   return (
     <>

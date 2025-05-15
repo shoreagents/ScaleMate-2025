@@ -223,7 +223,7 @@ export default function CourseGrid() {
       </Section>
 
       <CoursesAuthModal
-        isOpen={isAuthModalOpen}
+        $isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />

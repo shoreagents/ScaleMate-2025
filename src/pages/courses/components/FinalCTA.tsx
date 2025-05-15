@@ -115,7 +115,7 @@ export default function FinalCTA() {
       </Section>
 
       <CoursesAuthModal
-        isOpen={isAuthModalOpen}
+        $isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />

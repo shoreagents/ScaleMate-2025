@@ -10,7 +10,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
 
 interface RoleBuilderAuthModalProps {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: () => void;
 }
@@ -222,7 +222,7 @@ const ExploreLink = styled.a`
   }
 `;
 
-export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBuilderAuthModalProps) => {
+export const RoleBuilderAuthModal = ({ $isOpen, onClose, onAuthSuccess }: RoleBuilderAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
@@ -371,7 +371,7 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
 
   return (
     <>
-    <Modal isOpen={isOpen} onClose={handleClose}>
+    <Modal $isOpen={$isOpen} onClose={handleClose}>
       <Container>
         {renderContent()}
       </Container>

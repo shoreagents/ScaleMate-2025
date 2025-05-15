@@ -10,7 +10,7 @@ import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
 
 interface CostSavingsAuthModalProps {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: () => void;
 }
@@ -222,7 +222,7 @@ const ExploreLink = styled.a`
   }
 `;
 
-export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSavingsAuthModalProps) => {
+export const CostSavingsAuthModal = ({ $isOpen, onClose, onAuthSuccess }: CostSavingsAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
@@ -371,7 +371,7 @@ export const CostSavingsAuthModal = ({ isOpen, onClose, onAuthSuccess }: CostSav
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose}>
+      <Modal $isOpen={$isOpen} onClose={handleClose}>
         <Container>
           {renderContent()}
         </Container>

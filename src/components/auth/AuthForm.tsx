@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { FiEye, FiEyeOff, FiX, FiCheck } from 'react-icons/fi';
-import { createClient } from '@supabase/supabase-js';
 import ResetPasswordForm from './ResetPasswordForm';
 
 const FormContainer = styled.div`
@@ -451,45 +450,30 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     setIsLoading(true);
 
     try {
-        // Create a client with service role key for admin access
-        const serviceRoleClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
-
       let emailToUse = loginIdentifier;
 
       // If the identifier is not an email, try to find the email by username
       if (!isValidEmail(loginIdentifier)) {
-        // Query the user_profiles table to get the user_id
-        const { data: profileData, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('user_id')
-          .eq('username', loginIdentifier)
-          .single();
+        // Call /api/auth/lookup-email to get the email
+        const response = await fetch('/api/auth/lookup-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username: loginIdentifier })
+        });
 
-        if (profileError || !profileData) {
-          throw new Error('Invalid login credentials');
+        if (!response.ok) {
+          throw new Error('Failed to find email');
         }
 
-        // Query the users table to get the email
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('email')
-          .eq('id', profileData.user_id)
-          .single();
+        const data = await response.json();
 
-        if (userError || !userData) {
-          throw new Error('Invalid login credentials');
+        if (!data.email) {
+          throw new Error('No email found');
         }
 
-        emailToUse = userData.email;
+        emailToUse = data.email;
       }
 
       // Validate verification code
@@ -599,43 +583,28 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     try {
       let emailToUse = loginIdentifier;
 
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
       // If the identifier is not an email, try to find the email by username
       if (!isValidEmail(loginIdentifier)) {
-        // Query the user_profiles table to get the user_id
-        const { data: profileData, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('user_id')
-          .eq('username', loginIdentifier.toLowerCase())
-          .single();
+        // Call /api/auth/lookup-email to get the email
+        const response = await fetch('/api/auth/lookup-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username: loginIdentifier })
+        });
 
-        if (profileError || !profileData) {
-          throw new Error('Invalid login credentials');
+        if (!response.ok) {
+          throw new Error('Failed to find email');
         }
 
-        // Query the users table to get the email
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('email')
-          .eq('id', profileData.user_id)
-          .single();
+        const data = await response.json();
 
-        if (userError || !userData) {
-          throw new Error('Invalid login credentials');
+        if (!data.email) {
+          throw new Error('No email found');
         }
 
-        emailToUse = userData.email;
+        emailToUse = data.email;
       }
 
       // Normalize email before sign in
@@ -770,45 +739,30 @@ export default function AuthForm({ onSuccess, onError, preventRedirect = false, 
     setIsResending(true);
 
     try {
-      // Create a client with service role key for admin access
-      const serviceRoleClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-        {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false
-          }
-        }
-      );
-
       let emailToUse = loginIdentifier;
 
       // If the identifier is not an email, try to find the email by username
       if (!isValidEmail(loginIdentifier)) {
-        // Query the user_profiles table to get the user_id
-        const { data: profileData, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('user_id')
-          .eq('username', loginIdentifier)
-          .single();
+        // Call /api/auth/lookup-email to get the email
+        const response = await fetch('/api/auth/lookup-email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username: loginIdentifier })
+        });
 
-        if (profileError || !profileData) {
-          throw new Error('Invalid login credentials');
+        if (!response.ok) {
+          throw new Error('Failed to find email');
         }
 
-        // Query the users table to get the email
-        const { data: userData, error: userError } = await serviceRoleClient
-          .from('users')
-          .select('email')
-          .eq('id', profileData.user_id)
-          .single();
+        const data = await response.json();
 
-        if (userError || !userData) {
-          throw new Error('Invalid login credentials');
+        if (!data.email) {
+          throw new Error('No email found');
         }
 
-        emailToUse = userData.email;
+        emailToUse = data.email;
       }
 
       // Normalize email before sending

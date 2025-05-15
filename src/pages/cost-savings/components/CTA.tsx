@@ -241,13 +241,13 @@ export default function CTA() {
       )}
 
       <CostSavingsAuthModal 
-        isOpen={isLoginModalOpen} 
+        $isOpen={isLoginModalOpen} 
         onClose={() => setIsLoginModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />
 
       <CostSavingsDownloadModal
-        isOpen={isDownloadModalOpen}
+        $isOpen={isDownloadModalOpen}
         onClose={closeModal}
       />
     </Section>

@@ -150,7 +150,7 @@ export default function FinalCTA() {
       </Container>
 
       <RoleBuilderAuthModal
-        isOpen={isAuthModalOpen}
+        $isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />

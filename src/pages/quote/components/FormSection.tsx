@@ -313,13 +313,13 @@ export default function FormSection() {
       </Container>
 
       <QuoteAuthModal
-        isOpen={isLoginModalOpen}
+        $isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onAuthSuccess={handleAuthSuccess}
       />
 
       <QuoteDownloadModal
-        isOpen={isDownloadModalOpen}
+        $isOpen={isDownloadModalOpen}
         onClose={closeModal}
       />
     </Section>

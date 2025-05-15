@@ -5,7 +5,6 @@ import { FiCheck } from 'react-icons/fi';
 import { useRouter } from 'next/router';
 import { testSupabaseConnection, testOpenAIConnection } from '@/lib/test-connection';
 import { supabase } from '@/lib/supabase';
-import { createClient } from '@supabase/supabase-js';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -357,34 +356,10 @@ const WarningTime = styled.span`
   color: rgba(15, 23, 42, 0.6);
 `;
 
-// Create admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
 interface DatabaseStatus {
   success: boolean;
   message: string;
   lastChecked: Date;
-}
-
-interface UserStats {
-  totalUsers: number;
-  yesterdayCount: number;
-  trend: number;
-  weekCount?: number;
-  lastWeekCount?: number;
-  weekTrend?: number;
-  monthCount?: number;
-  lastMonthCount?: number;
-  monthTrend?: number;
 }
 
 interface UserActivity {
@@ -403,20 +378,10 @@ interface OpenAIStatus {
 const DashboardTab: React.FC = () => {
   const router = useRouter();
   const [dbStatus, setDbStatus] = useState<DatabaseStatus | null>(null);
-  const [userStats, setUserStats] = useState<UserStats>({ 
-    totalUsers: 0, 
-    yesterdayCount: 0, 
-    trend: 0,
-    weekCount: 0,
-    lastWeekCount: 0,
-    weekTrend: 0,
-    monthCount: 0,
-    lastMonthCount: 0,
-    monthTrend: 0
-  });
   const [timePeriod, setTimePeriod] = useState<'today' | 'week' | 'month'>('today');
   const [recentActivities, setRecentActivities] = useState<UserActivity[]>([]);
   const [openAIStatus, setOpenAIStatus] = useState<OpenAIStatus | null>(null);
+  const [analyticsUsers, setAnalyticsUsers] = useState<any[]>([]);
 
   // Function to format time ago
   const getTimeAgo = (date: string | Date) => {
@@ -450,255 +415,15 @@ const DashboardTab: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchUserStats = async () => {
-      try {
-        // Set up date ranges
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayISO = today.toISOString();
-
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayISO = yesterday.toISOString();
-
-        // Get this week's start (Sunday)
-        const thisWeek = new Date(today);
-        thisWeek.setDate(today.getDate() - today.getDay());
-        thisWeek.setHours(0, 0, 0, 0);
-        const thisWeekISO = thisWeek.toISOString();
-
-        // Get last week's start
-        const lastWeek = new Date(thisWeek);
-        lastWeek.setDate(lastWeek.getDate() - 7);
-        const lastWeekISO = lastWeek.toISOString();
-
-        // Get this month's start
-        const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-        const thisMonthISO = thisMonth.toISOString();
-
-        // Get last month's start
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const lastMonthISO = lastMonth.toISOString();
-
-        // Get active users created today
-        const { data: activeUsersToday, error: activeUsersTodayError } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('is_active', true)
-          .gte('created_at', todayISO);
-
-        if (activeUsersTodayError) {
-          console.error('Error fetching active users today:', activeUsersTodayError);
-          return;
-        }
-
-        // Get active users created yesterday
-        const { data: activeUsersYesterday, error: activeUsersYesterdayError } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('is_active', true)
-          .gte('created_at', yesterdayISO)
-          .lt('created_at', todayISO);
-
-        if (activeUsersYesterdayError) {
-          console.error('Error fetching active users yesterday:', activeUsersYesterdayError);
-          return;
-        }
-
-        // Get this week's users
-        const { data: activeUsersThisWeek, error: activeUsersThisWeekError } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('is_active', true)
-          .gte('created_at', thisWeekISO);
-
-        if (activeUsersThisWeekError) {
-          console.error('Error fetching this week users:', activeUsersThisWeekError);
-          return;
-        }
-
-        // Get last week's users
-        const { data: activeUsersLastWeek, error: activeUsersLastWeekError } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('is_active', true)
-          .gte('created_at', lastWeekISO)
-          .lt('created_at', thisWeekISO);
-
-        if (activeUsersLastWeekError) {
-          console.error('Error fetching last week users:', activeUsersLastWeekError);
-          return;
-        }
-
-        // Get this month's users
-        const { data: activeUsersThisMonth, error: activeUsersThisMonthError } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('is_active', true)
-          .gte('created_at', thisMonthISO);
-
-        if (activeUsersThisMonthError) {
-          console.error('Error fetching this month users:', activeUsersThisMonthError);
-          return;
-        }
-
-        // Get last month's users
-        const { data: activeUsersLastMonth, error: activeUsersLastMonthError } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('is_active', true)
-          .gte('created_at', lastMonthISO)
-          .lt('created_at', thisMonthISO);
-
-        if (activeUsersLastMonthError) {
-          console.error('Error fetching last month users:', activeUsersLastMonthError);
-          return;
-        }
-
-        // Get counts for today and yesterday
-        const { data: todayData, error: todayError } = await supabaseAdmin
-          .from('user_roles')
-          .select('user_id', { count: 'exact' })
-          .eq('role', 'user')
-          .in('user_id', activeUsersToday?.map(user => user.id) || []);
-
-        if (todayError) {
-          console.error('Error fetching today user stats:', todayError);
-          return;
-        }
-
-        const { data: yesterdayData, error: yesterdayError } = await supabaseAdmin
-          .from('user_roles')
-          .select('user_id', { count: 'exact' })
-          .eq('role', 'user')
-          .in('user_id', activeUsersYesterday?.map(user => user.id) || []);
-
-        if (yesterdayError) {
-          console.error('Error fetching yesterday user stats:', yesterdayError);
-          return;
-        }
-
-        // Get counts for this week and last week
-        const { data: thisWeekData, error: thisWeekError } = await supabaseAdmin
-          .from('user_roles')
-          .select('user_id', { count: 'exact' })
-          .eq('role', 'user')
-          .in('user_id', activeUsersThisWeek?.map(user => user.id) || []);
-
-        if (thisWeekError) {
-          console.error('Error fetching this week user stats:', thisWeekError);
-          return;
-        }
-
-        const { data: lastWeekData, error: lastWeekError } = await supabaseAdmin
-          .from('user_roles')
-          .select('user_id', { count: 'exact' })
-          .eq('role', 'user')
-          .in('user_id', activeUsersLastWeek?.map(user => user.id) || []);
-
-        if (lastWeekError) {
-          console.error('Error fetching last week user stats:', lastWeekError);
-          return;
-        }
-
-        // Get counts for this month and last month
-        const { data: thisMonthData, error: thisMonthError } = await supabaseAdmin
-          .from('user_roles')
-          .select('user_id', { count: 'exact' })
-          .eq('role', 'user')
-          .in('user_id', activeUsersThisMonth?.map(user => user.id) || []);
-
-        if (thisMonthError) {
-          console.error('Error fetching this month user stats:', thisMonthError);
-          return;
-        }
-
-        const { data: lastMonthData, error: lastMonthError } = await supabaseAdmin
-          .from('user_roles')
-          .select('user_id', { count: 'exact' })
-          .eq('role', 'user')
-          .in('user_id', activeUsersLastMonth?.map(user => user.id) || []);
-
-        if (lastMonthError) {
-          console.error('Error fetching last month user stats:', lastMonthError);
-          return;
-        }
-
-        const todayCount = todayData?.length || 0;
-        const yesterdayCount = yesterdayData?.length || 0;
-        const thisWeekCount = thisWeekData?.length || 0;
-        const lastWeekCount = lastWeekData?.length || 0;
-        const thisMonthCount = thisMonthData?.length || 0;
-        const lastMonthCount = lastMonthData?.length || 0;
-        
-        // Calculate trends
-        let trend = 0;
-        if (yesterdayCount > 0) {
-          trend = ((todayCount - yesterdayCount) / yesterdayCount) * 100;
-        } else if (todayCount > 0) {
-          trend = 100;
-        }
-
-        let weekTrend = 0;
-        if (lastWeekCount > 0) {
-          weekTrend = ((thisWeekCount - lastWeekCount) / lastWeekCount) * 100;
-        } else if (thisWeekCount > 0) {
-          weekTrend = 100;
-        }
-
-        let monthTrend = 0;
-        if (lastMonthCount > 0) {
-          monthTrend = ((thisMonthCount - lastMonthCount) / lastMonthCount) * 100;
-        } else if (thisMonthCount > 0) {
-          monthTrend = 100;
-        }
-
-        console.log('Debug - User stats:', {
-          todayCount,
-          yesterdayCount,
-          thisWeekCount,
-          lastWeekCount,
-          thisMonthCount,
-          lastMonthCount,
-          trend,
-          weekTrend,
-          monthTrend
-        });
-
-        setUserStats({
-          totalUsers: todayCount,
-          yesterdayCount: yesterdayCount,
-          trend: Math.round(trend),
-          weekCount: thisWeekCount,
-          lastWeekCount: lastWeekCount,
-          weekTrend: Math.round(weekTrend),
-          monthCount: thisMonthCount,
-          lastMonthCount: lastMonthCount,
-          monthTrend: Math.round(monthTrend)
-        });
-      } catch (error) {
-        console.error('Error in fetchUserStats:', error);
-      }
-    };
-
-    fetchUserStats();
-  }, []);
-
-  useEffect(() => {
     const fetchRecentActivities = async () => {
       try {
-        const { data: activities, error } = await supabaseAdmin
-          .from('users')
-          .select('id, full_name, email, created_at')
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (error) {
-          console.error('Error fetching recent activities:', error);
-          return;
+        const res = await fetch('/api/admin/recent-activities');
+        const result = await res.json();
+        if (res.ok) {
+          setRecentActivities(result.activities || []);
+        } else {
+          console.error('Error fetching recent activities:', result.error);
         }
-
-        setRecentActivities(activities || []);
       } catch (error) {
         console.error('Error in fetchRecentActivities:', error);
       }
@@ -722,6 +447,30 @@ const DashboardTab: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    // Fetch admin analytics data securely from the API route
+    const fetchAdminAnalytics = async () => {
+      try {
+        const res = await fetch('/api/admin/analytics');
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const result = await res.json();
+          if (res.ok) {
+            setAnalyticsUsers(result.users || []);
+          } else {
+            console.error('Error fetching admin analytics:', result.error);
+          }
+        } else {
+          const text = await res.text();
+          console.error('Non-JSON response:', text);
+        }
+      } catch (error) {
+        console.error('Error fetching admin analytics:', error);
+      }
+    };
+    fetchAdminAnalytics();
+  }, []);
+
   const handleTimePeriodToggle = () => {
     setTimePeriod(prev => {
       switch (prev) {
@@ -735,6 +484,94 @@ const DashboardTab: React.FC = () => {
           return 'today';
       }
     });
+  };
+
+  const getAnalyticsUserCount = (period: 'today' | 'week' | 'month') => {
+    const now = new Date();
+    let start: Date;
+
+    if (period === 'today') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (period === 'week') {
+      start = new Date(now);
+      start.setDate(now.getDate() - now.getDay());
+      start.setHours(0, 0, 0, 0);
+    } else if (period === 'month') {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else {
+      return analyticsUsers.length;
+    }
+
+    return analyticsUsers.filter(user => {
+      const created = new Date(user.created_at);
+      return created >= start && created <= now;
+    }).length;
+  };
+
+  const getAnalyticsUserCountForPreviousPeriod = (period: 'today' | 'week' | 'month') => {
+    const now = new Date();
+    let start: Date, end: Date;
+
+    if (period === 'today') {
+      // Yesterday
+      end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      start = new Date(end);
+      start.setDate(end.getDate() - 1);
+    } else if (period === 'week') {
+      // Last week
+      end = new Date(now);
+      end.setDate(now.getDate() - now.getDay());
+      end.setHours(0, 0, 0, 0);
+      start = new Date(end);
+      start.setDate(end.getDate() - 7);
+    } else if (period === 'month') {
+      // Last month
+      end = new Date(now.getFullYear(), now.getMonth(), 1);
+      start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    } else {
+      return 0;
+    }
+
+    return analyticsUsers.filter(user => {
+      const created = new Date(user.created_at);
+      return created >= start && created < end;
+    }).length;
+  };
+
+  const getAnalyticsUserCountForPeriod = () => {
+    const now = new Date();
+    let start: Date;
+
+    if (timePeriod === 'today') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (timePeriod === 'week') {
+      // Start of this week (Sunday)
+      start = new Date(now);
+      start.setDate(now.getDate() - now.getDay());
+      start.setHours(0, 0, 0, 0);
+    } else if (timePeriod === 'month') {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else {
+      return analyticsUsers.length;
+    }
+
+    return analyticsUsers.filter(user => {
+      const created = new Date(user.created_at);
+      return created >= start && created <= now;
+    }).length;
+  };
+
+  const getAnalyticsTrend = (period: 'today' | 'week' | 'month') => {
+    const current = getAnalyticsUserCount(period);
+    const previous = getAnalyticsUserCountForPreviousPeriod(period);
+
+    if (previous > 0) {
+      return Math.round(((current - previous) / previous) * 100);
+    } else if (current > 0) {
+      return 100;
+    } else {
+      return 0;
+    }
   };
 
   return (
@@ -767,32 +604,15 @@ const DashboardTab: React.FC = () => {
                 </TimeLabel>
               </StatHeader>
               <StatValue>
-                {timePeriod === 'today' 
-                  ? userStats.totalUsers.toLocaleString()
-                  : timePeriod === 'week'
-                    ? userStats.weekCount?.toLocaleString()
-                    : userStats.monthCount?.toLocaleString()}
+                {getAnalyticsUserCountForPeriod().toLocaleString()}
               </StatValue>
               <StatLabel>New Users</StatLabel>
-              <TrendIndicator $isPositive={
-                timePeriod === 'today' 
-                  ? userStats.trend >= 0 
-                  : timePeriod === 'week'
-                    ? userStats.weekTrend! >= 0
-                    : userStats.monthTrend! >= 0
-              }>
-                {timePeriod === 'today' 
-                  ? (userStats.trend >= 0 ? <FaArrowUp /> : <FaArrowDown />)
-                  : timePeriod === 'week'
-                    ? (userStats.weekTrend! >= 0 ? <FaArrowUp /> : <FaArrowDown />)
-                    : (userStats.monthTrend! >= 0 ? <FaArrowUp /> : <FaArrowDown />)
-                }
+              <TrendIndicator $isPositive={getAnalyticsTrend(timePeriod) >= 0}>
+                {getAnalyticsTrend(timePeriod) >= 0 ? <FaArrowUp /> : <FaArrowDown />}
                 <span style={{ marginLeft: '4px' }}>
-                  {timePeriod === 'today' 
-                    ? `${userStats.trend >= 0 ? '+' : ''}${userStats.trend}% vs yesterday`
-                    : timePeriod === 'week'
-                      ? `${userStats.weekTrend! >= 0 ? '+' : ''}${userStats.weekTrend}% vs last week`
-                      : `${userStats.monthTrend! >= 0 ? '+' : ''}${userStats.monthTrend}% vs last month`}
+                  {`${getAnalyticsTrend(timePeriod) >= 0 ? '+' : ''}${getAnalyticsTrend(timePeriod)}% vs ${
+                    timePeriod === 'today' ? 'yesterday' : timePeriod === 'week' ? 'last week' : 'last month'
+                  }`}
                 </span>
               </TrendIndicator>
             </StatCard>

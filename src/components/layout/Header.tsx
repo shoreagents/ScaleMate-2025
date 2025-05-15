@@ -114,7 +114,7 @@ const ProfileContainer = styled.div`
   position: relative;
 `;
 
-const ProfileDropdown = styled.div<{ isOpen: boolean }>`
+const ProfileDropdown = styled.div<{ $isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
@@ -122,7 +122,7 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   border-radius: 8px;
   border: 1px solid #E5E7EB;
   width: 200px;
-  display: ${props => props.isOpen ? 'block' : 'none'};
+  display: ${props => props.$isOpen ? 'block' : 'none'};
   z-index: 50;
   overflow: hidden;
 `;
@@ -329,7 +329,7 @@ const MobileMenuButton = styled.button`
   }
 `;
 
-const MobileMenu = styled.div<{ isOpen: boolean }>`
+const MobileMenu = styled.div<{ $isOpen: boolean }>`
   display: none;
   position: fixed;
   top: 4rem;
@@ -343,7 +343,7 @@ const MobileMenu = styled.div<{ isOpen: boolean }>`
   overflow-y: auto;
 
   @media (max-width: 994px) {
-    display: ${props => props.isOpen ? 'block' : 'none'};
+    display: ${props => props.$isOpen ? 'block' : 'none'};
     height: calc(100vh - 4rem);
   }
 `;
@@ -740,7 +740,7 @@ const Header = () => {
                     )}
                   </ProfileIcon>
                 </IconButton>
-                <ProfileDropdown isOpen={isProfileOpen}>
+                <ProfileDropdown $isOpen={isProfileOpen}>
                   <DropdownItem onClick={handleDashboardClick}>
                     <FaGripVertical size={16} color="#3B82F6" style={{ minWidth: 16 }} />
                     Dashboard
@@ -763,7 +763,7 @@ const Header = () => {
           </MobileMenuButton>
         </HeaderContent>
       </Container>
-      <MobileMenu isOpen={isMobileMenuOpen}>
+      <MobileMenu $isOpen={isMobileMenuOpen}>
         <MobileNav>
           {isLoggedIn === null ? null : isLoggedIn ? (
             <MobileAuthRow>

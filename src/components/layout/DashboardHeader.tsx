@@ -97,7 +97,7 @@ const ProfileContainer = styled.div`
   position: relative;
 `;
 
-const ProfileDropdown = styled.div<{ isOpen: boolean }>`
+const ProfileDropdown = styled.div<{ $isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
@@ -105,7 +105,7 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   border-radius: 8px;
   border: 1px solid #E5E7EB;
   width: 200px;
-  display: ${props => props.isOpen ? 'block' : 'none'};
+  display: ${props => props.$isOpen ? 'block' : 'none'};
   z-index: 50;
   overflow: hidden;
 `;
@@ -198,10 +198,15 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    console.log('[DashboardHeader] useEffect RUN', new Date().toISOString(), new Error().stack);
+
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => {
+      console.log('[DashboardHeader] useEffect CLEANUP', new Date().toISOString());
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
   const handleProfileClick = () => {
@@ -237,7 +242,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               )}
             </ProfileIcon>
           </IconButton>
-          <ProfileDropdown isOpen={isProfileOpen}>
+          <ProfileDropdown $isOpen={isProfileOpen}>
             <DropdownItem onClick={handleProfileClick}>
               <FaUser size={16} color="#6B7280" />
               Profile

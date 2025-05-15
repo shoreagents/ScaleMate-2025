@@ -3,27 +3,27 @@ import styled from 'styled-components';
 import { FaTimes } from 'react-icons/fa';
 
 interface ModalProps {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
   title?: string;
   closeOnOverlayClick?: boolean;
 }
 
-const ModalOverlay = styled.div<{ isOpen: boolean }>`
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   inset: 0;
   background-color: rgba(15, 23, 42, 0.75);
-  display: ${props => props.isOpen ? 'block' : 'none'};
+  display: ${props => props.$isOpen ? 'block' : 'none'};
   z-index: 70;
   backdrop-filter: blur(2px);
 `;
 
-const ModalContainer = styled.div<{ isOpen: boolean }>`
+const ModalContainer = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   inset: 0;
   z-index: 70;
-  display: ${props => props.isOpen ? 'flex' : 'none'};
+  display: ${props => props.$isOpen ? 'flex' : 'none'};
   min-height: 100vh;
   padding: 1rem;
   justify-content: center;
@@ -84,7 +84,7 @@ const CloseButton = styled.button`
   }
 `;
 
-export const Modal = ({ isOpen, onClose, children, title, closeOnOverlayClick = false }: ModalProps) => {
+export const Modal = ({ $isOpen, onClose, children, title, closeOnOverlayClick = false }: ModalProps) => {
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();
@@ -93,8 +93,8 @@ export const Modal = ({ isOpen, onClose, children, title, closeOnOverlayClick = 
 
   return (
     <>
-      <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick} />
-      <ModalContainer isOpen={isOpen} onClick={handleOverlayClick}>
+      <ModalOverlay $isOpen={$isOpen} onClick={handleOverlayClick} />
+      <ModalContainer $isOpen={$isOpen} onClick={handleOverlayClick}>
         <ModalContent onClick={(e) => e.stopPropagation()}>
           <CloseButton onClick={onClose} aria-label="Close modal">
             <FaTimes />

@@ -4,11 +4,11 @@ import { Modal } from '../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 
 interface Props {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
 }
 
-export const QuoteDownloadModal = ({ isOpen, onClose }: Props) => {
+export const QuoteDownloadModal = ({ $isOpen, onClose }: Props) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
@@ -32,7 +32,7 @@ export const QuoteDownloadModal = ({ isOpen, onClose }: Props) => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal $isOpen={$isOpen} onClose={onClose}>
       <Container>
         <Title>Your Blueprint is Ready!</Title>
         

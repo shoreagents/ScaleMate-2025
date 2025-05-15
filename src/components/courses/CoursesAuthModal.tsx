@@ -215,14 +215,14 @@ const ExploreLink = styled.a`
 `;
 
 interface CoursesAuthModalProps {
-  isOpen: boolean;
+  $isOpen: boolean;
   onClose: () => void;
   onAuthSuccess?: () => void;
 }
 
 type ModalView = 'initial' | 'signup' | 'login';
 
-export const CoursesAuthModal = ({ isOpen, onClose, onAuthSuccess }: CoursesAuthModalProps) => {
+export const CoursesAuthModal = ({ $isOpen, onClose, onAuthSuccess }: CoursesAuthModalProps) => {
   const [currentView, setCurrentView] = useState<ModalView>('initial');
   const router = useRouter();
 
@@ -371,7 +371,7 @@ export const CoursesAuthModal = ({ isOpen, onClose, onAuthSuccess }: CoursesAuth
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={handleClose}>
+      <Modal $isOpen={$isOpen} onClose={handleClose}>
         <Container>
           {renderContent()}
         </Container>
