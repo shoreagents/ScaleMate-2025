@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle, FaDatabase, FaArrowUp, FaArrowDown, FaRobot } from 'react-icons/fa';
+import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle, FaArrowUp, FaArrowDown } from 'react-icons/fa';
 import { FiCheck } from 'react-icons/fi';
 import { useRouter } from 'next/router';
-import { testSupabaseConnection, testOpenAIConnection } from '@/lib/test-connection';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 
@@ -357,24 +356,6 @@ const WarningTime = styled.span`
   color: rgba(15, 23, 42, 0.6);
 `;
 
-// Create admin client with service role key
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  }
-);
-
-interface DatabaseStatus {
-  success: boolean;
-  message: string;
-  lastChecked: Date;
-}
-
 interface UserStats {
   totalUsers: number;
   yesterdayCount: number;
@@ -394,15 +375,8 @@ interface UserActivity {
   created_at: string;
 }
 
-interface OpenAIStatus {
-  success: boolean;
-  message: string;
-  lastChecked: Date;
-}
-
 const DashboardTab: React.FC = () => {
   const router = useRouter();
-  const [dbStatus, setDbStatus] = useState<DatabaseStatus | null>(null);
   const [userStats, setUserStats] = useState<UserStats>({ 
     totalUsers: 0, 
     yesterdayCount: 0, 
@@ -416,7 +390,6 @@ const DashboardTab: React.FC = () => {
   });
   const [timePeriod, setTimePeriod] = useState<'today' | 'week' | 'month'>('today');
   const [recentActivities, setRecentActivities] = useState<UserActivity[]>([]);
-  const [openAIStatus, setOpenAIStatus] = useState<OpenAIStatus | null>(null);
 
   // Function to format time ago
   const getTimeAgo = (date: string | Date) => {
@@ -429,25 +402,6 @@ const DashboardTab: React.FC = () => {
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
     return `${Math.floor(diffInSeconds / 86400)} days ago`;
   };
-
-  useEffect(() => {
-    const checkDatabaseStatus = async () => {
-      const result = await testSupabaseConnection();
-      setDbStatus({
-        success: result.success,
-        message: result.message,
-        lastChecked: new Date()
-      });
-    };
-
-    // Initial check
-    checkDatabaseStatus();
-
-    // Check every 15 seconds instead of 30
-    const interval = setInterval(checkDatabaseStatus, 15000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const fetchUserStats = async () => {
@@ -481,7 +435,7 @@ const DashboardTab: React.FC = () => {
         const lastMonthISO = lastMonth.toISOString();
 
         // Get active users created today
-        const { data: activeUsersToday, error: activeUsersTodayError } = await supabaseAdmin
+        const { data: activeUsersToday, error: activeUsersTodayError } = await supabase
           .from('users')
           .select('id')
           .eq('is_active', true)
@@ -493,7 +447,7 @@ const DashboardTab: React.FC = () => {
         }
 
         // Get active users created yesterday
-        const { data: activeUsersYesterday, error: activeUsersYesterdayError } = await supabaseAdmin
+        const { data: activeUsersYesterday, error: activeUsersYesterdayError } = await supabase
           .from('users')
           .select('id')
           .eq('is_active', true)
@@ -506,7 +460,7 @@ const DashboardTab: React.FC = () => {
         }
 
         // Get this week's users
-        const { data: activeUsersThisWeek, error: activeUsersThisWeekError } = await supabaseAdmin
+        const { data: activeUsersThisWeek, error: activeUsersThisWeekError } = await supabase
           .from('users')
           .select('id')
           .eq('is_active', true)
@@ -518,7 +472,7 @@ const DashboardTab: React.FC = () => {
         }
 
         // Get last week's users
-        const { data: activeUsersLastWeek, error: activeUsersLastWeekError } = await supabaseAdmin
+        const { data: activeUsersLastWeek, error: activeUsersLastWeekError } = await supabase
           .from('users')
           .select('id')
           .eq('is_active', true)
@@ -531,7 +485,7 @@ const DashboardTab: React.FC = () => {
         }
 
         // Get this month's users
-        const { data: activeUsersThisMonth, error: activeUsersThisMonthError } = await supabaseAdmin
+        const { data: activeUsersThisMonth, error: activeUsersThisMonthError } = await supabase
           .from('users')
           .select('id')
           .eq('is_active', true)
@@ -543,7 +497,7 @@ const DashboardTab: React.FC = () => {
         }
 
         // Get last month's users
-        const { data: activeUsersLastMonth, error: activeUsersLastMonthError } = await supabaseAdmin
+        const { data: activeUsersLastMonth, error: activeUsersLastMonthError } = await supabase
           .from('users')
           .select('id')
           .eq('is_active', true)
@@ -556,7 +510,7 @@ const DashboardTab: React.FC = () => {
         }
 
         // Get counts for today and yesterday
-        const { data: todayData, error: todayError } = await supabaseAdmin
+        const { data: todayData, error: todayError } = await supabase
           .from('user_roles')
           .select('user_id', { count: 'exact' })
           .eq('role', 'user')
@@ -567,7 +521,7 @@ const DashboardTab: React.FC = () => {
           return;
         }
 
-        const { data: yesterdayData, error: yesterdayError } = await supabaseAdmin
+        const { data: yesterdayData, error: yesterdayError } = await supabase
           .from('user_roles')
           .select('user_id', { count: 'exact' })
           .eq('role', 'user')
@@ -579,7 +533,7 @@ const DashboardTab: React.FC = () => {
         }
 
         // Get counts for this week and last week
-        const { data: thisWeekData, error: thisWeekError } = await supabaseAdmin
+        const { data: thisWeekData, error: thisWeekError } = await supabase
           .from('user_roles')
           .select('user_id', { count: 'exact' })
           .eq('role', 'user')
@@ -590,7 +544,7 @@ const DashboardTab: React.FC = () => {
           return;
         }
 
-        const { data: lastWeekData, error: lastWeekError } = await supabaseAdmin
+        const { data: lastWeekData, error: lastWeekError } = await supabase
           .from('user_roles')
           .select('user_id', { count: 'exact' })
           .eq('role', 'user')
@@ -602,7 +556,7 @@ const DashboardTab: React.FC = () => {
         }
 
         // Get counts for this month and last month
-        const { data: thisMonthData, error: thisMonthError } = await supabaseAdmin
+        const { data: thisMonthData, error: thisMonthError } = await supabase
           .from('user_roles')
           .select('user_id', { count: 'exact' })
           .eq('role', 'user')
@@ -613,7 +567,7 @@ const DashboardTab: React.FC = () => {
           return;
         }
 
-        const { data: lastMonthData, error: lastMonthError } = await supabaseAdmin
+        const { data: lastMonthData, error: lastMonthError } = await supabase
           .from('user_roles')
           .select('user_id', { count: 'exact' })
           .eq('role', 'user')
@@ -687,7 +641,7 @@ const DashboardTab: React.FC = () => {
   useEffect(() => {
     const fetchRecentActivities = async () => {
       try {
-        const { data: activities, error } = await supabaseAdmin
+        const { data: activities, error } = await supabase
           .from('users')
           .select('id, full_name, email, created_at')
           .order('created_at', { ascending: false })
@@ -707,18 +661,6 @@ const DashboardTab: React.FC = () => {
     fetchRecentActivities();
     // Refresh activities every minute
     const interval = setInterval(fetchRecentActivities, 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const checkOpenAIStatus = async () => {
-      const status = await testOpenAIConnection();
-      setOpenAIStatus(status);
-    };
-
-    checkOpenAIStatus();
-    const interval = setInterval(checkOpenAIStatus, 5 * 60 * 1000); // Check every 5 minutes
-
     return () => clearInterval(interval);
   }, []);
 
@@ -907,50 +849,6 @@ const DashboardTab: React.FC = () => {
                   </WarningText>
                 </WarningContent>
                 <WarningTime>1 hour ago</WarningTime>
-              </WarningItem>
-              <WarningItem $type={dbStatus?.success ? 'info' : 'error'}>
-                <WarningContent>
-                  <WarningIcon $type={dbStatus?.success ? 'info' : 'error'}>
-                    <FaDatabase />
-                  </WarningIcon>
-                  <WarningText>
-                    <WarningTitle $type={dbStatus?.success ? 'info' : 'error'}>
-                      Database Connection
-                    </WarningTitle>
-                    <WarningDescription>
-                      {dbStatus?.success 
-                        ? 'Connection healthy' 
-                        : `Connection issue: ${dbStatus?.message}`}
-                    </WarningDescription>
-                  </WarningText>
-                </WarningContent>
-                <WarningTime>
-                  {dbStatus?.lastChecked 
-                    ? getTimeAgo(dbStatus.lastChecked)
-                    : 'Checking...'}
-                </WarningTime>
-              </WarningItem>
-              <WarningItem $type={openAIStatus?.success ? 'info' : 'error'}>
-                <WarningContent>
-                  <WarningIcon $type={openAIStatus?.success ? 'info' : 'error'}>
-                    <FaRobot />
-                  </WarningIcon>
-                  <WarningText>
-                    <WarningTitle $type={openAIStatus?.success ? 'info' : 'error'}>
-                      OpenAI Connection
-                    </WarningTitle>
-                    <WarningDescription>
-                      {openAIStatus?.success 
-                        ? 'Connection healthy' 
-                        : `Connection issue: ${openAIStatus?.message}`}
-                    </WarningDescription>
-                  </WarningText>
-                </WarningContent>
-                <WarningTime>
-                  {openAIStatus?.lastChecked 
-                    ? getTimeAgo(openAIStatus.lastChecked)
-                    : 'Checking...'}
-                </WarningTime>
               </WarningItem>
             </WarningList>
           </SystemWarnings>
