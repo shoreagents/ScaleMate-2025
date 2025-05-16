@@ -124,20 +124,19 @@ const DateInputWrapper = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: #F1F5F9;
-  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
-
+  padding: 0.5rem 1rem;
   input {
     background: transparent;
     border: none;
     color: #0F172A;
+    width: 100%;
   }
-
   svg {
     color: rgba(15, 23, 42, 0.7);
   }
-
   @media (max-width: 320px) {
     max-width: 100%;
   }
@@ -911,40 +910,50 @@ const QuoteAnalyticsTab: React.FC = () => {
           </FixedActionBar>
 
           <FiltersContainer>
-            <FilterRow>
-              <FilterGroup>
-                <SearchInput>
-                  <FaSearch />
-                  <input type="text" placeholder="Search roles..." />
-                </SearchInput>
-                <Select>
-                  <option>All Regions</option>
-                  <option>North America</option>
-                  <option>Europe</option>
-                  <option>Asia Pacific</option>
-                </Select>
-                <Select>
-                  <option>All Status</option>
-                  <option>Saved</option>
-                  <option>Abandoned</option>
-                </Select>
-              </FilterGroup>
-              <Button $primary>
-                <FaDownload />
-                Export CSV
-              </Button>
-            </FilterRow>
-            <DateRangeContainer>
-              <DateInputWrapper>
-                <FaCalendarAlt />
-                <input type="date" />
-              </DateInputWrapper>
-              <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>to</span>
-              <DateInputWrapper>
-                <FaCalendarAlt />
-                <input type="date" />
-              </DateInputWrapper>
-            </DateRangeContainer>
+            {/* For large desktop (>=1146px): Search is full width on top row, filters/dates/export are left-aligned on next row, each with max width. */}
+            {width > 1145 && (
+              <>
+                <div style={{ width: '100%', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}>
+                  <SearchInput style={{ width: '100%', maxWidth: '1100px' }}>
+                    <FaSearch />
+                    <input type="text" placeholder="Search roles..." />
+                  </SearchInput>
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    marginBottom: '1.5rem',
+                    width: '100%',
+                    maxWidth: '1100px',
+                  }}
+                >
+                  <Select style={{ minWidth: 0, maxWidth: 180 }}>
+                    <option>All Regions</option>
+                    <option>North America</option>
+                    <option>Europe</option>
+                    <option>Asia Pacific</option>
+                  </Select>
+                  <Select style={{ minWidth: 0, maxWidth: 180 }}>
+                    <option>All Status</option>
+                    <option>Saved</option>
+                    <option>Abandoned</option>
+                  </Select>
+                  <DateInputWrapper style={{ minWidth: 0, maxWidth: 180 }}>
+                    <input type="date" placeholder="From" />
+                  </DateInputWrapper>
+                  <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '1rem', margin: '0 0.25rem' }}>to</span>
+                  <DateInputWrapper style={{ minWidth: 0, maxWidth: 180 }}>
+                    <input type="date" placeholder="To" />
+                  </DateInputWrapper>
+                  <Button $primary style={{ maxWidth: 180, justifyContent: 'center' }}>
+                    <FaDownload />
+                    Export CSV
+                  </Button>
+                </div>
+              </>
+            )}
           </FiltersContainer>
 
           <TableContainer>
