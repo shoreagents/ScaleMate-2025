@@ -11,7 +11,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { useAuth } from '../../../hooks/useAuth';
-import { ResourcesAuthModal } from '../../../components/resources/ResourcesAuthModal';
+import { ResourcesAuthModal } from '../../../components/auth-modals/resources/ResourcesAuthModal';
 
 const Section = styled.section`
   padding: 3rem 0;

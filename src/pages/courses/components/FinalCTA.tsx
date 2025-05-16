@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../../../hooks/useAuth';
-import { CoursesAuthModal } from '../../../components/courses/CoursesAuthModal';
+import { CoursesAuthModal } from '../../../components/auth-modals/courses/CoursesAuthModal';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faToolbox, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../../hooks/useAuth';
-import { ToolsAuthModal } from '../../../components/tools/ToolsAuthModal';
+import { ToolsAuthModal } from '../../../components/auth-modals/tools/ToolsAuthModal';
 
 const Section = styled.section`
   padding: 5rem 0;

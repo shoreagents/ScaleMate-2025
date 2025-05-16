@@ -1,29 +1,32 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { FaTimes } from 'react-icons/fa';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
   title?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
+  className?: string;
 }
 
-const ModalOverlay = styled.div<{ isOpen: boolean }>`
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   inset: 0;
   background-color: rgba(15, 23, 42, 0.75);
-  display: ${props => props.isOpen ? 'block' : 'none'};
+  display: ${props => props.$isOpen ? 'block' : 'none'};
   z-index: 70;
   backdrop-filter: blur(2px);
 `;
 
-const ModalContainer = styled.div<{ isOpen: boolean }>`
+const ModalContainer = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   inset: 0;
   z-index: 70;
-  display: ${props => props.isOpen ? 'flex' : 'none'};
+  display: ${props => props.$isOpen ? 'flex' : 'none'};
   min-height: 100vh;
   padding: 1rem;
   justify-content: center;
@@ -34,73 +37,125 @@ const ModalContainer = styled.div<{ isOpen: boolean }>`
   }
 `;
 
-const ModalContent = styled.div`
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  width: 100%;
-  max-width: 32rem;
+const ModalContent = styled.div<{ $size?: ModalProps['size'] }>`
   position: relative;
+  width: 100%;
+  max-width: ${props => {
+    switch (props.$size) {
+      case 'sm': return '24rem';
+      case 'md': return '32rem';
+      case 'lg': return '48rem';
+      case 'xl': return '64rem';
+      case 'full': return '100%';
+      default: return '32rem';
+    }
+  }};
+  max-height: calc(100vh - 2rem);
+  background-color: white;
+  border-radius: 0.5rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E5E7EB;
-  max-height: 90vh;
   overflow-y: auto;
+  transform: translateY(0);
+  transition: transform 0.2s ease-out;
 
   @media (min-width: 640px) {
-    transform: scale(1);
+    max-height: calc(100vh - 3rem);
   }
 `;
 
-const ModalTitle = styled.h3`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0F172A;
-  margin-bottom: 1rem;
-  padding-right: 2rem; // Make room for close button
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
 `;
 
 const CloseButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  color: #6B7280;
-  cursor: pointer;
-  padding: 0.5rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s;
-  z-index: 1;
-
-  svg {
-    width: 1.5rem;
-    height: 1.5rem;
-  }
+  padding: 0.5rem;
+  color: #6b7280;
+  border-radius: 0.375rem;
+  transition: all 0.2s;
 
   &:hover {
-    color: #1F2937;
+    color: #111827;
+    background-color: #f3f4f6;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
   }
 `;
 
-export const Modal = ({ isOpen, onClose, children, title, closeOnOverlayClick = false }: ModalProps) => {
+const ModalBody = styled.div`
+  padding: 1.5rem;
+`;
+
+export const Modal: React.FC<ModalProps> = ({
+  isOpen,
+  onClose,
+  children,
+  title,
+  size = 'md',
+  showCloseButton = true,
+  closeOnOverlayClick = true,
+  className
+}) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <>
-      <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick} />
-      <ModalContainer isOpen={isOpen} onClick={handleOverlayClick}>
-        <ModalContent onClick={(e) => e.stopPropagation()}>
-          <CloseButton onClick={onClose} aria-label="Close modal">
-            <FaTimes />
-          </CloseButton>
-          {title && <ModalTitle>{title}</ModalTitle>}
-          {children}
+      <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick} />
+      <ModalContainer $isOpen={isOpen} onClick={handleOverlayClick}>
+        <ModalContent $size={size} className={className} ref={modalRef}>
+          {(title || showCloseButton) && (
+            <ModalHeader>
+              {title && <ModalTitle>{title}</ModalTitle>}
+              {showCloseButton && (
+                <CloseButton onClick={onClose} aria-label="Close modal">
+                  <XMarkIcon className="h-6 w-6" />
+                </CloseButton>
+              )}
+            </ModalHeader>
+          )}
+          <ModalBody>{children}</ModalBody>
         </ModalContent>
       </ModalContainer>
     </>

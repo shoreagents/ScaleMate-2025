@@ -44,10 +44,10 @@ const CardHeader = styled.div`
   margin-bottom: 1rem;
 `;
 
-const IconBox = styled.div<{bg: string}>`
+const IconBox = styled.div<{$bg: string}>`
   width: 3rem;
   height: 3rem;
-  background: ${({bg}) => bg};
+  background-color: ${props => props.$bg};
   border-radius: 0.5rem;
   display: flex;
   align-items: center;
@@ -59,12 +59,12 @@ const BadgeGroup = styled.div`
   gap: 0.5rem;
 `;
 
-const Badge = styled.span<{bg: string, color: string}>`
+const Badge = styled.span<{$bg: string, $color: string}>`
   padding: 0.25rem 0.5rem;
   border-radius: 0.375rem;
   font-size: 0.875rem;
-  background: ${({bg}) => bg};
-  color: ${({color}) => color};
+  background-color: ${props => props.$bg};
+  color: ${props => props.$color};
 `;
 
 const CardTitle = styled.h3`
@@ -115,12 +115,12 @@ export default function ToolGrid() {
           {/* Tool Card 1 */}
           <Card id="tool-1">
             <CardHeader>
-              <IconBox bg="rgba(59,130,246,0.1)">
+              <IconBox $bg="rgba(59,130,246,0.1)">
                 <FontAwesomeIcon icon={faRobot} style={{color: '#3B82F6', fontSize: '2rem'}} />
               </IconBox>
               <BadgeGroup>
-                <Badge bg="rgba(59,130,246,0.1)" color="#3B82F6">AI</Badge>
-                <Badge bg="rgba(0,233,21,0.1)" color="#00E915">Easy</Badge>
+                <Badge $bg="rgba(59,130,246,0.1)" $color="#3B82F6">AI</Badge>
+                <Badge $bg="rgba(0,233,21,0.1)" $color="#00E915">Easy</Badge>
               </BadgeGroup>
             </CardHeader>
             <CardTitle>UX Pilot</CardTitle>
@@ -136,11 +136,11 @@ export default function ToolGrid() {
           {/* Tool Card 2 */}
           <Card id="tool-2">
             <CardHeader>
-              <IconBox bg="rgba(0,152,255,0.1)">
+              <IconBox $bg="rgba(0,152,255,0.1)">
                 <FontAwesomeIcon icon={faArrowsSpin} style={{color: '#0098FF', fontSize: '2rem'}} />
               </IconBox>
               <BadgeGroup>
-                <Badge bg="rgba(0,152,255,0.1)" color="#0098FF">Automation</Badge>
+                <Badge $bg="rgba(0,152,255,0.1)" $color="#0098FF">Automation</Badge>
               </BadgeGroup>
             </CardHeader>
             <CardTitle>Zapier</CardTitle>
@@ -156,11 +156,11 @@ export default function ToolGrid() {
           {/* Tool Card 3 */}
           <Card id="tool-3">
             <CardHeader>
-              <IconBox bg="rgba(236,41,123,0.1)">
+              <IconBox $bg="rgba(236,41,123,0.1)">
                 <FontAwesomeIcon icon={faUsers} style={{color: '#EC297B', fontSize: '2rem'}} />
               </IconBox>
               <BadgeGroup>
-                <Badge bg="rgba(236,41,123,0.1)" color="#EC297B">Onboarding</Badge>
+                <Badge $bg="rgba(236,41,123,0.1)" $color="#EC297B">Onboarding</Badge>
               </BadgeGroup>
             </CardHeader>
             <CardTitle>Trainual</CardTitle>

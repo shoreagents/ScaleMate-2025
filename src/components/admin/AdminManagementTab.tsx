@@ -339,28 +339,47 @@ const Select = styled.select`
 `;
 
 const ErrorMessage = styled.div`
-  color: #DC2626;
   font-size: 0.875rem;
-  margin-top: 8px;
+  color: ${props => props.theme.colors.error};
+  background-color: ${props => props.theme.colors.error15};
+  padding: 0.75rem;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  
-  svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-  }
+  gap: 0.5rem;
 `;
 
-// Rename the first SuccessMessage to SuccessAlert
 const SuccessAlert = styled.div`
-  color: #059669;
   font-size: 0.875rem;
-  margin-top: 8px;
+  color: ${props => props.theme.colors.success};
+  background-color: ${props => props.theme.colors.success15};
+  padding: 0.75rem;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
+`;
+
+const SuccessNotification = styled.div`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.success};
+  background-color: ${props => props.theme.colors.success15};
+  padding: 0.75rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SuccessToast = styled.div`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.success};
+  background-color: ${props => props.theme.colors.success15};
+  padding: 0.75rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const HelperText = styled.div`
@@ -2057,10 +2076,10 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
       )}
 
       {success && (
-        <SuccessMessage>
+        <SuccessAlert>
           <FiCheck size={16} />
           {success}
-        </SuccessMessage>
+        </SuccessAlert>
       )}
 
       {isRefreshing && (
@@ -3635,10 +3654,10 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             )}
 
             {modalSuccess && (
-              <SuccessMessage>
+              <SuccessNotification>
                 <FiCheck size={16} />
                 {modalSuccess}
-              </SuccessMessage>
+              </SuccessNotification>
             )}
 
             <ButtonGroup>
@@ -3794,69 +3813,18 @@ const TabContainer = styled.div`
 `;
 
 const TabButton = styled.button<{ $active: boolean; $type: string }>`
-  padding: 0.25rem 0.75rem;
-  background-color: ${props => {
-      switch (props.$type) {
-        case 'all':
-          return props.$active ? '#6B728040' : '#6B728010';
-        case 'admin':
-          return props.$active ? '#EC489940' : '#EC489910';
-        case 'moderator':
-          return props.$active ? '#00E91540' : '#00E91510';
-        case 'developer':
-          return props.$active ? '#8B5CF640' : '#8B5CF610';
-        case 'author':
-          return props.$active ? '#F59E0B40' : '#F59E0B10';
-        case 'user':
-          return props.$active ? '#3B82F640' : '#3B82F610';
-        default:
-          return props.$active ? '#3B82F640' : '#3B82F610';
-      }
-  }};
-  color: ${props => {
-      switch (props.$type) {
-        case 'all':
-          return props.$active ? '#1F2937' : '#4B5563';
-        case 'admin':
-          return props.$active ? '#EC4899' : '#EC4899';
-        case 'moderator':
-          return props.$active ? '#00E915' : '#00E915';
-        case 'developer':
-          return props.$active ? '#8B5CF6' : '#8B5CF6';
-        case 'author':
-          return props.$active ? '#F59E0B' : '#F59E0B';
-        case 'user':
-          return props.$active ? '#3B82F6' : '#3B82F6';
-        default:
-          return props.$active ? '#3B82F6' : '#3B82F6';
-      }
-  }};
+  padding: 0.75rem 1.5rem;
+  background: ${props => props.$active ? props.theme.colors.primary : props.theme.colors.background.secondary};
+  color: ${props => props.$active ? props.theme.colors.text.inverse : props.theme.colors.text.primary};
   border: none;
-  border-radius: 9999px;
+  border-radius: 8px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: ${props => props.theme.fonts.weights.semibold};
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 
   &:hover {
-    background-color: ${props => {
-      switch (props.$type) {
-        case 'all':
-          return '#6B728040';
-        case 'admin':
-          return '#EC489940';
-        case 'moderator':
-          return '#00E91540';
-        case 'developer':
-          return '#8B5CF640';
-        case 'author':
-          return '#F59E0B40';
-        case 'user':
-          return '#3B82F640';
-        default:
-          return '#3B82F640';
-      }
-    }};
+    background: ${props => props.$active ? props.theme.colors.primaryDark : props.theme.colors.background.tertiary};
   }
 `;
 

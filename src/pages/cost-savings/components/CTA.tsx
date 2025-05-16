@@ -4,8 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDownload, faPhone, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useDownloadModal } from '@/hooks/useDownloadModal';
 import { supabase } from '@/lib/supabase';
-import { CostSavingsAuthModal } from '@/components/cost-savings/CostSavingsAuthModal';
-import { CostSavingsDownloadModal } from '@/components/cost-savings/CostSavingsDownloadModal';
+import { CostSavingsAuthModal } from '@/components/auth-modals/cost-savings/CostSavingsAuthModal';
+import { CostSavingsDownloadModal } from '@/components/auth-modals/cost-savings/CostSavingsDownloadModal';
 import Link from 'next/link';
 
 const Section = styled.section`

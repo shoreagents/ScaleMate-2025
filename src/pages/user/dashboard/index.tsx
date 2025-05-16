@@ -371,25 +371,24 @@ const DashboardPage = () => {
   }
 
   return (
-    <NoNavbarLayout>
-      <DashboardContainer>
-        <DashboardSidebar
-          logoText="ScaleMate"
-          navItems={navItems}
-          activeTab={activeTab}
-          onTabClick={handleTabClick}
-          isModalOpen={isModalOpen}
+    <DashboardContainer>
+      <DashboardSidebar
+        logoText="ScaleMate"
+        navItems={navItems}
+        activeTab={activeTab}
+        onTabClick={handleTabClick}
+        isModalOpen={isModalOpen}
+      />
+      <MainContent>
+        <DashboardHeader
+          title={getTabTitle(activeTab)}
+          profilePicture={profilePicture}
+          onLogout={handleLogout}
+          onProfileClick={() => setActiveTab('profile')}
+          showProfile={activeTab === 'profile'}
         />
-        <MainContent>
-          <DashboardHeader
-            title={getTabTitle(activeTab)}
-            profilePicture={profilePicture}
-            onLogout={handleLogout}
-            onProfileClick={() => setActiveTab('profile')}
-            showProfile={activeTab === 'profile'}
-          />
-          {renderContent()}
-        </MainContent>
+        {renderContent()}
+      </MainContent>
 
       {showSetupForm && user && (
           <FirstTimeSetupForm
@@ -417,8 +416,7 @@ const DashboardPage = () => {
           </SuccessModalContent>
         </SuccessModal>
       )}
-      </DashboardContainer>
-    </NoNavbarLayout>
+    </DashboardContainer>
   );
 };
 

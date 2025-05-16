@@ -114,7 +114,7 @@ const ProfileContainer = styled.div`
   position: relative;
 `;
 
-const ProfileDropdown = styled.div<{ isOpen: boolean }>`
+const ProfileDropdown = styled.div<{ $isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
@@ -122,7 +122,7 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   border-radius: 8px;
   border: 1px solid #E5E7EB;
   width: 200px;
-  display: ${props => props.isOpen ? 'block' : 'none'};
+  display: ${props => props.$isOpen ? 'block' : 'none'};
   z-index: 50;
   overflow: hidden;
 `;
@@ -242,11 +242,11 @@ const SolutionCard = styled.div`
     width: 100%;
   }
 `;
-const SolutionIcon = styled.div<{ bg: string }>`
+const SolutionIcon = styled.div<{$bg: string}>`
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: ${props => props.bg};
+  background-color: ${props => props.$bg};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -329,23 +329,17 @@ const MobileMenuButton = styled.button`
   }
 `;
 
-const MobileMenu = styled.div<{ isOpen: boolean }>`
-  display: none;
+const MobileMenu = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   top: 4rem;
   left: 0;
   right: 0;
   bottom: 0;
   background: white;
-  border-bottom: 1px solid #E5E7EB;
   z-index: 40;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
+  transition: transform 0.3s ease-in-out;
   overflow-y: auto;
-
-  @media (max-width: 994px) {
-    display: ${props => props.isOpen ? 'block' : 'none'};
-    height: calc(100vh - 4rem);
-  }
 `;
 
 const MobileNav = styled.nav`
@@ -655,25 +649,25 @@ const Header = () => {
                 <SolutionsDropdown>
                   <DropdownContent>
                     <SolutionCard>
-                      <SolutionIcon bg="#3B82F6"><FaCalculator /></SolutionIcon>
+                      <SolutionIcon $bg="#3B82F6"><FaCalculator /></SolutionIcon>
                       <SolutionTitle>Quick Quote Calculator</SolutionTitle>
                       <SolutionSubtitle>Instantly estimate offshore staff costs</SolutionSubtitle>
                       <SolutionLink onClick={() => router.push('/quote')}>Get a Quick Quote <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
-                      <SolutionIcon bg="#F472B6"><FaChartLine /></SolutionIcon>
+                      <SolutionIcon $bg="#F472B6"><FaChartLine /></SolutionIcon>
                       <SolutionTitle>Cost Savings Calculator</SolutionTitle>
                       <SolutionSubtitle>Compare local vs offshore teams</SolutionSubtitle>
                       <SolutionLink onClick={() => router.push('/cost-savings')}>Compare Savings <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
-                      <SolutionIcon bg="#4ADE80"><FaUsers /></SolutionIcon>
+                      <SolutionIcon $bg="#4ADE80"><FaUsers /></SolutionIcon>
                       <SolutionTitle>AI-Powered Role Builder</SolutionTitle>
                       <SolutionSubtitle>Build offshore job blueprints with AI</SolutionSubtitle>
                       <SolutionLink onClick={() => router.push('/role-builder')}>Build a Role <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
-                      <SolutionIcon bg="#6366F1"><FaRegCircle /></SolutionIcon>
+                      <SolutionIcon $bg="#6366F1"><FaRegCircle /></SolutionIcon>
                       <SolutionTitle>Readiness Quiz</SolutionTitle>
                       <SolutionSubtitle>Assess your offshore and AI readiness</SolutionSubtitle>
                       <SolutionLink onClick={() => router.push('/readiness')}>Take the Quiz <ArrowIcon icon={faArrowRight} /></SolutionLink>
@@ -696,25 +690,25 @@ const Header = () => {
                 <LearnDropdown>
                   <DropdownContent>
                     <SolutionCard>
-                      <SolutionIcon bg="#3B82F6"><FaGraduationCap /></SolutionIcon>
+                      <SolutionIcon $bg="#3B82F6"><FaGraduationCap /></SolutionIcon>
                       <SolutionTitle>Course Library</SolutionTitle>
                       <SolutionSubtitle>Build skills with free and premium training.</SolutionSubtitle>
                       <SolutionLink onClick={() => router.push('/courses')}>Browse Courses <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
-                      <SolutionIcon bg="#F472B6"><FaDownload /></SolutionIcon>
+                      <SolutionIcon $bg="#F472B6"><FaDownload /></SolutionIcon>
                       <SolutionTitle>Resource Library</SolutionTitle>
                       <SolutionSubtitle>Access checklists, templates, and guides.</SolutionSubtitle>
                       <SolutionLink onClick={() => router.push('/resources')}>View Resources <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
-                      <SolutionIcon bg="#4ADE80"><FaToolbox /></SolutionIcon>
+                      <SolutionIcon $bg="#4ADE80"><FaToolbox /></SolutionIcon>
                       <SolutionTitle>Tool Library</SolutionTitle>
                       <SolutionSubtitle>Discover top AI and automation tools.</SolutionSubtitle>
                       <SolutionLink onClick={() => router.push('/tools')}>Explore Tools <ArrowIcon icon={faArrowRight} /></SolutionLink>
                     </SolutionCard>
                     <SolutionCard>
-                      <SolutionIcon bg="#3B82F6"><FaRegNewspaper /></SolutionIcon>
+                      <SolutionIcon $bg="#3B82F6"><FaRegNewspaper /></SolutionIcon>
                       <SolutionTitle>Blog & Insights</SolutionTitle>
                       <SolutionSubtitle>Read insights, strategies, and scaling tips.</SolutionSubtitle>
                       <SolutionLink onClick={() => router.push('/blog')}>Read the Blog <ArrowIcon icon={faArrowRight} /></SolutionLink>
@@ -740,7 +734,7 @@ const Header = () => {
                     )}
                   </ProfileIcon>
                 </IconButton>
-                <ProfileDropdown isOpen={isProfileOpen}>
+                <ProfileDropdown $isOpen={isProfileOpen}>
                   <DropdownItem onClick={handleDashboardClick}>
                     <FaGripVertical size={16} color="#3B82F6" style={{ minWidth: 16 }} />
                     Dashboard
@@ -763,7 +757,7 @@ const Header = () => {
           </MobileMenuButton>
         </HeaderContent>
       </Container>
-      <MobileMenu isOpen={isMobileMenuOpen}>
+      <MobileMenu $isOpen={isMobileMenuOpen}>
         <MobileNav>
           {isLoggedIn === null ? null : isLoggedIn ? (
             <MobileAuthRow>

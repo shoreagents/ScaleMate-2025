@@ -88,162 +88,38 @@ const normalizeEmail = (email: string): string => {
 export default function DirectAuthCallback() {
   const router = useRouter();
 
+  // Helper function to handle errors
+  const handleError = (error: any, message: string) => {
+    console.error(message, error);
+    router.push('/login?error=' + encodeURIComponent(message));
+  };
+
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Helper function to handle errors - just log them
-        const handleError = (error: any, message: string) => {
-          console.error(message, error);
-        };
-
-        // Wait for session to be valid
-        const sessionValid = await waitForValidSession();
-        if (!sessionValid) {
-          handleError(null, 'Session validation failed. Please try again.');
-          return;
-        }
-
-        // Get the session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          handleError(sessionError, 'Session error. Please try again.');
-          return;
-        }
-        if (!session) {
-          handleError(null, 'No session found. Please try again.');
-          return;
-        }
-
-        // Get the user
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) {
-          handleError(userError, 'User error. Please try again.');
-          return;
-        }
-        if (!user) {
-          handleError(null, 'No user found. Please try again.');
+        
+        if (userError || !user) {
+          handleError(null, 'Authentication failed. Please try again.');
           return;
         }
 
-        // Create service role client for admin operations
-        const serviceRoleClient = createClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!,
-          {
-            auth: {
-              autoRefreshToken: false,
-              persistSession: false
-            }
-          }
-        );
-
-        // Check if user profile exists
-        const { data: profile, error: profileError } = await serviceRoleClient
-          .from('user_profiles')
-          .select('username, profile_picture')
-          .eq('user_id', user.id)
-          .single();
-
-        // If no profile exists, create one for Google sign-in users
-        if (profileError || !profile?.username) {
-          // Check if this is a Google sign-in
-          const isGoogleUser = user.app_metadata?.provider === 'google';
-          
-          if (isGoogleUser) {
-            // Get high quality profile picture from Google
-            const avatarUrl = user.user_metadata?.avatar_url;
-            const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
-
-            // Normalize email for Gmail addresses
-            const email = user.email;
-            const normalizedEmail = email ? normalizeEmail(email) : null;
-
-            // Always update auth user's email to normalized version for Google users
-            if (normalizedEmail && normalizedEmail !== email) {
-              const { error: updateError } = await serviceRoleClient.auth.admin.updateUserById(
-                user.id,
-                { email: normalizedEmail }
-              );
-              if (updateError) {
-                console.error('Error updating user email:', updateError);
-              }
-            }
-
-            // Create user profile without username
-            const { error: profileError } = await supabase
-              .from('user_profiles')
-              .insert({
-                user_id: user.id,
-                first_name: user.user_metadata?.full_name?.split(' ')[0] || '',
-                last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || '',
-                profile_picture: highQualityAvatarUrl
-              });
-
-            if (profileError) {
-              console.error('Error creating user profile:', profileError);
-              throw new Error('Error creating user profile. Please contact support.');
-            }
-          } else {
-            handleError(null, 'User profile not found. Please contact support.');
-            return;
-          }
-        } else if (user.app_metadata?.provider === 'google' && !profile.profile_picture) {
-          // If profile exists but no profile picture, update it with Google's picture
-          const avatarUrl = user.user_metadata?.avatar_url;
-          const highQualityAvatarUrl = avatarUrl ? avatarUrl.replace('=s96-c', '=s400-c') : null;
-          
-          if (highQualityAvatarUrl) {
-            const { error: updateError } = await serviceRoleClient
-              .from('user_profiles')
-              .update({
-                profile_picture: highQualityAvatarUrl,
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', user.id);
-
-            if (updateError) {
-              console.error('Error updating profile picture:', updateError);
-              // Don't return here as this is not critical
-            }
-          }
-        }
-
-        // Get user's role
-        const { data: roles, error: roleError } = await serviceRoleClient
+        // Get user's roles
+        const { data: roles, error: rolesError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id);
 
-        let userRoles: string[];
-
-        // If no roles exist, assign default 'user' role
-        if (roleError || !roles || roles.length === 0) {
-          // Try to assign default role
-          const { error: assignRoleError } = await serviceRoleClient
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
-              role: 'user',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-
-          if (assignRoleError) {
-            handleError(assignRoleError, 'Error assigning default role. Please contact support.');
-            return;
-          }
-
-          // Set roles to default after assignment
-          userRoles = ['user'];
-        } else {
-          userRoles = roles.map(r => r.role);
+        if (rolesError || !roles || roles.length === 0) {
+          handleError(null, 'User has no valid role assigned. Please contact support.');
+          return;
         }
 
-        // Determine redirect URL based on role
-        let redirectUrl = '';
-        if (userRoles.includes('admin')) {
-          redirectUrl = '/admin/dashboard';
-        } else if (userRoles.includes('moderator')) {
+        const userRoles = roles.map(r => r.role);
+        let redirectUrl = '/';
+
+        // Check for admin or moderator role first
+        if (userRoles.includes('admin') || userRoles.includes('moderator')) {
           redirectUrl = '/admin/dashboard';
         } else if (userRoles.includes('user')) {
           redirectUrl = '/user/dashboard';
@@ -252,11 +128,12 @@ export default function DirectAuthCallback() {
           return;
         }
 
-        // Use router.replace instead of window.location.href for smoother transition
+        // Use router.replace for smoother transition
         await router.replace(redirectUrl);
 
       } catch (err) {
         console.error('Direct auth callback error:', err);
+        handleError(err, 'An unexpected error occurred. Please try again.');
       }
     };
 

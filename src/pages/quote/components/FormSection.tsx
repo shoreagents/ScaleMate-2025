@@ -5,8 +5,8 @@ import { faLock, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useDownloadModal } from '@/hooks/useDownloadModal';
 import { useRouter } from 'next/router';
 import { supabase } from '@/lib/supabase';
-import { QuoteAuthModal } from '../../../components/quote/QuoteAuthModal';
-import { QuoteDownloadModal } from '../../../components/quote/QuoteDownloadModal';
+import { QuoteAuthModal } from '../../../components/auth-modals/quote/QuoteAuthModal';
+import { QuoteDownloadModal } from '../../../components/auth-modals/quote/QuoteDownloadModal';
 
 const Section = styled.section`
   padding: 3rem 0;

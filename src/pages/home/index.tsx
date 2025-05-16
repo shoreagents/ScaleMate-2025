@@ -63,10 +63,10 @@ const Card = styled.div`
   border: 1px solid #E5E7EB;
 `;
 
-const IconWrapper = styled.div<{ bgColor: string }>`
+const IconWrapper = styled.div<{ $bgColor: string }>`
   width: 4rem;
   height: 4rem;
-  background-color: ${props => props.bgColor};
+  background-color: ${props => props.$bgColor};
   border-radius: 9999px;
   display: flex;
   align-items: center;

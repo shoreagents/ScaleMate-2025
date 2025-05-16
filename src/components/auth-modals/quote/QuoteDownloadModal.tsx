@@ -1,31 +1,31 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { Modal } from '../ui/Modal';
+import { Modal } from '../../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 
-interface CostSavingsDownloadModalProps {
+interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const CostSavingsDownloadModal = ({ isOpen, onClose }: CostSavingsDownloadModalProps) => {
+export const QuoteDownloadModal = ({ isOpen, onClose }: Props) => {
   const [isDownloading, setIsDownloading] = useState(false);
 
   const handleDownload = async () => {
     try {
       setIsDownloading(true);
-      const response = await fetch('/api/cost-savings/download');
+      const response = await fetch('/api/blueprints/download');
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'cost-savings-report.pdf';
+      a.download = 'job-blueprint.pdf';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
     } catch (error) {
-      console.error('Error downloading cost savings report:', error);
+      console.error('Error downloading blueprint:', error);
     } finally {
       setIsDownloading(false);
     }
@@ -34,27 +34,27 @@ export const CostSavingsDownloadModal = ({ isOpen, onClose }: CostSavingsDownloa
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <Container>
-        <Title>Your Cost Savings Report is Ready!</Title>
+        <Title>Your Blueprint is Ready!</Title>
         
         <Description>
-          Get your complete cost savings report PDF with detailed ROI analysis, implementation recommendations, and more.
+          Get your complete job blueprint PDF with salary benchmarks, tools, KPIs, and more.
         </Description>
 
         <IconContainer>
           <IconWrapper>
             <DocumentIcon style={{ width: '2.5rem', height: '2.5rem' }} />
           </IconWrapper>
-          <IconText>Complete Cost Savings Report</IconText>
+          <IconText>Complete Job Blueprint</IconText>
         </IconContainer>
 
         <ButtonContainer>
           <DownloadButton onClick={handleDownload} disabled={isDownloading}>
-            {isDownloading ? 'Downloading...' : 'Download Report'}
+            {isDownloading ? 'Downloading...' : 'Download Blueprint'}
           </DownloadButton>
         </ButtonContainer>
 
         <ExploreContainer>
-          <ExploreText>Want to analyze another role?</ExploreText>
+          <ExploreText>Want to have another quotation?</ExploreText>
           <ExploreLink href="#" onClick={(e) => { e.preventDefault(); onClose(); }}>
             Yes, please!
           </ExploreLink>
@@ -105,7 +105,7 @@ const Description = styled.p`
 
 const IconContainer = styled.div`
   width: 100%;
-  background-color: rgba(244, 114, 182, 0.1);
+  background-color: rgba(59, 130, 246, 0.1);
   border-radius: 0.75rem;
   padding: 1.5rem;
   margin-bottom: 3rem;
@@ -120,7 +120,7 @@ const IconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #F472B6;
+  color: #3B82F6;
 
   @media (min-width: 640px) {
     width: 4rem;
@@ -147,7 +147,7 @@ const ButtonContainer = styled.div`
 
 const DownloadButton = styled.button`
   width: 100%;
-  background: #F472B6;
+  background: #3B82F6;
   color: white;
   padding: 0.875rem;
   border-radius: 8px;
@@ -158,7 +158,7 @@ const DownloadButton = styled.button`
   transition: all 0.2s ease;
 
   &:hover {
-    background: #EC4899;
+    background: #2563EB;
   }
 
   &:active {
@@ -182,12 +182,12 @@ const ExploreText = styled.span`
 `;
 
 const ExploreLink = styled.a`
-  color: #F472B6;
+  color: #3B82F6;
   font-weight: 500;
   font-size: 0.875rem;
   text-decoration: none;
   transition: color 0.2s ease;
   &:hover {
-    color: #EC4899;
+    color: #2563EB;
   }
 `; 

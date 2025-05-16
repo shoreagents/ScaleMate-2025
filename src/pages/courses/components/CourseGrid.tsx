@@ -5,7 +5,7 @@ import { faClock } from '@fortawesome/free-regular-svg-icons';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { useAuth } from '../../../hooks/useAuth';
-import { CoursesAuthModal } from '../../../components/courses/CoursesAuthModal';
+import { CoursesAuthModal } from '../../../components/auth-modals/courses/CoursesAuthModal';
 
 const Section = styled.section`
   padding: 3rem 0;
@@ -36,9 +36,9 @@ const Card = styled.div`
   overflow: hidden;
 `;
 
-const CardImageWrapper = styled.div<{bg: string}>`
+const CardImageWrapper = styled.div<{$bg: string}>`
   height: 12rem;
-  background: ${({bg}) => bg};
+  background-color: ${props => props.$bg};
   position: relative;
 `;
 
@@ -56,12 +56,12 @@ const BadgeGroup = styled.div`
   gap: 0.5rem;
 `;
 
-const Badge = styled.span<{bg: string, color: string}>`
+const Badge = styled.span<{$bg: string, $color: string}>`
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   font-size: 0.95rem;
-  background: ${({bg}) => bg};
-  color: ${({color}) => color};
+  background-color: ${props => props.$bg};
+  color: ${props => props.$color};
   font-weight: 500;
 `;
 
@@ -148,11 +148,11 @@ export default function CourseGrid() {
           <Grid>
             {/* Course Card 1 */}
             <Card id="course-1">
-              <CardImageWrapper bg="rgba(59,130,246,0.1)">
+              <CardImageWrapper $bg="rgba(59,130,246,0.1)">
                 <CardImage src="https://storage.googleapis.com/uxpilot-auth.appspot.com/6f542091d1-d3051b85f3425d637eb3.png" alt="modern business training course thumbnail with AI theme, minimalist" />
                 <BadgeGroup>
-                  <Badge bg="#00E915" color="#fff">100 XP</Badge>
-                  <Badge bg="#fff" color="#3B82F6">Free</Badge>
+                  <Badge $bg="#00E915" $color="#fff">100 XP</Badge>
+                  <Badge $bg="#fff" $color="#3B82F6">Free</Badge>
                 </BadgeGroup>
               </CardImageWrapper>
               <CardContent>
@@ -172,11 +172,11 @@ export default function CourseGrid() {
             </Card>
             {/* Course Card 2 */}
             <Card id="course-2">
-              <CardImageWrapper bg="rgba(236,41,123,0.1)">
+              <CardImageWrapper $bg="rgba(236,41,123,0.1)">
                 <CardImage src="https://storage.googleapis.com/uxpilot-auth.appspot.com/6b2e33c16d-cf18f37385c31a5e77a3.png" alt="team delegation and management course thumbnail, professional style" />
                 <BadgeGroup>
-                  <Badge bg="#00E915" color="#fff">150 XP</Badge>
-                  <Badge bg="#EC297B" color="#fff">Premium</Badge>
+                  <Badge $bg="#00E915" $color="#fff">150 XP</Badge>
+                  <Badge $bg="#EC297B" $color="#fff">Premium</Badge>
                 </BadgeGroup>
               </CardImageWrapper>
               <CardContent>
@@ -196,11 +196,11 @@ export default function CourseGrid() {
             </Card>
             {/* Course Card 3 */}
             <Card id="course-3">
-              <CardImageWrapper bg="rgba(0,152,255,0.1)">
+              <CardImageWrapper $bg="rgba(0,152,255,0.1)">
                 <CardImage src="https://storage.googleapis.com/uxpilot-auth.appspot.com/5957270779-07c26e609a2883f5668e.png" alt="system automation course thumbnail, tech focused" />
                 <BadgeGroup>
-                  <Badge bg="#00E915" color="#fff">200 XP</Badge>
-                  <Badge bg="#fff" color="#3B82F6">Free</Badge>
+                  <Badge $bg="#00E915" $color="#fff">200 XP</Badge>
+                  <Badge $bg="#fff" $color="#3B82F6">Free</Badge>
                 </BadgeGroup>
               </CardImageWrapper>
               <CardContent>
