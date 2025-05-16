@@ -69,7 +69,6 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 1rem;
   max-height: 90vh;
   overflow-y: auto;
   width: 100%;

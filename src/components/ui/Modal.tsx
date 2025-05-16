@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { FaTimes } from 'react-icons/fa';
 
 interface ModalProps {
   isOpen: boolean;
@@ -37,69 +37,44 @@ const ModalContainer = styled.div<{ $isOpen: boolean }>`
   }
 `;
 
-const ModalContent = styled.div<{ $size?: ModalProps['size'] }>`
+const ModalContent = styled.div`
   position: relative;
   width: 100%;
-  max-width: ${props => {
-    switch (props.$size) {
-      case 'sm': return '24rem';
-      case 'md': return '32rem';
-      case 'lg': return '48rem';
-      case 'xl': return '64rem';
-      case 'full': return '100%';
-      default: return '32rem';
-    }
-  }};
-  max-height: calc(100vh - 2rem);
+  max-width: 530px;
   background-color: white;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   overflow-y: auto;
   transform: translateY(0);
   transition: transform 0.2s ease-out;
-
-  @media (min-width: 640px) {
-    max-height: calc(100vh - 3rem);
-  }
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
 `;
 
 const CloseButton = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #6B7280;
+  cursor: pointer;
+  padding: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
-  color: #6b7280;
   border-radius: 0.375rem;
-  transition: all 0.2s;
-
+  transition: color 0.2s;
+  z-index: 2;
   &:hover {
     color: #111827;
-    background-color: #f3f4f6;
   }
-
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    box-shadow: none;
   }
 `;
 
 const ModalBody = styled.div`
-  padding: 1.5rem;
+  padding: 64px 32px 32px 32px;
 `;
 
 export const Modal: React.FC<ModalProps> = ({
@@ -144,20 +119,15 @@ export const Modal: React.FC<ModalProps> = ({
     <>
       <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick} />
       <ModalContainer $isOpen={isOpen} onClick={handleOverlayClick}>
-        <ModalContent $size={size} className={className} ref={modalRef}>
-          {(title || showCloseButton) && (
-            <ModalHeader>
-              {title && <ModalTitle>{title}</ModalTitle>}
-              {showCloseButton && (
-                <CloseButton onClick={onClose} aria-label="Close modal">
-                  <XMarkIcon className="h-6 w-6" />
-                </CloseButton>
-              )}
-            </ModalHeader>
+        <ModalContent className={className} ref={modalRef}>
+          {showCloseButton && (
+            <CloseButton onClick={onClose} aria-label="Close modal">
+              <FaTimes size={20} />
+            </CloseButton>
           )}
           <ModalBody>{children}</ModalBody>
         </ModalContent>
       </ModalContainer>
     </>
   );
-}; 
+};

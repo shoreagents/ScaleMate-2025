@@ -24,32 +24,27 @@ export const withRoleProtection = (WrappedComponent: React.ComponentType<any>, r
             return;
           }
 
-          // Get user's roles
+          // Get user's role
           const { data: roles, error: rolesError } = await supabase
             .from('user_roles')
             .select('role')
-            .eq('user_id', user.id);
+            .eq('user_id', user.id)
+            .single();
 
-          if (rolesError || !roles || roles.length === 0) {
+          if (rolesError || !roles) {
             router.push('/login');
             return;
           }
 
-          const userRoles = roles.map(r => r.role);
-
           // Check if user has the required role
-          if (userRoles.includes(requiredRole)) {
+          if (roles.role === requiredRole) {
             setIsAuthorized(true);
           } else {
-            // Redirect to appropriate dashboard based on highest role
-            if (userRoles.includes('admin')) {
+            // Redirect to appropriate dashboard based on role
+            if (roles.role === 'admin') {
               router.push('/admin/dashboard');
-            } else if (userRoles.includes('moderator')) {
-              router.push('/admin/dashboard');
-            } else if (userRoles.includes('user')) {
-              router.push('/user/dashboard');
             } else {
-              router.push('/login');
+              router.push('/user/dashboard');
             }
           }
         } catch (error) {

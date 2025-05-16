@@ -9,27 +9,15 @@ export type ScaleMateTheme = {
     background: {
       primary: string;
       secondary: string;
-      tertiary: string;
-      hover: string;
-      active: string;
     };
     text: {
       primary: string;
       secondary: string;
-      tertiary: string;
-      inverse: string;
     };
     border: string;
     error: string;
     success: string;
     disabled: string;
-    error15: string; // 15% opacity version of error color
-    primary15: string; // 15% opacity version of primary color
-    success15: string;
-    warning: string;
-    warning15: string;
-    info: string;
-    info15: string;
   };
   spacing: {
     xs: string;
@@ -50,12 +38,6 @@ export type ScaleMateTheme = {
   };
   fonts: {
     sans: string;
-    weights: {
-      normal: number;
-      medium: number;
-      semibold: number;
-      bold: number;
-    };
   };
   breakpoints: {
     sm: string;
@@ -77,28 +59,16 @@ export const theme: ScaleMateTheme = {
     secondary: '#6B7280',
     background: {
       primary: '#FFFFFF',
-      secondary: '#F9FAFB',
-      tertiary: '#F3F4F6',
-      hover: '#F1F5F9',
-      active: '#E2E8F0'
+      secondary: '#F9FAFB'
     },
     text: {
       primary: '#1F2937',
-      secondary: '#6B7280',
-      tertiary: '#9CA3AF',
-      inverse: '#FFFFFF'
+      secondary: '#6B7280'
     },
     border: '#E5E7EB',
     error: '#EF4444',
     success: '#10B981',
-    disabled: '#9CA3AF',
-    error15: '#EF444426', // 15% opacity version of error color
-    primary15: '#3B82F626', // 15% opacity version of primary color
-    success15: '#10B98126',
-    warning: '#F59E0B',
-    warning15: '#F59E0B26',
-    info: '#3B82F6',
-    info15: '#3B82F626'
+    disabled: '#9CA3AF'
   },
   spacing: {
     xs: '0.25rem',
@@ -118,13 +88,7 @@ export const theme: ScaleMateTheme = {
     slow: '500ms ease'
   },
   fonts: {
-    sans: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif',
-    weights: {
-      normal: 400,
-      medium: 500,
-      semibold: 600,
-      bold: 700
-    }
+    sans: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif'
   },
   breakpoints: {
     sm: '640px',

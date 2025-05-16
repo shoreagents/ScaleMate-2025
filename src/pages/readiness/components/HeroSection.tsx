@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartSimple, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import QuizInterface from './QuizInterface';
 import { FaRegCircle } from 'react-icons/fa6';
-import { ReadinessAuthModal } from '../../../components/readiness/ReadinessAuthModal';
+import { ReadinessAuthModal } from '../../../components/auth-modals/readiness/ReadinessAuthModal';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../../hooks/useAuth';
 
