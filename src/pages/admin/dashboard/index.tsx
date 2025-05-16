@@ -67,6 +67,7 @@ const MainContent = styled.main`
   padding-top: 5rem;
   background-color: #F9FAFB;
   min-height: 100vh;
+  overflow: hidden;
 
   @media (max-width: 768px) {
     margin-left: 0;
