@@ -112,6 +112,75 @@ This document defines the **architecture, implementation patterns, file structur
 - RLS per table (e.g. `user_id = auth.uid()` for quotes, events)
 - Admin bypass via `IS_MEMBER_OF('admin')`
 
+### Auth Context Structure
+```typescript
+interface AuthContext {
+  user: User | null;
+  role: 'user' | 'admin';
+  isLoading: boolean;
+  error: Error | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  signup: (email: string, password: string) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+}
+```
+
+### Protected Route Pattern
+```typescript
+// pages/_app.tsx
+function App({ Component, pageProps }) {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <Component {...pageProps} />
+      </ProtectedRoute>
+    </AuthProvider>
+  );
+}
+```
+
+### Role-Based Routing
+- User routes: `/user/*`
+- Admin routes: `/admin/*`
+- Public routes: `/`, `/login`, `/signup`, `/reset-password`
+
+## Dashboard Structure
+
+### User Dashboard (`/user/dashboard`)
+- Profile overview
+- Progress tracking
+- Tool access
+- Content recommendations
+- Event history
+
+### Admin Dashboard (`/admin/dashboard`)
+- User management
+- Content management
+- Analytics overview
+- Lead tracking
+- System settings
+
+### Data Fetching Pattern
+```typescript
+// hooks/useDashboardData.ts
+function useDashboardData() {
+  const { data, error, isLoading } = useQuery({
+    queryKey: ['dashboardData'],
+    queryFn: fetchDashboardData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  return { data, error, isLoading };
+}
+```
+
+### Loading States
+- Skeleton loaders for initial load
+- Spinners for actions
+- Error boundaries for graceful failure
+- Retry mechanisms for failed requests
+
 ---
 
 ## 7. Error Handling

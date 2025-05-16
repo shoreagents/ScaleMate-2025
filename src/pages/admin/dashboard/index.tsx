@@ -52,6 +52,8 @@ import QuizManagerTab from '@/components/admin/QuizManagerTab';
 import ContentBlocksTab from '@/components/admin/ContentBlocksTab';
 import SystemSettingsTab from '@/components/admin/SystemSettingsTab';
 import { withRoleProtection } from '@/components/auth/withRoleProtection';
+import { useQuery } from '@tanstack/react-query';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -672,6 +674,58 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   }
 `;
 
+interface AdminDashboardData {
+  users: Array<{
+    id: string;
+    email: string;
+    role: string;
+    created_at: string;
+    last_sign_in: string;
+  }>;
+  analytics: {
+    total_users: number;
+    active_users: number;
+    total_leads: number;
+    qualified_leads: number;
+  };
+  recent_leads: Array<{
+    id: string;
+    user_id: string;
+    score: number;
+    status: string;
+    created_at: string;
+  }>;
+}
+
+async function fetchAdminDashboardData(): Promise<AdminDashboardData> {
+  const { data: users } = await supabase
+    .from('users')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  const { data: analytics } = await supabase
+    .from('analytics')
+    .select('*')
+    .single();
+
+  const { data: recent_leads } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  return {
+    users: users || [],
+    analytics: analytics || {
+      total_users: 0,
+      active_users: 0,
+      total_leads: 0,
+      qualified_leads: 0,
+    },
+    recent_leads: recent_leads || [],
+  };
+}
+
 const DashboardPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -679,6 +733,12 @@ const DashboardPage = () => {
   const [userData, setUserData] = useState<any>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['adminDashboardData'],
+    queryFn: fetchAdminDashboardData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -808,27 +868,49 @@ const DashboardPage = () => {
     { id: 'system-settings', label: 'System Settings', icon: <FaGear /> }
   ];
 
+  if (isLoading) {
+    return (
+      <ProtectedRoute requiredRole="admin">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute requiredRole="admin">
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-red-500">Error loading dashboard data</div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
-    <DashboardContainer>
-      <DashboardSidebar
-        logoText="ScaleMate Admin"
-        navItems={navItems}
-        activeTab={activeTab}
-        onTabClick={handleTabClick}
-        isModalOpen={isModalOpen}
-      />
-      <MainContent>
-        <DashboardHeader
-          title={getTabTitle(activeTab)}
-          profilePicture={profilePicture}
-          onLogout={handleLogout}
-          onProfileClick={() => setActiveTab('profile')}
-          showProfile={activeTab === 'profile'}
-          isLoading={isLoadingProfile}
+    <ProtectedRoute requiredRole="admin">
+      <DashboardContainer>
+        <DashboardSidebar
+          logoText="ScaleMate Admin"
+          navItems={navItems}
+          activeTab={activeTab}
+          onTabClick={handleTabClick}
+          isModalOpen={isModalOpen}
         />
-        {renderContent()}
-      </MainContent>
-    </DashboardContainer>
+        <MainContent>
+          <DashboardHeader
+            title={getTabTitle(activeTab)}
+            profilePicture={profilePicture}
+            onLogout={handleLogout}
+            onProfileClick={() => setActiveTab('profile')}
+            showProfile={activeTab === 'profile'}
+            isLoading={isLoadingProfile}
+          />
+          {renderContent()}
+        </MainContent>
+      </DashboardContainer>
+    </ProtectedRoute>
   );
 };
 

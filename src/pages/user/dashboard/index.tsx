@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
-import { useAuth } from '@/hooks/useAuth';
-import DashboardTab from '@/components/user/DashboardTab';
-import RoleBuilderTab from '@/components/user/RoleBuilderTab';
-import QuoteCalculatorTab from '@/components/user/QuoteCalculatorTab';
-import DashboardHeader from '@/components/layout/DashboardHeader';
-import DashboardSidebar, { NavItem } from '@/components/layout/DashboardSidebar';
+import { useAuth } from '@/contexts/AuthContext';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { 
   FaHouse, 
@@ -33,7 +30,6 @@ import AIToolLibraryTab from '@/components/user/AIToolLibraryTab';
 import SavedToolStackTab from '@/components/user/SavedToolStackTab';
 import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
 import UserProfile from '@/components/user/UserProfile';
-import { withRoleProtection } from '@/components/auth/withRoleProtection';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
@@ -171,6 +167,49 @@ interface DashboardUserData {
   avatar?: string;
 }
 
+interface DashboardData {
+  profile: {
+    name: string;
+    email: string;
+    created_at: string;
+  };
+  progress: {
+    completed_tools: number;
+    total_tools: number;
+    xp_points: number;
+  };
+  recent_activity: Array<{
+    id: string;
+    type: string;
+    description: string;
+    created_at: string;
+  }>;
+}
+
+async function fetchDashboardData(): Promise<DashboardData> {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .single();
+
+  const { data: progress } = await supabase
+    .from('user_progress')
+    .select('*')
+    .single();
+
+  const { data: recent_activity } = await supabase
+    .from('user_events')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  return {
+    profile,
+    progress,
+    recent_activity,
+  };
+}
+
 const DashboardPage = () => {
   const router = useRouter();
   const { user } = useAuth();
@@ -185,7 +224,12 @@ const DashboardPage = () => {
   const { openModal } = useDownloadModal();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Add waitForValidSession helper
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey: ['dashboardData'],
+    queryFn: fetchDashboardData,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   const waitForValidSession = async (maxAttempts = 30): Promise<boolean> => {
     for (let i = 0; i < maxAttempts; i++) {
       const { data: { session } } = await supabase.auth.getSession();
@@ -203,7 +247,7 @@ const DashboardPage = () => {
   };
 
   const checkAuth = async () => {
-      try {
+    try {
       // Wait for valid session first
       const hasValidSession = await waitForValidSession();
       if (!hasValidSession) {
@@ -211,11 +255,11 @@ const DashboardPage = () => {
         return;
       }
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         router.push('/login');
-          return;
-        }
+        return;
+      }
 
       // Get user's profile data
       const { data: profile, error: profileError } = await supabase
@@ -227,8 +271,8 @@ const DashboardPage = () => {
       if (profileError) {
         console.error('Profile error:', profileError);
         setError('Error loading profile data');
-          return;
-        }
+        return;
+      }
 
       // Set user and show dashboard
       setUserData(profile);
@@ -237,14 +281,14 @@ const DashboardPage = () => {
       // Show setup form if username is null
       if (!profile?.username) {
         setShowSetupForm(true);
-        }
+      }
 
     } catch (err) {
       console.error('Auth check error:', err);
       setError('Error checking authentication');
       setLoading(false);
-      }
-    };
+    }
+  };
 
   useEffect(() => {
     checkAuth();
@@ -371,26 +415,27 @@ const DashboardPage = () => {
   }
 
   return (
-    <DashboardContainer>
-      <DashboardSidebar
-        logoText="ScaleMate"
-        navItems={navItems}
-        activeTab={activeTab}
-        onTabClick={handleTabClick}
-        isModalOpen={isModalOpen}
-      />
-      <MainContent>
-        <DashboardHeader
-          title={getTabTitle(activeTab)}
-          profilePicture={profilePicture}
-          onLogout={handleLogout}
-          onProfileClick={() => setActiveTab('profile')}
-          showProfile={activeTab === 'profile'}
+    <ProtectedRoute requiredRole="user">
+      <DashboardContainer>
+        <DashboardSidebar
+          logoText="ScaleMate"
+          navItems={navItems}
+          activeTab={activeTab}
+          onTabClick={handleTabClick}
+          isModalOpen={isModalOpen}
         />
-        {renderContent()}
-      </MainContent>
+        <MainContent>
+          <DashboardHeader
+            title={getTabTitle(activeTab)}
+            profilePicture={profilePicture}
+            onLogout={handleLogout}
+            onProfileClick={() => setActiveTab('profile')}
+            showProfile={activeTab === 'profile'}
+          />
+          {renderContent()}
+        </MainContent>
 
-      {showSetupForm && user && (
+        {showSetupForm && user && (
           <FirstTimeSetupForm
             isOpen={showSetupForm}
             onClose={() => setShowSetupForm(false)}
@@ -398,26 +443,27 @@ const DashboardPage = () => {
             currentUsername={userData?.username || ''}
             onSetupComplete={handleSetupComplete}
           />
-      )}
+        )}
 
-      {showSuccessModal && (
-        <SuccessModal $isOpen={showSuccessModal}>
-          <SuccessModalContent>
-            <SuccessIcon>
-              <FiCheck size={24} />
-            </SuccessIcon>
-            <SuccessTitle>Setup Complete!</SuccessTitle>
-            <SuccessMessage>
-              Your account has been successfully set up. You can now use your new credentials to log in.
-            </SuccessMessage>
-            <SuccessButton onClick={() => setShowSuccessModal(false)}>
-              Continue
-            </SuccessButton>
-          </SuccessModalContent>
-        </SuccessModal>
-      )}
-    </DashboardContainer>
+        {showSuccessModal && (
+          <SuccessModal $isOpen={showSuccessModal}>
+            <SuccessModalContent>
+              <SuccessIcon>
+                <FiCheck size={24} />
+              </SuccessIcon>
+              <SuccessTitle>Setup Complete!</SuccessTitle>
+              <SuccessMessage>
+                Your account has been successfully set up. You can now use your new credentials to log in.
+              </SuccessMessage>
+              <SuccessButton onClick={() => setShowSuccessModal(false)}>
+                Continue
+              </SuccessButton>
+            </SuccessModalContent>
+          </SuccessModal>
+        )}
+      </DashboardContainer>
+    </ProtectedRoute>
   );
 };
 
-export default withRoleProtection(DashboardPage, 'user'); 
+export default DashboardPage; 

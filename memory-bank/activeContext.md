@@ -15,11 +15,24 @@
    - [ ] Development environment configuration
    - [ ] Base configuration implementation
 
-2. **Authentication System** ⏳ Draft
-   - [ ] User registration flow
-   - [ ] Login mechanism
-   - [ ] Password recovery
-   - [ ] Session management
+2. **Authentication System** 🔬 In Progress
+   - [x] User registration flow
+   - [x] Login mechanism
+   - [x] Password recovery
+   - [x] Session management
+   - [x] Role-based routing (now via profiles table)
+   - [x] Protected routes implementation
+   - [x] Auth state management (now via profiles table)
+   - [x] Migration to single `profiles` table for user data/roles
+   - [x] Manual update of AuthForm.tsx and SignUpForm.tsx for new flow
+
+3. **Dashboard Implementation** 🔬 In Progress
+   - [ ] User dashboard page setup
+   - [ ] Admin dashboard page setup
+   - [ ] Role-based redirects (now via profiles table)
+   - [ ] Dashboard data fetching
+   - [ ] Loading states
+   - [ ] Error boundaries
 
 ### Planned Features (Next 2 Weeks)
 1. **Quick Quote Calculator** ⏳ Planned
@@ -318,3 +331,5 @@ Before adding a new feature, confirm:
 - **Status:** ✅ Completed
 - **Details:** Backup created as PreviewBlueprint.tsx.backup
 - **Next Steps:** Continue with planned updates to the Export as PDF button 
+
+- [REMOVED] Rate limiting and Upstash Redis integration from middleware. See progress.md ([REMOVED] Rate Limiting Middleware and Upstash Dependencies - [DATE]) for details.

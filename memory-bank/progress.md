@@ -364,4 +364,43 @@ This document follows an append-only policy:
   - @types/styled-components
   - react-icons
 - Added proper TypeScript interfaces for styled components
-- Followed project design patterns and UX guidelines from `design.md` 
+- Followed project design patterns and UX guidelines from `design.md`
+
+## 2024-04-09: Authentication & Dashboard Implementation
+
+### Changes Made
+1. Created `AuthContext` for centralized auth state management
+2. Implemented role-based authentication with user/admin roles
+3. Created protected route component for role-based access control
+4. Set up user dashboard at `/user/dashboard`
+5. Set up admin dashboard at `/admin/dashboard`
+6. Enhanced middleware for role-based routing
+7. Implemented data fetching with React Query
+
+### Files Modified
+- Created `src/contexts/AuthContext.tsx`
+- Created `src/components/auth/ProtectedRoute.tsx`
+- Created `src/pages/user/dashboard/index.tsx`
+- Created `src/pages/admin/dashboard/index.tsx`
+- Updated `src/middleware.ts`
+
+### Dependencies Added
+- @tanstack/react-query
+
+### Next Steps
+1. Implement dashboard data fetching hooks
+2. Add loading states and error boundaries
+3. Create dashboard components
+4. Add analytics tracking
+5. Implement user management features 
+
+## 2024-06-11: Migrated to profiles-based authentication flow
+
+- Updated Supabase migration (0000_profiles.sql) to use a single `profiles` table for user data and roles, with triggers and RLS policies.
+- Updated `AuthContext` and `middleware` to use `profiles` for role and profile management.
+- Manually updated `AuthForm.tsx` and `SignUpForm.tsx` to:
+  - Use Supabase's built-in signUp/signInWithPassword/verifyOtp flows
+  - No longer reference or insert into `user_roles` (now handled by trigger)
+  - Fetch and use profile data after login/signup as needed
+- Verified that signup, login, and OTP verification flows work with the new schema.
+- Next: Refactor any remaining components to use `profiles` for role checks and user data. 

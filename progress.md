@@ -4,4 +4,12 @@
 - **Files:**
   - `src/pages/role-builder/components/PreviewBlueprint.tsx` (modified)
   - `src/pages/role-builder/components/PreviewBlueprint.tsx.backup` (backup)
-- **Result:** Button now visually matches the SecondaryButton. Backup safely stored. No errors encountered. 
+- **Result:** Button now visually matches the SecondaryButton. Backup safely stored. No errors encountered.
+
+## [REMOVED] Rate Limiting Middleware and Upstash Dependencies - [DATE]
+
+- Removed all rate limiting logic and Upstash Redis integration from `src/middleware.ts`.
+- Middleware now simply passes all requests through.
+- Uninstalled `@upstash/ratelimit` and `@upstash/redis` packages from dependencies.
+- Created a backup of the original middleware as `src/middleware.ts.backup` before making changes.
+- Reason: Project uses Supabase for backend; Redis/Upstash was only used for rate limiting, which is no longer required. 

@@ -6,6 +6,7 @@ import { ThemeProvider } from 'styled-components';
 import { theme } from '@/styles/theme';
 import Header from '@/components/layout/Header';
 import { useRouter } from 'next/router';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 // Prevent Font Awesome from adding its CSS since we did it manually above
 config.autoAddCss = false;
@@ -20,8 +21,10 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider theme={theme}>
-      {showHeader && <Header />}
-      <Component {...pageProps} />
+      <AuthProvider>
+        {showHeader && <Header />}
+        <Component {...pageProps} />
+      </AuthProvider>
     </ThemeProvider>
   );
 } 
