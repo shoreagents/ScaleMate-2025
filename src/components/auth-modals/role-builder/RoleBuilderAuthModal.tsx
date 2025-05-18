@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Modal } from '../../ui/Modal';
 import { UserGroupIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../../auth/SignUpForm';
-import AuthForm from '../../auth/AuthForm';
+import SignInForm from '../../auth/SignInForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/router';
@@ -318,7 +318,7 @@ export const RoleBuilderAuthModal = ({ isOpen, onClose, onAuthSuccess }: RoleBui
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm 
+            <SignInForm 
               onSuccess={handleAuthSuccess} 
               onError={handleAuthError} 
               preventRedirect={true} 

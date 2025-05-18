@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import styled from 'styled-components';
 import { useTheme } from 'styled-components';
 import { supabase } from '@/lib/supabase';
-import AuthForm from '@/components/auth/AuthForm';
+import SignInForm from '@/components/auth/SignInForm';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { FaQuoteLeft } from 'react-icons/fa';
 import Link from 'next/link';
@@ -196,7 +196,7 @@ const LoginPage = () => {
       <AuthColumn>
         <Logo href="/">ScaleMate</Logo>
         <AuthFormContainer>
-          <AuthForm />
+          <SignInForm />
         </AuthFormContainer>
       </AuthColumn>
       <TestimonialsColumn>

@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Modal } from '../../ui/Modal';
 import { DocumentIcon } from '@heroicons/react/24/outline';
 import SignUpForm from '../../auth/SignUpForm';
-import AuthForm from '../../auth/AuthForm';
+import SignInForm from '../../auth/SignInForm';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/router';
@@ -325,11 +325,11 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
       case 'login':
         return (
           <FormWrapper>
-            <AuthForm 
-              onSuccess={handleAuthSuccess} 
-              onError={handleAuthError} 
-              preventRedirect={true} 
+            <SignInForm
+              onSuccess={handleAuthSuccess}
+              onError={handleAuthError}
               hideLinks={true}
+              preventRedirect={true}
               redirectUrl={getCurrentUrl()}
             />
             <BackButton onClick={() => setCurrentView('initial')}>

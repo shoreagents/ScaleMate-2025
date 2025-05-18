@@ -403,4 +403,18 @@ This document follows an append-only policy:
   - No longer reference or insert into `user_roles` (now handled by trigger)
   - Fetch and use profile data after login/signup as needed
 - Verified that signup, login, and OTP verification flows work with the new schema.
-- Next: Refactor any remaining components to use `profiles` for role checks and user data. 
+- Next: Refactor any remaining components to use `profiles` for role checks and user data.
+
+## Component Renaming - 2024-04-10
+- Renamed `AuthForm.tsx` to `SignInForm.tsx` for better clarity
+- Updated all imports and usages in:
+  - `src/pages/login.tsx`
+  - `src/components/auth-modals/role-builder/RoleBuilderAuthModal.tsx`
+  - `src/components/auth-modals/tools/ToolsAuthModal.tsx`
+  - `src/components/auth-modals/cost-savings/CostSavingsAuthModal.tsx`
+  - `src/components/auth-modals/readiness/ReadinessAuthModal.tsx`
+  - `src/components/auth-modals/resources/ResourcesAuthModal.tsx`
+  - `src/components/auth-modals/quote/QuoteAuthModal.tsx`
+  - `src/components/auth-modals/courses/CoursesAuthModal.tsx`
+- Added proper TypeScript props interface for SignInForm component
+- Fixed ref callback typing in OTP input fields 

@@ -1,20 +1,22 @@
--- Migration to refine triggers and RLS for the existing public.profiles table.
--- This assumes public.profiles table ALREADY EXISTS.
+-- Migration to create and set up the profiles table with triggers and RLS
 
 BEGIN; -- Start a transaction
 
--- Step 1: Drop the existing new user trigger and its function,
--- and the updated_at trigger and its function, so we can recreate them cleanly.
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
+-- Step 1: Create the profiles table if it doesn't exist
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    first_name TEXT,
+    last_name TEXT,
+    username TEXT UNIQUE,
+    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    phone_number TEXT,
+    location TEXT,
+    profile_picture_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
-DROP TRIGGER IF EXISTS handle_profile_updated_at ON public.profiles; -- Corrected name from your script
--- If your trigger was named handle_profiles_updated_at (plural profiles), use that:
--- DROP TRIGGER IF EXISTS handle_profiles_updated_at ON public.profiles;
-DROP FUNCTION IF EXISTS public.moddatetime();
-
-
--- Step 2: Recreate the `updated_at` trigger function and trigger
+-- Step 2: Create the updated_at trigger function
 CREATE OR REPLACE FUNCTION public.moddatetime()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -23,36 +25,34 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER handle_profile_updated_at -- Use a consistent name
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW EXECUTE FUNCTION public.moddatetime();
+-- Step 3: Create the updated_at trigger
+CREATE TRIGGER handle_profile_updated_at
+    BEFORE UPDATE ON public.profiles
+    FOR EACH ROW EXECUTE FUNCTION public.moddatetime();
 
-
--- Step 3: Recreate the `handle_new_user` trigger function (Simplified Version)
--- This version only inserts the user's ID.
--- 'role' will use its table DEFAULT 'user'.
--- first_name, last_name, username, etc., will be NULL by default.
+-- Step 4: Create the handle_new_user trigger function
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id)
-  VALUES (NEW.id);
-  RETURN NEW;
+    INSERT INTO public.profiles (id, first_name, last_name)
+    VALUES (
+        NEW.id,
+        NEW.raw_user_meta_data->>'first_name',
+        NEW.raw_user_meta_data->>'last_name'
+    );
+    RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER; -- SECURITY DEFINER is crucial
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Step 4: Recreate the trigger that fires after a new user is inserted in auth.users
+-- Step 5: Create the new user trigger
 CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- Step 6: Set up RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
--- Step 5: Reset and Apply Basic RLS Policies
--- (This section is optional but recommended if you want to ensure a clean RLS setup)
-
--- First, remove existing RLS policies on public.profiles to avoid conflicts.
--- This is a more aggressive reset; be cautious if you have complex custom policies you want to keep.
--- You might need to list specific policy names if this generic drop doesn't work or is too broad.
+-- Remove any existing policies
 DO $$
 DECLARE
     policy_name TEXT;
@@ -63,48 +63,35 @@ BEGIN
     END LOOP;
 END$$;
 
--- Ensure RLS is enabled (it should be from your Step 1, but good to re-confirm)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- Policy: Users can view their own profile.
+-- Create RLS policies
 CREATE POLICY "Users can view their own profile"
-  ON public.profiles FOR SELECT
-  USING (auth.uid() = id);
+    ON public.profiles FOR SELECT
+    USING (auth.uid() = id);
 
--- Policy: Users can insert their own profile (primarily for the trigger's operation,
--- as the trigger runs with definer's rights but this policy acts as a safeguard/intent).
 CREATE POLICY "Users can insert their own profile"
-  ON public.profiles FOR INSERT
-  WITH CHECK (auth.uid() = id);
+    ON public.profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
 
--- Policy: Users can update their own profile.
--- IMPORTANT: This basic policy allows users to update ANY field in their profile
--- except those restricted by database column constraints (like 'id').
--- You SHOULD refine this to restrict which columns users can update.
--- e.g., users should not update their 'role' directly.
 CREATE POLICY "Users can update their own profile"
-  ON public.profiles FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+    ON public.profiles FOR UPDATE
+    USING (auth.uid() = id);
 
--- Example of a more restrictive update policy (if you want to implement this later):
--- DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
--- CREATE POLICY "Users can update specific profile details"
---   ON public.profiles FOR UPDATE
---   USING (auth.uid() = id)
---   WITH CHECK (
---     auth.uid() = id AND
---     id = OLD.id AND         -- Cannot change their own ID
---     role = OLD.role AND     -- Cannot change their own role
---     created_at = OLD.created_at -- Cannot change created_at
---     -- Allow changes to first_name, last_name, username, phone_number, location, profile_picture_url
---     -- No specific check needed for these if they are allowed to change;
---     -- the USING clause already restricts it to their own row.
---   );
-
+-- Add policy comments
 COMMENT ON POLICY "Users can view their own profile" ON public.profiles IS 'Allows users to read their own profile data.';
 COMMENT ON POLICY "Users can insert their own profile" ON public.profiles IS 'Allows users to create their own profile entry (primarily for trigger).';
-COMMENT ON POLICY "Users can update their own profile" ON public.profiles IS 'Allows users to update their own profile data. Consider restricting columns.';
+COMMENT ON POLICY "Users can update their own profile" ON public.profiles IS 'Allows users to update their own profile data with restrictions on protected fields.';
 
+-- Add table comments
+COMMENT ON TABLE public.profiles IS 'Stores user profile information.';
+COMMENT ON COLUMN public.profiles.id IS 'References the auth.users id.';
+COMMENT ON COLUMN public.profiles.first_name IS 'User''s first name.';
+COMMENT ON COLUMN public.profiles.last_name IS 'User''s last name.';
+COMMENT ON COLUMN public.profiles.username IS 'Unique username for the user.';
+COMMENT ON COLUMN public.profiles.role IS 'User role (user or admin).';
+COMMENT ON COLUMN public.profiles.phone_number IS 'User''s phone number.';
+COMMENT ON COLUMN public.profiles.location IS 'User''s location.';
+COMMENT ON COLUMN public.profiles.profile_picture_url IS 'URL to user''s profile picture.';
+COMMENT ON COLUMN public.profiles.created_at IS 'Timestamp when the profile was created.';
+COMMENT ON COLUMN public.profiles.updated_at IS 'Timestamp when the profile was last updated.';
 
 COMMIT; -- End transaction

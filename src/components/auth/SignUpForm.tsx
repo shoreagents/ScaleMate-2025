@@ -105,11 +105,6 @@ const ButtonContainer = styled.div`
   gap: 1rem;
 `;
 
-const RequiredAsterisk = styled.span`
-  color: #EF4444;
-  margin-left: 4px;
-`;
-
 const Label = styled.label`
   font-size: 0.875rem;
   font-weight: 600;
@@ -355,9 +350,25 @@ const SecondaryButton = styled(Button)`
   }
 `;
 
-const SignUpForm: React.FC = () => {
+export interface SignUpFormProps {
+  onSuccess?: () => Promise<void>;
+  onError?: (error: string | null) => void;
+  hideLinks?: boolean;
+  preventRedirect?: boolean;
+  redirectUrl?: string;
+}
+
+const SignUpForm: React.FC<SignUpFormProps> = ({
+  onSuccess,
+  onError,
+  hideLinks = false,
+  preventRedirect = false,
+  redirectUrl = '/dashboard'
+}) => {
   const router = useRouter();
   const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -387,13 +398,15 @@ const SignUpForm: React.FC = () => {
   const [otpError, setOtpError] = useState('');
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
+      
   // New states for Resend OTP
   const [isResendingOtp, setIsResendingOtp] = useState(false);
   const [resendOtpMessage, setResendOtpMessage] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0); // Added for cooldown timer
 
   const { profile, refreshProfile } = useAuth();
+
+  const [nameError, setNameError] = useState('');
 
   useEffect(() => {
     if (formData.password) {
@@ -440,6 +453,7 @@ const SignUpForm: React.FC = () => {
     // Clear specific field errors on change
     if (name === 'email') setEmailError('');
     if (name === 'password' || name === 'confirmPassword') setPasswordError('');
+    if (name === 'firstName' || name === 'lastName') setNameError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -451,6 +465,14 @@ const SignUpForm: React.FC = () => {
     setIsFormSubmitted(true);
 
     // Basic frontend validation checks
+    if (!formData.firstName.trim()) {
+      setNameError('First name is required');
+        return;
+      }
+    if (!formData.lastName.trim()) {
+      setNameError('Last name is required');
+        return;
+      }
     if (!formData.email) {
       setEmailError('Email is required.');
         return;
@@ -462,17 +484,16 @@ const SignUpForm: React.FC = () => {
       }
     if (!formData.password) {
       setPasswordError('Password is required');
-        return;
-      }
+      return;
+    }
     if (!formData.confirmPassword) {
       setPasswordError('Confirm password is required');
       return;
     }
-      if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setPasswordError('Passwords do not match');
-        return;
-      }
-
+      return;
+    }
     if (!passwordValidations.minLength) {
       setPasswordError('Password must be at least 8 characters.');
         return;
@@ -480,56 +501,79 @@ const SignUpForm: React.FC = () => {
 
     setLoading(true);
     
+    try {
       const { data, error: signUpError } = await supabase.auth.signUp({
-      email: formData.email,
+        email: formData.email,
         password: formData.password,
-    });
-
-    setLoading(false);
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+          }
+        }
+      });
 
       if (signUpError) {
-      if (signUpError.message.toLowerCase().includes('user already registered') || 
-          signUpError.message.toLowerCase().includes('email address is already registered')) {
-        setError('This email address is already registered. Please try logging in or use a different email.');
-      } else {
+        if (signUpError.message.toLowerCase().includes('user already registered') || 
+            signUpError.message.toLowerCase().includes('email address is already registered')) {
+          setError('This email address is already registered. Please try logging in or use a different email.');
+        } else {
         setError(signUpError.message);
+        }
+        if (onError) {
+          onError(signUpError.message);
+        }
+      } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+        setError('Email in use or pending confirmation. Try logging in or check your email.');
+        if (onError) {
+          onError('Email in use or pending confirmation. Try logging in or check your email.');
+        }
+      } else if (data.user && !data.session) {
+        // Email confirmation is needed
+        setVerifyingEmail(formData.email);
+        setConfirmationMessage(`A verification code has been sent to ${formData.email}. Please enter it below.`);
+        setUiMode('verify');
+        setResendCooldown(60); // Start cooldown timer immediately when verify UI is shown
+        // Clear password fields from formData, keep email for display or resend if needed later
+        setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+        setIsFormSubmitted(false); // Reset for the OTP form
+        // Clear previous errors/success messages that are not relevant for OTP screen
+        setError('');
+        setSuccessMessage('');
+        setEmailError('');
+        setPasswordError('');
+      } else {
+        await refreshProfile();
+        // Role-based redirect
+        if (!preventRedirect) {
+          if (profile?.role === 'admin') {
+            router.push('/admin/dashboard');
+          } else if (profile?.role === 'user') {
+            router.push('/user/dashboard');
+          } else {
+            router.push(redirectUrl);
+          }
+        }
+        setSuccessMessage('Sign up successful! You are now logged in.');
+        setConfirmationMessage('');
+        if (onSuccess) {
+          await onSuccess();
+        }
+        setTimeout(() => {
+          setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '' });
+          setSuccessMessage('Sign up complete! Form cleared.');
+          setIsFormSubmitted(false);
+          setPasswordValidations({ minLength: false });
+          setPasswordsMatch(null);
+        }, 2000);
       }
-    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
-      setError('Email in use or pending confirmation. Try logging in or check your email.');
-    } else if (data.user && !data.session) {
-      // Email confirmation is needed
-      setVerifyingEmail(formData.email);
-      setConfirmationMessage(`A verification code has been sent to ${formData.email}. Please enter it below.`);
-      setUiMode('verify');
-      setResendCooldown(60); // Start cooldown timer immediately when verify UI is shown
-      // Clear password fields from formData, keep email for display or resend if needed later
-      setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
-      setIsFormSubmitted(false); // Reset for the OTP form
-      // Clear previous errors/success messages that are not relevant for OTP screen
-      setError('');
-      setSuccessMessage('');
-      setEmailError('');
-      setPasswordError('');
-    } else if (data.user && data.session) {
-      await refreshProfile();
-      // Role-based redirect
-      if (profile?.role === 'admin') {
-        router.push('/admin/dashboard');
-      } else if (profile?.role === 'user') {
-        router.push('/user/dashboard');
-      }
-      setSuccessMessage('Sign up successful! You are now logged in.');
-      setConfirmationMessage('');
-      setTimeout(() => {
-        setFormData({ email: '', password: '', confirmPassword: '' });
-        setSuccessMessage('Sign up complete! Form cleared.');
-        setIsFormSubmitted(false);
-        setPasswordValidations({ minLength: false });
-        setPasswordsMatch(null);
-        // router.push('/dashboard');
-      }, 2000);
-    } else {
+    } catch (err: any) {
       setError('An unexpected error occurred. Please try again.');
+      if (onError) {
+        onError(err.message || 'An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -616,7 +660,7 @@ const SignUpForm: React.FC = () => {
     if (code.length !== 6) {
       setOtpError('Please enter a valid 6-digit verification code.');
       return;
-    }
+        }
 
     setIsVerifyingOtp(true);
     const { data, error: verifyError } = await supabase.auth.verifyOtp({
@@ -640,12 +684,10 @@ const SignUpForm: React.FC = () => {
       setConfirmationMessage('');
       setOtpError('');
       setUiMode('signup');
-      setFormData({ email: '', password: '', confirmPassword: '' });
+      setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '' });
       setVerificationCode(Array(6).fill(''));
       setResendCooldown(0);
-      // router.push('/dashboard');
     } else {
-      // This case should ideally not be hit if OTP is correct and leads to a session
       setOtpError('Verification failed. Please try again or resend the code.');
     }
   };
@@ -661,7 +703,7 @@ const SignUpForm: React.FC = () => {
     setOtpError('');
     setEmailError('');
     setPasswordError('');
-    setFormData({ email: '', password: '', confirmPassword: ''}); // Reset form
+    setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '' }); // Reset form
     setResendOtpMessage(''); // Clear resend message when going back
     setResendCooldown(0); // Reset cooldown when going back
   };
@@ -702,7 +744,7 @@ const SignUpForm: React.FC = () => {
                   <VerificationInput
                     key={index}
                 ref={el => { otpInputRefs.current[index] = el; } }
-                type="text"
+                    type="text"
                     maxLength={1}
                 value={digit}
                 onChange={(e) => handleOtpChange(index, e.target.value)}
@@ -721,7 +763,7 @@ const SignUpForm: React.FC = () => {
             >
               {otpError}
               </MessageContainer>
-              )}
+            )}
           {/* Moved Resend OTP Message - show only if no otpError */}
           {!otpError && resendOtpMessage && (
             <MessageContainer 
@@ -761,6 +803,40 @@ const SignUpForm: React.FC = () => {
       </GoogleButton>
       <Divider>or</Divider>
       <Form onSubmit={handleSubmit} noValidate>
+        <FormRow>
+          <FormGroup>
+            <Label htmlFor="firstName">
+              First Name
+            </Label>
+            <Input
+              id="firstName"
+              name="firstName"
+              type="text"
+              value={formData.firstName}
+              onChange={handleChange}
+              required
+              autoComplete="given-name"
+              placeholder="Enter your first name"
+            />
+          </FormGroup>
+          <FormGroup>
+            <Label htmlFor="lastName">
+              Last Name
+            </Label>
+            <Input
+              id="lastName"
+              name="lastName"
+              type="text"
+              value={formData.lastName}
+              onChange={handleChange}
+              required
+              autoComplete="family-name"
+              placeholder="Enter your last name"
+            />
+          </FormGroup>
+        </FormRow>
+        {nameError && <MessageContainer>{nameError}</MessageContainer>}
+        
         <InputGroup>
           <Label htmlFor="email">
             Email
