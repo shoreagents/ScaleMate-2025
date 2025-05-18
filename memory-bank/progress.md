@@ -364,7 +364,7 @@ This document follows an append-only policy:
   - @types/styled-components
   - react-icons
 - Added proper TypeScript interfaces for styled components
-- Followed project design patterns and UX guidelines from `design.md`
+- Followed project design patterns and UX guidelines from `design.md` 
 
 ## 2024-04-09: Authentication & Dashboard Implementation
 

@@ -319,8 +319,8 @@ export const ReadinessAuthModal = ({ isOpen, onClose, onAuthSuccess }: Readiness
         return (
           <FormWrapper>
             <SignInForm
-              onSuccess={handleAuthSuccess}
-              onError={handleAuthError}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true}
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}

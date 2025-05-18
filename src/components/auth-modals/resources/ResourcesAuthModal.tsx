@@ -319,8 +319,8 @@ export const ResourcesAuthModal = ({ isOpen, onClose, onAuthSuccess }: Resources
         return (
           <FormWrapper>
             <SignInForm
-              onSuccess={handleAuthSuccess}
-              onError={handleAuthError}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true}
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}

@@ -326,8 +326,8 @@ export const QuoteAuthModal = ({ isOpen, onClose, onAuthSuccess }: QuoteAuthModa
         return (
           <FormWrapper>
             <SignInForm
-              onSuccess={handleAuthSuccess}
-              onError={handleAuthError}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true}
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}

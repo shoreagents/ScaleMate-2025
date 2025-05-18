@@ -350,6 +350,23 @@ const SecondaryButton = styled(Button)`
   }
 `;
 
+const AnimatedDots = styled.span`
+  @keyframes ellipsis {
+    0% { content: '. '; }
+    33% { content: '. . '; }
+    66% { content: '. . . '; }
+    100% { content: '. '; }
+  }
+  &::after {
+    content: '. ';
+    animation: ellipsis 1.5s infinite;
+    display: inline-block;
+    width: 2em;
+    text-align: left;
+    margin-left: 0.25em;
+  }
+`;
+
 export interface SignUpFormProps {
   onSuccess?: () => Promise<void>;
   onError?: (error: string | null) => void;
@@ -488,85 +505,75 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     }
     if (!formData.confirmPassword) {
       setPasswordError('Confirm password is required');
-      return;
-    }
+        return;
+      }
     if (formData.password !== formData.confirmPassword) {
       setPasswordError('Passwords do not match');
-      return;
-    }
+        return;
+      }
     if (!passwordValidations.minLength) {
       setPasswordError('Password must be at least 8 characters.');
         return;
       }
 
     setLoading(true);
-    
-    try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-          }
-        }
+
+      try {
+      const response = await fetch('/api/auth/[...auth]', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'signup',
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        }),
       });
 
-      if (signUpError) {
-        if (signUpError.message.toLowerCase().includes('user already registered') || 
-            signUpError.message.toLowerCase().includes('email address is already registered')) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        let errorMsg = data.error;
+        if (errorMsg && errorMsg.toLowerCase().includes('weak')) {
+          errorMsg = 'Password is too weak';
+        }
+        if (errorMsg && (errorMsg.toLowerCase().includes('user already registered') ||
+            errorMsg.toLowerCase().includes('email address is already registered') ||
+            errorMsg.toLowerCase().includes('already registered'))
+        ) {
           setError('This email address is already registered. Please try logging in or use a different email.');
-        } else {
-        setError(signUpError.message);
-        }
-        if (onError) {
-          onError(signUpError.message);
-        }
-      } else if (data.user && data.user.identities && data.user.identities.length === 0) {
-        setError('Email in use or pending confirmation. Try logging in or check your email.');
-        if (onError) {
-          onError('Email in use or pending confirmation. Try logging in or check your email.');
-        }
-      } else if (data.user && !data.session) {
-        // Email confirmation is needed
-        setVerifyingEmail(formData.email);
-        setConfirmationMessage(`A verification code has been sent to ${formData.email}. Please enter it below.`);
-        setUiMode('verify');
-        setResendCooldown(60); // Start cooldown timer immediately when verify UI is shown
-        // Clear password fields from formData, keep email for display or resend if needed later
-        setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
-        setIsFormSubmitted(false); // Reset for the OTP form
-        // Clear previous errors/success messages that are not relevant for OTP screen
-        setError('');
-        setSuccessMessage('');
-        setEmailError('');
-        setPasswordError('');
-      } else {
-        await refreshProfile();
-        // Role-based redirect
-        if (!preventRedirect) {
-          if (profile?.role === 'admin') {
-            router.push('/admin/dashboard');
-          } else if (profile?.role === 'user') {
-            router.push('/user/dashboard');
-          } else {
-            router.push(redirectUrl);
-          }
-        }
-        setSuccessMessage('Sign up successful! You are now logged in.');
-        setConfirmationMessage('');
-        if (onSuccess) {
-          await onSuccess();
-        }
-        setTimeout(() => {
-          setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '' });
-          setSuccessMessage('Sign up complete! Form cleared.');
+          setUiMode('signup');
           setIsFormSubmitted(false);
-          setPasswordValidations({ minLength: false });
-          setPasswordsMatch(null);
-        }, 2000);
+          return;
+        } else if (errorMsg && errorMsg.toLowerCase().includes('weak')) {
+          setPasswordError(errorMsg);
+          setUiMode('signup');
+          setIsFormSubmitted(false);
+          return;
+        } else {
+          setError(errorMsg);
+          setUiMode('signup');
+          setIsFormSubmitted(false);
+          return;
+        }
       }
+
+      // Email confirmation is needed
+      setVerifyingEmail(formData.email);
+      setConfirmationMessage(`A verification code has been sent to ${formData.email}. Please enter it below.`);
+      setUiMode('verify');
+      setResendCooldown(60); // Start cooldown timer immediately when verify UI is shown
+      // Clear password fields from formData, keep email for display or resend if needed later
+      setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
+      setIsFormSubmitted(false); // Reset for the OTP form
+      // Clear previous errors/success messages that are not relevant for OTP screen
+      setError('');
+      setSuccessMessage('');
+      setEmailError('');
+      setPasswordError('');
     } catch (err: any) {
       setError('An unexpected error occurred. Please try again.');
       if (onError) {
@@ -574,7 +581,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       }
     } finally {
       setLoading(false);
-    }
+        }
   };
 
   const handleGoogleSignUp = () => {
@@ -606,7 +613,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     // Move to next input if a digit is entered
     if (value && index < 5) {
       otpInputRefs.current[index + 1]?.focus();
-    }
+        }
   };
 
   // OTP KeyDown Handler (for backspace)
@@ -689,7 +696,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       setResendCooldown(0);
     } else {
       setOtpError('Verification failed. Please try again or resend the code.');
-    }
+      }
   };
   
   // Function to switch back to signup form (e.g. if user wants to use different email)
@@ -754,22 +761,23 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
                   />
                 ))}
               </VerificationContainer>
-          {/* Conditionally adjust marginTop for specific OTP error */}
           {otpError && (
-            <MessageContainer 
-              style={{
-                marginTop: '0', // Always 0 when otpError is present
-              }}
-            >
+              <MessageContainer>
+              <FiX size={12} />
               {otpError}
               </MessageContainer>
             )}
-          {/* Moved Resend OTP Message - show only if no otpError */}
-          {!otpError && resendOtpMessage && (
-            <MessageContainer 
-              $isSuccess={!resendOtpMessage.toLowerCase().includes('fail') && !resendOtpMessage.toLowerCase().includes('error')} 
-              style={{ marginTop: '0' }}
-            >
+          {successMessage && (
+            <MessageContainer $isSuccess>
+              <FiCheck size={12} />
+              {successMessage}
+            </MessageContainer>
+          )}
+          {resendOtpMessage && (
+            <MessageContainer $isSuccess={!resendOtpMessage.toLowerCase().includes('fail') && !resendOtpMessage.toLowerCase().includes('error')}>
+              {(!resendOtpMessage.toLowerCase().includes('fail') && !resendOtpMessage.toLowerCase().includes('error'))
+                ? <FiCheck size={12} />
+                : <FiX size={12} />}
               {resendOtpMessage}
             </MessageContainer>
           )}
@@ -835,7 +843,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
             />
           </FormGroup>
         </FormRow>
-        {nameError && <MessageContainer>{nameError}</MessageContainer>}
+        {nameError && <MessageContainer><FiX size={12} />{nameError}</MessageContainer>}
         
         <InputGroup>
           <Label htmlFor="email">
@@ -851,7 +859,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
             autoComplete="email"
             placeholder="Enter your email"
           />
-          {emailError && <HelperText style={{color: 'red'}}>{emailError}</HelperText>}
+          {emailError && <MessageContainer><FiX size={12} />{emailError}</MessageContainer>}
         </InputGroup>
           <FormRow>
             <FormGroup>
@@ -882,6 +890,11 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
                 <HelperText style={{ color: passwordValidations.minLength ? 'green' : '#6B7280' }}>
                   {passwordValidations.minLength ? <FiCheck size={12} /> : <FiX size={12} />} Must be at least 8 characters
                 </HelperText>
+                {passwordError && passwordError.toLowerCase().includes('weak') && (
+                  <HelperText style={{ color: 'red' }}>
+                    <FiX size={12} /> Password is too weak
+                  </HelperText>
+                )}
               </PasswordHelperText>
             )}
             </FormGroup>
@@ -919,23 +932,17 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
             </FormGroup>
           </FormRow>
         {/* Display field-specific errors first */}
-        {emailError && <MessageContainer>{emailError}</MessageContainer>}
-        {passwordError && <MessageContainer>{passwordError}</MessageContainer>}
+        {emailError && <MessageContainer><FiX size={12} />{emailError}</MessageContainer>}
+        {passwordError && !passwordError.toLowerCase().includes('weak') && <MessageContainer><FiX size={12} />{passwordError}</MessageContainer>}
         
         {/* Display general errors or success/confirmation messages */}
-        {error && !emailError && !passwordError && <MessageContainer>{error}</MessageContainer>}
-        {successMessage && <MessageContainer $isSuccess>{successMessage}</MessageContainer>}
+        {error && !emailError && !passwordError && <MessageContainer><FiX size={12} />{error}</MessageContainer>}
+        {successMessage && <MessageContainer $isSuccess><FiCheck size={12} />{successMessage}</MessageContainer>}
 
         <ButtonContainer>
           <Button type="submit" disabled={loading || !allPasswordCriteriaMet || passwordsMatch === false}>
-            {loading ? (
-              <>
-                <FiLoader style={{ animation: 'spin 1s linear infinite', marginRight: '8px' }} />
-                Creating Account...
-              </>
-            ) : (
-              'Create Account'
-            )}
+            {loading ? 'Creating Account' : 'Create Account'}
+            {loading && <AnimatedDots />}
           </Button>
         </ButtonContainer>
       </Form>

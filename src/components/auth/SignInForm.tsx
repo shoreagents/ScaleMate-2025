@@ -35,7 +35,7 @@ const Subtitle = styled.p`
 const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: 1rem;
 `;
 
 const FormContent = styled.div`
@@ -146,13 +146,12 @@ const Button = styled.button`
 
 const SecondaryButton = styled(Button)`
   background: transparent;
-  border: 1.5px solid #9aa2b3;
-  color: ${props => props.theme.colors.text.primary};
-  margin-top: 0;
+  border: 1.5px solid ${props => props.theme.colors.border || '#D1D5DB'};
+  color: ${props => props.theme.colors.text.primary || '#1F2937'};
 
   &:hover {
-    background: ${props => props.theme.colors.background.secondary};
-    border-color: ${props => props.theme.colors.text.primary};
+    background: ${props => props.theme.colors.background.secondary || '#F3F4F6'};
+    border-color: ${props => props.theme.colors.text.primary || '#1F2937'};
   }
 `;
 
@@ -279,6 +278,14 @@ const GoogleButton = styled.button`
     opacity: 0.7;
     cursor: not-allowed;
   }
+
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    display: block;
+    flex-shrink: 0;
+  }
 `;
 
 const Divider = styled.div`
@@ -329,6 +336,89 @@ const SignInLink = styled.div`
   }
 `;
 
+const ResendLink = styled.div`
+  text-align: center;
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+
+  button {
+    color: ${props => props.theme.colors.primary};
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 0.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: ${props => props.theme.colors.primaryDark};
+    }
+    &:disabled {
+      color: ${props => props.theme.colors.text.secondary};
+      cursor: not-allowed;
+    }
+  }
+`;
+
+const VerificationContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const VerificationInput = styled.input`
+  flex: 1;
+  height: 3.5rem;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border: 1.5px solid ${props => props.theme.colors.border};
+  border-radius: 8px;
+  background: white;
+  color: ${props => props.theme.colors.text.primary};
+  transition: all 0.2s ease;
+  padding: 0;
+  min-width: 0;
+
+  &:focus {
+    outline: none;
+    border-color: ${props => props.theme.colors.primary};
+    box-shadow: 0 0 0 3px ${props => props.theme.colors.primary}15;
+  }
+
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    height: 3rem;
+    font-size: 1.125rem;
+  }
+`;
+
+const AnimatedDots = styled.span`
+  @keyframes ellipsis {
+    0% { content: '. '; }
+    33% { content: '. . '; }
+    66% { content: '. . . '; }
+    100% { content: '. '; }
+  }
+  &::after {
+    content: '. ';
+    animation: ellipsis 1.5s infinite;
+    display: inline-block;
+    width: 2em;
+    text-align: left;
+    margin-left: 0.25em;
+  }
+`;
+
 export interface SignInFormProps {
   onSuccess?: () => Promise<void>;
   onError?: (error: string | null) => void;
@@ -345,6 +435,7 @@ const SignInForm: React.FC<SignInFormProps> = ({
   redirectUrl = '/dashboard'
 }) => {
   const router = useRouter();
+  const { refreshProfile } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -355,12 +446,32 @@ const SignInForm: React.FC<SignInFormProps> = ({
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const otpInputs = useRef<(HTMLInputElement | null)[]>([]);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
+  const [resendOtpMessage, setResendOtpMessage] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [resendCooldown]);
+
+  const handleSubmit = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
     setSuccess(null);
+    setOtpError('');
+    setResendOtpMessage('');
 
     try {
       const response = await fetch('/api/auth/[...auth]', {
@@ -377,20 +488,37 @@ const SignInForm: React.FC<SignInFormProps> = ({
       const data = await response.json();
 
       if (!response.ok) {
+        if (data.error && data.error.toLowerCase().includes('confirm')) {
+          setIsOtpSent(true);
+          setVerifyingEmail(email);
+          setSuccess(null);
+          setError(null);
+          setOtp(['', '', '', '', '', '']);
+          setResendCooldown(60);
+          return;
+        }
         throw new Error(data.error || 'Failed to sign in');
       }
 
-      setSuccess('Successfully signed in!');
-      if (onSuccess) {
-        await onSuccess();
-      }
-      if (!preventRedirect) {
-        router.push(redirectUrl);
+      if (data.success) {
+        setSuccess('Successfully signed in!');
+        if (data.session) {
+          await supabase.auth.setSession(data.session);
+        }
+        await refreshProfile();
+        if (onSuccess) {
+          await onSuccess();
+        }
+        if (!preventRedirect) {
+          router.push(redirectUrl);
+        }
+      } else {
+        throw new Error('Sign in failed');
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || 'An unexpected error occurred');
       if (onError) {
-        onError(err.message);
+        onError(err.message || 'An unexpected error occurred');
       }
     } finally {
       setIsLoading(false);
@@ -399,70 +527,39 @@ const SignInForm: React.FC<SignInFormProps> = ({
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    setError(null);
-    setSuccess(null);
+    setError('');
+    setSuccess('');
+
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback/direct`
+        }
       });
-      if (error) throw error;
+
+      if (error) {
+        setError(error.message);
+        if (onError) {
+          onError(error.message);
+        }
+      }
     } catch (err: any) {
-      setError(err.message);
+      setError('An unexpected error occurred. Please try again.');
       if (onError) {
-        onError(err.message);
+        onError(err.message || 'An unexpected error occurred. Please try again.');
       }
     } finally {
       setIsGoogleLoading(false);
     }
   };
 
-  const handleResendOtp = async (emailToResend: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: emailToResend,
-      });
-      if (error) throw error;
-      setSuccess('OTP resent successfully!');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-      });
-
-      if (error) throw error;
-
-      setIsOtpSent(true);
-      setSuccess('OTP sent to your email!');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleOtpChange = (index: number, value: string) => {
-    if (value.length > 1) {
-      value = value.slice(0, 1);
-    }
-
+    if (value.length > 1) value = value.slice(0, 1);
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-
+    setOtpError('');
     if (value && index < 5) {
       otpInputs.current[index + 1]?.focus();
     }
@@ -478,48 +575,70 @@ const SignInForm: React.FC<SignInFormProps> = ({
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').slice(0, 6);
     const newOtp = [...otp];
-
     for (let i = 0; i < pastedData.length; i++) {
       if (i < 6) {
         newOtp[i] = pastedData[i];
       }
     }
-
     setOtp(newOtp);
     otpInputs.current[pastedData.length - 1]?.focus();
   };
 
   const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-
+    setIsVerifyingOtp(true);
+    setOtpError('');
+    setResendOtpMessage('');
     const otpString = otp.join('');
-
+    if (otpString.length !== 6) {
+      setOtpError('Please enter a valid 6-digit verification code.');
+      setIsVerifyingOtp(false);
+      return;
+    }
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
+      const { data, error: verifyError } = await supabase.auth.verifyOtp({
+        email: verifyingEmail,
         token: otpString,
-        type: 'email',
+        type: 'signup',
       });
-
-      if (error) throw error;
-
-      setSuccess('Successfully verified!');
-      if (onSuccess) {
-        await onSuccess();
-      }
-      if (!preventRedirect) {
-        router.push(redirectUrl);
+      if (verifyError) {
+        setOtpError(verifyError.message);
+      } else if (data.user && data.session) {
+        setSuccess('Email verified! You are now signed in.');
+        await refreshProfile();
+        if (!preventRedirect) {
+          router.push(redirectUrl);
+        }
+      } else {
+        setOtpError('Verification failed. Please try again or resend the code.');
       }
     } catch (err: any) {
-      setError(err.message);
-      if (onError) {
-        onError(err.message);
-      }
+      setOtpError(err.message || 'An unexpected error occurred');
     } finally {
-      setIsLoading(false);
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (isResendingOtp) return;
+    setIsResendingOtp(true);
+    setResendOtpMessage('');
+    setOtpError('');
+    try {
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: verifyingEmail,
+      });
+      if (resendError) {
+        setResendOtpMessage(resendError.message);
+      } else {
+        setResendOtpMessage('New verification code sent');
+        setResendCooldown(60);
+      }
+    } catch (err: any) {
+      setResendOtpMessage(err.message || 'Failed to resend code');
+    } finally {
+      setIsResendingOtp(false);
     }
   };
 
@@ -530,107 +649,141 @@ const SignInForm: React.FC<SignInFormProps> = ({
     setSuccess(null);
   };
 
+  if (isOtpSent) {
+    return (
+      <FormContainer>
+        <Title>Email Confirmation</Title>
+        <Subtitle>
+          We sent a verification code to <strong style={{color: '#4A5568'}}>{verifyingEmail}</strong>.<br />
+          Enter the code below to verify your email and sign in.
+        </Subtitle>
+        <Form onSubmit={handleVerifyOtpSubmit} noValidate>
+          <VerificationContainer onPaste={handleOtpPaste}>
+            {otp.map((digit, index) => (
+              <VerificationInput
+                key={index}
+                ref={el => { otpInputs.current[index] = el; }}
+                type="text"
+                maxLength={1}
+                value={digit}
+                onChange={e => handleOtpChange(index, e.target.value)}
+                onKeyDown={e => handleOtpKeyDown(index, e)}
+                required
+                aria-label={`Digit ${index + 1} of verification code`}
+              />
+            ))}
+          </VerificationContainer>
+          {otpError && (
+            <MessageContainer><FiX size={12} />{otpError}</MessageContainer>
+          )}
+          {success && (
+            <MessageContainer $isSuccess><FiCheck size={12} />{success}</MessageContainer>
+          )}
+          {resendOtpMessage && (
+            <MessageContainer $isSuccess={!resendOtpMessage.toLowerCase().includes('fail') && !resendOtpMessage.toLowerCase().includes('error')}>
+              {(!resendOtpMessage.toLowerCase().includes('fail') && !resendOtpMessage.toLowerCase().includes('error'))
+                ? <FiCheck size={12} />
+                : <FiX size={12} />}
+              {resendOtpMessage}
+            </MessageContainer>
+          )}
+          <ButtonContainer style={{marginTop: '2rem'}}>
+            <SecondaryButton type="button" onClick={() => setIsOtpSent(false)}>
+              Back
+            </SecondaryButton>
+            <Button type="submit" disabled={isVerifyingOtp}>
+              {isVerifyingOtp ? 'Verifying...' : 'Verify Code'}
+            </Button>
+          </ButtonContainer>
+        </Form>
+        <ResendLink style={{ marginTop: '1.5rem' }}>
+          Didn't receive the code?
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={isResendingOtp || resendCooldown > 0}
+          >
+            {isResendingOtp
+              ? 'Sending...'
+              : resendCooldown > 0
+                ? `Resend in ${resendCooldown}s`
+                : 'Resend Code'}
+          </button>
+        </ResendLink>
+      </FormContainer>
+    );
+  }
+
   return (
     <FormContainer>
       <Title>Welcome back</Title>
       <Subtitle>Sign in to your account to continue</Subtitle>
 
       <GoogleButton onClick={handleGoogleSignIn} disabled={isGoogleLoading} type="button">
-        <img src="/google-icon.svg" alt="Google" width={20} height={20} />
+        <img 
+          src="/google-icon.svg" 
+          alt="Google" 
+          width={18} 
+          height={18}
+          style={{ display: 'block' }}
+          onError={(e) => {
+            console.error('Failed to load Google icon');
+            e.currentTarget.style.display = 'none';
+          }}
+        />
         {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
       </GoogleButton>
       <Divider>or</Divider>
 
-      <Form onSubmit={isOtpSent ? handleVerifyOtpSubmit : handleSubmit}>
+      <Form onSubmit={(e) => {
+        e.preventDefault();
+        handleSubmit();
+      }}>
         <FormContent>
           <FormFields>
-            {!isOtpSent ? (
-              <>
-                <InputGroup>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    required
-                    autoComplete="email"
-                  />
-                </InputGroup>
+            <InputGroup>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                autoComplete="email"
+              />
+            </InputGroup>
 
-                <InputGroup>
-                  <PasswordLabelContainer>
-                    <Label htmlFor="password">Password</Label>
-                    <ForgotPasswordLink type="button">Forgot password?</ForgotPasswordLink>
-                  </PasswordLabelContainer>
-                  <PasswordInputContainer>
-                    <PasswordInput
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      required
-                      autoComplete="current-password"
-                    />
-                    <ViewPasswordButton
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </ViewPasswordButton>
-                  </PasswordInputContainer>
-                </InputGroup>
-              </>
-            ) : (
-              <InputGroup>
-                <Label>Enter verification code</Label>
-                <FormRow>
-                  {otp.map((digit, index) => (
-                    <Input
-                      key={index}
-                      ref={(el: HTMLInputElement | null) => {
-                        if (el) {
-                          otpInputs.current[index] = el;
-                        }
-                      }}
-                      type="text"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      onPaste={handleOtpPaste}
-                      style={{ textAlign: 'center' }}
-                      aria-label={`Digit ${index + 1} of verification code`}
-                    />
-                  ))}
-                </FormRow>
+            <InputGroup>
+              <PasswordLabelContainer>
+                <Label htmlFor="password">Password</Label>
+                <ForgotPasswordLink type="button">Forgot password?</ForgotPasswordLink>
+              </PasswordLabelContainer>
+              <PasswordInputContainer>
+                <PasswordInput
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  autoComplete="current-password"
+                />
+                <ViewPasswordButton
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </ViewPasswordButton>
+              </PasswordInputContainer>
+              {error && (
                 <MessageContainer>
-                  <button
-                    type="button"
-                    onClick={() => handleResendOtp(email)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'inherit',
-                      padding: 0,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Resend code
-                  </button>
+                  <FiX size={12} />
+                  {error}
                 </MessageContainer>
-              </InputGroup>
-            )}
-
-            {error && (
-              <MessageContainer>
-                <FiX size={12} />
-                {error}
-              </MessageContainer>
-            )}
+              )}
+            </InputGroup>
 
             {success && (
               <MessageContainer $isSuccess>
@@ -641,15 +794,13 @@ const SignInForm: React.FC<SignInFormProps> = ({
           </FormFields>
 
           <ButtonContainer>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <FiLoader style={{ animation: 'spin 1s linear infinite', marginRight: '8px' }} />
-                  {isOtpSent ? 'Verifying...' : 'Signing in...'}
-                </>
-              ) : (
-                isOtpSent ? 'Verify Code' : 'Sign In'
-              )}
+            <Button 
+              type="button" 
+              onClick={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing In' : 'Sign In'}
+              {isLoading && <AnimatedDots />}
             </Button>
           </ButtonContainer>
         </FormContent>

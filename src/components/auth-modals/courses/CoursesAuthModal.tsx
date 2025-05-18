@@ -319,8 +319,8 @@ export const CoursesAuthModal = ({ isOpen, onClose, onAuthSuccess }: CoursesAuth
         return (
           <FormWrapper>
             <SignInForm
-              onSuccess={handleAuthSuccess}
-              onError={handleAuthError}
+              onSuccess={handleAuthSuccess} 
+              onError={handleAuthError} 
               hideLinks={true}
               preventRedirect={true}
               redirectUrl={getCurrentUrl()}
