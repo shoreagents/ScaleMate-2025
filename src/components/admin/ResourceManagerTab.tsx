@@ -11,12 +11,23 @@ const ActionsContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+
+  @media (max-width: 1088px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1rem;
+  }
 `;
 
 const FilterGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+
+  @media (max-width: 1088px) {
+    display: contents;
+  }
 `;
 
 const SearchInput = styled.div`
@@ -28,6 +39,12 @@ const SearchInput = styled.div`
     padding: 0.5rem 1rem 0.5rem 2.5rem;
     border: 1px solid #E5E7EB;
     border-radius: 0.5rem;
+    font-size: 0.875rem;
+    height: 2.5rem;
+    box-sizing: border-box;
+    &::placeholder {
+      color: rgba(15, 23, 42, 0.4);
+    }
   }
 
   svg {
@@ -37,21 +54,40 @@ const SearchInput = styled.div`
     transform: translateY(-50%);
     color: rgba(15, 23, 42, 0.4);
   }
+
+  @media (max-width: 1088px) {
+    width: 100%;
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+  }
 `;
 
 const FilterButton = styled.button`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 2rem 0.5rem 1rem;
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
+  font-size: 0.875rem;
   color: #0F172A;
-  background: white;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+  height: 2.5rem;
+  box-sizing: border-box;
   cursor: pointer;
+  transition: background-color 0.2s;
 
   &:hover {
     background-color: #F9FAFB;
+  }
+
+  @media (max-width: 1088px) {
+    width: 100%;
   }
 `;
 
@@ -59,15 +95,25 @@ const UploadButton = styled.button`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0 1rem;
   background-color: #3B82F6;
   color: white;
   border: none;
   border-radius: 0.5rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  box-sizing: border-box;
   cursor: pointer;
+  transition: background-color 0.2s;
 
   &:hover {
     background-color: #2563EB;
+  }
+
+  @media (max-width: 1088px) {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
   }
 `;
 
@@ -184,10 +230,10 @@ const ResourceManagerTab: React.FC = () => {
             <input type="text" placeholder="Search resources..." />
           </SearchInput>
           <FilterButton>
-            All Types <FaChevronDown />
+            All Types
           </FilterButton>
           <FilterButton>
-            Access Level <FaChevronDown />
+            Access Level
           </FilterButton>
         </FilterGroup>
         <UploadButton>
