@@ -973,14 +973,13 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: roles } = await supabase
-        .from('user_roles')
+      const { data: profile } = await supabase
+        .from('profiles')
         .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
+        .eq('id', user.id)
         .single();
 
-      setIsCurrentUserAdmin(!!roles);
+      setIsCurrentUserAdmin(profile?.role === 'admin');
     } catch (error) {
       console.error('Error checking user role:', error);
       setIsCurrentUserAdmin(false);
@@ -1295,7 +1294,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
               email: normalizedEmail,
               password: formData.password,
               options: {
-                emailRedirectTo: `${window.location.origin}/auth/callback/direct`
+                emailRedirectTo: `${window.location.origin}`
               }
             });
 
@@ -1352,12 +1351,11 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
           return;
         }
 
-        // First remove any existing roles using enable_user_roles_rls
-        const { error: deleteRolesError } = await supabase.rpc('enable_user_roles_rls', {
-          p_action: 'delete',
-          p_new_role: 'user', // This will remove all roles
-          p_target_user_id: authData.user.id
-        });
+        // First remove any existing roles
+        const { error: deleteRolesError } = await supabase
+          .from('profiles')
+          .update({ role: 'user' })
+          .eq('id', authData.user.id);
 
         if (deleteRolesError) {
           setModalError('Error clearing existing roles: ' + deleteRolesError.message);
@@ -1365,11 +1363,10 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
         }
 
         // Then assign the selected role
-        const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-          p_action: 'insert',
-          p_new_role: formData.role,
-          p_target_user_id: authData.user.id
-        });
+        const { error: roleError } = await supabase
+          .from('profiles')
+          .update({ role: formData.role })
+          .eq('id', authData.user.id);
 
         if (roleError) {
           setModalError('Error assigning role: ' + roleError.message);
@@ -1443,26 +1440,12 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
 
   const handleUpdateUserRole = async (userId: string, newRole: string) => {
     try {
-      // First, remove any existing roles for this user
-      const { error: deleteError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId);
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userId);
 
-      if (deleteError) throw deleteError;
-
-      // Then add the new role
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert([
-          {
-            user_id: userId,
-            role: newRole,
-            created_at: new Date().toISOString()
-          }
-        ]);
-
-      if (insertError) throw insertError;
+      if (updateError) throw updateError;
 
       // Refresh the user list
       await fetchAllUsers();

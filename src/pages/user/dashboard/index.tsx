@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { 
   FaHouse, 
@@ -34,7 +32,11 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
 import { useDownloadModal } from '@/hooks/useDownloadModal';
-import { Modal } from '@/components/ui/Modal';
+import DashboardSidebar, { NavItem } from '@/components/layout/DashboardSidebar';
+import DashboardHeader from '@/components/layout/DashboardHeader';
+import DashboardTab from '@/components/user/DashboardTab';
+import RoleBuilderTab from '@/components/user/RoleBuilderTab';
+import QuoteCalculatorTab from '@/components/user/QuoteCalculatorTab';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -161,12 +163,6 @@ interface UserProfileData {
   updated_at: string;
 }
 
-interface DashboardUserData {
-  name: string;
-  email: string;
-  avatar?: string;
-}
-
 interface DashboardData {
   profile: {
     name: string;
@@ -186,30 +182,6 @@ interface DashboardData {
   }>;
 }
 
-async function fetchDashboardData(): Promise<DashboardData> {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .single();
-
-  const { data: progress } = await supabase
-    .from('user_progress')
-    .select('*')
-    .single();
-
-  const { data: recent_activity } = await supabase
-    .from('user_events')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  return {
-    profile,
-    progress,
-    recent_activity,
-  };
-}
-
 const DashboardPage = () => {
   const router = useRouter();
   const { user } = useAuth();
@@ -218,100 +190,67 @@ const DashboardPage = () => {
   const [userData, setUserData] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showAuthCallback, setShowAuthCallback] = useState(false);
   const [showSetupForm, setShowSetupForm] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { openModal } = useDownloadModal();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
-  const { data, isLoading, error: queryError } = useQuery({
-    queryKey: ['dashboardData'],
-    queryFn: fetchDashboardData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  const waitForValidSession = async (maxAttempts = 30): Promise<boolean> => {
-    for (let i = 0; i < maxAttempts; i++) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        // Additional check to ensure session is fully established
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          return true;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Get profile data
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser) {
+          throw new Error('No authenticated user found');
         }
+
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
+
+        if (profileError) {
+          throw profileError;
+        }
+
+        if (profile) {
+          setUserData(profile);
+          setProfilePicture(profile.profile_picture);
+          
+          // Check if setup is needed
+          if (!profile.username) {
+            setShowSetupForm(true);
+          }
+
+          // Set dashboard data
+          setDashboardData({
+            profile: {
+              name: `${profile.first_name} ${profile.last_name}`,
+              email: profile.email,
+              created_at: profile.created_at
+            },
+            progress: {
+              completed_tools: 0,
+              total_tools: 0,
+              xp_points: 0
+            },
+            recent_activity: []
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      } finally {
+        setLoading(false);
       }
-      // Wait 1 second between attempts
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-    return false;
-  };
+    };
 
-  const checkAuth = async () => {
-    try {
-      // Wait for valid session first
-      const hasValidSession = await waitForValidSession();
-      if (!hasValidSession) {
-        router.push('/login');
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-
-      // Get user's profile data
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Profile error:', profileError);
-        setError('Error loading profile data');
-        return;
-      }
-
-      // Set user and show dashboard
-      setUserData(profile);
-      setLoading(false);
-
-      // Show setup form if username is null
-      if (!profile?.username) {
-        setShowSetupForm(true);
-      }
-
-    } catch (err) {
-      console.error('Auth check error:', err);
-      setError('Error checking authentication');
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    checkAuth();
+    fetchData();
   }, []);
-
-  useEffect(() => {
-    const { tab } = router.query;
-    if (tab && typeof tab === 'string') {
-      // Check if the tab exists in navItems
-      const isValidTab = navItems.some(item => item.id === tab);
-      if (isValidTab) {
-        setActiveTab(tab);
-      }
-    }
-  }, [router.query]);
 
   const handleProfilePictureChange = (newPictureUrl: string) => {
     setProfilePicture(newPictureUrl);
-    setUserData(prev => prev ? {
-      ...prev,
-      profile_picture: newPictureUrl,
-      updated_at: new Date().toISOString()
-    } : null);
   };
 
   const handleLogout = async () => {
@@ -326,15 +265,6 @@ const DashboardPage = () => {
   const getTabTitle = (tab: string) => {
     const tabItem = navItems.find(item => item.id === tab);
     return tabItem ? tabItem.label : 'Dashboard';
-  };
-
-  const transformUserData = (data: UserProfileData | null): DashboardUserData | undefined => {
-    if (!data) return undefined;
-    return {
-      name: `${data.first_name} ${data.last_name}`,
-      email: data.email,
-      avatar: data.profile_picture || undefined
-    };
   };
 
   const renderContent = () => {
@@ -362,7 +292,11 @@ const DashboardPage = () => {
       case 'gamified-tracker':
         return <GamifiedTrackerTab />;
       default:
-        return <DashboardTab user={transformUserData(userData)} />;
+        return <DashboardTab user={userData ? {
+          name: `${userData.first_name} ${userData.last_name}`,
+          email: userData.email,
+          avatar: userData.profile_picture || undefined
+        } : undefined} />;
     }
   };
 
@@ -386,16 +320,6 @@ const DashboardPage = () => {
     setShowSuccessModal(true);
   };
 
-  // Add a function to check if any modal is open
-  const checkModalState = () => {
-    return showSetupForm || showSuccessModal;
-  };
-
-  // Update modal state whenever relevant states change
-  useEffect(() => {
-    setIsModalOpen(checkModalState());
-  }, [showSetupForm, showSuccessModal]);
-
   // Show loading spinner while checking auth
   if (loading) {
     return (
@@ -415,14 +339,13 @@ const DashboardPage = () => {
   }
 
   return (
-    <ProtectedRoute requiredRole="user">
       <DashboardContainer>
         <DashboardSidebar
           logoText="ScaleMate"
           navItems={navItems}
           activeTab={activeTab}
           onTabClick={handleTabClick}
-          isModalOpen={isModalOpen}
+          isModalOpen={showSetupForm || showSuccessModal}
         />
         <MainContent>
           <DashboardHeader
@@ -462,7 +385,6 @@ const DashboardPage = () => {
           </SuccessModal>
         )}
       </DashboardContainer>
-    </ProtectedRoute>
   );
 };
 

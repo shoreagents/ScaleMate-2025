@@ -186,7 +186,7 @@ const UserManagementTab: React.FC = () => {
           email,
           full_name,
           created_at,
-          user_roles (
+          profiles (
             role
           )
         `)
@@ -198,7 +198,7 @@ const UserManagementTab: React.FC = () => {
         id: user.id,
         email: user.email,
         full_name: user.full_name,
-        role: user.user_roles?.[0]?.role || 'user',
+        role: user.profiles?.[0]?.role || 'user',
         status: 'active' as const,
         created_at: new Date(user.created_at).toLocaleDateString()
       }));

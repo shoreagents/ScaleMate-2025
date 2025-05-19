@@ -31,6 +31,10 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  hasRole: (role: Role) => boolean;
+  isAdmin: () => boolean;
+  isUser: () => boolean;
+  getRoleBasedRedirect: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,7 +92,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Add refreshProfile method for manual profile refresh
   const refreshProfile = async () => {
     if (!user) return;
     await fetchUserProfile(user.id);
@@ -174,6 +177,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // New role utility functions
+  const hasRole = (requiredRole: Role): boolean => {
+    return role === requiredRole;
+  };
+
+  const isAdmin = (): boolean => {
+    return role === 'admin';
+  };
+
+  const isUser = (): boolean => {
+    return role === 'user';
+  };
+
+  const getRoleBasedRedirect = (): string => {
+    if (role === 'admin') {
+      return '/admin/dashboard';
+    }
+    return '/user/dashboard';
+  };
+
   const value = {
     user,
     profile,
@@ -186,6 +209,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetPassword,
     updateProfile,
     refreshProfile,
+    hasRole,
+    isAdmin,
+    isUser,
+    getRoleBasedRedirect,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

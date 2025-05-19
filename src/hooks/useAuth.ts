@@ -29,7 +29,7 @@ export function useAuth() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback/direct`
+        emailRedirectTo: `${window.location.origin}`
       }
     });
     if (error) throw error;

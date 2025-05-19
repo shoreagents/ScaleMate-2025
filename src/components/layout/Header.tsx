@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FiUser, FiLogOut, FiChevronDown, FiMenu, FiX } from 'react-icons/fi';
-import { FaCalculator, FaChartLine, FaUsers, FaGraduationCap, FaDownload, FaToolbox, FaRegNewspaper, FaRegCircle } from 'react-icons/fa6';
+import { FaCalculator, FaChartLine, FaUsers, FaGraduationCap, FaDownload, FaToolbox, FaRegNewspaper, FaRegCircle, FaUser } from 'react-icons/fa6';
 import { FaGripVertical } from 'react-icons/fa6';
-import { FaUser, FaSignOutAlt, FaHome } from 'react-icons/fa';
+import { FaHome } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
@@ -21,9 +21,9 @@ const HeaderContainer = styled.header`
 
 const Container = styled.div`
   margin: 0 auto;
-  padding: 0 12vw;
+  padding: 0 1.5rem;
   @media (min-width: 1200px) {
-    padding: 0 14rem;
+    padding: 0 1.5rem;
   }
 `;
 
@@ -32,13 +32,15 @@ const HeaderContent = styled.div`
   align-items: center;
   justify-content: space-between;
   height: 4rem;
+  padding-right: 0;
 `;
 
-const Logo = styled(Link)`
+const Logo = styled.div`
   font-size: 1.5rem;
   font-weight: 700;
   color: #0F172A;
   text-decoration: none;
+  cursor: pointer;
 `;
 
 const Nav = styled.nav`
@@ -70,24 +72,31 @@ const AuthSection = styled.div`
   }
 `;
 
-const LoginButton = styled(Link)`
+const LoginButton = styled.button`
   color: #0F172A;
   cursor: pointer;
   transition: color 0.2s;
   text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
 
   &:hover {
     color: #3B82F6;
   }
 `;
 
-const SignUpButton = styled.span`
+const SignUpButton = styled.button`
   background-color: #3B82F6;
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  text-decoration: none;
+  border: none;
+  font-size: inherit;
 
   &:hover {
     background-color: #2563EB;
@@ -152,7 +161,7 @@ const DropdownItem = styled.div<{ $isLogout?: boolean }>`
 `;
 
 const IconButton = styled.button`
-  background: none;
+  background-color: #F3F4F6;
   border: none;
   cursor: pointer;
   color: #6B7280;
@@ -160,14 +169,13 @@ const IconButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #F3F4F6;
-    color: ${props => props.theme.colors.text.primary};
+    background-color: #EAECF0;
   }
 `;
 
@@ -242,6 +250,7 @@ const SolutionCard = styled.div`
     width: 100%;
   }
 `;
+
 const SolutionIcon = styled.div<{$bg: string}>`
   width: 40px;
   height: 40px;
@@ -250,82 +259,56 @@ const SolutionIcon = styled.div<{$bg: string}>`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.5rem;
-  color: #fff;
-  font-size: 1.5rem;
-`;
-const SolutionTitle = styled.div`
-  font-weight: 600;
-  color: #0F172A;
-  margin-bottom: 0.25rem;
-`;
-const SolutionSubtitle = styled.div`
-  font-size: 0.95rem;
-  color: #64748B;
-  margin-bottom: 0.5rem;
-`;
-const SolutionLink = styled.a`
-  color: ${({ theme }) => theme.colors.primary};
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  text-decoration: none;
-  transition: color 0.2s;
-  font-size: 0.98rem;
-  cursor: pointer;
-  &:hover {
-    color: ${({ theme }) => theme.colors.primaryDark};
-    text-decoration: none;
+  margin-bottom: 1rem;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    color: white;
   }
 `;
 
-const ArrowIcon = styled(FontAwesomeIcon)`
-  margin-left: 0.25rem;
-  font-size: 0.875rem;
+const SolutionTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0 0 0.5rem 0;
 `;
 
-const SolutionsDropdownWrapper = styled.div`
-  position: relative;
+const SolutionDescription = styled.p`
+  font-size: 0.875rem;
+  color: #64748B;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+`;
+
+const SolutionLink = styled.div`
   display: flex;
   align-items: center;
-`;
-
-const LearnDropdown = styled(SolutionsDropdown)``;
-
-const DropdownContent = styled.div`
-  display: flex;
-  justify-content: center;
   gap: 0.5rem;
-  max-width: 1600px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 0 1rem;
-  flex-wrap: nowrap;
+  color: #3B82F6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: auto;
 
-  @media (max-width: 1280px) {
-    flex-wrap: wrap;
-    gap: 1rem;
+  svg {
+    width: 12px;
+    height: 12px;
   }
 `;
 
 const MobileMenuButton = styled.button`
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   cursor: pointer;
   color: #0F172A;
   padding: 0.5rem;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
 
-  @media (max-width: 994px) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  &:hover {
-    background-color: #F3F4F6;
+  @media (min-width: 995px) {
+    display: none;
   }
 `;
 
@@ -337,137 +320,25 @@ const MobileMenu = styled.div<{ $isOpen: boolean }>`
   bottom: 0;
   background: white;
   z-index: 40;
-  transform: translateX(${props => props.$isOpen ? '0' : '100%'});
-  transition: transform 0.3s ease-in-out;
+  padding: 1rem;
+  display: ${props => props.$isOpen ? 'block' : 'none'};
   overflow-y: auto;
 `;
 
-const MobileNav = styled.nav`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  min-height: 100%;
-`;
-
-const MobileMenuSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 0.25rem;
-  border-top: 1px solid #E5E7EB;
-  padding-top: 0.375rem;
-
-  &:first-child {
-    border-top: none;
-    padding-top: 0;
-  }
-`;
-
-const MobileMenuSectionTitle = styled.h3`
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #3B82F6;
-  margin: 0;
-  padding: 0.375rem 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  line-height: 1.25;
-`;
-
-const MobileNavItem = styled.div`
+const MobileMenuItem = styled.div`
+  padding: 1rem;
+  border-bottom: 1px solid #E5E7EB;
   color: #0F172A;
   cursor: pointer;
-  padding: 0.375rem 0.5rem;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
-  line-height: 1.25;
 
   &:hover {
     background-color: #F3F4F6;
   }
 `;
 
-const MobileAuthRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.75rem;
-`;
-
-const MobileLoginButton = styled(Link)`
-  color: #0F172A;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  transition: all 0.2s;
-  text-align: center;
-  width: 100%;
-  border: 1px solid #E5E7EB;
-  background-color: #F9FAFB;
-
-  &:hover {
-    background-color: #F3F4F6;
-    border-color: #D1D5DB;
-  }
-`;
-
-const MobileSignUpButton = styled.span`
-  background-color: #3B82F6;
-  color: white;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  text-align: center;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #2563EB;
-  }
-`;
-
-const MobileLogoutButton = styled.div`
-  color: #EF4444;
-  cursor: pointer;
-  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
-  border-radius: 0.5rem;
-  text-align: left;
-  font-weight: 400;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-top: 1px solid #E5E7EB;
-  margin-top: 0.75rem;
-  transition: background 0.2s, color 0.2s;
-  &:hover {
-    background: #FEE2E2;
-    color: #B91C1C;
-  }
-`;
-
-const MobileDashboardButton = styled.div`
-  color: #0F172A;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  text-align: left;
-  font-weight: 400;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background 0.2s, color 0.2s;
-  &:hover {
-    background: #F3F4F6;
-    color: #2563EB;
-  }
-`;
-
-const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean }>`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: #f1f1f1;
+const ProfileIcon = styled.div`
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -494,129 +365,104 @@ const AvatarSpinner = styled.div`
   }
 `;
 
-const MobileAuthDivider = styled.div`
-  border-top: 1px solid #E5E7EB;
-  margin-top: 0.25rem;
-  padding-top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`;
-
 const Header = () => {
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [showSolutions, setShowSolutions] = useState(false);
-  const [showLearn, setShowLearn] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  let closeTimeout: NodeJS.Timeout | null = null;
-  let learnCloseTimeout: NodeJS.Timeout | null = null;
+  const [isSolutionsOpen, setIsSolutionsOpen] = useState(false);
+  const [isLearnOpen, setIsLearnOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setIsLoggedIn(!!user);
-
-        if (user) {
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('profile_picture')
-            .eq('user_id', user.id)
-            .single();
-
-          if (profile?.profile_picture) {
-            setProfilePicture(profile.profile_picture);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking auth:', error);
-        setIsLoggedIn(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsLoggedIn(!!session?.user);
-      // Close the profile dropdown on sign out
-      if (event === 'SIGNED_OUT') {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
+          }
     };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async (preventRedirect = false) => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) throw error;
+      
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Auth check error:', error);
+      setIsLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    setIsAuthenticated(false);
     router.push('/');
   };
 
   const handleDashboardClick = async () => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Check if user has completed setup
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('username, last_password_change')
-          .eq('user_id', user.id)
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error) throw error;
+      
+      if (session) {
+        // Get user's role from profiles table
+        const { data: profile, error: roleError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
           .single();
 
-        // If username is not set or last_password_change is null, redirect to dashboard to show setup form
-        if (!profile?.username || !profile?.last_password_change) {
-          router.push('/user/dashboard');
-          return;
+        if (roleError) {
+          console.error('Error fetching user role:', roleError);
+          throw new Error('Error fetching user role');
         }
 
-        // Get user's role
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-
-        if (roles && roles.length > 0) {
-          const userRoles = roles.map(r => r.role);
-          if (userRoles.includes('admin') || userRoles.includes('moderator')) {
-            router.push('/admin/dashboard');
-          } else if (userRoles.includes('user')) {
-            router.push('/user/dashboard');
-          }
+        // Redirect based on role
+        if (profile?.role === 'admin') {
+          router.push('/admin/dashboard');
         } else {
-          // If no role is found, redirect to home page
-          router.push('/');
+          router.push('/user/dashboard');
         }
       } else {
         router.push('/login');
       }
     } catch (error) {
-      console.error('Error in handleDashboardClick:', error);
-      router.push('/');
+      console.error('Dashboard navigation error:', error);
+      router.push('/login');
     }
   };
 
   const handleSolutionsEnter = () => {
-    if (closeTimeout) clearTimeout(closeTimeout);
-    setShowSolutions(true);
+    setIsSolutionsOpen(true);
   };
+
   const handleSolutionsLeave = () => {
-    closeTimeout = setTimeout(() => setShowSolutions(false), 120);
+    setIsSolutionsOpen(false);
   };
 
   const handleLearnEnter = () => {
-    if (learnCloseTimeout) clearTimeout(learnCloseTimeout);
-    setShowLearn(true);
+    setIsLearnOpen(true);
   };
+
   const handleLearnLeave = () => {
-    learnCloseTimeout = setTimeout(() => setShowLearn(false), 120);
+    setIsLearnOpen(false);
   };
 
   const handleMobileMenuToggle = () => {
@@ -632,177 +478,187 @@ const Header = () => {
     <HeaderContainer>
       <Container>
         <HeaderContent>
-          <Logo href="/">ScaleMate</Logo>
+          <Link href="/" passHref>
+            <Logo>ScaleMate</Logo>
+          </Link>
+          
           <Nav>
-            <NavItem onClick={() => router.push('/')}>Home</NavItem>
-            <SolutionsDropdownWrapper
-              onMouseEnter={handleSolutionsEnter}
-              onMouseLeave={handleSolutionsLeave}
-              tabIndex={0}
-              aria-haspopup="true"
-              aria-expanded={showSolutions}
-            >
-              <SolutionsNavItem>
-                Solutions <FiChevronDown style={{ marginLeft: 4 }} />
-              </SolutionsNavItem>
-              {showSolutions && (
+            <SolutionsNavItem onMouseEnter={handleSolutionsEnter} onMouseLeave={handleSolutionsLeave}>
+              <NavItem>
+                Solutions <FiChevronDown size={14} style={{ marginLeft: 4 }} />
+              </NavItem>
+              {isSolutionsOpen && (
                 <SolutionsDropdown>
-                  <DropdownContent>
                     <SolutionCard>
-                      <SolutionIcon $bg="#3B82F6"><FaCalculator /></SolutionIcon>
-                      <SolutionTitle>Quick Quote Calculator</SolutionTitle>
-                      <SolutionSubtitle>Instantly estimate offshore staff costs</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/quote')}>Get a Quick Quote <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    <SolutionIcon $bg="#3B82F6">
+                      <FaCalculator />
+                    </SolutionIcon>
+                    <SolutionTitle>Quote Calculator</SolutionTitle>
+                    <SolutionDescription>
+                      Get instant, accurate quotes for your staffing needs with our AI-powered calculator.
+                    </SolutionDescription>
+                    <SolutionLink>
+                      Learn More <FontAwesomeIcon icon={faArrowRight} />
+                    </SolutionLink>
                     </SolutionCard>
+                  
                     <SolutionCard>
-                      <SolutionIcon $bg="#F472B6"><FaChartLine /></SolutionIcon>
-                      <SolutionTitle>Cost Savings Calculator</SolutionTitle>
-                      <SolutionSubtitle>Compare local vs offshore teams</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/cost-savings')}>Compare Savings <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    <SolutionIcon $bg="#10B981">
+                      <FaChartLine />
+                    </SolutionIcon>
+                    <SolutionTitle>Role Builder</SolutionTitle>
+                    <SolutionDescription>
+                      Create detailed job descriptions and role specifications with AI assistance.
+                    </SolutionDescription>
+                    <SolutionLink>
+                      Learn More <FontAwesomeIcon icon={faArrowRight} />
+                    </SolutionLink>
                     </SolutionCard>
+                  
                     <SolutionCard>
-                      <SolutionIcon $bg="#4ADE80"><FaUsers /></SolutionIcon>
-                      <SolutionTitle>AI-Powered Role Builder</SolutionTitle>
-                      <SolutionSubtitle>Build offshore job blueprints with AI</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/role-builder')}>Build a Role <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    <SolutionIcon $bg="#8B5CF6">
+                      <FaUsers />
+                    </SolutionIcon>
+                    <SolutionTitle>Team Management</SolutionTitle>
+                    <SolutionDescription>
+                      Streamline your team management with our comprehensive tools and analytics.
+                    </SolutionDescription>
+                    <SolutionLink>
+                      Learn More <FontAwesomeIcon icon={faArrowRight} />
+                    </SolutionLink>
                     </SolutionCard>
-                    <SolutionCard>
-                      <SolutionIcon $bg="#6366F1"><FaRegCircle /></SolutionIcon>
-                      <SolutionTitle>Readiness Quiz</SolutionTitle>
-                      <SolutionSubtitle>Assess your offshore and AI readiness</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/readiness')}>Take the Quiz <ArrowIcon icon={faArrowRight} /></SolutionLink>
-                    </SolutionCard>
-                  </DropdownContent>
                 </SolutionsDropdown>
               )}
-            </SolutionsDropdownWrapper>
-            <SolutionsDropdownWrapper
-              onMouseEnter={handleLearnEnter}
-              onMouseLeave={handleLearnLeave}
-              tabIndex={0}
-              aria-haspopup="true"
-              aria-expanded={showLearn}
-            >
-              <SolutionsNavItem>
-                Learn <FiChevronDown style={{ marginLeft: 4 }} />
               </SolutionsNavItem>
-              {showLearn && (
-                <LearnDropdown>
-                  <DropdownContent>
+
+            <SolutionsNavItem onMouseEnter={handleLearnEnter} onMouseLeave={handleLearnLeave}>
+              <NavItem>
+                Learn <FiChevronDown size={14} style={{ marginLeft: 4 }} />
+              </NavItem>
+              {isLearnOpen && (
+                <SolutionsDropdown>
                     <SolutionCard>
-                      <SolutionIcon $bg="#3B82F6"><FaGraduationCap /></SolutionIcon>
-                      <SolutionTitle>Course Library</SolutionTitle>
-                      <SolutionSubtitle>Build skills with free and premium training.</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/courses')}>Browse Courses <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    <SolutionIcon $bg="#F59E0B">
+                      <FaGraduationCap />
+                    </SolutionIcon>
+                    <SolutionTitle>Courses</SolutionTitle>
+                    <SolutionDescription>
+                      Access our comprehensive library of courses on staffing and team management.
+                    </SolutionDescription>
+                    <SolutionLink>
+                      Learn More <FontAwesomeIcon icon={faArrowRight} />
+                    </SolutionLink>
                     </SolutionCard>
+                  
                     <SolutionCard>
-                      <SolutionIcon $bg="#F472B6"><FaDownload /></SolutionIcon>
-                      <SolutionTitle>Resource Library</SolutionTitle>
-                      <SolutionSubtitle>Access checklists, templates, and guides.</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/resources')}>View Resources <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    <SolutionIcon $bg="#EC4899">
+                      <FaDownload />
+                    </SolutionIcon>
+                    <SolutionTitle>Resources</SolutionTitle>
+                    <SolutionDescription>
+                      Download guides, templates, and tools to enhance your staffing process.
+                    </SolutionDescription>
+                    <SolutionLink>
+                      Learn More <FontAwesomeIcon icon={faArrowRight} />
+                    </SolutionLink>
                     </SolutionCard>
+                  
                     <SolutionCard>
-                      <SolutionIcon $bg="#4ADE80"><FaToolbox /></SolutionIcon>
-                      <SolutionTitle>Tool Library</SolutionTitle>
-                      <SolutionSubtitle>Discover top AI and automation tools.</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/tools')}>Explore Tools <ArrowIcon icon={faArrowRight} /></SolutionLink>
+                    <SolutionIcon $bg="#6366F1">
+                      <FaToolbox />
+                    </SolutionIcon>
+                    <SolutionTitle>Tools</SolutionTitle>
+                    <SolutionDescription>
+                      Explore our suite of tools designed to optimize your staffing workflow.
+                    </SolutionDescription>
+                    <SolutionLink>
+                      Learn More <FontAwesomeIcon icon={faArrowRight} />
+                    </SolutionLink>
                     </SolutionCard>
-                    <SolutionCard>
-                      <SolutionIcon $bg="#3B82F6"><FaRegNewspaper /></SolutionIcon>
-                      <SolutionTitle>Blog & Insights</SolutionTitle>
-                      <SolutionSubtitle>Read insights, strategies, and scaling tips.</SolutionSubtitle>
-                      <SolutionLink onClick={() => router.push('/blog')}>Read the Blog <ArrowIcon icon={faArrowRight} /></SolutionLink>
-                    </SolutionCard>
-                  </DropdownContent>
-                </LearnDropdown>
+                </SolutionsDropdown>
               )}
-            </SolutionsDropdownWrapper>
-            <NavItem onClick={() => router.push('/about')}>About</NavItem>
-            <NavItem onClick={() => router.push('/contact')}>Contact</NavItem>
+            </SolutionsNavItem>
+
+            <Link href="/pricing" passHref>
+              <NavItem>Pricing</NavItem>
+            </Link>
+            
+            <Link href="/about" passHref>
+              <NavItem>About</NavItem>
+            </Link>
           </Nav>
+
           <AuthSection>
-            {isLoggedIn === null ? null : isLoggedIn ? (
-              <ProfileContainer id="profile-menu">
+            {isLoading ? (
+              <Spinner />
+            ) : isAuthenticated ? (
+              <ProfileContainer ref={profileRef}>
                 <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
-                  <ProfileIcon $imageUrl={profilePicture} $isLoading={isLoading}>
-                    {isLoading ? (
-                      <AvatarSpinner />
-                    ) : profilePicture ? (
-                      <img src={profilePicture} alt="Profile" />
-                    ) : (
-                      <FiUser size={20} />
-                    )}
+                  <ProfileIcon>
+                    <FaUser size={20} color="#9CA3AF" />
                   </ProfileIcon>
                 </IconButton>
                 <ProfileDropdown $isOpen={isProfileOpen}>
                   <DropdownItem onClick={handleDashboardClick}>
-                    <FaGripVertical size={16} color="#3B82F6" style={{ minWidth: 16 }} />
+                    <FaHome size={16} color="#6B7280" />
                     Dashboard
                   </DropdownItem>
                   <DropdownItem onClick={handleLogout} $isLogout>
-                    <FiLogOut size={16} color="#EF4444" style={{ minWidth: 16 }} />
+                    <FiLogOut size={16} />
                     Logout
                   </DropdownItem>
                 </ProfileDropdown>
               </ProfileContainer>
             ) : (
               <>
-                <LoginButton href="/login">Login</LoginButton>
-                <SignUpButton onClick={() => router.push('/signup')}>Sign Up</SignUpButton>
+                <Link href="/login" passHref>
+                  <LoginButton>Log in</LoginButton>
+                </Link>
+                <Link href="/signup" passHref>
+                  <SignUpButton>Sign up</SignUpButton>
+                </Link>
               </>
             )}
           </AuthSection>
+
           <MobileMenuButton onClick={handleMobileMenuToggle}>
             {isMobileMenuOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </MobileMenuButton>
         </HeaderContent>
       </Container>
+
       <MobileMenu $isOpen={isMobileMenuOpen}>
-        <MobileNav>
-          {isLoggedIn === null ? null : isLoggedIn ? (
-            <MobileAuthRow>
-              <MobileDashboardButton onClick={handleDashboardClick}>
-                <FaGripVertical size={18} style={{ minWidth: 18, color: '#3B82F6' }} />
+        <MobileMenuItem onClick={() => handleMobileNavClick('/solutions')}>
+          Solutions
+        </MobileMenuItem>
+        <MobileMenuItem onClick={() => handleMobileNavClick('/learn')}>
+          Learn
+        </MobileMenuItem>
+        <MobileMenuItem onClick={() => handleMobileNavClick('/pricing')}>
+          Pricing
+        </MobileMenuItem>
+        <MobileMenuItem onClick={() => handleMobileNavClick('/about')}>
+          About
+        </MobileMenuItem>
+        {isAuthenticated ? (
+          <>
+            <MobileMenuItem onClick={handleDashboardClick}>
                 Dashboard
-              </MobileDashboardButton>
-            </MobileAuthRow>
-          ) : null}
-          <MobileMenuSection>
-            <MobileNavItem onClick={() => handleMobileNavClick('/')}>Home</MobileNavItem>
-          </MobileMenuSection>
-
-          <MobileMenuSection>
-            <MobileMenuSectionTitle>Solutions</MobileMenuSectionTitle>
-            <MobileNavItem onClick={() => handleMobileNavClick('/quote')}>Quick Quote Calculator</MobileNavItem>
-            <MobileNavItem onClick={() => handleMobileNavClick('/cost-savings')}>Cost Savings Calculator</MobileNavItem>
-            <MobileNavItem onClick={() => handleMobileNavClick('/role-builder')}>AI-Powered Role Builder</MobileNavItem>
-            <MobileNavItem onClick={() => handleMobileNavClick('/readiness')}>Readiness Quiz</MobileNavItem>
-          </MobileMenuSection>
-
-          <MobileMenuSection>
-            <MobileMenuSectionTitle>Learn</MobileMenuSectionTitle>
-            <MobileNavItem onClick={() => handleMobileNavClick('/courses')}>Course Library</MobileNavItem>
-            <MobileNavItem onClick={() => handleMobileNavClick('/resources')}>Resource Library</MobileNavItem>
-            <MobileNavItem onClick={() => handleMobileNavClick('/tools')}>Tool Library</MobileNavItem>
-            <MobileNavItem onClick={() => handleMobileNavClick('/blog')}>Blog & Insights</MobileNavItem>
-          </MobileMenuSection>
-
-          <MobileMenuSection>
-            <MobileNavItem onClick={() => handleMobileNavClick('/about')}>About</MobileNavItem>
-            <MobileNavItem onClick={() => handleMobileNavClick('/contact')}>Contact</MobileNavItem>
-          </MobileMenuSection>
-          {isLoggedIn === null ? null : isLoggedIn ? (
-            <MobileLogoutButton onClick={handleLogout}>
-              <FiLogOut size={18} style={{ minWidth: 18 }} />
+            </MobileMenuItem>
+            <MobileMenuItem onClick={handleLogout}>
               Logout
-            </MobileLogoutButton>
+            </MobileMenuItem>
+          </>
           ) : (
-            <MobileAuthDivider>
-              <MobileLoginButton href="/login">Login</MobileLoginButton>
-              <MobileSignUpButton onClick={() => handleMobileNavClick('/signup')}>Sign Up</MobileSignUpButton>
-            </MobileAuthDivider>
+          <>
+            <MobileMenuItem onClick={() => handleMobileNavClick('/login')}>
+              Log in
+            </MobileMenuItem>
+            <MobileMenuItem onClick={() => handleMobileNavClick('/signup')}>
+              Sign up
+            </MobileMenuItem>
+          </>
           )}
-        </MobileNav>
       </MobileMenu>
     </HeaderContainer>
   );

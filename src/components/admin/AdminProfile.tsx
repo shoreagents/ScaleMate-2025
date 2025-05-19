@@ -755,7 +755,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       if (!user) return;
 
       const { data: profile, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .single();
@@ -831,7 +831,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
 
       // Update profile
       const { error: updateError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({
           first_name: profileData.first_name,
           last_name: profileData.last_name,
@@ -933,7 +933,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       const previousPasswordChange = profileData.last_password_change || 'Never';
 
       const { error: profileError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({
           last_password_change: new Date().toISOString()
         })
@@ -1042,7 +1042,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
 
       // Update the user profile with the new picture URL
       const { error: updateError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({ 
           profile_picture: publicUrl,
           updated_at: new Date().toISOString()

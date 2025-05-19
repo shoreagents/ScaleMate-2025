@@ -388,9 +388,9 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
         }
       );
       
-      // Query the user_profiles table with service role
+      // Query the profiles table with service role
       const { data, error } = await serviceRoleClient
-        .from('user_profiles')
+        .from('profiles')
         .select('username, user_id')
         .eq('username', username)
         .limit(1);
@@ -455,7 +455,7 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
 
       // Update user profile
       const { error: profileError } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .update({
           username: formData.username,
           last_password_change: new Date().toISOString()

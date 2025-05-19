@@ -74,7 +74,7 @@ const NotificationBadge = styled.div`
 `;
 
 const IconButton = styled.button`
-  background: none;
+  background-color: #F3F4F6;
   border: none;
   cursor: pointer;
   color: #6B7280;
@@ -82,14 +82,13 @@ const IconButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #F3F4F6;
-    color: ${props => props.theme.colors.text.primary};
+    background-color: #EAECF0;
   }
 `;
 
@@ -97,7 +96,7 @@ const ProfileContainer = styled.div`
   position: relative;
 `;
 
-const ProfileDropdown = styled.div<{ isOpen: boolean }>`
+const ProfileDropdown = styled.div<{ $isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
@@ -105,7 +104,7 @@ const ProfileDropdown = styled.div<{ isOpen: boolean }>`
   border-radius: 8px;
   border: 1px solid #E5E7EB;
   width: 200px;
-  display: ${props => props.isOpen ? 'block' : 'none'};
+  display: ${props => props.$isOpen ? 'block' : 'none'};
   z-index: 50;
   overflow: hidden;
 `;
@@ -135,10 +134,8 @@ const DropdownItem = styled.div<{ $isLogout?: boolean }>`
 `;
 
 const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean }>`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: #f1f1f1;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -152,11 +149,8 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean
   }
 
   @media (min-width: 769px) {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color: transparent;
-    padding: 0;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -183,6 +177,8 @@ interface DashboardHeaderProps {
   onProfileClick: () => void;
   showProfile?: boolean;
   isLoading?: boolean;
+  onNotificationClick?: () => void;
+  hasNotifications?: boolean;
 }
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -191,7 +187,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onLogout,
   onProfileClick,
   showProfile = false,
-  isLoading = false
+  isLoading = false,
+  onNotificationClick,
+  hasNotifications = false
 }) => {
   const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -220,11 +218,13 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     <ContentHeader>
       <ContentTitle>{title}</ContentTitle>
       <HeaderActions>
-        <NotificationBadge>
-          <IconButton>
-            <FaBell size={20} />
-          </IconButton>
-        </NotificationBadge>
+        {hasNotifications && (
+          <NotificationBadge>
+            <IconButton onClick={onNotificationClick}>
+              <FaBell size={20} />
+            </IconButton>
+          </NotificationBadge>
+        )}
         <ProfileContainer id="profile-menu">
           <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
             <ProfileIcon $imageUrl={profilePicture} $isLoading={isLoading}>
@@ -233,11 +233,11 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               ) : profilePicture ? (
                 <img src={profilePicture} alt="Profile" />
               ) : (
-                <FaUser size={20} color="#6B7280" />
+                <FaUser size={20} color="#9CA3AF" />
               )}
             </ProfileIcon>
           </IconButton>
-          <ProfileDropdown isOpen={isProfileOpen}>
+          <ProfileDropdown $isOpen={isProfileOpen}>
             <DropdownItem onClick={handleProfileClick}>
               <FaUser size={16} color="#6B7280" />
               Profile

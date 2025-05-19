@@ -29,6 +29,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const { email, password, action } = req.body;
 
       if (action === 'signup') {
+        // First check if user exists
+        const { data: existingUser } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (existingUser?.user) {
+          return res.status(400).json({ 
+            error: 'This email address is already registered. Please try logging in or use a different email.' 
+          });
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -58,8 +70,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: error.message });
       }
 
-      // Return session explicitly for frontend to set
-      return res.status(200).json({ success: true, data, session: data.session || null });
+      // Get user's role from profiles table
+      const { data: userData, error: roleError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (roleError) {
+        console.error('Error fetching user role:', roleError);
+        return res.status(400).json({ error: 'Error fetching user role' });
+      }
+
+      // Return session and role information
+      return res.status(200).json({ 
+        success: true, 
+        data, 
+        session: data.session || null,
+        role: userData?.role || 'user' // Default to 'user' if no role found
+      });
     } catch (error: any) {
       console.error('Auth error:', error);
       return res.status(500).json({ 

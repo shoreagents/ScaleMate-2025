@@ -51,9 +51,8 @@ import AIToolsTab from '@/components/admin/AIToolsTab';
 import QuizManagerTab from '@/components/admin/QuizManagerTab';
 import ContentBlocksTab from '@/components/admin/ContentBlocksTab';
 import SystemSettingsTab from '@/components/admin/SystemSettingsTab';
-import { withRoleProtection } from '@/components/auth/withRoleProtection';
-import { useQuery } from '@tanstack/react-query';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
+import { FiCheck } from 'react-icons/fi';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -359,7 +358,7 @@ const ErrorMessage = styled.span`
   font-size: 0.875rem;
 `;
 
-const SuccessMessage = styled.span`
+const FormSuccessMessage = styled.span`
   color: ${({ theme }) => theme.colors.success};
   font-size: 0.875rem;
 `;
@@ -674,6 +673,76 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   }
 `;
 
+const SuccessModal = styled.div<{ $isOpen: boolean }>`
+  display: ${props => props.$isOpen ? 'flex' : 'none'};
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(15, 23, 42, 0.75);
+  z-index: 50;
+  backdrop-filter: blur(2px);
+`;
+
+const SuccessModalContent = styled.div`
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const SuccessIcon = styled.div`
+  width: 48px;
+  height: 48px;
+  background-color: ${props => props.theme.colors.success}15;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  color: ${props => props.theme.colors.success};
+`;
+
+const SuccessTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+  margin-bottom: 0.5rem;
+`;
+
+const ModalSuccessMessage = styled.p`
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.secondary};
+  margin-bottom: 1.5rem;
+`;
+
+const SuccessButton = styled.button`
+  padding: 0.875rem 1.5rem;
+  background: ${props => props.theme.colors.primary};
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+
+  &:hover {
+    background: ${props => props.theme.colors.primaryDark};
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
 interface AdminDashboardData {
   users: Array<{
     id: string;
@@ -733,12 +802,26 @@ const DashboardPage = () => {
   const [userData, setUserData] = useState<any>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showSetupForm, setShowSetupForm] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['adminDashboardData'],
-    queryFn: fetchAdminDashboardData,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchAdminDashboardData();
+        setDashboardData(data);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -747,14 +830,18 @@ const DashboardPage = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
           if (profile) {
             setUserData(profile);
-        setProfilePicture(profile.profile_picture);
+            setProfilePicture(profile.profile_picture);
+            // Check if setup is needed - only if username is missing
+            if (!profile.username) {
+              setShowSetupForm(true);
+            }
           }
         }
       } catch (error) {
@@ -785,26 +872,15 @@ const DashboardPage = () => {
     return tabItem ? tabItem.label : 'Dashboard';
   };
 
-  // Add a function to check if any modal is open
-  const checkModalState = () => {
-    // Check for any modal state in the current tab
-    switch (activeTab) {
-      case 'profile':
-        return false; // Profile tab has its own modal handling
-      case 'admin-management':
-        return isModalOpen; // Use the modal state from AdminManagementTab
-      default:
-        return false;
+  const handleModalStateChange = (isOpen: boolean) => {
+    if (activeTab === 'admin-management') {
+      setIsModalOpen(isOpen);
     }
   };
 
-  // Update modal state whenever activeTab changes
-  useEffect(() => {
-    setIsModalOpen(checkModalState());
-  }, [activeTab, isModalOpen]);
-
-  const handleModalStateChange = (isOpen: boolean) => {
-    setIsModalOpen(isOpen);
+  const handleSetupComplete = () => {
+    setShowSetupForm(false);
+    setShowSuccessModal(true);
   };
 
   const renderContent = () => {
@@ -870,33 +946,28 @@ const DashboardPage = () => {
 
   if (isLoading) {
     return (
-      <ProtectedRoute requiredRole="admin">
         <div className="flex items-center justify-center min-h-screen">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
         </div>
-      </ProtectedRoute>
     );
   }
 
   if (error) {
     return (
-      <ProtectedRoute requiredRole="admin">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-red-500">Error loading dashboard data</div>
         </div>
-      </ProtectedRoute>
     );
   }
 
   return (
-    <ProtectedRoute requiredRole="admin">
       <DashboardContainer>
         <DashboardSidebar
-          logoText="ScaleMate Admin"
+          logoText="ScaleMate"
           navItems={navItems}
           activeTab={activeTab}
           onTabClick={handleTabClick}
-          isModalOpen={isModalOpen}
+          isModalOpen={showSetupForm || showSuccessModal || (activeTab === 'admin-management' && isModalOpen)}
         />
         <MainContent>
           <DashboardHeader
@@ -905,13 +976,38 @@ const DashboardPage = () => {
             onLogout={handleLogout}
             onProfileClick={() => setActiveTab('profile')}
             showProfile={activeTab === 'profile'}
-            isLoading={isLoadingProfile}
           />
           {renderContent()}
         </MainContent>
+
+        {showSetupForm && userData && (
+          <FirstTimeSetupForm
+            isOpen={showSetupForm}
+            onClose={() => setShowSetupForm(false)}
+            userId={userData.id}
+            currentUsername={userData.username || ''}
+            onSetupComplete={handleSetupComplete}
+          />
+        )}
+
+        {showSuccessModal && (
+          <SuccessModal $isOpen={showSuccessModal}>
+            <SuccessModalContent>
+              <SuccessIcon>
+                <FiCheck size={24} />
+              </SuccessIcon>
+              <SuccessTitle>Setup Complete!</SuccessTitle>
+              <ModalSuccessMessage>
+                Your account has been successfully set up. You can now use your new credentials to log in.
+              </ModalSuccessMessage>
+              <SuccessButton onClick={() => setShowSuccessModal(false)}>
+                Continue
+              </SuccessButton>
+            </SuccessModalContent>
+          </SuccessModal>
+        )}
       </DashboardContainer>
-    </ProtectedRoute>
   );
 };
 
-export default withRoleProtection(DashboardPage, 'admin'); 
+export default DashboardPage; 

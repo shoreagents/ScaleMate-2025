@@ -153,30 +153,36 @@ const LoginPage = () => {
   const theme = useTheme();
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [isVisible, setIsVisible] = useState(true);
+  const [preventRedirect, setPreventRedirect] = useState(false);
+  const { redirectTo } = router.query;
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Get user's role
-        const { data: roles } = await supabase
-          .from('user_roles')
+      if (user && !preventRedirect) {
+        // Get user's role from profiles table
+        const { data: userData, error: roleError } = await supabase
+          .from('profiles')
           .select('role')
-          .eq('user_id', user.id);
+          .eq('id', user.id)
+          .single();
 
-        if (roles && roles.length > 0) {
-          const userRoles = roles.map(r => r.role);
-          if (userRoles.includes('admin') || userRoles.includes('moderator')) {
-            router.push('/admin/dashboard');
-          } else if (userRoles.includes('user')) {
-            router.push('/user/dashboard');
-          }
+        if (roleError) {
+          console.error('Error fetching user role:', roleError);
+          throw new Error('Error fetching user role');
+        }
+
+        // Redirect based on role
+        if (userData?.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else {
+          router.push('/user/dashboard');
         }
       }
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, preventRedirect, redirectTo]);
 
   // Add auto-rotation effect with animation
   useEffect(() => {
@@ -196,7 +202,10 @@ const LoginPage = () => {
       <AuthColumn>
         <Logo href="/">ScaleMate</Logo>
         <AuthFormContainer>
-          <SignInForm />
+          <SignInForm 
+            preventRedirect={preventRedirect} 
+            redirectUrl={typeof redirectTo === 'string' ? redirectTo : '/user/dashboard'}
+          />
         </AuthFormContainer>
       </AuthColumn>
       <TestimonialsColumn>

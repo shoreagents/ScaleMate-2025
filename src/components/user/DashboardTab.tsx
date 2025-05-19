@@ -459,45 +459,29 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!userData) {
         try {
-          const { data: { user: authUser } } = await supabase.auth.getUser();
-          if (authUser) {
-            const { data: profile } = await supabase
-              .from('user_profiles')
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
               .select('*')
-              .eq('user_id', authUser.id)
+          .eq('id', user.id)
               .single();
 
+        if (error) throw error;
             if (profile) {
-              setUserData({
-                name: `${profile.first_name} ${profile.last_name}`,
-                email: authUser.email || '',
-                avatar: profile.profile_picture
-              });
-
-              // Check if this is a Google sign-up user who just completed setup
-              const isGoogleUser = authUser.app_metadata?.provider === 'google';
-              const justCompletedSetup = profile.last_password_change && 
-                new Date(profile.last_password_change).getTime() > Date.now() - 10000; // Within last 10 seconds
-
-              if (isGoogleUser && justCompletedSetup) {
-                setShowSuccessModal(true);
-              }
-            }
+          setUserData(profile);
           }
         } catch (error) {
           console.error('Error fetching user data:', error);
         } finally {
-          setIsLoading(false);
-        }
-      } else {
         setIsLoading(false);
       }
     };
 
     fetchUserData();
-  }, [userData]);
+  }, []);
 
   const handleSuccessContinue = () => {
     setShowSuccessModal(false);
