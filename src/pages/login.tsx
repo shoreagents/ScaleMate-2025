@@ -160,23 +160,24 @@ const LoginPage = () => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user && !preventRedirect) {
-        // Get user's role from profiles table
-        const { data: userData, error: roleError } = await supabase
-          .from('profiles')
+        // Get user's role
+        const { data: roles } = await supabase
+          .from('user_roles')
           .select('role')
-          .eq('id', user.id)
-          .single();
+          .eq('user_id', user.id);
 
-        if (roleError) {
-          console.error('Error fetching user role:', roleError);
-          throw new Error('Error fetching user role');
-        }
-
-        // Redirect based on role
-        if (userData?.role === 'admin') {
-          router.push('/admin/dashboard');
-        } else {
-          router.push('/user/dashboard');
+        if (roles && roles.length > 0) {
+          const userRoles = roles.map(r => r.role);
+          if (userRoles.includes('admin') || userRoles.includes('moderator')) {
+            router.push('/admin/dashboard');
+          } else if (userRoles.includes('user')) {
+            // If there's a redirectTo parameter, use it
+            if (redirectTo && typeof redirectTo === 'string') {
+              router.push(redirectTo);
+            } else {
+            router.push('/user/dashboard');
+            }
+          }
         }
       }
     };

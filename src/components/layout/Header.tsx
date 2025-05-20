@@ -35,12 +35,11 @@ const HeaderContent = styled.div`
   padding-right: 0;
 `;
 
-const Logo = styled.div`
+const Logo = styled.span`
   font-size: 1.5rem;
   font-weight: 700;
   color: #0F172A;
   text-decoration: none;
-  cursor: pointer;
 `;
 
 const Nav = styled.nav`
@@ -398,6 +397,10 @@ const Header = () => {
       
       setIsAuthenticated(!!session);
       setIsLoading(false);
+
+      if (!session && !preventRedirect && router.pathname.startsWith('/user/dashboard')) {
+        router.push('/login');
+      }
     } catch (error) {
       console.error('Auth check error:', error);
       setIsLoading(false);
@@ -413,8 +416,8 @@ const Header = () => {
   const handleDashboardClick = async () => {
     if (!isAuthenticated) {
       router.push('/login');
-      return;
-    }
+          return;
+        }
 
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -422,24 +425,7 @@ const Header = () => {
       if (error) throw error;
       
       if (session) {
-        // Get user's role from profiles table
-        const { data: profile, error: roleError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-
-        if (roleError) {
-          console.error('Error fetching user role:', roleError);
-          throw new Error('Error fetching user role');
-        }
-
-        // Redirect based on role
-        if (profile?.role === 'admin') {
-          router.push('/admin/dashboard');
-        } else {
-          router.push('/user/dashboard');
-        }
+            router.push('/user/dashboard');
       } else {
         router.push('/login');
       }
@@ -478,7 +464,7 @@ const Header = () => {
     <HeaderContainer>
       <Container>
         <HeaderContent>
-          <Link href="/" passHref>
+          <Link href="/" style={{ textDecoration: 'none' }}>
             <Logo>ScaleMate</Logo>
           </Link>
           
@@ -579,11 +565,11 @@ const Header = () => {
               )}
             </SolutionsNavItem>
 
-            <Link href="/pricing" passHref>
+            <Link href="/pricing" style={{ textDecoration: 'none' }}>
               <NavItem>Pricing</NavItem>
             </Link>
             
-            <Link href="/about" passHref>
+            <Link href="/about" style={{ textDecoration: 'none' }}>
               <NavItem>About</NavItem>
             </Link>
           </Nav>
@@ -611,11 +597,11 @@ const Header = () => {
               </ProfileContainer>
             ) : (
               <>
-                <Link href="/login" passHref>
-                  <LoginButton>Log in</LoginButton>
+                <Link href="/login" style={{ textDecoration: 'none' }}>
+                  <LoginButton type="button">Log in</LoginButton>
                 </Link>
-                <Link href="/signup" passHref>
-                  <SignUpButton>Sign up</SignUpButton>
+                <Link href="/signup" style={{ textDecoration: 'none' }}>
+                  <SignUpButton type="button">Sign up</SignUpButton>
                 </Link>
               </>
             )}

@@ -37,6 +37,7 @@ import DashboardHeader from '@/components/layout/DashboardHeader';
 import DashboardTab from '@/components/user/DashboardTab';
 import RoleBuilderTab from '@/components/user/RoleBuilderTab';
 import QuoteCalculatorTab from '@/components/user/QuoteCalculatorTab';
+import WithRoleProtection from '@/components/auth/withRoleProtection';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -195,6 +196,16 @@ const DashboardPage = () => {
   const { openModal } = useDownloadModal();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
+  // Check for error messages in URL
+  useEffect(() => {
+    const { error: urlError } = router.query;
+    if (urlError) {
+      setError(urlError as string);
+      // Remove error from URL
+      router.replace(router.pathname, undefined, { shallow: true });
+    }
+  }, [router.query]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -339,6 +350,7 @@ const DashboardPage = () => {
   }
 
   return (
+    <WithRoleProtection allowedRoles={['user', 'admin']}>
       <DashboardContainer>
         <DashboardSidebar
           logoText="ScaleMate"
@@ -385,6 +397,7 @@ const DashboardPage = () => {
           </SuccessModal>
         )}
       </DashboardContainer>
+    </WithRoleProtection>
   );
 };
 

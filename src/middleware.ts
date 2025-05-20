@@ -1,4 +1,4 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -27,99 +27,112 @@ const PUBLIC_ROUTES = [
   '/privacy',
 ];
 
-export async function middleware(req: NextRequest) {
-  const res = NextResponse.next();
-  const supabase = createMiddlewareClient({ req, res });
+export async function middleware(request: NextRequest) {
+  try {
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
 
-  // Get the session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    // Check if Supabase environment variables are set
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.error('Missing Supabase environment variables');
+      return response;
+    }
 
-  // If we're on the login page
-  if (req.nextUrl.pathname === '/login') {
-    // If we have a session, redirect to appropriate dashboard
-    if (session) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
-
-      // Get the redirectTo parameter if it exists
-      const redirectTo = req.nextUrl.searchParams.get('redirectTo');
-      
-      // If we have a redirectTo parameter and the user has the right role, use it
-      if (redirectTo) {
-        const route = Object.keys(PROTECTED_ROUTES).find(route => 
-          redirectTo.startsWith(route)
-        );
-        
-        if (route && PROTECTED_ROUTES[route as keyof typeof PROTECTED_ROUTES].includes(profile?.role || '')) {
-          return NextResponse.redirect(new URL(redirectTo, req.url));
-        }
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({
+              name,
+              value: '',
+              ...options,
+            });
+          },
+        },
       }
-
-      // Otherwise redirect to role-based dashboard
-      return NextResponse.redirect(
-        new URL(profile?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard', req.url)
-      );
-    }
-    return res;
-  }
-
-  // Check if the route is public
-  if (PUBLIC_ROUTES.includes(req.nextUrl.pathname)) {
-    return res;
-  }
-
-  // If no session and trying to access protected route, redirect to login
-  if (!session) {
-    // Don't add redirectTo if we're already on the login page
-    if (req.nextUrl.pathname === '/login') {
-      return res;
-    }
-
-    const redirectUrl = new URL('/login', req.url);
-    redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
-    return NextResponse.redirect(redirectUrl);
-  }
-
-  // Check if the route is protected
-  const isProtectedRoute = Object.keys(PROTECTED_ROUTES).some(route => 
-    req.nextUrl.pathname.startsWith(route)
-  );
-
-  if (isProtectedRoute) {
-    // Get user's role from profiles table
-    const { data: profile, error } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', session.user.id)
-      .single();
-
-    if (error || !profile) {
-      console.error('Error fetching user role:', error);
-      // If we can't get the role, redirect to login
-      const redirectUrl = new URL('/login', req.url);
-      redirectUrl.searchParams.set('redirectTo', req.nextUrl.pathname);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    // Check if user has required role for the route
-    const route = Object.keys(PROTECTED_ROUTES).find(route => 
-      req.nextUrl.pathname.startsWith(route)
     );
 
-    if (route && !PROTECTED_ROUTES[route as keyof typeof PROTECTED_ROUTES].includes(profile.role)) {
-      // If user doesn't have required role, redirect to appropriate dashboard
-      return NextResponse.redirect(
-        new URL(profile.role === 'admin' ? '/admin/dashboard' : '/user/dashboard', req.url)
-      );
-    }
-  }
+    // Get the pathname of the request
+    const path = request.nextUrl.pathname;
 
-  return res;
+    // Check if it's a public route
+    if (PUBLIC_ROUTES.some(route => path.startsWith(route))) {
+      return response;
+    }
+
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        return response;
+      }
+
+      // If the user is not signed in and the route is not public, redirect to login
+      if (!session) {
+        const redirectUrl = new URL('/login', request.url);
+        redirectUrl.searchParams.set('redirectedFrom', path);
+        return NextResponse.redirect(redirectUrl);
+      }
+
+      // If the user is signed in and tries to access login/signup, redirect to dashboard
+      if (session && (path === '/login' || path === '/signup')) {
+        return NextResponse.redirect(new URL('/user/dashboard', request.url));
+      }
+
+      // Role-based access control
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Profile error:', profileError);
+          return response;
+        }
+
+        if (profile) {
+          // Admin routes
+          if (path.startsWith('/admin') && profile.role !== 'admin') {
+            return NextResponse.redirect(new URL('/user/dashboard', request.url));
+          }
+
+          // User routes
+          if (path.startsWith('/user') && profile.role !== 'user' && profile.role !== 'admin') {
+            return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+          }
+        }
+      } catch (profileError) {
+        console.error('Error fetching profile:', profileError);
+        return response;
+      }
+    } catch (authError) {
+      console.error('Auth error:', authError);
+      return response;
+    }
+
+    return response;
+  } catch (error) {
+    console.error('Middleware error:', error);
+    return NextResponse.next();
+  }
 }
 
 export const config = {

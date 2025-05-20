@@ -5,15 +5,6 @@ import { FiEye, FiEyeOff, FiCheck, FiX, FiLoader } from 'react-icons/fi';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Define protected routes and their required roles
-const PROTECTED_ROUTES = {
-  '/admin': ['admin'],
-  '/admin/dashboard': ['admin'],
-  '/user/dashboard': ['user', 'admin'],
-  '/profile': ['user', 'admin'],
-  '/settings': ['user', 'admin'],
-} as const;
-
 const FormContainer = styled.div`
   max-width: 420px;
   width: 100%;
@@ -436,31 +427,32 @@ export interface SignInFormProps {
   redirectUrl?: string;
 }
 
-const SignInForm = ({
+const SignInForm: React.FC<SignInFormProps> = ({
   onSuccess,
   onError,
   hideLinks = false,
   preventRedirect = false,
-  redirectUrl = '/dashboard'
-}: SignInFormProps): React.ReactElement => {
+  redirectUrl = '/user/dashboard'
+}) => {
   const router = useRouter();
-  const { refreshProfile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [isOtpSent, setIsOtpSent] = useState(false);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const otpInputs = useRef<(HTMLInputElement | null)[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [isFormSubmitted, setIsFormSubmitted] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState('');
   const [verifyingEmail, setVerifyingEmail] = useState('');
   const [otpError, setOtpError] = useState('');
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [verificationCode, setVerificationCode] = useState<string[]>(Array(6).fill(''));
   const [isResendingOtp, setIsResendingOtp] = useState(false);
   const [resendOtpMessage, setResendOtpMessage] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [uiMode, setUiMode] = useState<'signin' | 'verify'>('signin');
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
@@ -474,93 +466,100 @@ const SignInForm = ({
     };
   }, [resendCooldown]);
 
+  // Add Gmail normalization function
+  const normalizeGmailAddress = (email: string): string => {
+    if (!email) return email;
+    
+    const [localPart, domain] = email.toLowerCase().split('@');
+    if (domain !== 'gmail.com') return email;
+    
+    // Remove dots and everything after + in the local part
+    const normalizedLocalPart = localPart.replace(/\./g, '').split('+')[0];
+    return `${normalizedLocalPart}@gmail.com`;
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    // Sanitize input
+    const sanitizeInput = (input: string) => {
+      return input.trim().replace(/[<>]/g, '');
+    };
+    
+    if (name === 'email') {
+      const sanitizedEmail = sanitizeInput(value);
+      setEmail(sanitizedEmail);
+      setError(''); // Clear general error on change
+    } else if (name === 'password') {
+      setPassword(sanitizeInput(value));
+      setError(''); // Clear general error on change
+    }
+  };
+
   const handleSubmit = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-    setOtpError('');
-    setResendOtpMessage('');
+    if (loading) return;
+    setLoading(true);
+    setError('');
+    setConfirmationMessage('');
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Normalize Gmail address before sending
+      const normalizedEmail = normalizeGmailAddress(email);
+      
+      // First try to sign in with Supabase
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password
       });
 
-      if (error) {
-        if (error.message.toLowerCase().includes('confirm')) {
-          setIsOtpSent(true);
-          setVerifyingEmail(email);
-          setSuccess(null);
-          setError(null);
-          setOtp(['', '', '', '', '', '']);
+      if (signInError) {
+        // If email needs confirmation
+        if (signInError.message.toLowerCase().includes('email not confirmed')) {
+          setIsFormSubmitted(true);
+          setVerifyingEmail(normalizedEmail);
+          setConfirmationMessage('');
+          setError('');
+          setVerificationCode(Array(6).fill(''));
           setResendCooldown(60);
+          setLoading(false); // Reset loading here since we're switching to verification mode
           return;
         }
-        throw error;
+        // Customize error message for invalid credentials
+        if (signInError.message.toLowerCase().includes('invalid login credentials')) {
+          throw new Error('Incorrect email or password');
+        }
+        throw signInError;
       }
 
-      if (data.session) {
-        setSuccess('Successfully signed in!');
+      if (signInData.user) {
         await refreshProfile();
-        
         if (onSuccess) {
           await onSuccess();
         }
-
         if (!preventRedirect) {
-          // Get user's role from profiles table
-          const { data: userData, error: roleError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
-
-          if (roleError) {
-            console.error('Error fetching user role:', roleError);
-            throw new Error('Error fetching user role');
-          }
-
-          // Get the redirectTo parameter from the URL if it exists
-          const redirectTo = router.query.redirectTo as string;
-          
-          // If we have a redirectTo parameter and the user has the right role, use it
-          if (redirectTo) {
-            const route = Object.keys(PROTECTED_ROUTES).find(route => 
-              redirectTo.startsWith(route)
-            );
-            
-            if (route && PROTECTED_ROUTES[route as keyof typeof PROTECTED_ROUTES].includes(userData?.role || '')) {
-              router.push(redirectTo);
-              return;
-            }
-          }
-
-          // Otherwise, redirect based on role
-          if (userData?.role === 'admin') {
-            router.push('/admin/dashboard');
-          } else {
-            router.push('/user/dashboard');
-          }
+          const redirectPath = redirectUrl || 
+            (signInData.user.user_metadata?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+          // Keep loading state active during redirect
+          router.replace(redirectPath);
+          return; // Don't reset loading state here
         }
-      } else {
-        throw new Error('Sign in failed');
       }
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred');
+      setError(err.message || 'Unable to sign in. Please check your credentials and try again.');
       if (onError) {
-        onError(err.message || 'An unexpected error occurred');
+        onError(err.message || 'Unable to sign in. Please check your credentials and try again.');
       }
-    } finally {
-      setIsLoading(false);
+      setLoading(false); // Reset loading on error
+    }
+    // Only reset loading if we're not redirecting
+    if (preventRedirect) {
+      setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     setError('');
-    setSuccess('');
+    setConfirmationMessage('');
 
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -588,98 +587,74 @@ const SignInForm = ({
 
   const handleOtpChange = (index: number, value: string) => {
     if (value.length > 1) value = value.slice(0, 1);
-    const newOtp = [...otp];
+    const newOtp = [...verificationCode];
     newOtp[index] = value;
-    setOtp(newOtp);
+    setVerificationCode(newOtp);
     setOtpError('');
     if (value && index < 5) {
-      otpInputs.current[index + 1]?.focus();
+      otpInputRefs.current[index + 1]?.focus();
     }
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpInputs.current[index - 1]?.focus();
+    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
     }
   };
 
   const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').slice(0, 6);
-    const newOtp = [...otp];
+    const newOtp = [...verificationCode];
     for (let i = 0; i < pastedData.length; i++) {
       if (i < 6) {
         newOtp[i] = pastedData[i];
       }
     }
-    setOtp(newOtp);
-    otpInputs.current[pastedData.length - 1]?.focus();
+    setVerificationCode(newOtp);
+    otpInputRefs.current[pastedData.length - 1]?.focus();
   };
 
   const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsVerifyingOtp(true);
     setOtpError('');
     setResendOtpMessage('');
-    const otpString = otp.join('');
+    const otpString = verificationCode.join('');
     if (otpString.length !== 6) {
       setOtpError('Please enter a valid 6-digit verification code.');
-      setIsVerifyingOtp(false);
       return;
     }
+
+    setIsVerifyingOtp(true);
+
     try {
+      // Normalize Gmail address before verification
+      const normalizedEmail = normalizeGmailAddress(verifyingEmail);
+      
       const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        email: verifyingEmail,
+        email: normalizedEmail,
         token: otpString,
-        type: 'signup',
+        type: 'signup'
       });
+
       if (verifyError) {
         setOtpError(verifyError.message);
-      } else if (data.user && data.session) {
-        setSuccess('Email verified! You are now signed in.');
+        setIsVerifyingOtp(false);
+      } else if (data?.user && data?.session) {
         await refreshProfile();
-        
         if (!preventRedirect) {
-          // Get user's role from profiles table
-          const { data: userData, error: roleError } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
-
-          if (roleError) {
-            console.error('Error fetching user role:', roleError);
-            throw new Error('Error fetching user role');
-          }
-
-          // Get the redirectTo parameter from the URL if it exists
-          const redirectTo = router.query.redirectTo as string;
-          
-          // If we have a redirectTo parameter and the user has the right role, use it
-          if (redirectTo) {
-            const route = Object.keys(PROTECTED_ROUTES).find(route => 
-              redirectTo.startsWith(route)
-            );
-            
-            if (route && PROTECTED_ROUTES[route as keyof typeof PROTECTED_ROUTES].includes(userData?.role || '')) {
-              router.push(redirectTo);
-              return;
-            }
-          }
-
-          // Otherwise, redirect based on role
-          if (userData?.role === 'admin') {
-            router.push('/admin/dashboard');
-          } else {
-            router.push('/user/dashboard');
-          }
+          const redirectPath = redirectUrl || 
+            (data.user.user_metadata?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+          router.replace(redirectPath);
+          return; // Don't reset verifying state
         }
-      } else {
-        setOtpError('Verification failed. Please try again or resend the code.');
+        setIsVerifyingOtp(false);
       }
     } catch (err: any) {
-      setOtpError(err.message || 'An unexpected error occurred');
-    } finally {
+      setOtpError(err.message || 'Failed to verify code');
+      if (onError) {
+        onError(err.message || 'Failed to verify code');
+      }
       setIsVerifyingOtp(false);
     }
   };
@@ -690,9 +665,12 @@ const SignInForm = ({
     setResendOtpMessage('');
     setOtpError('');
     try {
+      // Normalize Gmail address before resending
+      const normalizedEmail = normalizeGmailAddress(verifyingEmail);
+      
       const { error: resendError } = await supabase.auth.resend({
         type: 'signup',
-        email: verifyingEmail,
+        email: normalizedEmail,
       });
       if (resendError) {
         setResendOtpMessage(resendError.message);
@@ -708,13 +686,13 @@ const SignInForm = ({
   };
 
   const switchToLoginMode = () => {
-    setIsOtpSent(false);
-    setOtp(['', '', '', '', '', '']);
-    setError(null);
-    setSuccess(null);
+    setIsFormSubmitted(false);
+    setVerificationCode(Array(6).fill(''));
+    setError('');
+    setConfirmationMessage('');
   };
 
-  if (isOtpSent) {
+  if (isFormSubmitted) {
     return (
       <FormContainer>
         <Title>Email Confirmation</Title>
@@ -724,10 +702,10 @@ const SignInForm = ({
         </Subtitle>
         <Form onSubmit={handleVerifyOtpSubmit} noValidate>
           <VerificationContainer onPaste={handleOtpPaste}>
-            {otp.map((digit, index) => (
+            {verificationCode.map((digit, index) => (
               <VerificationInput
                 key={index}
-                ref={el => { otpInputs.current[index] = el; }}
+                ref={el => { otpInputRefs.current[index] = el; }}
                 type="text"
                 maxLength={1}
                 value={digit}
@@ -741,8 +719,8 @@ const SignInForm = ({
           {otpError && (
             <MessageContainer><FiX size={12} />{otpError}</MessageContainer>
           )}
-          {success && (
-            <MessageContainer $isSuccess><FiCheck size={12} />{success}</MessageContainer>
+          {confirmationMessage && (
+            <MessageContainer $isSuccess><FiCheck size={12} />{confirmationMessage}</MessageContainer>
           )}
           {resendOtpMessage && (
             <MessageContainer $isSuccess={!resendOtpMessage.toLowerCase().includes('fail') && !resendOtpMessage.toLowerCase().includes('error')}>
@@ -753,7 +731,7 @@ const SignInForm = ({
             </MessageContainer>
           )}
           <ButtonContainer style={{marginTop: '2rem'}}>
-            <SecondaryButton type="button" onClick={() => setIsOtpSent(false)}>
+            <SecondaryButton type="button" onClick={() => setIsFormSubmitted(false)}>
               Back
             </SecondaryButton>
             <Button type="submit" disabled={isVerifyingOtp}>
@@ -781,9 +759,8 @@ const SignInForm = ({
 
   return (
     <FormContainer>
-      <Title>Welcome back</Title>
-      <Subtitle>Sign in to your account to continue</Subtitle>
-
+      <Title>Welcome Back</Title>
+      <Subtitle>Sign in to continue to ScaleMate</Subtitle>
       <GoogleButton
         type="button"
         onClick={handleGoogleSignIn}
@@ -798,83 +775,75 @@ const SignInForm = ({
         {isGoogleLoading ? 'Connecting...' : 'Continue with Google'}
       </GoogleButton>
       <Divider>or</Divider>
+      <Form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} noValidate>
+        <InputGroup>
+          <Label htmlFor="email">
+            Email
+          </Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={handleChange}
+            required
+            autoComplete="email"
+            placeholder="Enter your email"
+          />
+        </InputGroup>
 
-      <Form onSubmit={(e) => {
-        e.preventDefault();
-        handleSubmit();
-      }}>
-        <FormContent>
-          <FormFields>
-            <InputGroup>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                autoComplete="email"
-              />
-            </InputGroup>
-
-            <InputGroup>
-              <PasswordLabelContainer>
-                <Label htmlFor="password">Password</Label>
-                <ForgotPasswordLink type="button">Forgot password?</ForgotPasswordLink>
-              </PasswordLabelContainer>
-              <PasswordInputContainer>
-                <PasswordInput
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                  autoComplete="current-password"
-                />
-                <ViewPasswordButton
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                </ViewPasswordButton>
-              </PasswordInputContainer>
-              {error && (
-                <MessageContainer>
-                  <FiX size={12} />
-                  {error}
-                </MessageContainer>
-              )}
-            </InputGroup>
-
-            {success && (
-              <MessageContainer $isSuccess>
-                <FiCheck size={12} />
-                {success}
-              </MessageContainer>
-            )}
-          </FormFields>
-
-          <ButtonContainer>
-            <Button 
-              type="button" 
-              onClick={handleSubmit}
-              disabled={isLoading}
+        <InputGroup>
+          <Label htmlFor="password">Password</Label>
+          <InputWrapper>
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={handleChange}
+              required
+              autoComplete="current-password"
+              placeholder="Enter your password"
+            />
+            <PasswordToggle
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
-              {isLoading ? 'Signing In' : 'Sign In'}
-              {isLoading && <AnimatedDots />}
-            </Button>
-          </ButtonContainer>
-        </FormContent>
+              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+            </PasswordToggle>
+          </InputWrapper>
+        </InputGroup>
+
+        {error && (
+          <MessageContainer>
+            <FiX size={12} />
+            {error}
+          </MessageContainer>
+        )}
+
+        {confirmationMessage && (
+          <MessageContainer $isSuccess>
+            <FiCheck size={12} />
+            {confirmationMessage}
+          </MessageContainer>
+        )}
+
+        <ButtonContainer>
+          <Button 
+            type="submit" 
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? 'Signing In' : 'Sign In'}
+            {loading && <AnimatedDots />}
+          </Button>
+        </ButtonContainer>
       </Form>
-      {!hideLinks && (
-        <SignInLink style={{ marginTop: '1.5rem' }}>
-          Don't have an account?
-          <a href="/signup"> Sign Up</a>
-        </SignInLink>
-      )}
+      <SignInLink style={{ marginTop: '1.5rem' }}>
+        Don't have an account?
+        <a href="/signup"> Sign Up</a>
+      </SignInLink>
     </FormContainer>
   );
 };

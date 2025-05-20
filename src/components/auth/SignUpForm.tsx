@@ -387,7 +387,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   onError,
   hideLinks = false,
   preventRedirect = false,
-  redirectUrl = '/dashboard'
+  redirectUrl = '/user/dashboard'
 }) => {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -470,7 +470,15 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Sanitize input
+    const sanitizeInput = (input: string) => {
+      return input.trim().replace(/[<>]/g, '');
+    };
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      [name]: sanitizeInput(value) 
+    }));
     setError(''); // Clear general error on change
     setSuccessMessage(''); // Clear success message on change
 
@@ -478,6 +486,18 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     if (name === 'email') setEmailError('');
     if (name === 'password' || name === 'confirmPassword') setPasswordError('');
     if (name === 'firstName' || name === 'lastName') setNameError('');
+  };
+
+  // Add Gmail normalization function
+  const normalizeGmailAddress = (email: string): string => {
+    if (!email) return email;
+    
+    const [localPart, domain] = email.toLowerCase().split('@');
+    if (domain !== 'gmail.com') return email;
+    
+    // Remove dots and everything after + in the local part
+    const normalizedLocalPart = localPart.replace(/\./g, '').split('+')[0];
+    return `${normalizedLocalPart}@gmail.com`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -491,41 +511,69 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     // Basic frontend validation checks
     if (!formData.firstName.trim()) {
       setNameError('First name is required');
-        return;
-      }
+      return;
+    }
     if (!formData.lastName.trim()) {
       setNameError('Last name is required');
-        return;
-      }
+      return;
+    }
     if (!formData.email) {
       setEmailError('Email is required.');
-        return;
-      }
+      return;
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setEmailError('Invalid email format');
-        return;
-      }
+      return;
+    }
     if (!formData.password) {
       setPasswordError('Password is required');
       return;
     }
     if (!formData.confirmPassword) {
       setPasswordError('Confirm password is required');
-        return;
-      }
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       setPasswordError('Passwords do not match');
-        return;
-      }
+      return;
+    }
     if (!passwordValidations.minLength) {
       setPasswordError('Password must be at least 8 characters.');
-        return;
-      }
+      return;
+    }
 
     setLoading(true);
 
-      try {
+    try {
+      // Normalize Gmail address before checking
+      const normalizedEmail = normalizeGmailAddress(formData.email);
+
+      // First check if email exists
+      const checkResponse = await fetch('/api/auth/[...auth]', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'check-email',
+          email: normalizedEmail,
+        }),
+      });
+
+      const checkData = await checkResponse.json();
+
+      if (!checkResponse.ok) {
+        throw new Error(checkData.error || 'Failed to check email');
+      }
+
+      if (checkData.exists) {
+        setEmailError('Email already exists');
+        setLoading(false);
+        return;
+      }
+
+      // If email doesn't exist, proceed with signup
       const response = await fetch('/api/auth/[...auth]', {
         method: 'POST',
         headers: {
@@ -533,7 +581,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         },
         body: JSON.stringify({
           action: 'signup',
-          email: formData.email,
+          email: normalizedEmail,
           password: formData.password,
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -544,54 +592,73 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 
       if (!response.ok) {
         let errorMsg = data.error;
-        if (errorMsg && errorMsg.toLowerCase().includes('weak')) {
-          errorMsg = 'Password is too weak';
+        
+        // Handle specific error cases
+        if (errorMsg) {
+          if (errorMsg.toLowerCase().includes('weak') || 
+              errorMsg.toLowerCase().includes('password')) {
+            setPasswordError('Password is too weak');
+            setUiMode('signup');
+            setIsFormSubmitted(false);
+            setLoading(false);
+            return;
+          }
+          
+          if (errorMsg.toLowerCase().includes('email already exists') ||
+              errorMsg.toLowerCase().includes('user already registered') ||
+              errorMsg.toLowerCase().includes('email address is already registered') ||
+              errorMsg.toLowerCase().includes('already registered')) {
+            setEmailError('Email already exists');
+            setUiMode('signup');
+            setIsFormSubmitted(false);
+            setLoading(false);
+            return;
+          }
+          
+          if (errorMsg.toLowerCase().includes('invalid email') ||
+              errorMsg.toLowerCase().includes('email format')) {
+            setEmailError('Invalid email format');
+            setUiMode('signup');
+            setIsFormSubmitted(false);
+            setLoading(false);
+            return;
+          }
+          
+          if (errorMsg.toLowerCase().includes('network') || 
+              errorMsg.toLowerCase().includes('connection')) {
+            throw new Error('Network error. Please check your internet connection and try again.');
+          }
+          
+          if (errorMsg.toLowerCase().includes('rate limit')) {
+            throw new Error('Too many attempts. Please try again in a few minutes.');
+          }
         }
-        if (errorMsg && (errorMsg.toLowerCase().includes('user already registered') ||
-            errorMsg.toLowerCase().includes('email address is already registered') ||
-            errorMsg.toLowerCase().includes('already registered'))
-        ) {
-          setEmailError('Email already exists');
-          setUiMode('signup');
-          setIsFormSubmitted(false);
-          setLoading(false);
-          return;
-        } else if (errorMsg && errorMsg.toLowerCase().includes('weak')) {
-          setPasswordError(errorMsg);
-          setUiMode('signup');
-          setIsFormSubmitted(false);
-          setLoading(false);
-          return;
-        } else {
-          setError(errorMsg);
-          setUiMode('signup');
-          setIsFormSubmitted(false);
-          setLoading(false);
-          return;
-        }
+        
+        throw new Error(errorMsg || 'Failed to create account');
       }
 
       // Email confirmation is needed
-      setVerifyingEmail(formData.email);
+      setVerifyingEmail(normalizedEmail);
       setConfirmationMessage(`A verification code has been sent to ${formData.email}. Please enter it below.`);
       setUiMode('verify');
       setResendCooldown(60); // Start cooldown timer immediately when verify UI is shown
       // Clear password fields from formData, keep email for display or resend if needed later
       setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
-      setIsFormSubmitted(false); // Reset for the OTP form
+      setIsFormSubmitted(false);
       // Clear previous errors/success messages that are not relevant for OTP screen
       setError('');
       setSuccessMessage('');
       setEmailError('');
       setPasswordError('');
     } catch (err: any) {
-      setError('An unexpected error occurred. Please try again.');
+      console.error('Signup error:', err);
+      setError(err.message || 'Unable to create account. Please try again.');
       if (onError) {
-        onError(err.message || 'An unexpected error occurred. Please try again.');
+        onError(err.message || 'Unable to create account. Please try again.');
       }
     } finally {
       setLoading(false);
-        }
+    }
   };
 
   const handleGoogleSignUp = () => {
@@ -677,36 +744,48 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     if (code.length !== 6) {
       setOtpError('Please enter a valid 6-digit verification code.');
       return;
-        }
+    }
 
     setIsVerifyingOtp(true);
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      email: verifyingEmail,
-      token: code,
-      type: 'signup',
-    });
-    setIsVerifyingOtp(false);
 
-    if (verifyError) {
-      setOtpError(verifyError.message);
-    } else if (data.user && data.session) {
-      await refreshProfile();
-      // Role-based redirect
-      if (profile?.role === 'admin') {
-        router.push('/admin/dashboard');
-      } else if (profile?.role === 'user') {
-        router.push('/user/dashboard');
+    try {
+      // Normalize Gmail address before verification
+      const normalizedEmail = normalizeGmailAddress(verifyingEmail);
+      
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: normalizedEmail,
+        token: code,
+        type: 'signup'
+      });
+
+      if (error) {
+        throw error;
       }
-      setSuccessMessage('Email verified successfully! You are now logged in.');
-      setConfirmationMessage('');
-      setOtpError('');
-      setUiMode('signup');
-      setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '' });
-      setVerificationCode(Array(6).fill(''));
-      setResendCooldown(0);
-    } else {
-      setOtpError('Verification failed. Please try again or resend the code.');
+
+      if (data?.user) {
+        await refreshProfile();
+        
+        if (onSuccess) {
+          await onSuccess();
+        }
+
+        if (!preventRedirect) {
+          // Use redirectUrl prop if provided, otherwise use role-based paths
+          const redirectPath = redirectUrl || 
+            (data.user.user_metadata?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+          
+          router.replace(redirectPath);
+          return; // Don't reset verifying state
+        }
+        setIsVerifyingOtp(false);
       }
+    } catch (err: any) {
+      setOtpError(err.message || 'Failed to verify code');
+      if (onError) {
+        onError(err.message || 'Failed to verify code');
+      }
+      setIsVerifyingOtp(false);
+    }
   };
   
   // Function to switch back to signup form (e.g. if user wants to use different email)
@@ -732,16 +811,19 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
     setResendOtpMessage('');
     setOtpError(''); // Clear previous OTP field errors
 
-      const { error: resendError } = await supabase.auth.resend({
-        type: 'signup',
-      email: verifyingEmail,
-      });
+    // Normalize Gmail address before resending
+    const normalizedEmail = normalizeGmailAddress(verifyingEmail);
+
+    const { error: resendError } = await supabase.auth.resend({
+      type: 'signup',
+      email: normalizedEmail,
+    });
 
     setIsResendingOtp(false);
 
-      if (resendError) {
+    if (resendError) {
       setResendOtpMessage(resendError.message); // Or a more user-friendly error
-        } else {
+    } else {
       setResendOtpMessage(`New verification code sent`);
       setResendCooldown(60); // Start 60-second cooldown
     }

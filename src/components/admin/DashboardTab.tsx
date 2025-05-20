@@ -549,10 +549,10 @@ const DashboardTab: React.FC = () => {
 
         // Get counts for today and yesterday
         const { data: todayData, error: todayError } = await supabaseAdmin
-          .from('profiles')
-          .select('id')
+          .from('user_roles')
+          .select('user_id', { count: 'exact' })
           .eq('role', 'user')
-          .in('id', activeUsersToday?.map(user => user.id) || []);
+          .in('user_id', activeUsersToday?.map(user => user.id) || []);
 
         if (todayError) {
           console.error('Error fetching today user stats:', todayError);
@@ -560,10 +560,10 @@ const DashboardTab: React.FC = () => {
         }
 
         const { data: yesterdayData, error: yesterdayError } = await supabaseAdmin
-          .from('profiles')
-          .select('id')
+          .from('user_roles')
+          .select('user_id', { count: 'exact' })
           .eq('role', 'user')
-          .in('id', activeUsersYesterday?.map(user => user.id) || []);
+          .in('user_id', activeUsersYesterday?.map(user => user.id) || []);
 
         if (yesterdayError) {
           console.error('Error fetching yesterday user stats:', yesterdayError);
@@ -572,10 +572,10 @@ const DashboardTab: React.FC = () => {
 
         // Get counts for this week and last week
         const { data: thisWeekData, error: thisWeekError } = await supabaseAdmin
-          .from('profiles')
-          .select('id')
+          .from('user_roles')
+          .select('user_id', { count: 'exact' })
           .eq('role', 'user')
-          .in('id', activeUsersThisWeek?.map(user => user.id) || []);
+          .in('user_id', activeUsersThisWeek?.map(user => user.id) || []);
 
         if (thisWeekError) {
           console.error('Error fetching this week user stats:', thisWeekError);
@@ -583,10 +583,10 @@ const DashboardTab: React.FC = () => {
         }
 
         const { data: lastWeekData, error: lastWeekError } = await supabaseAdmin
-          .from('profiles')
-          .select('id')
+          .from('user_roles')
+          .select('user_id', { count: 'exact' })
           .eq('role', 'user')
-          .in('id', activeUsersLastWeek?.map(user => user.id) || []);
+          .in('user_id', activeUsersLastWeek?.map(user => user.id) || []);
 
         if (lastWeekError) {
           console.error('Error fetching last week user stats:', lastWeekError);
@@ -595,10 +595,10 @@ const DashboardTab: React.FC = () => {
 
         // Get counts for this month and last month
         const { data: thisMonthData, error: thisMonthError } = await supabaseAdmin
-          .from('profiles')
-          .select('id')
+          .from('user_roles')
+          .select('user_id', { count: 'exact' })
           .eq('role', 'user')
-          .in('id', activeUsersThisMonth?.map(user => user.id) || []);
+          .in('user_id', activeUsersThisMonth?.map(user => user.id) || []);
 
         if (thisMonthError) {
           console.error('Error fetching this month user stats:', thisMonthError);
@@ -606,10 +606,10 @@ const DashboardTab: React.FC = () => {
         }
 
         const { data: lastMonthData, error: lastMonthError } = await supabaseAdmin
-          .from('profiles')
-          .select('id')
+          .from('user_roles')
+          .select('user_id', { count: 'exact' })
           .eq('role', 'user')
-          .in('id', activeUsersLastMonth?.map(user => user.id) || []);
+          .in('user_id', activeUsersLastMonth?.map(user => user.id) || []);
 
         if (lastMonthError) {
           console.error('Error fetching last month user stats:', lastMonthError);

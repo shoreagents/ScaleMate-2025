@@ -53,6 +53,7 @@ import ContentBlocksTab from '@/components/admin/ContentBlocksTab';
 import SystemSettingsTab from '@/components/admin/SystemSettingsTab';
 import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
+import WithRoleProtection from '@/components/auth/withRoleProtection';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -961,6 +962,7 @@ const DashboardPage = () => {
   }
 
   return (
+    <WithRoleProtection allowedRoles={['admin']}>
       <DashboardContainer>
         <DashboardSidebar
           logoText="ScaleMate"
@@ -1007,6 +1009,7 @@ const DashboardPage = () => {
           </SuccessModal>
         )}
       </DashboardContainer>
+    </WithRoleProtection>
   );
 };
 

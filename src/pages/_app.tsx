@@ -9,7 +9,6 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import Header from '@/components/layout/Header';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '@/lib/supabase';
 
 // Prevent Font Awesome from adding its CSS since we did it manually above
 config.autoAddCss = false;
@@ -30,31 +29,14 @@ const NO_HEADER_ROUTES = [
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        setIsAuthenticated(!!session);
-      } catch (error) {
-        console.error('Auth check error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Simulate loading time
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
 
-    checkAuth();
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   const shouldShowHeader = !NO_HEADER_ROUTES.some(route => 
@@ -90,12 +72,12 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider theme={theme}>
-        <AuthProvider>
+    <ThemeProvider theme={theme}>
+      <AuthProvider>
           {shouldShowHeader && <Header />}
-          <Component {...pageProps} />
-        </AuthProvider>
-      </ThemeProvider>
+        <Component {...pageProps} />
+      </AuthProvider>
+    </ThemeProvider>
     </QueryClientProvider>
   );
 } 
