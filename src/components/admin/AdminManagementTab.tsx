@@ -512,22 +512,16 @@ const FilterContainer = styled.div`
   justify-content: space-between;
 `;
 
-const SearchInput = styled.div`
-  position: relative;
-  width: 16rem;
-
-  input {
-    width: 100%;
-    padding: 0.5rem 1rem 0.5rem 2.5rem;
+const StyledSearchInput = styled.input`
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
   border: 1px solid #E5E7EB;
-    border-radius: 0.5rem;
-  }
-
-  svg {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
+  border-radius: 0.5rem;
+  width: 16rem;
+  font-size: 0.875rem;
+  background-color: white;
+  height: 2.5rem;
+  box-sizing: border-box;
+  &::placeholder {
     color: rgba(15, 23, 42, 0.4);
   }
 `;
@@ -618,6 +612,25 @@ const AvatarSpinner = styled.div`
   @keyframes spin {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+`;
+
+const StyledAddUserButton = styled.button`
+  padding: 0.5rem 1rem;
+  background-color: #3B82F6;
+  color: white;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  border: none;
+  height: 2.5rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  &:hover {
+    background-color: #2563EB;
   }
 `;
 
@@ -2073,20 +2086,20 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
       {activeTab === 'admins' ? (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
-              type="text"
-              placeholder="Search ..."
-              value={filterEmail}
-              onChange={(e) => setFilterEmail(e.target.value)}
-            />
-              <FaSearch />
-            </SearchInput>
+            <div style={{ position: 'relative', width: '16rem' }}>
+              <StyledSearchInput
+                type="text"
+                placeholder="Search ..."
+                value={filterEmail}
+                onChange={(e) => setFilterEmail(e.target.value)}
+              />
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </div>
             {isCurrentUserAdmin && (
-            <Button $primary onClick={handleAddAdmin}>
-              <FiUserPlus />
-              Add User
-            </Button>
+              <StyledAddUserButton onClick={handleAddAdmin}>
+                <FiUserPlus />
+                Add User
+              </StyledAddUserButton>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2290,20 +2303,20 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
       ) : activeTab === 'moderators' ? (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
-              type="text"
-              placeholder="Search ..."
-              value={filterEmail}
-              onChange={(e) => setFilterEmail(e.target.value)}
-            />
-              <FaSearch />
-            </SearchInput>
+            <div style={{ position: 'relative', width: '16rem' }}>
+              <StyledSearchInput
+                type="text"
+                placeholder="Search ..."
+                value={filterEmail}
+                onChange={(e) => setFilterEmail(e.target.value)}
+              />
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </div>
             {isCurrentUserAdmin && (
-              <Button $primary onClick={handleAddAdmin}>
+              <StyledAddUserButton onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
-              </Button>
+              </StyledAddUserButton>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2507,20 +2520,20 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
       ) : activeTab === 'developers' ? (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
+            <div style={{ position: 'relative', width: '16rem' }}>
+              <StyledSearchInput
                 type="text"
                 placeholder="Search ..."
                 value={filterEmail}
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
-              <FaSearch />
-            </SearchInput>
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </div>
             {isCurrentUserAdmin && (
-              <Button $primary onClick={handleAddAdmin}>
+              <StyledAddUserButton onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
-              </Button>
+              </StyledAddUserButton>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2675,20 +2688,20 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
       ) : activeTab === 'authors' ? (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
+            <div style={{ position: 'relative', width: '16rem' }}>
+              <StyledSearchInput
                 type="text"
                 placeholder="Search ..."
                 value={filterEmail}
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
-              <FaSearch />
-            </SearchInput>
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </div>
             {isCurrentUserAdmin && (
-              <Button $primary onClick={handleAddAdmin}>
+              <StyledAddUserButton onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
-              </Button>
+              </StyledAddUserButton>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2843,20 +2856,20 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
       ) : (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
-              type="text"
-              placeholder="Search ..."
-              value={filterEmail}
-              onChange={(e) => setFilterEmail(e.target.value)}
-            />
-              <FaSearch />
-            </SearchInput>
+            <div style={{ position: 'relative', width: '16rem' }}>
+              <StyledSearchInput
+                type="text"
+                placeholder="Search ..."
+                value={filterEmail}
+                onChange={(e) => setFilterEmail(e.target.value)}
+              />
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </div>
             {isCurrentUserAdmin && (
-              <Button $primary onClick={handleAddAdmin}>
+              <StyledAddUserButton onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
-              </Button>
+              </StyledAddUserButton>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
