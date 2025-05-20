@@ -119,14 +119,17 @@ const UploadButton = styled.button`
 
 const TagFilterContainer = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+  width: 100%;
 `;
 
 const TagLabel = styled.span`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
+  margin-right: 0.25rem;
 `;
 
 const TagButton = styled.button`
@@ -137,6 +140,7 @@ const TagButton = styled.button`
   border-radius: 9999px;
   font-size: 0.875rem;
   cursor: pointer;
+  white-space: nowrap;
 
   &:hover {
     background-color: rgba(0, 152, 255, 0.2);
@@ -148,6 +152,13 @@ const TableContainer = styled.div`
   border-radius: 0.5rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+
+  @media (min-width: 889px) {
+    overflow-x: auto;
+  }
+  @media (max-width: 888px) {
+    display: none;
+  }
 `;
 
 const Table = styled.table`
@@ -220,6 +231,87 @@ const IconButton = styled.button<{ $color?: string }>`
   }
 `;
 
+const CardListContainer = styled.div`
+  display: none;
+  margin-top: 1.5rem;
+  @media (max-width: 888px) {
+    display: block;
+  }
+`;
+
+const ResourceCard = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+`;
+
+const CardTitleGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const CardResourceTitle = styled.h3`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const CardDate = styled.span`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const CardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const CardDetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+`;
+
+const CardLabel = styled.span`
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const CardValue = styled.span`
+  color: rgba(15, 23, 42, 0.7);
+  text-align: left;
+  &.font-medium {
+    font-weight: 500;
+    color: #0F172A;
+  }
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 0.75rem;
+`;
+
 const ResourceManagerTab: React.FC = () => {
   return (
     <Container>
@@ -250,6 +342,7 @@ const ResourceManagerTab: React.FC = () => {
         <TagButton>Templates</TagButton>
       </TagFilterContainer>
 
+      {/* Desktop/Tablet Table */}
       <TableContainer>
         <Table>
           <TableHeader>
@@ -317,6 +410,79 @@ const ResourceManagerTab: React.FC = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Mobile Card View */}
+      <CardListContainer>
+        <ResourceCard>
+          <CardHeader>
+            <CardTitleGroup>
+              <CardResourceTitle>
+                <FaFilePdf style={{ color: '#EC297B' }} />
+                Team Scaling Guide 2025
+              </CardResourceTitle>
+              <CardDate>Jan 15, 2025</CardDate>
+            </CardTitleGroup>
+          </CardHeader>
+          <CardContent>
+            <CardDetailRow>
+              <CardLabel>Type:</CardLabel>
+              <CardValue>PDF</CardValue>
+            </CardDetailRow>
+            <CardDetailRow>
+              <CardLabel>Status:</CardLabel>
+              <CardValue>
+                <StatusTag $color="#EC297B">Premium</StatusTag>
+              </CardValue>
+            </CardDetailRow>
+            <CardActions>
+              <IconButton $color="#3B82F6" title="Edit">
+                <FaPen />
+              </IconButton>
+              <IconButton $color="#EC297B" title="Archive">
+                <FaArchive />
+              </IconButton>
+              <IconButton $color="#0098FF" title="Star">
+                <FaStar />
+              </IconButton>
+            </CardActions>
+          </CardContent>
+        </ResourceCard>
+
+        <ResourceCard>
+          <CardHeader>
+            <CardTitleGroup>
+              <CardResourceTitle>
+                <FaFileWord style={{ color: '#0098FF' }} />
+                Onboarding Checklist
+              </CardResourceTitle>
+              <CardDate>Jan 10, 2025</CardDate>
+            </CardTitleGroup>
+          </CardHeader>
+          <CardContent>
+            <CardDetailRow>
+              <CardLabel>Type:</CardLabel>
+              <CardValue>DOC</CardValue>
+            </CardDetailRow>
+            <CardDetailRow>
+              <CardLabel>Status:</CardLabel>
+              <CardValue>
+                <StatusTag $color="#00E915">Free</StatusTag>
+              </CardValue>
+            </CardDetailRow>
+            <CardActions>
+              <IconButton $color="#3B82F6" title="Edit">
+                <FaPen />
+              </IconButton>
+              <IconButton $color="#EC297B" title="Archive">
+                <FaArchive />
+              </IconButton>
+              <IconButton $color="#0098FF" title="Star">
+                <FaStar />
+              </IconButton>
+            </CardActions>
+          </CardContent>
+        </ResourceCard>
+      </CardListContainer>
     </Container>
   );
 };
