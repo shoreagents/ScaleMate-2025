@@ -10,16 +10,41 @@ import {
 const Container = styled.div`
   padding: 1.5rem;
   background-color: white;
+  
+  @media only screen and (max-width: 1023px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.75rem;
+  }
 `;
 
 const SettingsTabs = styled.div`
   border-bottom: 1px solid #E5E7EB;
   margin-bottom: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-bottom: 1rem;
+  }
 `;
 
 const TabList = styled.div`
   display: flex;
   gap: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 const TabButton = styled.button<{ $active?: boolean }>`
@@ -33,18 +58,45 @@ const TabButton = styled.button<{ $active?: boolean }>`
   &:hover {
     color: ${props => props.$active ? '#3B82F6' : '#0F172A'};
   }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
 `;
 
 const ContentGrid = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
+  
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 767px) {
+    gap: 1rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.75rem;
+  }
 `;
 
 const SettingsForm = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 1rem;
+  }
 `;
 
 const SettingsCard = styled.div`
@@ -61,6 +113,14 @@ const CardSection = styled.div`
   &:last-child {
     border-bottom: none;
   }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const SectionTitle = styled.h3`
@@ -68,21 +128,41 @@ const SectionTitle = styled.h3`
   font-weight: 500;
   color: #0F172A;
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const SettingGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.75rem;
+  }
 `;
 
 const ToggleSetting = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  
+  @media only screen and (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 `;
 
-const ToggleLabel = styled.div``;
+const ToggleLabel = styled.div`
+  @media only screen and (max-width: 480px) {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+`;
 
 const ToggleTitle = styled.label`
   display: block;
@@ -123,6 +203,10 @@ const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.375rem;
+  }
 `;
 
 const InputLabel = styled.label`
@@ -148,6 +232,11 @@ const ActionButtons = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  
+  @media only screen and (max-width: 480px) {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
 `;
 
 const ResetButton = styled.button`
@@ -159,6 +248,11 @@ const ResetButton = styled.button`
   
   &:hover {
     background-color: #F9FAFB;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    width: 100%;
+    padding: 0.75rem 1rem;
   }
 `;
 
@@ -173,12 +267,21 @@ const SaveButton = styled.button`
   &:hover {
     background-color: #2563EB;
   }
+  
+  @media only screen and (max-width: 480px) {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
 `;
 
 const SidePanel = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 1rem;
+  }
 `;
 
 const BackupCard = styled.div`
@@ -186,6 +289,14 @@ const BackupCard = styled.div`
   border-radius: 0.5rem;
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const CardTitle = styled.h3`
@@ -193,6 +304,11 @@ const CardTitle = styled.h3`
   font-weight: 500;
   color: #0F172A;
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const BackupInfo = styled.div`
@@ -242,6 +358,10 @@ const DownloadButton = styled.button`
   &:hover {
     background-color: white;
   }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.75rem 1rem;
+  }
 `;
 
 const LogsCard = styled.div`
@@ -249,12 +369,24 @@ const LogsCard = styled.div`
   border-radius: 0.5rem;
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const LogsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 const LogItem = styled.div`
@@ -262,6 +394,10 @@ const LogItem = styled.div`
   border-radius: 0.5rem;
   background-color: #F9FAFB;
   border: 1px solid #E5E7EB;
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.625rem;
+  }
 `;
 
 const LogHeader = styled.div`
