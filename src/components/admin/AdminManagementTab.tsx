@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader, FiCode, FiEdit } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch, FaTimes } from 'react-icons/fa';
@@ -57,6 +57,18 @@ const TableContainer = styled.div`
   border: 1px solid #E5E7EB;
   overflow: hidden;
   margin-top: 1.5rem;
+  
+  @media (max-width: 470px) {
+    display: none;
+  }
+`;
+
+const TableScrollContainer = styled.div`
+  width: 100%;
+  
+  @media (max-width: 1284px) {
+    overflow-x: auto;
+  }
 `;
 
 const Table = styled.table`
@@ -198,7 +210,6 @@ const ActionButton = styled.button<{ $variant?: 'danger' | 'success' }>`
 const ActionGroup = styled.div`
   display: flex;
   gap: 8px;
-  align-items: center;
 `;
 
 const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed' }>`
@@ -256,6 +267,13 @@ const ModalContent = styled.div`
   border-radius: 12px;
   width: 100%;
   max-width: 530px;
+  
+  @media (max-width: 550px) {
+    padding: 16px 20px 24px 20px;
+    max-width: 95%;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -268,6 +286,10 @@ const ModalTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  
+  @media (max-width: 550px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -286,12 +308,21 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  
+  @media (max-width: 550px) {
+    gap: 12px;
+  }
 `;
 
 const FormRow = styled.div`
   display: flex;
   gap: 16px;
   width: 100%;
+  
+  @media (max-width: 550px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -299,6 +330,10 @@ const FormGroup = styled.div`
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  
+  @media (max-width: 550px) {
+    gap: 6px;
+  }
 `;
 
 const RequiredAsterisk = styled.span`
@@ -311,6 +346,11 @@ const Label = styled.label`
   font-weight: 500;
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
+  
+  @media (max-width: 550px) {
+    min-width: unset;
+    font-size: 0.8125rem;
+  }
 `;
 
 const Input = styled.input`
@@ -322,6 +362,11 @@ const Input = styled.input`
   &:focus {
     outline: none;
     border-color: #3B82F6;
+  }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
   }
 `;
 
@@ -335,6 +380,11 @@ const Select = styled.select`
   &:focus {
     outline: none;
     border-color: #3B82F6;
+  }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
   }
 `;
 
@@ -350,6 +400,17 @@ const ErrorMessage = styled.div`
     width: 16px;
     height: 16px;
     flex-shrink: 0;
+  }
+  
+  @media (max-width: 550px) {
+    font-size: 0.8125rem;
+    margin-top: 6px;
+    gap: 6px;
+    
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 `;
 
@@ -369,6 +430,11 @@ const HelperText = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+  
+  @media (max-width: 550px) {
+    font-size: 0.6875rem;
+    gap: 3px;
+  }
 `;
 
 const RoleSelectContainer = styled.div`
@@ -407,6 +473,12 @@ const RoleSelect = styled.select`
     outline: none;
     border-color: #3B82F6;
   }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    padding-right: 24px;
+    font-size: 0.8125rem;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -415,6 +487,12 @@ const ButtonGroup = styled.div`
   gap: 12px;
   justify-content: flex-end;
   margin-top: 16px;
+  
+  @media (max-width: 550px) {
+    gap: 8px;
+    margin-top: 12px;
+    flex-direction: column;
+  }
 `;
 
 const ModalButton = styled.button`
@@ -425,6 +503,11 @@ font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  @media (max-width: 550px) {
+    padding: 10px 16px;
+    width: 100%;
+  }
 `;
 
 const CancelButton = styled(ModalButton)`
@@ -510,13 +593,27 @@ const FilterContainer = styled.div`
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  
+  @media (max-width: 470px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const SearchWrapper = styled.div`
+  position: relative;
+  width: 16rem;
+  
+  @media (max-width: 470px) {
+    width: 100%;
+  }
 `;
 
 const StyledSearchInput = styled.input`
   padding: 0.5rem 1rem 0.5rem 2.5rem;
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
-  width: 16rem;
+  width: 100%;
   font-size: 0.875rem;
   background-color: white;
   height: 2.5rem;
@@ -541,6 +638,10 @@ const InfoMessage = styled.div`
 const PasswordInputContainer = styled.div`
   position: relative;
   width: 100%;
+  
+  @media (max-width: 550px) {
+    display: flex;
+  }
 `;
 
 const PasswordInput = styled(Input)`
@@ -631,6 +732,47 @@ const StyledAddUserButton = styled.button`
   transition: background-color 0.2s;
   &:hover {
     background-color: #2563EB;
+  }
+
+  @media (max-width: 470px) {
+    display: none;
+  }
+`;
+
+const CircularAddButton = styled.button`
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+  z-index: 40;
+
+  @media (max-width: 470px) {
+    display: flex;
+  }
+
+  &:hover {
+    background-color: #2563EB;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
   }
 `;
 
@@ -727,6 +869,17 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(normalized);
 };
 
+const GlobalStyles = createGlobalStyle`
+  @media (max-width: 470px) {
+    .full-text {
+      display: none;
+    }
+    .short-text {
+      display: inline !important;
+    }
+  }
+`;
+
 const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModalStateChange }): ReactElement => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [allUsers, setAllUsers] = useState<UserRole[]>([]);
@@ -816,16 +969,33 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
     padding: 1rem;
     background-color: white;
     border-top: 1px solid #E5E7EB;
+    
+    @media (max-width: 470px) {
+      flex-direction: column;
+      gap: 1rem;
+      padding: 0.75rem;
+    }
   `;
 
   const PageInfo = styled.div`
     font-size: 0.875rem;
     color: #6B7280;
+    
+    @media (max-width: 470px) {
+      font-size: 0.75rem;
+      text-align: center;
+    }
   `;
 
   const PageButtons = styled.div`
     display: flex;
     gap: 0.5rem;
+    
+    @media (max-width: 470px) {
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
   `;
 
   const PageButton = styled.button<{ $active?: boolean }>`
@@ -845,6 +1015,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+    
+    @media (max-width: 470px) {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.75rem;
+      min-width: 2rem;
     }
   `;
 
@@ -2005,12 +2181,80 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
     });
   };
 
+  // Change the implementation to use a helper function for pagination that doesn't require IIFE
+  const renderPaginationButtons = (currentPage: number, totalPages: number) => {
+    const pages = [];
+    // Use a fixed value for mobile screens
+    const maxVisiblePages = 3;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if there are fewer than the max visible
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      // Calculate start and end of visible range around current page
+      let startPage = Math.max(2, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 3);
+      
+      // Adjust if at the beginning
+      if (currentPage <= Math.floor(maxVisiblePages / 2)) {
+        endPage = maxVisiblePages - 1;
+      }
+      
+      // Adjust if at the end
+      if (currentPage > totalPages - Math.floor(maxVisiblePages / 2)) {
+        startPage = totalPages - maxVisiblePages + 2;
+      }
+      
+      // Add ellipsis after first page if needed
+      if (startPage > 2) {
+        pages.push('...');
+      }
+      
+      // Add visible range of pages
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      // Add ellipsis before last page if needed
+      if (endPage < totalPages - 1) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      if (totalPages > 1) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages.map((page, index) => 
+      typeof page === 'number' ? (
+        <PageButton
+          key={index}
+          $active={currentPage === page}
+          onClick={() => handlePageChange(page)}
+        >
+          {page}
+        </PageButton>
+      ) : (
+        <span key={index} style={{ alignSelf: 'center', color: '#6B7280', fontSize: '0.75rem' }}>
+          {page}
+        </span>
+      )
+    );
+  };
+
   if (loading) {
     return <PageLoadingSpinner />;
   }
 
   return (
     <Container>
+      <GlobalStyles />
 
       <TabContainer>
         <TabButton 
@@ -2086,7 +2330,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
       {activeTab === 'admins' ? (
         <>
           <FilterContainer>
-            <div style={{ position: 'relative', width: '16rem' }}>
+            <SearchWrapper>
               <StyledSearchInput
                 type="text"
                 placeholder="Search ..."
@@ -2094,12 +2338,17 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
               <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
-            </div>
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-              <StyledAddUserButton onClick={handleAddAdmin}>
-                <FiUserPlus />
-                Add User
-              </StyledAddUserButton>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
+                  <FiUserPlus />
+                  Add User
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2109,201 +2358,310 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
-          <Table>
-              <TableHead>
-              <tr>
-                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
-                  <TableHeader 
-                  style={{ width: '200px' }}
-                  onClick={() => handleSort('name')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Name</span>
-                  <SortIcon 
-                      $active={sortField === 'name'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '300px' }}
-                  onClick={() => handleSort('email')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Email</span>
-                  <SortIcon 
-                      $active={sortField === 'email'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '150px' }}
-                  onClick={() => handleSort('roles')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Roles</span>
-                  <SortIcon 
-                      $active={sortField === 'roles'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '150px' }}
-                  onClick={() => handleSort('last_sign_in')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Last Activity</span>
-                  <SortIcon 
-                      $active={sortField === 'last_sign_in'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
-              </tr>
-              </TableHead>
-              <TableBody>
-              {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
-                <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                  <TableCell style={{ width: '200px' }}>
-                    <UserInfo>
-                      <Avatar 
-                        $imageUrl={user.profile_picture} 
-                        $isLoading={Boolean(loadingProfilePictures[user.id])}
+            <TableScrollContainer>
+              <Table>
+                <TableHead>
+                  <tr>
+                      <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                      <TableHeader 
+                      style={{ width: '200px' }}
+                      onClick={() => handleSort('name')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Name</span>
+                      <SortIcon 
+                          $active={sortField === 'name'} 
+                        $direction={sortDirection}
                       >
-                        {user.profile_picture && (
-                          <img
-                            src={user.profile_picture}
-                            alt={`${user.first_name}'s profile`}
-                            onLoad={() => handleImageLoad(user.id)}
-                            onError={() => handleImageError(user.id)}
-                            style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                          />
-                        )}
-                        {!user.profile_picture && <FiUser />}
-                        {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                      </Avatar>
-                      <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                    </UserInfo>
-                  </TableCell>
-                  <TableCell style={{ width: '300px' }}>
-                    <UserEmail>{user.email}</UserEmail>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
-                    ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
-                  </TableCell>
-                  {isCurrentUserAdmin && (
-                    <TableCell style={{ width: '120px' }}>
-                    <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '300px' }}
+                      onClick={() => handleSort('email')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Email</span>
+                      <SortIcon 
+                          $active={sortField === 'email'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '150px' }}
+                      onClick={() => handleSort('roles')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Roles</span>
+                      <SortIcon 
+                          $active={sortField === 'roles'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '150px' }}
+                      onClick={() => handleSort('last_sign_in')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Last Activity</span>
+                      <SortIcon 
+                          $active={sortField === 'last_sign_in'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
+                  </tr>
+                </TableHead>
+                <TableBody>
+                {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
                         >
-                        <FiEdit2 size={18} />
-                      </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(user);
-                            }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
-                      <ActionButton 
-                        $variant="danger"
-                      onClick={(e) => {
-                            e.stopPropagation();
-                              setUserToDelete(user);
-                          setIsDeleteModalOpen(true);
-                        }}
-                      >
-                        <FiTrash2 size={18} />
-                      </ActionButton>
-                        )}
-                    </ActionGroup>
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              </TableBody>
-          </Table>
-          <PaginationControls>
-            <PageInfo>
-              Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
-            </PageInfo>
-            <PageButtons>
-              <PageButton 
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </PageButton>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PageButton
-                  key={page}
-                  $active={currentPage === page}
-                  onClick={() => handlePageChange(page)}
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      {user.last_sign_in 
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </TableCell>
+                    {isCurrentUserAdmin && (
+                      <TableCell style={{ width: '120px' }}>
+                      <ActionGroup>
+                          <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
+                            title="Update Info"
+                          >
+                          <FiEdit2 size={18} />
+                        </ActionButton>
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                        <ActionButton 
+                          $variant="danger"
+                        onClick={(e) => {
+                              e.stopPropagation();
+                                setUserToDelete(user);
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
+                          <FiTrash2 size={18} />
+                        </ActionButton>
+                          )}
+                      </ActionGroup>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+                </TableBody>
+              </Table>
+            </TableScrollContainer>
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
                 >
-                  {page}
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-              ))}
-              <PageButton 
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </PageButton>
-            </PageButtons>
-          </PaginationControls>
+                {renderPaginationButtons(currentPage, totalPages)}
+                  <PageButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                  </PageButton>
+              </PageButtons>
+            </PaginationControls>
           </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    
+                    <ActionButton 
+                      $variant="danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserToDelete(user);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, totalPages)}
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                </PageButton>
+              </PageButtons>
+            </PaginationControls>
+          </CardViewContainer>
         </>
       ) : activeTab === 'moderators' ? (
         <>
           <FilterContainer>
-            <div style={{ position: 'relative', width: '16rem' }}>
+            <SearchWrapper>
               <StyledSearchInput
                 type="text"
                 placeholder="Search ..."
@@ -2311,12 +2669,17 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
               <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
-            </div>
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-              <StyledAddUserButton onClick={handleAddAdmin}>
-                <FiUserPlus />
-                Add User
-              </StyledAddUserButton>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
+                  <FiUserPlus />
+                  Add User
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2326,201 +2689,310 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
-          <Table>
-              <TableHead>
-              <tr>
-                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
-                  <TableHeader 
-                  style={{ width: '200px' }}
-                  onClick={() => handleSort('name')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Name</span>
-                  <SortIcon 
-                      $active={sortField === 'name'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '300px' }}
-                  onClick={() => handleSort('email')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Email</span>
-                  <SortIcon 
-                      $active={sortField === 'email'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '150px' }}
-                  onClick={() => handleSort('roles')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Roles</span>
-                  <SortIcon 
-                      $active={sortField === 'roles'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '150px' }}
-                  onClick={() => handleSort('last_sign_in')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Last Activity</span>
-                  <SortIcon 
-                      $active={sortField === 'last_sign_in'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
-              </tr>
-              </TableHead>
-              <TableBody>
-              {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
-                <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                  <TableCell style={{ width: '200px' }}>
-                    <UserInfo>
-                      <Avatar 
-                        $imageUrl={user.profile_picture} 
-                        $isLoading={Boolean(loadingProfilePictures[user.id])}
+            <TableScrollContainer>
+              <Table>
+                <TableHead>
+                  <tr>
+                      <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                      <TableHeader 
+                      style={{ width: '200px' }}
+                      onClick={() => handleSort('name')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Name</span>
+                      <SortIcon 
+                          $active={sortField === 'name'} 
+                        $direction={sortDirection}
                       >
-                        {user.profile_picture && (
-                          <img
-                            src={user.profile_picture}
-                            alt={`${user.first_name}'s profile`}
-                            onLoad={() => handleImageLoad(user.id)}
-                            onError={() => handleImageError(user.id)}
-                            style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                          />
-                        )}
-                        {!user.profile_picture && <FiUser />}
-                        {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                      </Avatar>
-                      <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                    </UserInfo>
-                  </TableCell>
-                  <TableCell style={{ width: '300px' }}>
-                    <UserEmail>{user.email}</UserEmail>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
-                    ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
-                  </TableCell>
-                  {isCurrentUserAdmin && (
-                    <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '300px' }}
+                      onClick={() => handleSort('email')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Email</span>
+                      <SortIcon 
+                          $active={sortField === 'email'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '150px' }}
+                      onClick={() => handleSort('roles')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Roles</span>
+                      <SortIcon 
+                          $active={sortField === 'roles'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '150px' }}
+                      onClick={() => handleSort('last_sign_in')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Last Activity</span>
+                      <SortIcon 
+                          $active={sortField === 'last_sign_in'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
+                  </tr>
+                </TableHead>
+                <TableBody>
+                {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                    <TableCell style={{ width: '200px' }}>
+                      <UserInfo>
+                        <Avatar 
+                          $imageUrl={user.profile_picture} 
+                          $isLoading={Boolean(loadingProfilePictures[user.id])}
                         >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(user);
-                            }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
+                          {user.profile_picture && (
+                            <img
+                              src={user.profile_picture}
+                              alt={`${user.first_name}'s profile`}
+                              onLoad={() => handleImageLoad(user.id)}
+                              onError={() => handleImageError(user.id)}
+                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                            />
+                          )}
+                          {!user.profile_picture && <FiUser />}
+                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                        </Avatar>
+                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                      </UserInfo>
+                    </TableCell>
+                    <TableCell style={{ width: '300px' }}>
+                      <UserEmail>{user.email}</UserEmail>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </TableCell>
+                    <TableCell style={{ width: '150px' }}>
+                      {user.last_sign_in 
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </TableCell>
+                    {isCurrentUserAdmin && (
+                      <TableCell style={{ width: '120px' }}>
+                        <ActionGroup>
                           <ActionButton 
-                            $variant="danger"
                           onClick={(e) => {
                             e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
-                            }}
+                            handleEditUser(user);
+                          }}
+                            title="Update Info"
                           >
-                            <FiTrash2 size={18} />
+                            <FiEdit2 size={18} />
                           </ActionButton>
-                        )}
-                      </ActionGroup>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              </TableBody>
-          </Table>
-          <PaginationControls>
-            <PageInfo>
-              Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
-            </PageInfo>
-            <PageButtons>
-              <PageButton 
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </PageButton>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PageButton
-                  key={page}
-                  $active={currentPage === page}
-                  onClick={() => handlePageChange(page)}
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                            <ActionButton 
+                              $variant="danger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                                setUserToDelete(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          )}
+                        </ActionGroup>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+                </TableBody>
+              </Table>
+            </TableScrollContainer>
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
                 >
-                  {page}
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-              ))}
-              <PageButton 
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </PageButton>
-            </PageButtons>
-          </PaginationControls>
+                {renderPaginationButtons(currentPage, totalPages)}
+                  <PageButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                  </PageButton>
+              </PageButtons>
+            </PaginationControls>
           </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    
+                    <ActionButton 
+                      $variant="danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserToDelete(user);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, totalPages)}
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                </PageButton>
+              </PageButtons>
+            </PaginationControls>
+          </CardViewContainer>
         </>
       ) : activeTab === 'developers' ? (
         <>
           <FilterContainer>
-            <div style={{ position: 'relative', width: '16rem' }}>
+            <SearchWrapper>
               <StyledSearchInput
                 type="text"
                 placeholder="Search ..."
@@ -2528,12 +3000,17 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
               <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
-            </div>
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-              <StyledAddUserButton onClick={handleAddAdmin}>
-                <FiUserPlus />
-                Add User
-              </StyledAddUserButton>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
+                  <FiUserPlus />
+                  Add User
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2543,76 +3020,180 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
-            <Table>
-              <TableHead>
-                <tr>
-                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
-                  <TableHeader 
-                    style={{ width: '200px' }}
-                    onClick={() => handleSort('name')}
-                    $sortable
-                  >
-                    <HeaderContent>
-                      <span>Name</span>
-                      <SortIcon 
-                        $active={sortField === 'name'} 
-                        $direction={sortDirection}
-                      >
-                        ↑
-                      </SortIcon>
-                    </HeaderContent>
-                  </TableHeader>
-                  <TableHeader 
-                    style={{ width: '300px' }}
-                    onClick={() => handleSort('email')}
-                    $sortable
-                  >
-                    <HeaderContent>
-                      <span>Email</span>
-                      <SortIcon 
-                        $active={sortField === 'email'} 
-                        $direction={sortDirection}
-                      >
-                        ↑
-                      </SortIcon>
-                    </HeaderContent>
-                  </TableHeader>
-                  <TableHeader style={{ width: '150px' }}>Roles</TableHeader>
-                  <TableHeader style={{ width: '150px' }}>Last Sign In</TableHeader>
-                  {isCurrentUserAdmin && (
-                    <TableHeader style={{ width: '120px' }}>Actions</TableHeader>
-                  )}
-                </tr>
-              </TableHead>
-              <tbody>
-                {getPaginatedData(allUsers.filter(user => user.roles.includes('developer'))).map((user, index) => (
-                  <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                    <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                    <TableCell style={{ width: '200px' }}>
-                      <UserInfo>
-                        <Avatar 
-                          $imageUrl={user.profile_picture} 
-                          $isLoading={Boolean(loadingProfilePictures[user.id])}
+            <TableScrollContainer>
+              <Table>
+                <TableHead>
+                  <tr>
+                    <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                    <TableHeader 
+                      style={{ width: '200px' }}
+                      onClick={() => handleSort('name')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Name</span>
+                        <SortIcon 
+                          $active={sortField === 'name'} 
+                          $direction={sortDirection}
                         >
-                          {user.profile_picture && (
-                            <img
-                              src={user.profile_picture}
-                              alt={`${user.first_name}'s profile`}
-                              onLoad={() => handleImageLoad(user.id)}
-                              onError={() => handleImageError(user.id)}
-                              style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                            />
-                          )}
-                          {!user.profile_picture && <FiUser />}
-                          {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                        </Avatar>
-                        <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                      </UserInfo>
-                    </TableCell>
-                    <TableCell style={{ width: '300px' }}>
-                      <UserEmail>{user.email}</UserEmail>
-                    </TableCell>
-                    <TableCell style={{ width: '150px' }}>
+                          ↑
+                        </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                    <TableHeader 
+                      style={{ width: '300px' }}
+                      onClick={() => handleSort('email')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Email</span>
+                        <SortIcon 
+                          $active={sortField === 'email'} 
+                          $direction={sortDirection}
+                        >
+                          ↑
+                        </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                    <TableHeader style={{ width: '150px' }}>Roles</TableHeader>
+                    <TableHeader style={{ width: '150px' }}>Last Sign In</TableHeader>
+                    {isCurrentUserAdmin && (
+                      <TableHeader style={{ width: '120px' }}>Actions</TableHeader>
+                    )}
+                  </tr>
+                </TableHead>
+                <tbody>
+                  {getPaginatedData(allUsers.filter(user => user.roles.includes('developer'))).map((user, index) => (
+                    <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
+                          >
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                          </Avatar>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
+                      </TableCell>
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        <RoleBadges>
+                          {user.roles.map((role: string, idx: number) => (
+                            <RoleBadge key={idx} $role={role}>
+                              {role}
+                            </RoleBadge>
+                          ))}
+                        </RoleBadges>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        {user.last_sign_in 
+                          ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                          : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                        }
+                      </TableCell>
+                      {isCurrentUserAdmin && (
+                        <TableCell style={{ width: '120px' }}>
+                          <ActionGroup>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditUser(user);
+                              }}
+                              title="Update Info"
+                            >
+                              <FiEdit2 size={18} />
+                            </ActionButton>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(user);
+                              }}
+                              title="Delete User"
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          </ActionGroup>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </tbody>
+              </Table>
+            </TableScrollContainer>
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
+                  <PageButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
+                  >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                  </PageButton>
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData(allUsers.filter(user => user.roles.includes('developer'))).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
                       <RoleBadges>
                         {user.roles.map((role: string, idx: number) => (
                           <RoleBadge key={idx} $role={role}>
@@ -2620,75 +3201,78 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                           </RoleBadge>
                         ))}
                       </RoleBadges>
-                    </TableCell>
-                    <TableCell style={{ width: '150px' }}>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
                       {user.last_sign_in 
                         ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
-                    </TableCell>
-                    {isCurrentUserAdmin && (
-                      <TableCell style={{ width: '120px' }}>
-                        <ActionGroup>
-                          <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditUser(user);
-                            }}
-                            title="Update Info"
-                          >
-                            <FiEdit2 size={18} />
-                          </ActionButton>
-                          <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteClick(user);
-                            }}
-                            title="Delete User"
-                          >
-                            <FiTrash2 size={18} />
-                          </ActionButton>
-                        </ActionGroup>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </tbody>
-            </Table>
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(user);
+                      }}
+                      title="Delete User"
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
             <PaginationControls>
               <PageInfo>
-                Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: Math.ceil(allUsers.length / rowsPerPage) }, (_, i) => i + 1).map((page) => (
-                  <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
-                  >
-                    {page}
-                  </PageButton>
-                ))}
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                 <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                 >
-                  Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
               </PageButtons>
             </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : activeTab === 'authors' ? (
         <>
           <FilterContainer>
-            <div style={{ position: 'relative', width: '16rem' }}>
+            <SearchWrapper>
               <StyledSearchInput
                 type="text"
                 placeholder="Search ..."
@@ -2696,12 +3280,17 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
               <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
-            </div>
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-              <StyledAddUserButton onClick={handleAddAdmin}>
-                <FiUserPlus />
-                Add User
-              </StyledAddUserButton>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
+                  <FiUserPlus />
+                  Add User
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2711,49 +3300,356 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
-            <Table>
-              <TableHead>
-                <tr>
-                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
-                  <TableHeader 
-                    style={{ width: '200px' }}
-                    onClick={() => handleSort('name')}
-                    $sortable
+            <TableScrollContainer>
+              <Table>
+                <TableHead>
+                  <tr>
+                    <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                    <TableHeader 
+                      style={{ width: '200px' }}
+                      onClick={() => handleSort('name')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Name</span>
+                        <SortIcon 
+                          $active={sortField === 'name'} 
+                          $direction={sortDirection}
+                        >
+                          ↑
+                        </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                    <TableHeader 
+                      style={{ width: '300px' }}
+                      onClick={() => handleSort('email')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Email</span>
+                        <SortIcon 
+                          $active={sortField === 'email'} 
+                          $direction={sortDirection}
+                        >
+                          ↑
+                        </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                    <TableHeader style={{ width: '150px' }}>Roles</TableHeader>
+                    <TableHeader style={{ width: '150px' }}>Last Sign In</TableHeader>
+                    {isCurrentUserAdmin && (
+                      <TableHeader style={{ width: '120px' }}>Actions</TableHeader>
+                    )}
+                  </tr>
+                </TableHead>
+                <tbody>
+                  {getPaginatedData(allUsers.filter(user => user.roles.includes('author'))).map((user, index) => (
+                    <TableRow key={user.id} onClick={() => handleNameClick(user)}>
+                      <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
+                      <TableCell style={{ width: '200px' }}>
+                        <UserInfo>
+                          <Avatar 
+                            $imageUrl={user.profile_picture} 
+                            $isLoading={Boolean(loadingProfilePictures[user.id])}
+                          >
+                            {user.profile_picture && (
+                              <img
+                                src={user.profile_picture}
+                                alt={`${user.first_name}'s profile`}
+                                onLoad={() => handleImageLoad(user.id)}
+                                onError={() => handleImageError(user.id)}
+                                style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                              />
+                            )}
+                            {!user.profile_picture && <FiUser />}
+                            {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                          </Avatar>
+                          <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                        </UserInfo>
+                      </TableCell>
+                      <TableCell style={{ width: '300px' }}>
+                        <UserEmail>{user.email}</UserEmail>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        <RoleBadges>
+                          {user.roles.map((role: string, idx: number) => (
+                            <RoleBadge key={idx} $role={role}>
+                              {role}
+                            </RoleBadge>
+                          ))}
+                        </RoleBadges>
+                      </TableCell>
+                      <TableCell style={{ width: '150px' }}>
+                        {user.last_sign_in 
+                          ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                          : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                        }
+                      </TableCell>
+                      {isCurrentUserAdmin && (
+                        <TableCell style={{ width: '120px' }}>
+                          <ActionGroup>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditUser(user);
+                              }}
+                              title="Update Info"
+                            >
+                              <FiEdit2 size={18} />
+                            </ActionButton>
+                            <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(user);
+                              }}
+                              title="Delete User"
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          </ActionGroup>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                </tbody>
+              </Table>
+            </TableScrollContainer>
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
+                  <PageButton
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                   >
-                    <HeaderContent>
-                      <span>Name</span>
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                  </PageButton>
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData(allUsers.filter(user => user.roles.includes('author'))).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(user);
+                      }}
+                      title="Delete User"
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
+                >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                </PageButton>
+              </PageButtons>
+            </PaginationControls>
+          </CardViewContainer>
+        </>
+      ) : (
+        <>
+          <FilterContainer>
+            <SearchWrapper>
+              <StyledSearchInput
+                type="text"
+                placeholder="Search ..."
+                value={filterEmail}
+                onChange={(e) => setFilterEmail(e.target.value)}
+              />
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </SearchWrapper>
+            {isCurrentUserAdmin && (
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
+                  <FiUserPlus />
+                  Add User
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
+            )}
+          </FilterContainer>
+          {!isCurrentUserAdmin && (
+            <InfoMessage>
+              <FiInfo />
+              You need admin privileges to manage user roles.
+            </InfoMessage>
+          )}
+          <TableContainer>
+            <TableScrollContainer>
+              <Table>
+                <TableHead>
+                  <tr>
+                      <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
+                      <TableHeader 
+                      style={{ width: '200px' }}
+                      onClick={() => handleSort('name')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Name</span>
                       <SortIcon 
-                        $active={sortField === 'name'} 
+                          $active={sortField === 'name'} 
                         $direction={sortDirection}
                       >
                         ↑
                       </SortIcon>
-                    </HeaderContent>
-                  </TableHeader>
-                  <TableHeader 
-                    style={{ width: '300px' }}
-                    onClick={() => handleSort('email')}
-                    $sortable
-                  >
-                    <HeaderContent>
-                      <span>Email</span>
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '300px' }}
+                      onClick={() => handleSort('email')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Email</span>
                       <SortIcon 
-                        $active={sortField === 'email'} 
+                          $active={sortField === 'email'} 
                         $direction={sortDirection}
                       >
                         ↑
                       </SortIcon>
-                    </HeaderContent>
-                  </TableHeader>
-                  <TableHeader style={{ width: '150px' }}>Roles</TableHeader>
-                  <TableHeader style={{ width: '150px' }}>Last Sign In</TableHeader>
-                  {isCurrentUserAdmin && (
-                    <TableHeader style={{ width: '120px' }}>Actions</TableHeader>
-                  )}
-                </tr>
-              </TableHead>
-              <tbody>
-                {getPaginatedData(allUsers.filter(user => user.roles.includes('author'))).map((user, index) => (
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '150px' }}
+                      onClick={() => handleSort('roles')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Roles</span>
+                      <SortIcon 
+                          $active={sortField === 'roles'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      <TableHeader 
+                      style={{ width: '150px' }}
+                      onClick={() => handleSort('last_sign_in')}
+                      $sortable
+                    >
+                      <HeaderContent>
+                        <span>Last Activity</span>
+                      <SortIcon 
+                          $active={sortField === 'last_sign_in'} 
+                        $direction={sortDirection}
+                      >
+                        ↑
+                      </SortIcon>
+                      </HeaderContent>
+                    </TableHeader>
+                      {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
+                  </tr>
+                </TableHead>
+                <TableBody>
+                {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
                   <TableRow key={user.id} onClick={() => handleNameClick(user)}>
                     <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
                     <TableCell style={{ width: '200px' }}>
@@ -2791,7 +3687,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                     </TableCell>
                     <TableCell style={{ width: '150px' }}>
                       {user.last_sign_in 
-                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                      ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                     </TableCell>
@@ -2799,276 +3695,190 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                       <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
                           <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditUser(user);
-                            }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
                             title="Update Info"
                           >
                             <FiEdit2 size={18} />
                           </ActionButton>
-                          <ActionButton 
+                          {isConfirmingDelete === user.id ? (
+                            <>
+                              <ActionButton 
+                                $variant="success"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(user);
+                              }}
+                              >
+                                <FiCheck size={18} />
+                              </ActionButton>
+                              <ActionButton 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsConfirmingDelete(null);
+                              }}
+                              >
+                                <FiX size={18} />
+                              </ActionButton>
+                            </>
+                          ) : (
+                            <ActionButton 
+                              $variant="danger"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDeleteClick(user);
-                            }}
-                            title="Delete User"
-                          >
-                            <FiTrash2 size={18} />
-                          </ActionButton>
+                                setUserToDelete(user);
+                                setIsDeleteModalOpen(true);
+                              }}
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          )}
                         </ActionGroup>
                       </TableCell>
                     )}
                   </TableRow>
                 ))}
-              </tbody>
-            </Table>
+                </TableBody>
+              </Table>
+            </TableScrollContainer>
             <PaginationControls>
               <PageInfo>
-                Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                <span className="full-text">
+                Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: Math.ceil(allUsers.length / rowsPerPage) }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, totalPages)}
                   <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
-                  >
-                    {page}
-                  </PageButton>
-                ))}
-                <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
-                >
-                  Next
-                </PageButton>
+                  disabled={currentPage === totalPages}
+                  >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                  </PageButton>
               </PageButtons>
             </PaginationControls>
           </TableContainer>
-        </>
-      ) : (
-        <>
-          <FilterContainer>
-            <div style={{ position: 'relative', width: '16rem' }}>
-              <StyledSearchInput
-                type="text"
-                placeholder="Search ..."
-                value={filterEmail}
-                onChange={(e) => setFilterEmail(e.target.value)}
-              />
-              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
-            </div>
-            {isCurrentUserAdmin && (
-              <StyledAddUserButton onClick={handleAddAdmin}>
-                <FiUserPlus />
-                Add User
-              </StyledAddUserButton>
-            )}
-          </FilterContainer>
-          {!isCurrentUserAdmin && (
-            <InfoMessage>
-              <FiInfo />
-              You need admin privileges to manage user roles.
-            </InfoMessage>
-          )}
-          <TableContainer>
-          <Table>
-              <TableHead>
-              <tr>
-                  <TableHeader style={{ width: '20px', textAlign: 'center' }}>#</TableHeader>
-                  <TableHeader 
-                  style={{ width: '200px' }}
-                  onClick={() => handleSort('name')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Name</span>
-                  <SortIcon 
-                      $active={sortField === 'name'} 
-                    $direction={sortDirection}
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
                   >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '300px' }}
-                  onClick={() => handleSort('email')}
-                  $sortable
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    
+                    <ActionButton 
+                      $variant="danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserToDelete(user);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
                 >
-                  <HeaderContent>
-                    <span>Email</span>
-                  <SortIcon 
-                      $active={sortField === 'email'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '150px' }}
-                  onClick={() => handleSort('roles')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Roles</span>
-                  <SortIcon 
-                      $active={sortField === 'roles'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  <TableHeader 
-                  style={{ width: '150px' }}
-                  onClick={() => handleSort('last_sign_in')}
-                  $sortable
-                >
-                  <HeaderContent>
-                    <span>Last Activity</span>
-                  <SortIcon 
-                      $active={sortField === 'last_sign_in'} 
-                    $direction={sortDirection}
-                  >
-                    ↑
-                  </SortIcon>
-                  </HeaderContent>
-                </TableHeader>
-                  {isCurrentUserAdmin && <TableHeader style={{ width: '120px' }}>Actions</TableHeader>}
-              </tr>
-              </TableHead>
-              <TableBody>
-              {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
-                <TableRow key={user.id} onClick={() => handleNameClick(user)}>
-                  <TableCell style={{ width: '20px', textAlign: 'center', color: '#6B7280' }}>{index + 1}</TableCell>
-                  <TableCell style={{ width: '200px' }}>
-                    <UserInfo>
-                      <Avatar 
-                        $imageUrl={user.profile_picture} 
-                        $isLoading={Boolean(loadingProfilePictures[user.id])}
-                      >
-                        {user.profile_picture && (
-                          <img
-                            src={user.profile_picture}
-                            alt={`${user.first_name}'s profile`}
-                            onLoad={() => handleImageLoad(user.id)}
-                            onError={() => handleImageError(user.id)}
-                            style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
-                          />
-                        )}
-                        {!user.profile_picture && <FiUser />}
-                        {loadingProfilePictures[user.id] && <AvatarSpinner />}
-                      </Avatar>
-                      <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
-                    </UserInfo>
-                  </TableCell>
-                  <TableCell style={{ width: '300px' }}>
-                    <UserEmail>{user.email}</UserEmail>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    <RoleBadges>
-                      {user.roles.map((role: string, idx: number) => (
-                        <RoleBadge key={idx} $role={role}>
-                          {role}
-                        </RoleBadge>
-                      ))}
-                    </RoleBadges>
-                  </TableCell>
-                  <TableCell style={{ width: '150px' }}>
-                    {user.last_sign_in 
-                    ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
-                      : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
-                    }
-                  </TableCell>
-                  {isCurrentUserAdmin && (
-                    <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
-                        >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(user);
-                            }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
-                          <ActionButton 
-                            $variant="danger"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
-                            }}
-                          >
-                            <FiTrash2 size={18} />
-                          </ActionButton>
-                        )}
-                      </ActionGroup>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              </TableBody>
-          </Table>
-          <PaginationControls>
-            <PageInfo>
-              Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
-            </PageInfo>
-            <PageButtons>
-              <PageButton 
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </PageButton>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PageButton
-                  key={page}
-                  $active={currentPage === page}
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-              ))}
-              <PageButton 
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </PageButton>
-            </PageButtons>
-          </PaginationControls>
-          </TableContainer>
+                {renderPaginationButtons(currentPage, totalPages)}
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+                </PageButton>
+              </PageButtons>
+            </PaginationControls>
+          </CardViewContainer>
         </>
       )}
 
@@ -3804,6 +4614,11 @@ const TabContainer = styled.div`
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    gap: 0.25rem;
+  }
 `;
 
 const TabButton = styled.button<{ $active: boolean; $type: string }>`
@@ -3850,6 +4665,12 @@ const TabButton = styled.button<{ $active: boolean; $type: string }>`
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
 
   &:hover {
     background-color: ${props => {
@@ -4139,6 +4960,76 @@ const DeleteCancelButton = styled(ModalButton)`
     background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
   }
+`;
+
+// Add these new styled components after the DeleteCancelButton component
+const CardViewContainer = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+
+  @media (max-width: 470px) {
+    display: flex;
+  }
+`;
+
+const UserCard = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+  }
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const CardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const CardItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  
+  &:not(:last-child) {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #F3F4F6;
+  }
+`;
+
+const CardLabel = styled.span`
+  color: #6B7280;
+  font-weight: 500;
+`;
+
+const CardValue = styled.span`
+  color: #1F2937;
+  font-weight: 500;
+  text-align: right;
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 `;
 
 export default AdminManagementTab; 

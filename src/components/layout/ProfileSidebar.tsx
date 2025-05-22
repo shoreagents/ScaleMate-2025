@@ -75,6 +75,20 @@ const Sidebar = styled.aside<{ $isOpen: boolean }>`
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  
+  @media (max-width: 1183px) {
+    width: 90vw;
+    padding: 1.25rem;
+  }
+  
+  @media (max-width: 768px) {
+    width: 100vw;
+  }
+  
+  @media (max-width: 480px) {
+    overflow-y: auto;
+    padding-bottom: 5rem;
+  }
 `;
 
 const SidebarHeader = styled.div`
@@ -121,6 +135,18 @@ const SidebarContent = styled.div`
   flex: 1;
   height: calc(100vh - 5rem); // Account for header height
   position: relative;
+  
+  @media (max-width: 1183px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow-y: visible;
+  }
 `;
 
 const LeftColumn = styled.div`
@@ -130,6 +156,14 @@ const LeftColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  
+  @media (max-width: 1183px) {
+    position: static;
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const RightColumn = styled.div`
@@ -154,6 +188,18 @@ const RightColumn = styled.div`
   &::-webkit-scrollbar-thumb:hover {
     background: #94A3B8;
   }
+  
+  @media (max-width: 1183px) {
+    padding-right: 0;
+    height: auto;
+    max-height: 60vh;
+  }
+  
+  @media (max-width: 480px) {
+    max-height: none;
+    width: 100%;
+    overflow-y: visible;
+  }
 `;
 
 const Card = styled.div`
@@ -161,6 +207,10 @@ const Card = styled.div`
   border-radius: 0.75rem;
   padding: 1.25rem;
   width: 100%;
+  
+  @media (max-width: 1183px) {
+    padding: 1rem;
+  }
 `;
 
 const ProfileHeader = styled.div`
@@ -169,6 +219,16 @@ const ProfileHeader = styled.div`
   align-items: center;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
+  
+  @media (max-width: 1183px) {
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const Avatar = styled.div`
@@ -190,6 +250,17 @@ const Avatar = styled.div`
     height: 100%;
     object-fit: cover;
   }
+  
+  @media (max-width: 1183px) {
+    width: 4rem;
+    height: 4rem;
+    min-width: 4rem;
+    margin-bottom: 0;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const AvatarPlaceholder = styled(Avatar)`
@@ -203,6 +274,10 @@ const ProfileInfo = styled.div`
   gap: 0.5rem;
   align-items: flex-start;
   text-align: left;
+  
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const ProfileName = styled.h3`
@@ -304,6 +379,15 @@ const InfoList = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
   padding-top: 1.5rem;
+  
+  @media (max-width: 1183px) {
+    gap: 1rem;
+    padding-top: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const InfoItem = styled.div`
@@ -350,6 +434,14 @@ const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  
+  @media (max-width: 1183px) {
+    gap: 0.75rem;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const StatItem = styled.div`
@@ -448,6 +540,12 @@ const ActivityItem = styled.div`
     color: rgba(15,23,42,0.7);
     flex-shrink: 0;
     margin-top: 0.25rem;
+  }
+  
+  @media (max-width: 1183px) {
+    padding: 0.75rem;
+    gap: 0.75rem;
+    min-height: 3.5rem;
   }
 `;
 
@@ -911,8 +1009,183 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
     }));
   };
 
+  // Add a media query state to detect small screens
+  const [isSmallScreen, setIsSmallScreen] = React.useState(false);
+  
+  // Create a function to check screen size
+  const checkScreenSize = () => {
+    setIsSmallScreen(window.innerWidth <= 480);
+  };
+  
+  // Add effect to detect screen size changes
+  React.useEffect(() => {
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   if (!profile) return null;
 
+  // Create the user info card component for reuse
+  const UserInfoCard = () => (
+    <Card>
+      <ProfileHeader>
+        {profile.avatar ? (
+          <Avatar>
+            <img src={profile.avatar} alt={profile.name} />
+          </Avatar>
+        ) : (
+          <AvatarPlaceholder>
+            <FiUser size={24} />
+          </AvatarPlaceholder>
+        )}
+        <ProfileInfo>
+          <ProfileName>{profile.name}</ProfileName>
+          <RolesContainer>
+            {Array.isArray(profile.role) ? (
+              profile.role.map((role, index) => (
+                <ProfileRole key={index}>{role}</ProfileRole>
+              ))
+            ) : (
+              <ProfileRole>{profile.role}</ProfileRole>
+            )}
+          </RolesContainer>
+        </ProfileInfo>
+      </ProfileHeader>
+
+      <InfoList>
+        <InfoItem>
+          <InfoLabel>
+            <FaEnvelope />
+            Email
+          </InfoLabel>
+          <InfoValue>{profile.email}</InfoValue>
+        </InfoItem>
+        {profile.username && (
+          <InfoItem>
+            <InfoLabel>
+              <FaUser />
+              Username
+            </InfoLabel>
+            <InfoValue>@{profile.username}</InfoValue>
+          </InfoItem>
+        )}
+        {profile.gender && (
+          <InfoItem>
+            <InfoLabel>
+              {profile.gender === 'male' ? <FaMale size={18} /> :
+               profile.gender === 'female' ? <FaFemale size={18} /> :
+               profile.gender === 'other' ? <FaTransgender size={18} /> :
+               profile.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
+               <FaQuestion size={18} />}
+              Gender
+            </InfoLabel>
+            <InfoValue>{profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)}</InfoValue>
+          </InfoItem>
+        )}
+        {profile.phone && (
+          <InfoItem>
+            <InfoLabel>
+              <FaPhone />
+              Phone
+            </InfoLabel>
+            <InfoValue>{profile.phone}</InfoValue>
+          </InfoItem>
+        )}
+        <InfoItem>
+          <InfoLabel>
+            <FaCalendarAlt />
+            Joined
+          </InfoLabel>
+          <InfoValue>{profile.joinedDate}</InfoValue>
+        </InfoItem>
+        <InfoItem>
+          <InfoLabel>
+            <FaClock />
+            Last Login
+          </InfoLabel>
+          <InfoValue>{profile.lastLogin}</InfoValue>
+        </InfoItem>
+      </InfoList>
+    </Card>
+  );
+
+  // Create the stats card component for reuse
+  const StatsCard = () => (
+    profile.stats ? (
+      <Card>
+        <SectionTitle>
+          <FaChartLine />
+          Performance Stats
+        </SectionTitle>
+        <StatsGrid>
+          <StatItem>
+            <h4>{profile.stats.leadsGenerated}</h4>
+            <p>Leads</p>
+          </StatItem>
+          <StatItem>
+            <h4>{profile.stats.rolesCreated}</h4>
+            <p>Roles</p>
+          </StatItem>
+          <StatItem>
+            <h4>{profile.stats.quotesSent}</h4>
+            <p>Quotes</p>
+          </StatItem>
+        </StatsGrid>
+      </Card>
+    ) : null
+  );
+
+  // Create the activities card component for reuse
+  const ActivitiesCard = () => (
+    <Card>
+      <SectionTitle>
+        <FaHistory />
+        Recent Activities
+      </SectionTitle>
+      <ActivityList>
+        {recentActivity.length > 0 ? (
+          Object.entries(groupedActivities).map(([date, activities]) => (
+            <React.Fragment key={date}>
+              <ActivityDate 
+                onClick={() => toggleDateVisibility(date)}
+                $isActive={visibleDates[date]}
+              >
+                {date}
+              </ActivityDate>
+              <ActivityGroup $isVisible={visibleDates[date]}>
+                {activities.slice(0, visibleItems[date]).map((activity) => (
+                  <ActivityItem key={activity.id}>
+                    {getActivityIcon(activity.type, activity.description)}
+                    <ActivityContent>
+                      <p>{activity.description.replace('Removed Gender', 'Unset Gender')}</p>
+                      <span>{activity.time}</span>
+                    </ActivityContent>
+                  </ActivityItem>
+                ))}
+                {activities.length > visibleItems[date] && (
+                  <ShowMoreButton onClick={() => showMoreItems(date)}>
+                    Show More
+                  </ShowMoreButton>
+                )}
+              </ActivityGroup>
+            </React.Fragment>
+          ))
+        ) : (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '2rem', 
+            color: 'rgba(15,23,42,0.7)',
+            fontSize: '0.875rem'
+          }}>
+            No recent activities to show
+          </div>
+        )}
+      </ActivityList>
+    </Card>
+  );
+
+  // Render appropriate layout based on screen size
   return (
     <Sidebar $isOpen={isOpen} id="profile-sidebar">
       <SidebarHeader>
@@ -922,161 +1195,25 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
         </CloseButton>
       </SidebarHeader>
 
-      <SidebarContent>
-        <LeftColumn>
-          <Card>
-            <ProfileHeader>
-              {profile.avatar ? (
-                <Avatar>
-                  <img src={profile.avatar} alt={profile.name} />
-                </Avatar>
-              ) : (
-                <AvatarPlaceholder>
-                  <FiUser size={24} />
-                </AvatarPlaceholder>
-              )}
-              <ProfileInfo>
-                <ProfileName>{profile.name}</ProfileName>
-                <RolesContainer>
-                  {Array.isArray(profile.role) ? (
-                    profile.role.map((role, index) => (
-                      <ProfileRole key={index}>{role}</ProfileRole>
-                    ))
-                  ) : (
-                    <ProfileRole>{profile.role}</ProfileRole>
-                  )}
-                </RolesContainer>
-              </ProfileInfo>
-            </ProfileHeader>
-
-            <InfoList>
-              <InfoItem>
-                <InfoLabel>
-                  <FaEnvelope />
-                  Email
-                </InfoLabel>
-                <InfoValue>{profile.email}</InfoValue>
-              </InfoItem>
-              {profile.username && (
-                <InfoItem>
-                  <InfoLabel>
-                    <FaUser />
-                    Username
-                  </InfoLabel>
-                  <InfoValue>@{profile.username}</InfoValue>
-                </InfoItem>
-              )}
-              {profile.gender && (
-                <InfoItem>
-                  <InfoLabel>
-                    {profile.gender === 'male' ? <FaMale size={18} /> :
-                     profile.gender === 'female' ? <FaFemale size={18} /> :
-                     profile.gender === 'other' ? <FaTransgender size={18} /> :
-                     profile.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
-                     <FaQuestion size={18} />}
-                    Gender
-                  </InfoLabel>
-                  <InfoValue>{profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1)}</InfoValue>
-                </InfoItem>
-              )}
-              {profile.phone && (
-                <InfoItem>
-                  <InfoLabel>
-                    <FaPhone />
-                    Phone
-                  </InfoLabel>
-                  <InfoValue>{profile.phone}</InfoValue>
-                </InfoItem>
-              )}
-              <InfoItem>
-                <InfoLabel>
-                  <FaCalendarAlt />
-                  Joined
-                </InfoLabel>
-                <InfoValue>{profile.joinedDate}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>
-                  <FaClock />
-                  Last Login
-                </InfoLabel>
-                <InfoValue>{profile.lastLogin}</InfoValue>
-              </InfoItem>
-            </InfoList>
-          </Card>
-
-          {profile.stats && (
-            <Card>
-              <SectionTitle>
-                <FaChartLine />
-                Performance Stats
-              </SectionTitle>
-              <StatsGrid>
-                <StatItem>
-                  <h4>{profile.stats.leadsGenerated}</h4>
-                  <p>Leads</p>
-                </StatItem>
-                <StatItem>
-                  <h4>{profile.stats.rolesCreated}</h4>
-                  <p>Roles</p>
-                </StatItem>
-                <StatItem>
-                  <h4>{profile.stats.quotesSent}</h4>
-                  <p>Quotes</p>
-                </StatItem>
-              </StatsGrid>
-            </Card>
-          )}
-        </LeftColumn>
-
-        <RightColumn>
-          <Card>
-            <SectionTitle>
-              <FaHistory />
-              Recent Activities
-            </SectionTitle>
-            <ActivityList>
-              {recentActivity.length > 0 ? (
-                Object.entries(groupedActivities).map(([date, activities]) => (
-                  <React.Fragment key={date}>
-                    <ActivityDate 
-                      onClick={() => toggleDateVisibility(date)}
-                      $isActive={visibleDates[date]}
-                    >
-                      {date}
-                    </ActivityDate>
-                    <ActivityGroup $isVisible={visibleDates[date]}>
-                      {activities.slice(0, visibleItems[date]).map((activity) => (
-                        <ActivityItem key={activity.id}>
-                          {getActivityIcon(activity.type, activity.description)}
-                          <ActivityContent>
-                            <p>{activity.description.replace('Removed Gender', 'Unset Gender')}</p>
-                            <span>{activity.time}</span>
-                          </ActivityContent>
-                        </ActivityItem>
-                      ))}
-                      {activities.length > visibleItems[date] && (
-                        <ShowMoreButton onClick={() => showMoreItems(date)}>
-                          Show More
-                        </ShowMoreButton>
-                      )}
-                    </ActivityGroup>
-                  </React.Fragment>
-                ))
-              ) : (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '2rem', 
-                  color: 'rgba(15,23,42,0.7)',
-                  fontSize: '0.875rem'
-                }}>
-                  No recent activities to show
-                </div>
-              )}
-            </ActivityList>
-          </Card>
-        </RightColumn>
-      </SidebarContent>
+      {isSmallScreen ? (
+        // Single column layout for small screens with activities below
+        <>
+          <UserInfoCard />
+          <div style={{ marginTop: '1rem' }}><StatsCard /></div>
+          <div style={{ marginTop: '1rem' }}><ActivitiesCard /></div>
+        </>
+      ) : (
+        // Standard two-column layout for larger screens
+        <SidebarContent>
+          <LeftColumn>
+            <UserInfoCard />
+            <StatsCard />
+          </LeftColumn>
+          <RightColumn>
+            <ActivitiesCard />
+          </RightColumn>
+        </SidebarContent>
+      )}
     </Sidebar>
   );
 };
