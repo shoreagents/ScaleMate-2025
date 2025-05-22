@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader, FiCode, FiEdit } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch, FaTimes } from 'react-icons/fa';
@@ -57,6 +57,10 @@ const TableContainer = styled.div`
   border: 1px solid #E5E7EB;
   overflow: hidden;
   margin-top: 1.5rem;
+  
+  @media (max-width: 470px) {
+    display: none;
+  }
 `;
 
 const TableScrollContainer = styled.div`
@@ -263,6 +267,13 @@ const ModalContent = styled.div`
   border-radius: 12px;
   width: 100%;
   max-width: 530px;
+  
+  @media (max-width: 550px) {
+    padding: 16px 20px 24px 20px;
+    max-width: 95%;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -275,6 +286,10 @@ const ModalTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  
+  @media (max-width: 550px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -293,12 +308,21 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  
+  @media (max-width: 550px) {
+    gap: 12px;
+  }
 `;
 
 const FormRow = styled.div`
   display: flex;
   gap: 16px;
   width: 100%;
+  
+  @media (max-width: 550px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -306,6 +330,10 @@ const FormGroup = styled.div`
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  
+  @media (max-width: 550px) {
+    gap: 6px;
+  }
 `;
 
 const RequiredAsterisk = styled.span`
@@ -318,6 +346,11 @@ const Label = styled.label`
   font-weight: 500;
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
+  
+  @media (max-width: 550px) {
+    min-width: unset;
+    font-size: 0.8125rem;
+  }
 `;
 
 const Input = styled.input`
@@ -329,6 +362,11 @@ const Input = styled.input`
   &:focus {
     outline: none;
     border-color: #3B82F6;
+  }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
   }
 `;
 
@@ -342,6 +380,11 @@ const Select = styled.select`
   &:focus {
     outline: none;
     border-color: #3B82F6;
+  }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
   }
 `;
 
@@ -357,6 +400,17 @@ const ErrorMessage = styled.div`
     width: 16px;
     height: 16px;
     flex-shrink: 0;
+  }
+  
+  @media (max-width: 550px) {
+    font-size: 0.8125rem;
+    margin-top: 6px;
+    gap: 6px;
+    
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 `;
 
@@ -376,6 +430,11 @@ const HelperText = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+  
+  @media (max-width: 550px) {
+    font-size: 0.6875rem;
+    gap: 3px;
+  }
 `;
 
 const RoleSelectContainer = styled.div`
@@ -414,6 +473,12 @@ const RoleSelect = styled.select`
     outline: none;
     border-color: #3B82F6;
   }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    padding-right: 24px;
+    font-size: 0.8125rem;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -422,6 +487,12 @@ const ButtonGroup = styled.div`
   gap: 12px;
   justify-content: flex-end;
   margin-top: 16px;
+  
+  @media (max-width: 550px) {
+    gap: 8px;
+    margin-top: 12px;
+    flex-direction: column;
+  }
 `;
 
 const ModalButton = styled.button`
@@ -432,6 +503,11 @@ font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  @media (max-width: 550px) {
+    padding: 10px 16px;
+    width: 100%;
+  }
 `;
 
 const CancelButton = styled(ModalButton)`
@@ -562,6 +638,10 @@ const InfoMessage = styled.div`
 const PasswordInputContainer = styled.div`
   position: relative;
   width: 100%;
+  
+  @media (max-width: 550px) {
+    display: flex;
+  }
 `;
 
 const PasswordInput = styled(Input)`
@@ -789,6 +869,17 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(normalized);
 };
 
+const GlobalStyles = createGlobalStyle`
+  @media (max-width: 470px) {
+    .full-text {
+      display: none;
+    }
+    .short-text {
+      display: inline !important;
+    }
+  }
+`;
+
 const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModalStateChange }): ReactElement => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [allUsers, setAllUsers] = useState<UserRole[]>([]);
@@ -878,16 +969,33 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
     padding: 1rem;
     background-color: white;
     border-top: 1px solid #E5E7EB;
+    
+    @media (max-width: 470px) {
+      flex-direction: column;
+      gap: 1rem;
+      padding: 0.75rem;
+    }
   `;
 
   const PageInfo = styled.div`
     font-size: 0.875rem;
     color: #6B7280;
+    
+    @media (max-width: 470px) {
+      font-size: 0.75rem;
+      text-align: center;
+    }
   `;
 
   const PageButtons = styled.div`
     display: flex;
     gap: 0.5rem;
+    
+    @media (max-width: 470px) {
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
   `;
 
   const PageButton = styled.button<{ $active?: boolean }>`
@@ -907,6 +1015,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+    
+    @media (max-width: 470px) {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.75rem;
+      min-width: 2rem;
     }
   `;
 
@@ -2067,12 +2181,80 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
     });
   };
 
+  // Change the implementation to use a helper function for pagination that doesn't require IIFE
+  const renderPaginationButtons = (currentPage: number, totalPages: number) => {
+    const pages = [];
+    // Use a fixed value for mobile screens
+    const maxVisiblePages = 3;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if there are fewer than the max visible
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      // Calculate start and end of visible range around current page
+      let startPage = Math.max(2, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 3);
+      
+      // Adjust if at the beginning
+      if (currentPage <= Math.floor(maxVisiblePages / 2)) {
+        endPage = maxVisiblePages - 1;
+      }
+      
+      // Adjust if at the end
+      if (currentPage > totalPages - Math.floor(maxVisiblePages / 2)) {
+        startPage = totalPages - maxVisiblePages + 2;
+      }
+      
+      // Add ellipsis after first page if needed
+      if (startPage > 2) {
+        pages.push('...');
+      }
+      
+      // Add visible range of pages
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      // Add ellipsis before last page if needed
+      if (endPage < totalPages - 1) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      if (totalPages > 1) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages.map((page, index) => 
+      typeof page === 'number' ? (
+        <PageButton
+          key={index}
+          $active={currentPage === page}
+          onClick={() => handlePageChange(page)}
+        >
+          {page}
+        </PageButton>
+      ) : (
+        <span key={index} style={{ alignSelf: 'center', color: '#6B7280', fontSize: '0.75rem' }}>
+          {page}
+        </span>
+      )
+    );
+  };
+
   if (loading) {
     return <PageLoadingSpinner />;
   }
 
   return (
     <Container>
+      <GlobalStyles />
 
       <TabContainer>
         <TabButton 
@@ -2341,33 +2523,140 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </TableScrollContainer>
             <PaginationControls>
               <PageInfo>
+                <span className="full-text">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, totalPages)}
                   <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
                   >
-                    {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                   </PageButton>
-                ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    
+                    <ActionButton 
+                      $variant="danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserToDelete(user);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, totalPages)}
                 <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
                 >
-                  Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
               </PageButtons>
             </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : activeTab === 'moderators' ? (
         <>
@@ -2565,33 +2854,140 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </TableScrollContainer>
             <PaginationControls>
               <PageInfo>
+                <span className="full-text">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, totalPages)}
                   <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
                   >
-                    {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                   </PageButton>
-                ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    
+                    <ActionButton 
+                      $variant="danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserToDelete(user);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, totalPages)}
                 <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
                 >
-                  Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
               </PageButtons>
             </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : activeTab === 'developers' ? (
         <>
@@ -2740,33 +3136,138 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </TableScrollContainer>
             <PaginationControls>
               <PageInfo>
+                <span className="full-text">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: Math.ceil(allUsers.length / rowsPerPage) }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                   <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                   >
-                    {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                   </PageButton>
-                ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData(allUsers.filter(user => user.roles.includes('developer'))).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(user);
+                      }}
+                      title="Delete User"
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                 <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                 >
-                  Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
               </PageButtons>
             </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : activeTab === 'authors' ? (
         <>
@@ -2915,33 +3416,138 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </TableScrollContainer>
             <PaginationControls>
               <PageInfo>
+                <span className="full-text">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: Math.ceil(allUsers.length / rowsPerPage) }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                   <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                   >
-                    {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                   </PageButton>
-                ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData(allUsers.filter(user => user.roles.includes('author'))).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(user);
+                      }}
+                      title="Delete User"
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                 <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                 >
-                  Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
               </PageButtons>
             </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : (
         <>
@@ -3139,33 +3745,140 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </TableScrollContainer>
             <PaginationControls>
               <PageInfo>
+                <span className="full-text">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, totalPages)}
                   <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
                   >
-                    {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                   </PageButton>
-                ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Activity</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Update Info"
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    
+                    <ActionButton 
+                      $variant="danger"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUserToDelete(user);
+                        setIsDeleteModalOpen(true);
+                      }}
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, totalPages)}
                 <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
                 >
-                  Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
               </PageButtons>
             </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       )}
 
@@ -4247,6 +4960,76 @@ const DeleteCancelButton = styled(ModalButton)`
     background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
   }
+`;
+
+// Add these new styled components after the DeleteCancelButton component
+const CardViewContainer = styled.div`
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+
+  @media (max-width: 470px) {
+    display: flex;
+  }
+`;
+
+const UserCard = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+  }
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const CardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const CardItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  
+  &:not(:last-child) {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #F3F4F6;
+  }
+`;
+
+const CardLabel = styled.span`
+  color: #6B7280;
+  font-weight: 500;
+`;
+
+const CardValue = styled.span`
+  color: #1F2937;
+  font-weight: 500;
+  text-align: right;
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 `;
 
 export default AdminManagementTab; 

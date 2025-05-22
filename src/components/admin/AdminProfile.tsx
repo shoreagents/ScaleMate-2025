@@ -13,6 +13,22 @@ const Container = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  
+  @media (max-width: 1024px) {
+    padding: 1.25rem;
+    gap: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+    gap: 12px;
+  }
 `;
 
 const LeftColumn = styled.div`
@@ -33,16 +49,36 @@ const Section = styled.div`
   padding: 10px 24px 24px 24px;
   border: 1px solid #E5E7EB;
   margin-bottom: 24px;
+  
+  @media (max-width: 768px) {
+    padding: 10px 20px 20px 20px;
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px 16px 16px 16px;
+    margin-bottom: 12px;
+  }
 `;
 
 const ProfileSection = styled(Section)`
   display: flex;
   gap: 48px;
   align-items: flex-start;
+  
+  @media (max-width: 640px) {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 24px;
+  }
 `;
 
 const ProfileInfo = styled.div`
   flex: 1;
+  
+  @media (max-width: 640px) {
+    width: 100%;
+  }
 `;
 
 const ProfilePicture = styled.div`
@@ -59,6 +95,23 @@ const ProfilePicture = styled.div`
   flex-shrink: 0;
   margin-left: auto;
   align-self: center;
+  
+  @media (max-width: 768px) {
+    width: 180px;
+    height: 180px;
+  }
+  
+  @media (max-width: 640px) {
+    margin-left: 0;
+    align-self: flex-start;
+    width: 150px;
+    height: 150px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 120px;
+    height: 120px;
+  }
 `;
 
 const ProfileImage = styled.img`
@@ -103,6 +156,14 @@ const SectionTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  @media (max-width: 768px) {
+    font-size: 1.125rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -110,6 +171,15 @@ const FormGroup = styled.div`
   align-items: flex-start;
   gap: 32px;
   margin-bottom: 16px;
+  
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 12px;
+  }
 `;
 
 const InputWrapper = styled.div`
@@ -132,6 +202,11 @@ const Label = styled.label`
   font-weight: 500;
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
+  
+  @media (max-width: 640px) {
+    min-width: unset;
+    width: 100%;
+  }
 `;
 
 const Input = styled.input`
@@ -151,6 +226,11 @@ const Input = styled.input`
   &:disabled {
     background: #f9fafb;
     color: ${props => props.theme.colors.text.primary};
+  }
+  
+  @media (max-width: 480px) {
+    padding: 6px 10px;
+    font-size: 0.75rem;
   }
 `;
 
@@ -238,6 +318,16 @@ const InfoRow = styled.div<InfoRowProps>`
     border-bottom: none;
     padding-bottom: 0;
   }
+  
+  @media (max-width: 640px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 `;
 
 const InfoLabel = styled.span<InfoLabelProps>`
@@ -246,6 +336,15 @@ const InfoLabel = styled.span<InfoLabelProps>`
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
   display: ${props => props.$isEditing ? 'none' : 'block'};
+  
+  @media (max-width: 640px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: unset;
+    width: 100%;
+  }
 `;
 
 const InfoValue = styled.div<InfoValueProps>`
@@ -289,15 +388,21 @@ const PasswordChangeForm = styled.form`
 `;
 
 const ButtonGroup = styled.div`
-font-size: 0.875rem;
+  font-size: 0.875rem;
   display: flex;
   gap: 12px;
   justify-content: flex-start;
   margin-top: 32px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    gap: 8px;
+    margin-top: 24px;
+  }
 `;
 
 const ModalButton = styled.button`
-font-size: 0.875rem;
+  font-size: 0.875rem;
   padding: 8px 16px;
   border: none;
   border-radius: 8px;
@@ -310,7 +415,7 @@ font-size: 0.875rem;
 `;
 
 const ChooseImageButton = styled(ModalButton)`
-font-size: 0.875rem;
+  font-size: 0.875rem;
   background: transparent;
   border: 1.5px solid #9aa2b3;
   color: ${props => props.theme.colors.text.primary};
@@ -319,10 +424,14 @@ font-size: 0.875rem;
     background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
   }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const SaveButton = styled(ModalButton)`
-font-size: 0.875rem;
+  font-size: 0.875rem;
   background-color: #3B82F6;
   color: white;
   min-width: 100px;
@@ -337,6 +446,10 @@ font-size: 0.875rem;
     cursor: not-allowed;
     opacity: 0.7;
   }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const ProfileModal = styled.div<{ $isOpen: boolean }>`
@@ -350,6 +463,10 @@ const ProfileModal = styled.div<{ $isOpen: boolean }>`
   z-index: 1000;
   padding: 20px;
   overflow-y: auto;
+  
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 `;
 
 const ProfileModalContent = styled.div`
@@ -366,6 +483,11 @@ const ProfileModalContent = styled.div`
   ${ButtonGroup} {
     justify-content: center;
   }
+  
+  @media (max-width: 480px) {
+    max-width: 90%;
+    padding: 20px;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -374,6 +496,10 @@ const ModalHeader = styled.div`
   align-items: flex-start;
   margin-bottom: 24px;
   position: relative;
+  
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const ModalTitle = styled.h3`
@@ -382,6 +508,10 @@ const ModalTitle = styled.h3`
   color: ${props => props.theme.colors.text.primary};
   margin: 0;
   text-align: left;
+  
+  @media (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const ModalDescription = styled.p`
@@ -390,6 +520,11 @@ const ModalDescription = styled.p`
   text-align: left;
   margin: 8px 0 0;
   line-height: 1.5;
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    margin: 4px 0 0;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -421,6 +556,12 @@ const ImagePreview = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  @media (max-width: 480px) {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 16px;
+  }
 `;
 
 const PreviewImage = styled.img`
@@ -483,6 +624,11 @@ const PasswordRow = styled.div`
   display: flex;
   gap: 16px;
   width: 100%;
+  
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 
 const PasswordColumn = styled.div`
@@ -529,6 +675,11 @@ const StatsGrid = styled.div`
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 16px;
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 const StatCard = styled.div`
@@ -539,6 +690,10 @@ const StatCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 `;
 
 const StatValue = styled.div`
@@ -559,12 +714,21 @@ const ActivityList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  
+  @media (max-width: 480px) {
+    gap: 0.75rem;
+  }
 `;
 
 const ActivityGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
+  
+  @media (max-width: 480px) {
+    gap: 0.375rem;
+  }
 `;
 
 const ActivityDate = styled.div`
@@ -581,6 +745,10 @@ const ActivityDate = styled.div`
   &:hover {
     color: #374151;
   }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const ActivityItem = styled.div`
@@ -591,9 +759,16 @@ const ActivityItem = styled.div`
   background: #F9FAFB;
   border-radius: 0.5rem;
   transition: background-color 0.2s;
+  overflow-wrap: break-word;
+  word-break: break-word;
 
   &:hover {
     background: #F3F4F6;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem;
+    gap: 0.5rem;
   }
 `;
 
@@ -608,25 +783,46 @@ const ActivityIcon = styled.div`
   color: #6B7280;
   flex-shrink: 0;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  
+  @media (max-width: 480px) {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+  }
 `;
 
 const ActivityContent = styled.div`
   flex: 1;
   min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 `;
 
 const ActivityTitle = styled.div`
   font-weight: 500;
   color: #1F2937;
   margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  
+  @media (max-width: 768px) {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: 0.875rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const ActivityTime = styled.div`
   font-size: 0.75rem;
   color: #6B7280;
+  
+  @media (max-width: 480px) {
+    font-size: 0.675rem;
+  }
 `;
 
 const ShowMoreButton = styled.button`
@@ -640,9 +836,16 @@ const ShowMoreButton = styled.button`
   width: 100%;
   border-radius: 0.375rem;
   transition: background-color 0.2s;
+  overflow-wrap: break-word;
+  word-break: break-word;
 
   &:hover {
     background: #F3F4F6;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    padding: 0.375rem;
   }
 `;
 
