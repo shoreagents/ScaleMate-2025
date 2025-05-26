@@ -14,9 +14,18 @@ const Container = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   
+  @media (max-width: 1227px) {
+    grid-template-columns: 1fr;
+  }
+  
   @media (max-width: 1024px) {
     padding: 1.25rem;
     gap: 20px;
+  }
+  
+  @media (max-width: 884px) {
+    padding: 1rem;
+    gap: 16px;
   }
   
   @media (max-width: 768px) {
@@ -35,12 +44,20 @@ const LeftColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
 `;
 
 const RightColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
 `;
 
 const Section = styled.div`
@@ -49,6 +66,11 @@ const Section = styled.div`
   padding: 10px 24px 24px 24px;
   border: 1px solid #E5E7EB;
   margin-bottom: 24px;
+  
+  @media (max-width: 884px) {
+    padding: 10px 20px 20px 20px;
+    margin-bottom: 16px;
+  }
   
   @media (max-width: 768px) {
     padding: 10px 20px 20px 20px;
@@ -66,6 +88,12 @@ const ProfileSection = styled(Section)`
   gap: 48px;
   align-items: flex-start;
   
+  @media (max-width: 884px) {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  
   @media (max-width: 640px) {
     flex-direction: column-reverse;
     align-items: flex-start;
@@ -75,6 +103,10 @@ const ProfileSection = styled(Section)`
 
 const ProfileInfo = styled.div`
   flex: 1;
+  
+  @media (max-width: 884px) {
+    width: 100%;
+  }
   
   @media (max-width: 640px) {
     width: 100%;
@@ -91,10 +123,16 @@ const ProfilePicture = styled.div`
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: visible;
   flex-shrink: 0;
   margin-left: auto;
   align-self: center;
+  
+  @media (max-width: 884px) {
+    margin-left: 0;
+    align-self: flex-start;
+    width: 160px;
+    height: 160px;
+  }
   
   @media (max-width: 768px) {
     width: 180px;
@@ -157,6 +195,10 @@ const SectionTitle = styled.h2`
   align-items: center;
   gap: 8px;
   
+  @media (max-width: 884px) {
+    font-size: 1.125rem;
+  }
+  
   @media (max-width: 768px) {
     font-size: 1.125rem;
   }
@@ -171,6 +213,11 @@ const FormGroup = styled.div`
   align-items: flex-start;
   gap: 32px;
   margin-bottom: 16px;
+  
+  @media (max-width: 884px) {
+    flex-direction: column;
+    gap: 8px;
+  }
   
   @media (max-width: 640px) {
     flex-direction: column;
@@ -203,7 +250,15 @@ const Label = styled.label`
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
   
+  @media (max-width: 884px) {
+    min-width: 100px;
+  }
+  
   @media (max-width: 640px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 480px) {
     min-width: unset;
     width: 100%;
   }
@@ -319,6 +374,10 @@ const InfoRow = styled.div<InfoRowProps>`
     padding-bottom: 0;
   }
   
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
+  
   @media (max-width: 640px) {
     gap: 16px;
   }
@@ -336,6 +395,10 @@ const InfoLabel = styled.span<InfoLabelProps>`
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
   display: ${props => props.$isEditing ? 'none' : 'block'};
+  
+  @media (max-width: 884px) {
+    min-width: 100px;
+  }
   
   @media (max-width: 640px) {
     min-width: 100px;
@@ -462,7 +525,6 @@ const ProfileModal = styled.div<{ $isOpen: boolean }>`
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   padding: 20px;
-  overflow-y: auto;
   
   @media (max-width: 480px) {
     padding: 10px;
@@ -552,7 +614,6 @@ const ImagePreview = styled.div`
   background-color: #f3f4f6;
   margin: 0 auto 24px;
   position: relative;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -676,6 +737,15 @@ const StatsGrid = styled.div`
   gap: 16px;
   margin-top: 16px;
   
+  @media (max-width: 1227px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 884px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -691,6 +761,10 @@ const StatCard = styled.div`
   flex-direction: column;
   gap: 8px;
   
+  @media (max-width: 884px) {
+    padding: 14px;
+  }
+  
   @media (max-width: 480px) {
     padding: 12px;
   }
@@ -700,6 +774,10 @@ const StatValue = styled.div`
   font-size: 1.5rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  
+  @media (max-width: 884px) {
+    font-size: 1.25rem;
+  }
 `;
 
 const StatLabel = styled.div`
@@ -708,12 +786,21 @@ const StatLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
+  
+  @media (max-width: 884px) {
+    font-size: 0.8125rem;
+    gap: 4px;
+  }
 `;
 
 const ActivityList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  
+  @media (max-width: 884px) {
+    gap: 0.875rem;
+  }
   
   @media (max-width: 480px) {
     gap: 0.75rem;
@@ -759,11 +846,15 @@ const ActivityItem = styled.div`
   background: #F9FAFB;
   border-radius: 0.5rem;
   transition: background-color 0.2s;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  /* Remove overflow-wrap and word-break */
 
   &:hover {
     background: #F3F4F6;
+  }
+  
+  @media (max-width: 884px) {
+    padding: 0.5rem;
+    gap: 0.5rem;
   }
   
   @media (max-width: 480px) {
@@ -795,8 +886,7 @@ const ActivityIcon = styled.div`
 const ActivityContent = styled.div`
   flex: 1;
   min-width: 0;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  /* Remove overflow-wrap and word-break */
 `;
 
 const ActivityTitle = styled.div`
@@ -804,10 +894,12 @@ const ActivityTitle = styled.div`
   color: #1F2937;
   margin-bottom: 0.25rem;
   
+  @media (max-width: 884px) {
+    font-size: 0.875rem;
+  }
+  
   @media (max-width: 768px) {
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
+    /* Remove white-space, overflow, and text-overflow */
     font-size: 0.875rem;
   }
   
@@ -836,8 +928,7 @@ const ShowMoreButton = styled.button`
   width: 100%;
   border-radius: 0.375rem;
   transition: background-color 0.2s;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  /* Remove overflow-wrap and word-break */
 
   &:hover {
     background: #F3F4F6;

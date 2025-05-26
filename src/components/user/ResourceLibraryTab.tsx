@@ -6,6 +6,11 @@ import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
 
 const Container = styled.div`
   padding: 1.5rem;
+  background-color: #F9FAFB;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const FiltersContainer = styled.div`
@@ -13,23 +18,57 @@ const FiltersContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+
+  @media (max-width: 1002px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
 `;
 
 const SearchFilterGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+
+  @media (max-width: 1002px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+`;
+
+const FilterSortGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  @media (max-width: 1002px) {
+    width: 100%;
+  }
 `;
 
 const SearchContainer = styled.div`
   position: relative;
+  width: 16rem;
+
+  @media (max-width: 1002px) {
+    width: 100%;
+  }
 `;
 
 const SearchInput = styled.input`
-  padding: 0.5rem 2.5rem 0.5rem 2.5rem;
+  width: 100%;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
-  width: 200px;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  
+  &::placeholder {
+    color: rgba(15, 23, 42, 0.4);
+  }
 
   &:focus {
     outline: none;
@@ -45,34 +84,51 @@ const SearchIcon = styled.span`
   color: rgba(15, 23, 42, 0.4);
 `;
 
-const FilterButtons = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const FilterButton = styled.button<{ $active?: boolean }>`
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
+const FilterSelect = styled.select`
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
   font-size: 0.875rem;
-  ${props => props.$active ? `
-    background-color: #0098FF;
-    color: white;
-    border: none;
-  ` : `
-    background-color: transparent;
-    color: rgba(15, 23, 42, 0.7);
-    border: 1px solid #E5E7EB;
-    
-    &:hover {
-      background-color: #F9FAFB;
-    }
-  `}
+  color: #0F172A;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+  height: 2.5rem;
+  box-sizing: border-box;
+  width: auto;
+
+  @media (max-width: 1002px) {
+    width: 100%;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
 `;
 
 const SortSelect = styled.select`
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 2rem 0.5rem 1rem;
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #0F172A;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+  height: 2.5rem;
+  box-sizing: border-box;
+  width: auto;
+
+  @media (max-width: 1002px) {
+    width: 100%;
+  }
 
   &:focus {
     outline: none;
@@ -84,6 +140,15 @@ const ResourceGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const ResourceCard = styled.div`
@@ -91,10 +156,20 @@ const ResourceCard = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
 `;
 
 const CardContent = styled.div`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const CardHeader = styled.div`
@@ -102,11 +177,14 @@ const CardHeader = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 `;
 
 const TagContainer = styled.div`
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 `;
 
 const Tag = styled.span<{ $type: 'guide' | 'template' | 'checklist' | 'downloaded' }>`
@@ -114,6 +192,7 @@ const Tag = styled.span<{ $type: 'guide' | 'template' | 'checklist' | 'downloade
   font-weight: 500;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
+  white-space: nowrap;
   
   ${props => {
     switch (props.$type) {
@@ -132,17 +211,20 @@ const Tag = styled.span<{ $type: 'guide' | 'template' | 'checklist' | 'downloade
 const RatingContainer = styled.div`
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 `;
 
 const Stars = styled.div`
   display: flex;
   color: #FBBF24;
+  gap: 0.25rem;
 `;
 
 const RatingCount = styled.span`
   margin-left: 0.5rem;
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
+  white-space: nowrap;
 `;
 
 const ResourceTitle = styled.h3`
@@ -150,23 +232,35 @@ const ResourceTitle = styled.h3`
   font-weight: 600;
   color: #0F172A;
   margin-bottom: 0.5rem;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const ResourceDescription = styled.p`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
   margin-bottom: 1rem;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 `;
 
 const CardFooter = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 `;
 
 const ResourceMeta = styled.span`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.6);
+  white-space: nowrap;
 `;
 
 const DownloadButton = styled.button`
@@ -176,7 +270,11 @@ const DownloadButton = styled.button`
   color: #3B82F6;
   background: none;
   border: none;
-  padding: 0;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  white-space: nowrap;
 
   &:hover {
     color: rgba(59, 130, 246, 0.8);
@@ -194,18 +292,20 @@ const ResourceLibraryTab: React.FC = () => {
               <FontAwesomeIcon icon={faSearch} />
             </SearchIcon>
           </SearchContainer>
-          <FilterButtons>
-            <FilterButton $active>All Resources</FilterButton>
-            <FilterButton>Guides</FilterButton>
-            <FilterButton>Templates</FilterButton>
-            <FilterButton>Checklists</FilterButton>
-          </FilterButtons>
+          <FilterSortGroup>
+            <FilterSelect>
+              <option>All Resources</option>
+              <option>Guides</option>
+              <option>Templates</option>
+              <option>Checklists</option>
+            </FilterSelect>
+            <SortSelect>
+              <option>Most Popular</option>
+              <option>Recently Added</option>
+              <option>Most Downloaded</option>
+            </SortSelect>
+          </FilterSortGroup>
         </SearchFilterGroup>
-        <SortSelect>
-          <option>Most Popular</option>
-          <option>Recently Added</option>
-          <option>Most Downloaded</option>
-        </SortSelect>
       </FiltersContainer>
 
       <ResourceGrid id="resource-grid">
