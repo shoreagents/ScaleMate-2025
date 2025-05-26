@@ -8,6 +8,11 @@ const MainContent = styled.main`
   flex: 1;
   padding: 1.5rem;
   background-color: #F9FAFB;
+  overflow-x: hidden;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const Section = styled.section`
@@ -16,6 +21,12 @@ const Section = styled.section`
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  overflow-x: hidden;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -23,12 +34,22 @@ const SectionHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-bottom: 1rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 600;
   color: #0F172A;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const AddButton = styled.button`
@@ -60,6 +81,15 @@ const RoleGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
+  
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -81,6 +111,13 @@ const Select = styled.select`
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.375rem 0.75rem;
+  }
 `;
 
 const Input = styled.input`
@@ -88,6 +125,13 @@ const Input = styled.input`
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
   padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.375rem 0.75rem;
+  }
 `;
 
 const DeleteButton = styled.button`
@@ -111,6 +155,12 @@ const Grid = styled.div`
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
   margin-top: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
 `;
 
 const SummarySection = styled.section`
@@ -125,6 +175,11 @@ const CostBox = styled.div<{ $isTotal?: boolean }>`
   background-color: ${props => props.$isTotal ? 'rgba(132, 204, 22, 0.05)' : '#F9FAFB'};
   border-radius: 0.5rem;
   margin-bottom: ${props => !props.$isTotal && '1rem'};
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.75rem;
+    margin-bottom: ${props => !props.$isTotal && '0.75rem'};
+  }
 `;
 
 const CostRow = styled.div<{ hasMargin?: boolean }>`
@@ -132,17 +187,25 @@ const CostRow = styled.div<{ hasMargin?: boolean }>`
   justify-content: space-between;
   align-items: center;
   margin-bottom: ${props => props.hasMargin ? '0.5rem' : '0'};
+  flex-wrap: wrap;
+  gap: 0.5rem;
 `;
 
 const CostLabel = styled.span<{ $isTotal?: boolean }>`
   color: ${props => props.$isTotal ? '#0F172A' : 'rgba(15, 23, 42, 0.7)'};
   font-weight: ${props => props.$isTotal && '600'};
+  word-break: break-word;
 `;
 
 const CostValue = styled.span<{ $isHighlight?: boolean }>`
   font-weight: ${props => props.$isHighlight ? 'bold' : '600'};
   font-size: ${props => props.$isHighlight && '1.25rem'};
   color: ${props => props.$isHighlight && '#84CC16'};
+  white-space: nowrap;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: ${props => props.$isHighlight && '1.125rem'};
+  }
 `;
 
 const GraphContainer = styled.div`
@@ -150,6 +213,18 @@ const GraphContainer = styled.div`
   display: flex;
   align-items: flex-end;
   gap: 3rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    height: 10rem;
+    gap: 2rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    height: 8rem;
+    gap: 1.5rem;
+  }
 `;
 
 const GraphColumn = styled.div`
@@ -157,6 +232,7 @@ const GraphColumn = styled.div`
   flex-direction: column;
   align-items: center;
   flex: 1;
+  min-width: 4rem;
 `;
 
 const GraphBar = styled.div<{ $height: string; $color: string }>`
@@ -164,18 +240,31 @@ const GraphBar = styled.div<{ $height: string; $color: string }>`
   height: ${props => props.$height};
   background-color: ${props => props.$color};
   border-radius: 0.5rem 0.5rem 0 0;
+  min-width: 2rem;
 `;
 
 const GraphLabel = styled.div`
   margin-top: 0.5rem;
   font-size: 0.875rem;
   color: #0F172A;
+  text-align: center;
+  word-break: break-word;
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const GraphValue = styled.div<{ $color: string }>`
   font-size: 0.875rem;
   font-weight: 600;
   color: ${props => props.$color};
+  text-align: center;
+  word-break: break-word;
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const ActionBar = styled.div`
@@ -183,11 +272,36 @@ const ActionBar = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-top: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-top: 1rem;
+  }
+  
+  @media only screen and (max-width: 582px) {
+    flex-direction: column;
+    width: 100%;
+    
+    > button {
+      width: 100%;
+    }
+  }
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.5rem;
+  }
+  
+  @media only screen and (max-width: 582px) {
+    width: 100%;
+    gap: 0.5rem;
+  }
 `;
 
 const ActionButton = styled.button<{ $primary?: boolean }>`
@@ -195,17 +309,55 @@ const ActionButton = styled.button<{ $primary?: boolean }>`
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
+  background-color: ${props => props.$primary ? '#3B82F6' : 'white'};
+  color: ${props => props.$primary ? 'white' : '#0F172A'};
   border: ${props => props.$primary ? 'none' : '1px solid #E5E7EB'};
   border-radius: 0.5rem;
-  background-color: ${props => props.$primary ? '#3B82F6' : 'transparent'};
-  color: ${props => props.$primary ? 'white' : '#0F172A'};
+  font-size: 0.875rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
 
   &:hover {
-    background-color: ${props => props.$primary ? 'rgba(59, 130, 246, 0.9)' : '#F9FAFB'};
+    background-color: ${props => props.$primary ? '#2563EB' : '#F9FAFB'};
+    border-color: ${props => !props.$primary && '#D1D5DB'};
   }
 
   svg {
     color: ${props => !props.$primary && 'rgba(15, 23, 42, 0.7)'};
+  }
+  
+  @media only screen and (max-width: 582px) {
+    flex: 1;
+    justify-content: center;
+  }
+`;
+
+const ConsultButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  
+  &:hover {
+    background-color: #2563EB;
+  }
+  
+  @media only screen and (max-width: 582px) {
+    width: 100%;
+    justify-content: center;
   }
 `;
 
@@ -325,9 +477,9 @@ const CostSavingsTab: React.FC = () => {
             <span>Save Calculation</span>
           </ActionButton>
         </ButtonGroup>
-        <ActionButton $primary>
+        <ConsultButton>
           Schedule Team Review
-        </ActionButton>
+        </ConsultButton>
       </ActionBar>
     </MainContent>
   );

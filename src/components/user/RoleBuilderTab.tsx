@@ -18,11 +18,17 @@ const MainContent = styled.main`
   flex: 1;
   padding: 1.5rem;
   background-color: #F9FAFB;
+  overflow-x: hidden;
+  
+  @media only screen and (max-width: 525px) {
+    padding: 1rem;
+  }
 `;
 
 const Container = styled.div`
   max-width: 100%;
   margin: 0 auto;
+  overflow-x: hidden;
 `;
 
 const ProgressSteps = styled.div`
@@ -30,15 +36,27 @@ const ProgressSteps = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  
+  @media only screen and (max-width: 525px) {
+    margin-bottom: 1.5rem;
+    justify-content: center;
+  }
 `;
 
 const StepContainer = styled.div`
   flex: 1;
   display: flex;
   align-items: center;
+  min-width: 0;
 
   &:last-child {
     flex: 0;
+  }
+  
+  @media only screen and (max-width: 525px) {
+    flex: 0 1 auto;
   }
 `;
 
@@ -52,9 +70,16 @@ const StepCircle = styled.div<{ $active?: boolean }>`
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  flex-shrink: 0;
 
   &:hover {
     background-color: ${props => props.$active ? '#4F46E5' : '#D1D5DB'};
+  }
+  
+  @media only screen and (max-width: 525px) {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: 0.875rem;
   }
 `;
 
@@ -63,6 +88,11 @@ const StepLine = styled.div<{ $active?: boolean }>`
   height: 0.25rem;
   margin: 0 1rem;
   background-color: ${props => props.$active ? '#6366F1' : '#E5E7EB'};
+  min-width: 1rem;
+  
+  @media only screen and (max-width: 525px) {
+    margin: 0 0.5rem;
+  }
 `;
 
 const Section = styled.section`
@@ -70,6 +100,11 @@ const Section = styled.section`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   padding: 2rem;
+  overflow-x: hidden;
+  
+  @media only screen and (max-width: 525px) {
+    padding: 1.25rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -162,6 +197,11 @@ const ContinueButton = styled.button`
 const PreviewPanel = styled(Section)`
   margin-top: 1.5rem;
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 525px) {
+    margin-top: 1rem;
+    padding: 1rem;
+  }
 `;
 
 const PreviewHeader = styled.div`
@@ -169,6 +209,12 @@ const PreviewHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  
+  @media only screen and (max-width: 525px) {
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const PreviewTitle = styled.h3`
@@ -180,16 +226,22 @@ const ActionButtons = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+  
+  @media only screen and (max-width: 525px) {
+    gap: 0.5rem;
+  }
 `;
 
 const ActionButton = styled.button`
-display: flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
   color: #0F172A;
+  white-space: nowrap;
 
   &:hover {
     background-color: #F9FAFB;
@@ -198,17 +250,30 @@ display: flex;
   svg {
     color: rgba(15, 23, 42, 0.7);
   }
+  
+  @media only screen and (max-width: 525px) {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+  }
 `;
 
 const PreviewContent = styled.div`
   padding: 1rem;
   background-color: #F9FAFB;
   border-radius: 0.5rem;
+  
+  @media only screen and (max-width: 525px) {
+    padding: 0.75rem;
+  }
 `;
 
 const PreviewText = styled.p`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
+  
+  @media only screen and (max-width: 525px) {
+    font-size: 0.8125rem;
+  }
 `;
 
 const RoleBuilderTab: React.FC = () => {
@@ -338,4 +403,4 @@ const RoleBuilderTab: React.FC = () => {
   );
 };
 
-export default RoleBuilderTab; 
+export default RoleBuilderTab;

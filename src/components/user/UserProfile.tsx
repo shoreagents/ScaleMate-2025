@@ -13,18 +13,67 @@ const Container = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  
+  @media (max-width: 1227px) {
+    grid-template-columns: 1fr;
+  }
+  
+  @media (max-width: 1024px) {
+    padding: 1.25rem;
+    gap: 20px;
+  }
+  
+  @media (max-width: 884px) {
+    padding: 1rem;
+    gap: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+    gap: 12px;
+  }
 `;
 
 const LeftColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+  }
 `;
 
 const RightColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+  }
 `;
 
 const Section = styled.div`
@@ -35,6 +84,21 @@ const Section = styled.div`
   margin-bottom: 24px;
   width: 100%;
   box-sizing: border-box;
+  
+  @media (max-width: 884px) {
+    padding: 10px 20px 20px 20px;
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 10px 20px 20px 20px;
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px 16px 16px 16px;
+    margin-bottom: 12px;
+  }
 `;
 
 const ProfileSection = styled(Section)`
@@ -43,12 +107,36 @@ const ProfileSection = styled(Section)`
   align-items: flex-start;
   width: 100%;
   box-sizing: border-box;
+  
+  @media (max-width: 884px) {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  
+  @media (max-width: 640px) {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 16px;
+  }
 `;
 
 const ProfileInfo = styled.div`
   flex: 1;
   width: 100%;
   box-sizing: border-box;
+  
+  @media (max-width: 884px) {
+    width: 100%;
+  }
+  
+  @media (max-width: 640px) {
+    width: 100%;
+  }
 `;
 
 const ProfilePicture = styled.div`
@@ -61,10 +149,33 @@ const ProfilePicture = styled.div`
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: visible;
   flex-shrink: 0;
   margin-left: auto;
   align-self: center;
+  
+  @media (max-width: 884px) {
+    margin-left: 0;
+    align-self: flex-start;
+    width: 160px;
+    height: 160px;
+  }
+  
+  @media (max-width: 768px) {
+    width: 180px;
+    height: 180px;
+  }
+  
+  @media (max-width: 640px) {
+    margin-left: 0;
+    align-self: flex-start;
+    width: 150px;
+    height: 150px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 120px;
+    height: 120px;
+  }
 `;
 
 const ProfileImage = styled.img`
@@ -83,6 +194,16 @@ const DefaultProfileIcon = styled(FiUser)`
   height: 80px;
   color: #6b7280;
   opacity: 0.5;
+  
+  @media (max-width: 640px) {
+    width: 60px;
+    height: 60px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 48px;
+    height: 48px;
+  }
 `;
 
 const UploadButton = styled.button`
@@ -107,6 +228,11 @@ const UploadButton = styled.button`
     background: #f3f4f6;
     color: ${props => props.theme.colors.text.primary};
   }
+  
+  @media (max-width: 480px) {
+    width: 28px;
+    height: 28px;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -116,6 +242,18 @@ const SectionTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  @media (max-width: 884px) {
+    font-size: 1.125rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 1.125rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -124,6 +262,20 @@ const FormGroup = styled.div`
   gap: 32px;
   margin-bottom: 16px;
   width: 100%;
+  
+  @media (max-width: 884px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 12px;
+  }
 `;
 
 const InputWrapper = styled.div`
@@ -132,6 +284,10 @@ const InputWrapper = styled.div`
   flex-direction: column;
   gap: 8px;
   width: 100%;
+  
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
 `;
 
 const HelperText = styled.div`
@@ -140,6 +296,10 @@ const HelperText = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+  
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 const Label = styled.label`
@@ -147,6 +307,19 @@ const Label = styled.label`
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
   width: 120px;
+  
+  @media (max-width: 884px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 640px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: unset;
+    width: 100%;
+  }
 `;
 
 const Input = styled.input`
@@ -168,6 +341,11 @@ const Input = styled.input`
   &:disabled {
     background: #f9fafb;
     color: ${props => props.theme.colors.text.primary};
+  }
+  
+  @media (max-width: 480px) {
+    padding: 6px 10px;
+    font-size: 0.75rem;
   }
 `;
 
@@ -209,6 +387,11 @@ const GenderSelect = styled.select`
     border-color: #3B82F6;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   }
+  
+  @media (max-width: 480px) {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -216,6 +399,12 @@ const ButtonGroup = styled.div`
   gap: 12px;
   justify-content: flex-start;
   margin-top: 32px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    gap: 8px;
+    margin-top: 24px;
+  }
 `;
 
 const ModalButton = styled.button`
@@ -228,6 +417,12 @@ const ModalButton = styled.button`
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 12px;
+  }
 `;
 
 const ChooseImageButton = styled(ModalButton)`
@@ -248,9 +443,13 @@ const SaveButton = styled(ModalButton)`
   justify-content: center;
 
   &:hover {
-    background-color: #2563EB;
+    background: ${props => props.theme.colors.primaryDark};
   }
 
+  &:active {
+    transform: scale(0.98);
+  }
+  
   &:disabled {
     background-color: #93C5FD;
     cursor: not-allowed;
@@ -268,7 +467,10 @@ const ProfileModal = styled.div<{ $isOpen: boolean }>`
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   padding: 20px;
-  overflow-y: auto;
+  
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 `;
 
 const ProfileModalContent = styled.div`
@@ -285,6 +487,11 @@ const ProfileModalContent = styled.div`
   ${ButtonGroup} {
     justify-content: center;
   }
+  
+  @media (max-width: 480px) {
+    max-width: 90%;
+    padding: 20px;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -293,6 +500,10 @@ const ModalHeader = styled.div`
   align-items: flex-start;
   margin-bottom: 24px;
   position: relative;
+  
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const ModalTitle = styled.h3`
@@ -301,6 +512,10 @@ const ModalTitle = styled.h3`
   color: ${props => props.theme.colors.text.primary};
   margin: 0;
   text-align: left;
+  
+  @media (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const ModalDescription = styled.p`
@@ -309,6 +524,10 @@ const ModalDescription = styled.p`
   text-align: left;
   margin: 8px 0 0;
   line-height: 1.5;
+  
+  @media (max-width: 480px) {
+    font-size: 0.8125rem;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -336,10 +555,15 @@ const ImagePreview = styled.div`
   background-color: #f3f4f6;
   margin: 0 auto 24px;
   position: relative;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  @media (max-width: 480px) {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 16px;
+  }
 `;
 
 const PreviewImage = styled.img`
@@ -367,18 +591,30 @@ const EditButton = styled.button`
   &:hover {
     color: #374151;
   }
+  
+  @media (max-width: 480px) {
+    font-size: 0.8125rem;
+  }
 `;
 
 const SuccessMessage = styled.div`
   color: #059669;
   font-size: 0.875rem;
   margin-top: 0;
+  
+  @media (max-width: 480px) {
+    font-size: 0.8125rem;
+  }
 `;
 
 const ErrorMessage = styled.div`
   color: #dc2626;
   font-size: 0.875rem;
   margin-top: 0;
+  
+  @media (max-width: 480px) {
+    font-size: 0.8125rem;
+  }
 `;
 
 const PasswordChangeForm = styled.form`
@@ -420,6 +656,11 @@ const PasswordRow = styled.div`
   display: flex;
   gap: 16px;
   width: 100%;
+  
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 
 const PasswordColumn = styled.div`
@@ -427,6 +668,10 @@ const PasswordColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
 `;
 
 const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
@@ -435,6 +680,10 @@ const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
   display: flex;
   align-items: center;
   gap: 4px;
+  
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 const RequiredAsterisk = styled.span`
@@ -466,6 +715,20 @@ const StatsGrid = styled.div`
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 16px;
+  
+  @media (max-width: 1227px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 884px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 const StatCard = styled.div`
@@ -476,12 +739,37 @@ const StatCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  
+  @media (max-width: 884px) {
+    padding: 14px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    gap: 6px;
+  }
 `;
 
 const StatValue = styled.div`
   font-size: 1.5rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  
+  @media (max-width: 884px) {
+    font-size: 1.25rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const StatLabel = styled.div`
@@ -490,12 +778,39 @@ const StatLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
+  
+  @media (max-width: 884px) {
+    font-size: 0.8125rem;
+    gap: 4px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.8125rem;
+    gap: 4px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    gap: 4px;
+  }
 `;
 
 const ActivityList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  
+  @media (max-width: 884px) {
+    gap: 0.875rem;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 0.875rem;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.75rem;
+  }
 `;
 
 const ActivityGroup = styled.div`
@@ -532,6 +847,16 @@ const ActivityItem = styled.div`
   &:hover {
     background: #F3F4F6;
   }
+  
+  @media (max-width: 884px) {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
 `;
 
 const ActivityIcon = styled.div`
@@ -556,9 +881,18 @@ const ActivityTitle = styled.div`
   font-weight: 500;
   color: #1F2937;
   margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  
+  @media (max-width: 884px) {
+    font-size: 0.875rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.875rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const ActivityTime = styled.div`
@@ -613,6 +947,72 @@ interface RecentActivity {
 interface UserProfileProps {
   onProfilePictureChange?: (url: string) => void;
 }
+
+interface InfoRowProps {
+  $isEditing?: boolean;
+}
+
+interface InfoLabelProps {
+  $isEditing?: boolean;
+}
+
+interface InfoValueProps {
+  $isEditing?: boolean;
+}
+
+const InfoRow = styled.div<InfoRowProps>`
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  padding: 8px 0;
+  border-bottom: ${props => props.$isEditing ? 'none' : '1px solid #e5e7eb'};
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 640px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+`;
+
+const InfoLabel = styled.span<InfoLabelProps>`
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: ${props => props.theme.colors.text.primary};
+  min-width: 120px;
+  display: ${props => props.$isEditing ? 'none' : 'block'};
+  
+  @media (max-width: 884px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 640px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: unset;
+    width: 100%;
+  }
+`;
+
+const InfoValue = styled.div<InfoValueProps>`
+  flex: 1;
+  color: #6b7280;
+  display: ${props => props.$isEditing ? 'none' : 'block'};
+`;
 
 const capitalizeFirstLetter = (string: string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
@@ -1336,22 +1736,22 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
               </>
             ) : (
               <>
-                <FormGroup>
-                  <Label>Username</Label>
-                  <div>{profileData.username || '-'}</div>
-                </FormGroup>
-                <FormGroup>
-                  <Label>First Name</Label>
-                  <div>{profileData.first_name || '-'}</div>
-                </FormGroup>
-                <FormGroup>
-                  <Label>Last Name</Label>
-                  <div>{profileData.last_name || '-'}</div>
-                </FormGroup>
-                <FormGroup>
-                  <Label>Gender</Label>
-                  <div>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</div>
-                </FormGroup>
+                <InfoRow $isEditing={isEditing}>
+                  <InfoLabel $isEditing={isEditing}>Username</InfoLabel>
+                  <InfoValue $isEditing={isEditing}>{profileData.username || '-'}</InfoValue>
+                </InfoRow>
+                <InfoRow $isEditing={isEditing}>
+                  <InfoLabel $isEditing={isEditing}>First Name</InfoLabel>
+                  <InfoValue $isEditing={isEditing}>{profileData.first_name || '-'}</InfoValue>
+                </InfoRow>
+                <InfoRow $isEditing={isEditing}>
+                  <InfoLabel $isEditing={isEditing}>Last Name</InfoLabel>
+                  <InfoValue $isEditing={isEditing}>{profileData.last_name || '-'}</InfoValue>
+                </InfoRow>
+                <InfoRow $isEditing={isEditing} style={{ borderBottom: 'none' }}>
+                  <InfoLabel $isEditing={isEditing}>Gender</InfoLabel>
+                  <InfoValue $isEditing={isEditing}>{profileData.gender ? capitalizeFirstLetter(profileData.gender) : '-'}</InfoValue>
+                </InfoRow>
                 <div style={{ marginTop: '16px' }}>
                   <EditButton onClick={() => {
                     setIsEditing(true);
@@ -1455,14 +1855,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
             </>
           ) : (
             <>
-              <FormGroup>
-                <Label>Email</Label>
-                <div>{profileData.email}</div>
-              </FormGroup>
-              <FormGroup>
-                <Label>Phone</Label>
-                <div>{profileData.phone || '-'}</div>
-              </FormGroup>
+              <InfoRow $isEditing={isEditingContact}>
+                <InfoLabel $isEditing={isEditingContact}>Email</InfoLabel>
+                <InfoValue $isEditing={isEditingContact}>{profileData.email}</InfoValue>
+              </InfoRow>
+              <InfoRow $isEditing={isEditingContact} style={{ borderBottom: 'none' }}>
+                <InfoLabel $isEditing={isEditingContact}>Phone</InfoLabel>
+                <InfoValue $isEditing={isEditingContact}>{profileData.phone || '-'}</InfoValue>
+              </InfoRow>
               <div style={{ marginTop: '16px' }}>
                 <EditButton onClick={() => {
                   setIsEditingContact(true);
@@ -1625,14 +2025,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
             </PasswordChangeForm>
           ) : (
             <>
-              <FormGroup>
-                <Label>Last Changed</Label>
-                <div>
+              <InfoRow style={{ borderBottom: 'none' }}>
+                <InfoLabel>Last Changed</InfoLabel>
+                <InfoValue>
                   {profileData.last_password_change
                     ? new Date(profileData.last_password_change).toLocaleDateString()
                     : 'Never'}
-                </div>
-              </FormGroup>
+                </InfoValue>
+              </InfoRow>
               <div style={{ marginTop: '16px' }}>
                 <EditButton onClick={() => {
                   setIsEditingPassword(true);
