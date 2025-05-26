@@ -8,6 +8,11 @@ const MainContent = styled.main`
   flex: 1;
   padding: 1.5rem;
   background-color: #F9FAFB;
+  overflow-x: hidden;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const Section = styled.section`
@@ -16,6 +21,12 @@ const Section = styled.section`
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  overflow-x: hidden;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -23,12 +34,22 @@ const SectionHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-bottom: 1rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 600;
   color: #0F172A;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const AddButton = styled.button`
@@ -48,6 +69,11 @@ const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const CostGrid = styled.div`
@@ -55,6 +81,16 @@ const CostGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
   margin-top: 1.5rem;
+  
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
 `;
 
 interface CostSectionProps {
@@ -67,12 +103,25 @@ const CostSection = styled.section<CostSectionProps>`
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
   grid-column: ${props => `span ${props.$span || 1}`};
+  overflow-x: hidden;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
+  
+  @media only screen and (max-width: 1023px) {
+    grid-column: span 1;
+  }
 `;
 
 const CostList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.75rem;
+  }
 `;
 
 interface CostItemProps {
@@ -86,6 +135,12 @@ const CostItem = styled.div<CostItemProps>`
   padding: 1rem;
   background-color: ${props => props.$isTotal ? 'rgba(59, 130, 246, 0.05)' : '#F9FAFB'};
   border-radius: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.75rem;
+  }
 `;
 
 interface CostLabelProps {
@@ -95,6 +150,7 @@ interface CostLabelProps {
 const CostLabel = styled.span<CostLabelProps>`
   color: #0F172A;
   ${props => props.$isBold && 'font-weight: 600;'}
+  word-break: break-word;
 `;
 
 interface CostValueProps {
@@ -106,10 +162,19 @@ const CostValue = styled.span<CostValueProps>`
   font-weight: ${props => props.$isTotal ? 'bold' : '600'};
   font-size: ${props => props.$isTotal ? '1.25rem' : 'inherit'};
   color: ${props => props.$isTotal ? '#3B82F6' : props.$isGreen ? '#00E915' : 'inherit'};
+  white-space: nowrap;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: ${props => props.$isTotal ? '1.125rem' : 'inherit'};
+  }
 `;
 
 const ComparisonGroup = styled.div`
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const ComparisonLabel = styled.label`
@@ -125,6 +190,11 @@ const ComparisonSelect = styled.select`
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
   padding: 0.625rem 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
 `;
 
 interface ComparisonBoxProps {
@@ -136,6 +206,11 @@ const ComparisonBox = styled.div<ComparisonBoxProps>`
   background-color: ${props => props.$isGreen ? 'rgba(0, 233, 21, 0.05)' : '#F9FAFB'};
   border-radius: 0.5rem;
   margin-bottom: ${props => !props.$isGreen && '1rem'};
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.75rem;
+    margin-bottom: ${props => !props.$isGreen && '0.75rem'};
+  }
 `;
 
 const ComparisonLabel2 = styled.div`
@@ -152,6 +227,10 @@ const ComparisonValue = styled.div<ComparisonValueProps>`
   font-size: 1.25rem;
   font-weight: 700;
   color: ${props => props.$isGreen ? '#00E915' : '#0F172A'};
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const Column = styled.div`
@@ -185,6 +264,11 @@ const Select = styled.select`
 const ExperienceButtons = styled.div`
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.5rem;
+  }
 `;
 
 const ExperienceButton = styled.button<{ $active?: boolean }>`
@@ -193,10 +277,16 @@ const ExperienceButton = styled.button<{ $active?: boolean }>`
   border: 1px solid ${props => props.$active ? '#3B82F6' : '#E5E7EB'};
   background-color: ${props => props.$active ? 'rgba(59, 130, 246, 0.05)' : 'transparent'};
   color: ${props => props.$active ? '#3B82F6' : '#64748B'};
+  white-space: nowrap;
 
   &:hover {
     border-color: #3B82F6;
     background-color: rgba(59, 130, 246, 0.05);
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
   }
 `;
 
@@ -207,12 +297,17 @@ const TasksContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.75rem;
+  }
 `;
 
 const TaskItem = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 `;
 
 const Checkbox = styled.input`
@@ -222,6 +317,7 @@ const Checkbox = styled.input`
 const TaskText = styled.span`
   font-size: 0.875rem;
   color: #0F172A;
+  word-break: break-word;
 `;
 
 const ActionBar = styled.div`
@@ -229,11 +325,32 @@ const ActionBar = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-top: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-top: 1rem;
+  }
+  
+  @media only screen and (max-width: 551px) {
+    flex-direction: column;
+    width: 100%;
+  }
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
   gap: 1rem;
+  flex-wrap: wrap;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.5rem;
+  }
+  
+  @media only screen and (max-width: 551px) {
+    width: 100%;
+    gap: 0.5rem;
+  }
 `;
 
 const ActionButton = styled.button`
@@ -241,28 +358,55 @@ const ActionButton = styled.button`
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
+  background-color: white;
+  color: #0F172A;
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
-  color: #0F172A;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
 
   &:hover {
     background-color: #F9FAFB;
+    border-color: #D1D5DB;
   }
 
   svg {
     color: rgba(15, 23, 42, 0.7);
   }
+  
+  @media only screen and (max-width: 551px) {
+    flex: 1;
+    justify-content: center;
+  }
 `;
 
 const ConsultButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1rem;
   background-color: #3B82F6;
   color: white;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
   border: none;
-
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  
   &:hover {
-    background-color: rgba(59, 130, 246, 0.9);
+    background-color: #2563EB;
+  }
+  
+  @media only screen and (max-width: 551px) {
+    width: 100%;
+    justify-content: center;
   }
 `;
 

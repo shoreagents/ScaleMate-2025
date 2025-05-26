@@ -15,6 +15,18 @@ const Section = styled.section`
   border: 1px solid #E5E7EB;
   padding: 2rem;
   width: 100%;
+  
+  @media only screen and (max-width: 1023px) {
+    padding: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -22,12 +34,35 @@ const SectionTitle = styled.h2`
   font-weight: 700;
   color: #0F172A;
   margin-bottom: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const DepartmentGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.75rem;
+  }
 `;
 
 const DepartmentCard = styled.div<{ $selected?: boolean }>`
@@ -42,6 +77,14 @@ const DepartmentCard = styled.div<{ $selected?: boolean }>`
     border-color: #6366F1;
     background-color: rgba(99, 102, 241, 0.05);
   }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const CardHeader = styled.div`
@@ -49,11 +92,23 @@ const CardHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 480px) {
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const IconContainer = styled.div<{ $selected?: boolean }>`
   font-size: 1.5rem;
   color: ${props => props.$selected ? '#6366F1' : 'rgba(15, 23, 42, 0.7)'};
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const RadioCircle = styled.div<{ $selected?: boolean }>`
@@ -64,6 +119,11 @@ const RadioCircle = styled.div<{ $selected?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  @media only screen and (max-width: 480px) {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
 `;
 
 const RadioDot = styled.div`
@@ -71,21 +131,52 @@ const RadioDot = styled.div`
   height: 0.75rem;
   border-radius: 9999px;
   background-color: #6366F1;
+  
+  @media only screen and (max-width: 480px) {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
 `;
 
 const CardTitle = styled.h3`
   font-weight: 600;
   color: #0F172A;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const CardDescription = styled.p`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
   margin-top: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.8125rem;
+    margin-top: 0.375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
 `;
 
 const ButtonContainer = styled.div`
   margin-top: 2rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-top: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    margin-top: 1.25rem;
+  }
 `;
 
 const ContinueButton = styled.button`
@@ -102,6 +193,16 @@ const ContinueButton = styled.button`
 
   &:hover {
     background-color: rgba(59, 130, 246, 0.9);
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
   }
 `;
 
