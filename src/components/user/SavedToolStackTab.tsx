@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -14,6 +14,10 @@ import {
 
 const Container = styled.div`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const StackControls = styled.div`
@@ -21,37 +25,54 @@ const StackControls = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+
+  @media (max-width: 1002px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
 `;
 
-const FilterButtons = styled.div`
-  display: flex;
-  gap: 0.5rem;
+const FilterDropdown = styled.div`
+  position: relative;
+  min-width: 200px;
+
+  @media (max-width: 1002px) {
+    width: 100%;
+  }
 `;
 
-const FilterButton = styled.button<{ $active?: boolean }>`
-  padding: 0.5rem 1rem;
+const DropdownButton = styled.select`
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
   font-size: 0.875rem;
-  
-  ${props => props.$active ? `
-    background-color: #0098FF;
-    color: white;
-    border: none;
-  ` : `
-    background-color: white;
-    color: #0F172A;
-    border: 1px solid #E5E7EB;
-    
-    &:hover {
-      background-color: #F9FAFB;
-    }
-  `}
+  color: #0F172A;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+  height: 2.5rem;
+  box-sizing: border-box;
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
 `;
 
 const ViewControls = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+
+  @media (max-width: 1002px) {
+    justify-content: flex-end;
+  }
 `;
 
 const ViewButton = styled.button`
@@ -74,6 +95,15 @@ const StackGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const ToolCard = styled.div`
@@ -81,10 +111,20 @@ const ToolCard = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
 `;
 
 const CardContent = styled.div`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const CardHeader = styled.div`
@@ -180,12 +220,15 @@ const ButtonGroup = styled.div`
 
 const PrimaryButton = styled.button`
   flex: 1;
-  padding: 0.5rem 0;
+  padding: 0.75rem 0;
   background-color: #3B82F6;
   color: white;
   border-radius: 0.5rem;
   font-size: 0.875rem;
+  font-weight: 500;
   border: none;
+  transition: all 0.2s;
+  cursor: pointer;
   
   &:hover {
     background-color: rgba(59, 130, 246, 0.9);
@@ -193,13 +236,20 @@ const PrimaryButton = styled.button`
 `;
 
 const SecondaryButton = styled.button`
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem;
+  background-color: transparent;
+  color: rgba(15, 23, 42, 0.4);
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
-  color: rgba(15, 23, 42, 0.4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
   
   &:hover {
     background-color: #F9FAFB;
+    color: #3B82F6;
+    border-color: #3B82F6;
   }
 `;
 
@@ -234,15 +284,31 @@ const AddNewIcon = styled(FontAwesomeIcon)`
 `;
 
 const SavedToolStackTab: React.FC = () => {
+  const [selectedFilter, setSelectedFilter] = useState('All Tools');
+
+  const filterOptions = [
+    'All Tools',
+    'Productivity',
+    'Communication',
+    'Project Management'
+  ];
+
+  const handleFilterSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedFilter(event.target.value);
+  };
+
   return (
     <Container>
       <StackControls>
-        <FilterButtons>
-          <FilterButton $active>All Tools</FilterButton>
-          <FilterButton>Productivity</FilterButton>
-          <FilterButton>Communication</FilterButton>
-          <FilterButton>Project Management</FilterButton>
-        </FilterButtons>
+        <FilterDropdown>
+          <DropdownButton value={selectedFilter} onChange={handleFilterSelect}>
+            {filterOptions.map((filter) => (
+              <option key={filter} value={filter}>
+                {filter}
+              </option>
+            ))}
+          </DropdownButton>
+        </FilterDropdown>
         <ViewControls>
           <ViewButton>
             <FontAwesomeIcon icon={faGrip} />

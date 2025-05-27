@@ -42,13 +42,15 @@ const ProgressOverview = styled.div`
 
 const OverviewHeader = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 1.5rem;
   gap: 1rem;
   flex-wrap: wrap;
   
   @media only screen and (max-width: 767px) {
+    flex-direction: column;
+    align-items: flex-start;
     margin-bottom: 1rem;
   }
 `;
@@ -83,6 +85,13 @@ const StatsContainer = styled.div`
   gap: 1rem;
   flex-wrap: wrap;
   flex-shrink: 0;
+
+  @media only screen and (max-width: 767px) {
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #E5E7EB;
+  }
 `;
 
 const XPContainer = styled.div`
@@ -90,6 +99,10 @@ const XPContainer = styled.div`
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
+
+  @media only screen and (max-width: 767px) {
+    margin-right: auto;
+  }
 `;
 
 const XPText = styled.span`
@@ -102,6 +115,12 @@ const BadgesContainer = styled.div`
   margin-left: -0.5rem;
   flex-wrap: wrap;
   gap: 0.5rem;
+
+  @media only screen and (max-width: 767px) {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
 `;
 
 const BadgeCircle = styled.div<{ $bgColor: string, $iconColor: string }>`

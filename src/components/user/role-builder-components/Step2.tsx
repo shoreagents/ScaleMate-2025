@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FaArrowLeft, FaArrowRight, FaPlus } from 'react-icons/fa';
+import { NavigationButtons, BackButton, ContinueButton, PrimaryButton } from './sharedStyles';
 
 const Section = styled.section`
   background-color: white;
@@ -218,6 +219,8 @@ const CustomTaskInput = styled.div`
   
   @media only screen and (max-width: 480px) {
     gap: 0.5rem;
+    flex-direction: column;
+    width: 100%;
   }
 `;
 
@@ -240,102 +243,22 @@ const Input = styled.input`
   }
   
   @media only screen and (max-width: 480px) {
-    padding: 0.25rem 0.75rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
   }
 `;
 
-const AddButton = styled.button`
+const AddButton = styled(PrimaryButton)`
   padding: 0.5rem 1rem;
-  border: none;
-  color: #6366F1;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: rgba(99, 102, 241, 0.05);
-  }
   
   @media only screen and (max-width: 767px) {
     padding: 0.375rem 0.875rem;
     font-size: 0.9375rem;
   }
-  
+
   @media only screen and (max-width: 480px) {
     padding: 0.25rem 0.75rem;
-    font-size: 0.875rem;
-  }
-`;
-
-const NavigationContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  
-  @media only screen and (max-width: 767px) {
-    gap: 0.75rem;
-  }
-  
-  @media only screen and (max-width: 480px) {
-    gap: 0.5rem;
-  }
-`;
-
-const BackButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  color: #0F172A;
-  border-radius: 0.5rem;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: #F9FAFB;
-  }
-  
-  @media only screen and (max-width: 767px) {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.9375rem;
-  }
-  
-  @media only screen and (max-width: 480px) {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-  }
-`;
-
-const ContinueButton = styled.button`
-  background-color: #3B82F6;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: none;
-  transition: all 0.2s;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: rgba(59, 130, 246, 0.9);
-  }
-  
-  @media only screen and (max-width: 767px) {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.9375rem;
-  }
-  
-  @media only screen and (max-width: 480px) {
-    padding: 0.5rem 1rem;
     font-size: 0.875rem;
   }
 `;
@@ -465,14 +388,14 @@ const Step2: React.FC<Step2Props> = ({ onBack, onContinue }) => {
         </CustomTaskInput>
       </CustomTaskContainer>
 
-      <NavigationContainer>
+      <NavigationButtons>
         <BackButton onClick={onBack}>
           <FaArrowLeft /> Back to Department
         </BackButton>
         <ContinueButton onClick={onContinue}>
           Continue to Tools <FaArrowRight />
         </ContinueButton>
-      </NavigationContainer>
+      </NavigationButtons>
     </Section>
   );
 };
