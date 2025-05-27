@@ -8,6 +8,7 @@ import {
   FaRegBookmark, 
   FaRegCopy 
 } from 'react-icons/fa6';
+import { NavigationButtons, ContinueButton } from './sharedStyles';
 
 const Section = styled.section`
   background-color: white;
@@ -179,33 +180,6 @@ const ButtonContainer = styled.div`
   }
 `;
 
-const ContinueButton = styled.button`
-  background-color: #3B82F6;
-  border: none;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: rgba(59, 130, 246, 0.9);
-  }
-  
-  @media only screen and (max-width: 767px) {
-    padding: 0.625rem 1.25rem;
-    font-size: 0.9375rem;
-  }
-  
-  @media only screen and (max-width: 480px) {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-  }
-`;
-
 interface Step1Props {
   selectedDepartment: string;
   onDepartmentSelect: (department: string) => void;
@@ -266,11 +240,11 @@ const Step1: React.FC<Step1Props> = ({ selectedDepartment, onDepartmentSelect, o
         </DepartmentCard>
       </DepartmentGrid>
 
-      <ButtonContainer>
+      <NavigationButtons>
         <ContinueButton onClick={onContinue}>
           Continue to Tasks <FaArrowRight />
         </ContinueButton>
-      </ButtonContainer>
+      </NavigationButtons>
     </Section>
   );
 };
