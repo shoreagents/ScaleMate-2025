@@ -7,8 +7,11 @@ import {
   FaCalculator, 
   FaCopy,
   FaSalesforce,
-  FaLinkedin
+  FaLinkedin,
+  FaArrowLeft,
+  FaArrowRight
 } from 'react-icons/fa';
+import { NavigationButtons, BackButton, ContinueButton, PrimaryButton, SecondaryButton } from './sharedStyles';
 
 const Section = styled.section`
   background-color: white;
@@ -16,11 +19,31 @@ const Section = styled.section`
   border: 1px solid #E5E7EB;
   padding: 2rem;
   width: 100%;
+  
+  @media only screen and (max-width: 1023px) {
+    padding: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const BlueprintHeader = styled.section`
   text-align: center;
   margin-bottom: 2rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-bottom: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const BlueprintTitle = styled.h2`
@@ -28,26 +51,71 @@ const BlueprintTitle = styled.h2`
   font-weight: 700;
   color: #0F172A;
   margin-bottom: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const BlueprintDescription = styled.p`
   color: rgba(15, 23, 42, 0.7);
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const BlueprintGrid = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 1.5rem;
+  
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 767px) {
+    gap: 1rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.875rem;
+  }
 `;
 
 const MainContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 1rem;
+  }
 `;
 
 const JobOverview = styled(Section)`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const JobTitle = styled.h3`
@@ -55,6 +123,16 @@ const JobTitle = styled.h3`
   font-weight: 600;
   color: #0F172A;
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1rem;
+    margin-bottom: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const TagContainer = styled.div`
@@ -62,6 +140,16 @@ const TagContainer = styled.div`
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.375rem;
+    margin-bottom: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const Tag = styled.span`
@@ -70,14 +158,40 @@ const Tag = styled.span`
   color: #6366F1;
   border-radius: 9999px;
   font-size: 0.875rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.25rem 0.625rem;
+    font-size: 0.8125rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
 `;
 
 const JobDescription = styled.p`
   color: rgba(15, 23, 42, 0.7);
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const TaskBreakdown = styled(Section)`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const TaskTitle = styled.h3`
@@ -85,12 +199,30 @@ const TaskTitle = styled.h3`
   font-weight: 600;
   color: #0F172A;
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1rem;
+    margin-bottom: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const TaskList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.625rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 const TaskItem = styled.div`
@@ -101,14 +233,39 @@ const TaskItem = styled.div`
 const TaskIcon = styled.div`
   color: #6366F1;
   margin-right: 0.75rem;
+  flex-shrink: 0;
+  
+  @media only screen and (max-width: 767px) {
+    margin-right: 0.625rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    margin-right: 0.5rem;
+  }
 `;
 
 const TaskText = styled.span`
   color: rgba(15, 23, 42, 0.7);
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const ToolsSection = styled(Section)`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const ToolsTitle = styled.h3`
@@ -116,12 +273,31 @@ const ToolsTitle = styled.h3`
   font-weight: 600;
   color: #0F172A;
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1rem;
+    margin-bottom: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const ToolsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.75rem;
+  }
 `;
 
 const ToolCard = styled.div`
@@ -130,26 +306,69 @@ const ToolCard = styled.div`
   padding: 0.75rem;
   background-color: #F9FAFB;
   border-radius: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.625rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.5rem;
+  }
 `;
 
 const ToolIcon = styled.div`
   font-size: 1.25rem;
   color: #6366F1;
   margin-right: 0.75rem;
+  flex-shrink: 0;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.125rem;
+    margin-right: 0.625rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+  }
 `;
 
 const ToolName = styled.span`
   color: #0F172A;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const ActionPanel = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 1rem;
+  }
 `;
 
 const CostEstimate = styled(Section)`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const CostTitle = styled.h3`
@@ -157,6 +376,16 @@ const CostTitle = styled.h3`
   font-weight: 600;
   color: #0F172A;
   margin-bottom: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1rem;
+    margin-bottom: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.9375rem;
+    margin-bottom: 0.75rem;
+  }
 `;
 
 const CostDisplay = styled.div`
@@ -164,6 +393,14 @@ const CostDisplay = styled.div`
   padding: 1rem;
   background-color: #F9FAFB;
   border-radius: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.75rem;
+  }
 `;
 
 const CostAmount = styled.div`
@@ -171,74 +408,53 @@ const CostAmount = styled.div`
   font-weight: 700;
   color: #0F172A;
   margin-bottom: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.5rem;
+    margin-bottom: 0.375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
 `;
 
 const CostLabel = styled.p`
   color: rgba(15, 23, 42, 0.7);
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const ActionButtons = styled(Section)`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const ButtonContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-`;
-
-const PrimaryButton = styled.button`
-  width: 100%;
-  background-color: #3B82F6;
-  color: white;
-  padding: 0.75rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: rgba(59, 130, 246, 0.9);
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.625rem;
   }
-`;
-
-const SecondaryButton = styled.button`
-  width: 100%;
-  border: 2px solid #3B82F6;
-  color: #3B82F6;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: rgba(59, 130, 246, 0.05);
-  }
-`;
-
-const TertiaryButton = styled.button`
-  width: 100%;
-  border: 1px solid #E5E7EB;
-  color: #0F172A;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: #F9FAFB;
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
   }
 `;
 
@@ -318,12 +534,12 @@ const Step5: React.FC<Step5Props> = ({ onBack }) => {
               <SecondaryButton>
                 <FaBookmark /> Save to My Roles
               </SecondaryButton>
-              <TertiaryButton>
+              <SecondaryButton>
                 <FaCalculator /> Generate Quote
-              </TertiaryButton>
-              <TertiaryButton>
+              </SecondaryButton>
+              <SecondaryButton>
                 <FaCopy /> Duplicate Role
-              </TertiaryButton>
+              </SecondaryButton>
             </ButtonContainer>
           </ActionButtons>
         </ActionPanel>

@@ -13,6 +13,7 @@ import {
   FaRegBookmark, 
   FaRegCopy 
 } from 'react-icons/fa6';
+import { PrimaryButton, SecondaryButton } from './role-builder-components/sharedStyles';
 
 const MainContent = styled.main`
   flex: 1;
@@ -233,27 +234,16 @@ const ActionButtons = styled.div`
   }
 `;
 
-const ActionButton = styled.button`
+const ActionButton = styled(SecondaryButton)`
   display: flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.5rem;
-  color: #0F172A;
   white-space: nowrap;
-
-  &:hover {
-    background-color: #F9FAFB;
-  }
-
-  svg {
-    color: rgba(15, 23, 42, 0.7);
-  }
   
   @media only screen and (max-width: 525px) {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
+    padding: 0.375rem 0.875rem;
+    font-size: 0.9375rem;
   }
 `;
 
