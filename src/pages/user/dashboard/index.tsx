@@ -40,6 +40,7 @@ import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
 import { useDownloadModal } from '@/hooks/useDownloadModal';
 import { Modal } from '@/components/ui/Modal';
+import ReadinessScore from '@/components/user/ReadinessScore';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -285,12 +286,15 @@ const DashboardPage = () => {
     return tabItem ? tabItem.label : 'Dashboard';
   };
 
-  const transformUserData = (data: UserProfileData | null): DashboardUserData | undefined => {
+  const transformUserData = (data: UserProfileData | null): any => {
     if (!data) return undefined;
     return {
-      name: `${data.first_name} ${data.last_name}`,
+      id: data.user_id,
       email: data.email,
-      avatar: data.profile_picture || undefined
+      username: data.username,
+      full_name: `${data.first_name} ${data.last_name}`,
+      profile_picture: data.profile_picture || null,
+      role: '', // or data.role if available
     };
   };
 
@@ -318,8 +322,10 @@ const DashboardPage = () => {
         return <SavedToolStackTab />;
       case 'gamified-tracker':
         return <GamifiedTrackerTab />;
+      case 'readiness-score':
+        return <ReadinessScore />;
       default:
-        return <DashboardTab user={transformUserData(userData)} />;
+        return <DashboardTab user={transformUserData(userData)} activeTab={activeTab} />;
     }
   };
 
@@ -336,7 +342,6 @@ const DashboardPage = () => {
     { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FaRobot /> },
     { id: 'saved-tool-stack', label: 'Tool Stack', icon: <FaLayerGroup /> },
     { id: 'gamified-tracker', label: 'Gamified Tracker', icon: <FaTrophy /> },
-    { id: 'account-settings', label: 'System Settings', icon: <FaGear /> }
   ];
 
   const handleSetupComplete = () => {
@@ -380,6 +385,7 @@ const DashboardPage = () => {
           activeTab={activeTab}
           onTabClick={handleTabClick}
           isModalOpen={isModalOpen}
+          onTabChange={() => {}}
         />
         <MainContent>
           <DashboardHeader

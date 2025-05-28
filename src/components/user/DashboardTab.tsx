@@ -20,13 +20,18 @@ import {
 } from 'react-icons/fa6';
 import { FiCheck } from 'react-icons/fi';
 import UserProfile from '@/components/user/UserProfile';
+import ReadinessScore from './ReadinessScore';
 
 interface DashboardTabProps {
   user?: {
-    name: string;
+    id: string;
     email: string;
-    avatar?: string;
+    username: string;
+    full_name: string;
+    profile_picture: string | null;
+    role: string;
   };
+  activeTab: string;
 }
 
 const DashboardContainer = styled.div`
@@ -747,10 +752,19 @@ const SuccessButton = styled.button`
   }
 `;
 
-const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
+const TabContainer = styled.div`
+  padding: 1.5rem;
+`;
+
+const TabContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const DashboardTab: React.FC<DashboardTabProps> = ({ user, activeTab }) => {
   const router = useRouter();
   const [userData, setUserData] = useState(user);
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [showProfile, setShowProfile] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -769,9 +783,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
 
             if (profile) {
               setUserData({
-                name: `${profile.first_name} ${profile.last_name}`,
+                id: authUser.id,
                 email: authUser.email || '',
-                avatar: profile.profile_picture
+                username: authUser.user_metadata.username || '',
+                full_name: `${profile.first_name} ${profile.last_name}`,
+                profile_picture: profile.profile_picture,
+                role: profile.role || ''
               });
 
               // Check if this is a Google sign-up user who just completed setup
@@ -816,7 +833,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
     <DashboardContainer>
       <DashboardHeader
         title="Dashboard"
-            profilePicture={userData?.avatar}
+            profilePicture={userData?.profile_picture}
         onLogout={handleLogout}
         onProfileClick={() => setShowProfile(true)}
         showProfile={showProfile}
@@ -828,7 +845,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ user }) => {
           <WelcomeSection>
             <WelcomeContent>
               <WelcomeText>
-                    <WelcomeTitle>Welcome back, {userData?.name}!</WelcomeTitle>
+                    <WelcomeTitle>Welcome back, {userData?.full_name}!</WelcomeTitle>
                 <WelcomeSubtitle>Ready to scale your team today?</WelcomeSubtitle>
               </WelcomeText>
               <TipBox>
