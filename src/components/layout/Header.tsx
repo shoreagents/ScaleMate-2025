@@ -354,6 +354,7 @@ const MobileNav = styled.nav`
   gap: 0.5rem;
   padding: 0.75rem;
   min-height: 100%;
+  padding-bottom: 150px;
 `;
 
 const MobileMenuSection = styled.div`

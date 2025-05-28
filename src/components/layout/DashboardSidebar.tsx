@@ -106,8 +106,13 @@ const CloseButton = styled.button`
 const Nav = styled.nav`
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
+  padding-bottom: 100px;
   flex: 1;
+
+  @media (max-width: 768px) {
+    padding-bottom: 150px;
+  }
 `;
 
 const NavLink = styled.a<{ $active?: boolean }>`
