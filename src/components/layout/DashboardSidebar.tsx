@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { IconType } from 'react-icons';
 import { FiMenu, FiX, FiHome, FiBell, FiUser, FiLogOut } from 'react-icons/fi';
-import { FaHome, FaBell, FaUser } from 'react-icons/fa';
+import { FaHome, FaBell, FaUser, FaGripVertical, FaCalculator, FaUsers, FaGraduationCap, FaDownload, FaToolbox, FaRegNewspaper, FaRegCircle, FaChartLine, FaBook, FaCog } from 'react-icons/fa';
+import { FaFileLines } from 'react-icons/fa6';
 import { useRouter } from 'next/router';
 import { supabase } from '../../lib/supabase';
+import Link from 'next/link';
 
 const Sidebar = styled.aside<{ $isMobileMenuOpen: boolean; $isModalOpen?: boolean }>`
   width: 16rem;
@@ -242,6 +244,7 @@ interface DashboardSidebarProps {
   activeTab: string;
   onTabClick: (tabId: string) => void;
   isModalOpen?: boolean;
+  onTabChange?: (tab: string) => void;
 }
 
 const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -250,6 +253,7 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   activeTab,
   onTabClick,
   isModalOpen = false,
+  onTabChange,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -270,6 +274,11 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/');
+  };
+
+  const handleTabClick = (tab: string) => {
+    if (onTabChange) onTabChange(tab);
+    setIsMobileMenuOpen(false);
   };
 
   return (
