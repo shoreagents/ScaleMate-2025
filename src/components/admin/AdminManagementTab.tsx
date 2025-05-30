@@ -6,6 +6,8 @@ import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch, FaTimes } from '
 import type { FC, ReactElement } from 'react';
 import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import ProfileSidebar from '@/components/layout/ProfileSidebar';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPen, faTrash, faUserCog, faUser, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const Container = styled.div`
   padding: 24px;
@@ -191,25 +193,22 @@ const Td = styled.td`
   font-size: 0.875rem;
 `;
 
-const ActionButton = styled.button<{ $variant?: 'danger' | 'success' }>`
-  font-size: 0.875rem;
-  padding: 6px;
+const ActionButton = styled.button<{ $color?: string }>`
+  padding: 0.5rem;
+  color: rgba(15, 23, 42, 0.7);
+  border-radius: 0.25rem;
+  transition: all 0.2s;
   background: none;
   border: none;
-  cursor: pointer;
-  color: ${props => props.$variant === 'danger' ? '#EF4444' : 
-    props.$variant === 'success' ? '#10B981' : '#6B7280'};
-  transition: color 0.2s;
 
   &:hover {
-    color: ${props => props.$variant === 'danger' ? '#DC2626' : 
-    props.$variant === 'success' ? '#059669' : '#4B5563'};
+    color: ${props => props.$color || '#0F172A'};
   }
 `;
 
 const ActionGroup = styled.div`
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
 `;
 
 const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed' }>`
@@ -2472,25 +2471,19 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                     {isCurrentUserAdmin && (
                       <TableCell style={{ width: '120px' }}>
                       <ActionGroup>
-                          <ActionButton 
-                          onClick={(e) => {
+                          <ActionButton $color="#10B981" onClick={(e) => {
                             e.stopPropagation();
-                            handleEditUser(user);
-                          }}
-                            title="Update Info"
-                          >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
+                            user.role === 'admin' ? handleEditAdmin(user as Admin) : handleEditUser(user);
+                          }}>
+                            <FontAwesomeIcon icon={faPen} />
+                          </ActionButton>
                           {isConfirmingDelete === user.id ? (
                             <>
-                              <ActionButton 
-                                $variant="success"
-                              onClick={(e) => {
+                              <ActionButton $color="#10B981" onClick={(e) => {
                                 e.stopPropagation();
                                 handleDelete(user);
-                              }}
-                              >
-                                <FiCheck size={18} />
+                              }}>
+                                <FontAwesomeIcon icon={faCheck} />
                               </ActionButton>
                               <ActionButton 
                               onClick={(e) => {
@@ -2498,19 +2491,16 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                                 setIsConfirmingDelete(null);
                               }}
                               >
-                                <FiX size={18} />
+                                <FontAwesomeIcon icon={faTimes} />
                               </ActionButton>
                             </>
                           ) : (
-                        <ActionButton 
-                          $variant="danger"
-                        onClick={(e) => {
-                              e.stopPropagation();
-                                setUserToDelete(user);
-                            setIsDeleteModalOpen(true);
-                          }}
-                        >
-                          <FiTrash2 size={18} />
+                        <ActionButton $color="#EF4444" onClick={(e) => {
+                          e.stopPropagation();
+                          setUserToDelete(user);
+                          setIsDeleteModalOpen(true);
+                        }}>
+                          <FontAwesomeIcon icon={faTrash} />
                         </ActionButton>
                           )}
                       </ActionGroup>
@@ -2604,26 +2594,37 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 
                 {isCurrentUserAdmin && (
                   <CardActions>
-                    <ActionButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditUser(user);
-                      }}
-                      title="Update Info"
-                    >
-                      <FiEdit2 size={18} />
+                    <ActionButton $color="#10B981" onClick={(e) => {
+                      e.stopPropagation();
+                      user.role === 'admin' ? handleEditAdmin(user as Admin) : handleEditUser(user);
+                    }}>
+                      <FontAwesomeIcon icon={faPen} />
                     </ActionButton>
                     
-                    <ActionButton 
-                      $variant="danger"
-                      onClick={(e) => {
+                    {isConfirmingDelete === user.id ? (
+                      <>
+                        <ActionButton $color="#10B981" onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(user);
+                        }}>
+                          <FontAwesomeIcon icon={faCheck} />
+                        </ActionButton>
+                        <ActionButton $color="#EF4444" onClick={(e) => {
+                          e.stopPropagation();
+                          setIsConfirmingDelete(null);
+                        }}>
+                          <FontAwesomeIcon icon={faTimes} />
+                        </ActionButton>
+                      </>
+                    ) : (
+                      <ActionButton $color="#EF4444" onClick={(e) => {
                         e.stopPropagation();
                         setUserToDelete(user);
                         setIsDeleteModalOpen(true);
-                      }}
-                    >
-                      <FiTrash2 size={18} />
-                    </ActionButton>
+                      }}>
+                        <FontAwesomeIcon icon={faTrash} />
+                      </ActionButton>
+                    )}
                   </CardActions>
                 )}
               </UserCard>
@@ -2803,25 +2804,19 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                     {isCurrentUserAdmin && (
                       <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
-                          <ActionButton 
-                          onClick={(e) => {
+                          <ActionButton $color="#10B981" onClick={(e) => {
                             e.stopPropagation();
                             handleEditUser(user);
-                          }}
-                            title="Update Info"
-                          >
-                            <FiEdit2 size={18} />
+                          }}>
+                            <FontAwesomeIcon icon={faPen} />
                           </ActionButton>
                           {isConfirmingDelete === user.id ? (
                             <>
-                              <ActionButton 
-                                $variant="success"
-                              onClick={(e) => {
+                              <ActionButton $color="#10B981" onClick={(e) => {
                                 e.stopPropagation();
                                 handleDelete(user);
-                              }}
-                              >
-                                <FiCheck size={18} />
+                              }}>
+                                <FontAwesomeIcon icon={faCheck} />
                               </ActionButton>
                               <ActionButton 
                               onClick={(e) => {
@@ -2829,19 +2824,16 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                                 setIsConfirmingDelete(null);
                               }}
                               >
-                                <FiX size={18} />
+                                <FontAwesomeIcon icon={faTimes} />
                               </ActionButton>
                             </>
                           ) : (
-                            <ActionButton 
-                              $variant="danger"
-                            onClick={(e) => {
+                            <ActionButton $color="#EF4444" onClick={(e) => {
                               e.stopPropagation();
-                                setUserToDelete(user);
-                                setIsDeleteModalOpen(true);
-                              }}
-                            >
-                              <FiTrash2 size={18} />
+                              setUserToDelete(user);
+                              setIsDeleteModalOpen(true);
+                            }}>
+                              <FontAwesomeIcon icon={faTrash} />
                             </ActionButton>
                           )}
                         </ActionGroup>
@@ -2935,26 +2927,39 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 
                 {isCurrentUserAdmin && (
                   <CardActions>
-                    <ActionButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditUser(user);
-                      }}
-                      title="Update Info"
-                    >
-                      <FiEdit2 size={18} />
+                    <ActionButton $color="#10B981" onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditUser(user);
+                    }}>
+                      <FontAwesomeIcon icon={faPen} />
                     </ActionButton>
                     
-                    <ActionButton 
-                      $variant="danger"
-                      onClick={(e) => {
+                    {isConfirmingDelete === user.id ? (
+                      <>
+                        <ActionButton $color="#10B981" onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(user);
+                        }}>
+                          <FontAwesomeIcon icon={faCheck} />
+                        </ActionButton>
+                        <ActionButton 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsConfirmingDelete(null);
+                        }}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </ActionButton>
+                      </>
+                    ) : (
+                      <ActionButton $color="#EF4444" onClick={(e) => {
                         e.stopPropagation();
                         setUserToDelete(user);
                         setIsDeleteModalOpen(true);
-                      }}
-                    >
-                      <FiTrash2 size={18} />
-                    </ActionButton>
+                      }}>
+                        <FontAwesomeIcon icon={faTrash} />
+                      </ActionButton>
+                    )}
                   </CardActions>
                 )}
               </UserCard>
@@ -3108,23 +3113,17 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                       {isCurrentUserAdmin && (
                         <TableCell style={{ width: '120px' }}>
                           <ActionGroup>
-                            <ActionButton 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditUser(user);
-                              }}
-                              title="Update Info"
-                            >
-                              <FiEdit2 size={18} />
+                            <ActionButton $color="#10B981" onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditUser(user);
+                            }}>
+                              <FontAwesomeIcon icon={faPen} />
                             </ActionButton>
-                            <ActionButton 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClick(user);
-                              }}
-                              title="Delete User"
-                            >
-                              <FiTrash2 size={18} />
+                            <ActionButton $color="#10B981" onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(user);
+                            }}>
+                              <FontAwesomeIcon icon={faUserCog} />
                             </ActionButton>
                           </ActionGroup>
                         </TableCell>
@@ -3217,23 +3216,17 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 
                 {isCurrentUserAdmin && (
                   <CardActions>
-                    <ActionButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditUser(user);
-                      }}
-                      title="Update Info"
-                    >
-                      <FiEdit2 size={18} />
+                    <ActionButton $color="#10B981" onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditUser(user);
+                    }}>
+                      <FontAwesomeIcon icon={faPen} />
                     </ActionButton>
-                    <ActionButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(user);
-                      }}
-                      title="Delete User"
-                    >
-                      <FiTrash2 size={18} />
+                    <ActionButton $color="#10B981" onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(user);
+                    }}>
+                      <FontAwesomeIcon icon={faUserCog} />
                     </ActionButton>
                   </CardActions>
                 )}
@@ -3388,23 +3381,17 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                       {isCurrentUserAdmin && (
                         <TableCell style={{ width: '120px' }}>
                           <ActionGroup>
-                            <ActionButton 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditUser(user);
-                              }}
-                              title="Update Info"
-                            >
-                              <FiEdit2 size={18} />
+                            <ActionButton $color="#10B981" onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditUser(user);
+                            }}>
+                              <FontAwesomeIcon icon={faPen} />
                             </ActionButton>
-                            <ActionButton 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClick(user);
-                              }}
-                              title="Delete User"
-                            >
-                              <FiTrash2 size={18} />
+                            <ActionButton $color="#10B981" onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteClick(user);
+                            }}>
+                              <FontAwesomeIcon icon={faUserCog} />
                             </ActionButton>
                           </ActionGroup>
                         </TableCell>
@@ -3497,23 +3484,17 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 
                 {isCurrentUserAdmin && (
                   <CardActions>
-                    <ActionButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditUser(user);
-                      }}
-                      title="Update Info"
-                    >
-                      <FiEdit2 size={18} />
+                    <ActionButton $color="#10B981" onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditUser(user);
+                    }}>
+                      <FontAwesomeIcon icon={faPen} />
                     </ActionButton>
-                    <ActionButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteClick(user);
-                      }}
-                      title="Delete User"
-                    >
-                      <FiTrash2 size={18} />
+                    <ActionButton $color="#10B981" onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteClick(user);
+                    }}>
+                      <FontAwesomeIcon icon={faUserCog} />
                     </ActionButton>
                   </CardActions>
                 )}
@@ -3694,25 +3675,19 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                     {isCurrentUserAdmin && (
                       <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
-                          <ActionButton 
-                          onClick={(e) => {
+                          <ActionButton $color="#10B981" onClick={(e) => {
                             e.stopPropagation();
                             handleEditUser(user);
-                          }}
-                            title="Update Info"
-                          >
-                            <FiEdit2 size={18} />
+                          }}>
+                            <FontAwesomeIcon icon={faPen} />
                           </ActionButton>
                           {isConfirmingDelete === user.id ? (
                             <>
-                              <ActionButton 
-                                $variant="success"
-                              onClick={(e) => {
+                              <ActionButton $color="#10B981" onClick={(e) => {
                                 e.stopPropagation();
                                 handleDelete(user);
-                              }}
-                              >
-                                <FiCheck size={18} />
+                              }}>
+                                <FontAwesomeIcon icon={faCheck} />
                               </ActionButton>
                               <ActionButton 
                               onClick={(e) => {
@@ -3720,19 +3695,16 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                                 setIsConfirmingDelete(null);
                               }}
                               >
-                                <FiX size={18} />
+                                <FontAwesomeIcon icon={faTimes} />
                               </ActionButton>
                             </>
                           ) : (
-                            <ActionButton 
-                              $variant="danger"
-                            onClick={(e) => {
+                            <ActionButton $color="#EF4444" onClick={(e) => {
                               e.stopPropagation();
-                                setUserToDelete(user);
-                                setIsDeleteModalOpen(true);
-                              }}
-                            >
-                              <FiTrash2 size={18} />
+                              setUserToDelete(user);
+                              setIsDeleteModalOpen(true);
+                            }}>
+                              <FontAwesomeIcon icon={faTrash} />
                             </ActionButton>
                           )}
                         </ActionGroup>
@@ -3826,26 +3798,39 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 
                 {isCurrentUserAdmin && (
                   <CardActions>
-                    <ActionButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditUser(user);
-                      }}
-                      title="Update Info"
-                    >
-                      <FiEdit2 size={18} />
+                    <ActionButton $color="#10B981" onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditUser(user);
+                    }}>
+                      <FontAwesomeIcon icon={faPen} />
                     </ActionButton>
                     
-                    <ActionButton 
-                      $variant="danger"
-                      onClick={(e) => {
+                    {isConfirmingDelete === user.id ? (
+                      <>
+                        <ActionButton $color="#10B981" onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(user);
+                        }}>
+                          <FontAwesomeIcon icon={faCheck} />
+                        </ActionButton>
+                        <ActionButton 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsConfirmingDelete(null);
+                        }}
+                        >
+                          <FontAwesomeIcon icon={faTimes} />
+                        </ActionButton>
+                      </>
+                    ) : (
+                      <ActionButton $color="#EF4444" onClick={(e) => {
                         e.stopPropagation();
                         setUserToDelete(user);
                         setIsDeleteModalOpen(true);
-                      }}
-                    >
-                      <FiTrash2 size={18} />
-                    </ActionButton>
+                      }}>
+                        <FontAwesomeIcon icon={faTrash} />
+                      </ActionButton>
+                    )}
                   </CardActions>
                 )}
               </UserCard>

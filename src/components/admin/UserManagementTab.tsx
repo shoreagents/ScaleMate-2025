@@ -1,317 +1,578 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { supabase } from '@/lib/supabase';
-import { 
-  FaUserPlus, 
-  FaFilter, 
-  FaPen, 
-  FaTrash 
-} from 'react-icons/fa6';
+import { FaSearch, FaPlus, FaTrophy, FaEye, FaUser, FaKey, FaBan, FaTimes, FaBookOpen, FaFilePdf, FaFileAlt, FaMedal } from 'react-icons/fa';
 
 const Container = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  padding: 1.5rem;
 `;
 
-const Header = styled.div`
+const FilterBar = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-`;
-
-const Title = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
-`;
-
-const Actions = styled.div`
-  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
   gap: 1rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 1088px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
 `;
 
-const Button = styled.button`
+const FilterGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 1088px) {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 1rem;
+  }
+`;
+
+const SearchContainer = styled.div`
+  position: relative;
+  width: 16rem;
+  min-width: 200px;
+  @media (max-width: 1088px) {
+    width: 100%;
+    min-width: 0;
+  }
+`;
+
+const StyledSearchInput = styled.input`
+  width: 100%;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+  color: #0F172A;
+  background-color: white;
+  box-sizing: border-box;
+  &::placeholder {
+    color: rgba(15, 23, 42, 0.4);
+  }
+`;
+
+const SearchIcon = styled(FaSearch)`
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(15, 23, 42, 0.4);
+`;
+
+const StyledSelect = styled.select`
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #0F172A;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+  height: 2.5rem;
+  box-sizing: border-box;
+  min-width: 10rem;
+  @media (max-width: 1088px) {
+    width: 100%;
+    min-width: 0;
+  }
+`;
+
+const StyledButton = styled.button`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0 1rem;
   border-radius: 0.5rem;
   font-size: 0.875rem;
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-
-  &.primary {
-    background-color: #3B82F6;
-    color: white;
-    border: none;
-
-    &:hover {
-      background-color: #2563EB;
-    }
+  justify-content: center;
+  height: 2.5rem;
+  box-sizing: border-box;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  font-weight: 500;
+  @media (max-width: 1088px) {
+    width: 100%;
+    margin-top: 0.5rem;
   }
-
-  &.secondary {
-    background-color: white;
-    color: #374151;
-    border: 1px solid #E5E7EB;
-
-    &:hover {
-      background-color: #F9FAFB;
-    }
-  }
-`;
-
-const SearchBar = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-`;
-
-const SearchInput = styled.input`
-  flex: 1;
-  padding: 0.5rem 1rem;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-
-  &:focus {
-    outline: none;
-    border-color: #3B82F6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-  }
-`;
-
-const FilterButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.5rem;
-  color: #374151;
-  font-size: 0.875rem;
-  cursor: pointer;
-
   &:hover {
-    background-color: #F9FAFB;
+    background-color: #2563EB;
   }
+`;
+
+const TableContainer = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  overflow: hidden;
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  background-color: white;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
 
-const Th = styled.th`
-  text-align: left;
-  padding: 1rem;
+const TableHead = styled.thead`
   background-color: #F9FAFB;
-  font-weight: 500;
-  color: #374151;
   border-bottom: 1px solid #E5E7EB;
 `;
 
-const Td = styled.td`
-  padding: 1rem;
+const TableHeader = styled.th`
+  padding: 1rem 1.5rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0F172A;
+  background-color: #F9FAFB;
   border-bottom: 1px solid #E5E7EB;
-  color: ${props => props.theme.colors.text.primary};
+
+  &:last-child {
+    text-align: right;
+  }
 `;
 
-const Tr = styled.tr`
+const TableBody = styled.tbody`
+  & > tr:not(:last-child) {
+    border-bottom: 1px solid #E5E7EB;
+  }
+`;
+
+const TableRow = styled.tr`
   &:hover {
     background-color: #F9FAFB;
   }
 `;
 
-const StatusBadge = styled.span<{ $status: 'active' | 'inactive' }>`
+const TableCell = styled.td`
+  padding: 1rem 1.5rem;
+  color: #0F172A;
+
+  &:last-child {
+    text-align: right;
+  }
+`;
+
+const UserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const Avatar = styled.img`
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  object-fit: cover;
+`;
+
+const UserDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const UserName = styled.div`
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const UserEmail = styled.div`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const XPBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #00E915;
+  font-weight: 500;
+`;
+
+const PlanBadge = styled.span`
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  background-color: ${props => props.$status === 'active' ? '#D1FAE5' : '#FEE2E2'};
-  color: ${props => props.$status === 'active' ? '#059669' : '#DC2626'};
+  font-size: 0.875rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+`;
+
+const StatusBadge = styled.span`
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  background-color: rgba(0, 233, 21, 0.1);
+  color: #00E915;
+`;
+
+const ActionGroup = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
 `;
 
 const ActionButton = styled.button`
-  padding: 0.25rem;
+  padding: 0.5rem;
+  color: rgba(15, 23, 42, 0.7);
   background: none;
   border: none;
-  color: #6B7280;
   cursor: pointer;
   transition: color 0.2s;
 
   &:hover {
-    color: ${props => props.theme.colors.text.primary};
-  }
-
-  &.delete:hover {
-    color: #DC2626;
+    color: #0F172A;
   }
 `;
 
-interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  role: string;
-  status: 'active' | 'inactive';
-  created_at: string;
-}
+const Modal = styled.div`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+`;
+
+const ModalContent = styled.div`
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 600px;
+  background-color: white;
+  box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.1);
+`;
+
+const ModalHeader = styled.div`
+  padding: 1.5rem;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0F172A;
+`;
+
+const CloseButton = styled.button`
+  color: rgba(15, 23, 42, 0.4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #0F172A;
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 1.5rem;
+  height: calc(100vh - 80px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const ProfileCard = styled.div`
+  background-color: #F9FAFB;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+`;
+
+const ProfileHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const ProfileAvatar = styled.img`
+  width: 4rem;
+  height: 4rem;
+  border-radius: 9999px;
+  object-fit: cover;
+`;
+
+const ProfileInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const ProfileName = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0F172A;
+`;
+
+const ProfileEmail = styled.p`
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const LevelInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+`;
+
+const LevelBadge = styled.span`
+  color: #00E915;
+  font-weight: 500;
+`;
+
+const MedalGroup = styled.div`
+  display: flex;
+  gap: 0.25rem;
+`;
+
+const SectionCard = styled.div`
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+`;
+
+const SectionTitle = styled.h4`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin-bottom: 1rem;
+`;
+
+const ActivityItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #E5E7EB;
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const ActivityContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const ActivityIcon = styled.div`
+  color: #3B82F6;
+`;
+
+const ActivityText = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ActivityTitle = styled.p`
+  color: #0F172A;
+`;
+
+const ActivitySubtitle = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const ActivityTime = styled.span`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
 
 const UserManagementTab: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('users')
-        .select(`
-          id,
-          email,
-          full_name,
-          created_at,
-          user_roles (
-            role
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formattedUsers: User[] = data.map(user => ({
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-        role: user.user_roles?.[0]?.role || 'user',
-        status: 'active' as const,
-        created_at: new Date(user.created_at).toLocaleDateString()
-      }));
-
-      setUsers(formattedUsers);
-    } catch (err) {
-      console.error('Error fetching users:', err);
-      setError('Failed to fetch users');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const filteredUsers = users.filter(user =>
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      setUsers(users.filter(user => user.id !== userId));
-    } catch (err) {
-      console.error('Error deleting user:', err);
-      setError('Failed to delete user');
-    }
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
-
   return (
     <Container>
-      <Header>
-        <Title>User Management</Title>
-        <Actions>
-          <Button className="primary">
-            <FaUserPlus />
-            Add User
-          </Button>
-        </Actions>
-      </Header>
+      {/* Filters and Actions */}
+      <FilterBar>
+        <FilterGroup>
+          <SearchContainer>
+            <StyledSearchInput type="text" placeholder="Search users..." />
+            <SearchIcon />
+          </SearchContainer>
+          <StyledSelect>
+            <option>All Plans</option>
+            <option>Free</option>
+            <option>Pro</option>
+            <option>Enterprise</option>
+          </StyledSelect>
+          <StyledSelect>
+            <option>Activity Level</option>
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </StyledSelect>
+          <StyledSelect>
+            <option>Progress Status</option>
+            <option>Beginner</option>
+            <option>Intermediate</option>
+            <option>Advanced</option>
+          </StyledSelect>
+        </FilterGroup>
+        <StyledButton>
+          <FaPlus />
+          Create User
+        </StyledButton>
+      </FilterBar>
 
-      <SearchBar>
-        <SearchInput
-          type="text"
-          placeholder="Search users..."
-          value={searchTerm}
-          onChange={handleSearch}
-        />
-        <FilterButton>
-          <FaFilter />
-          Filter
-        </FilterButton>
-      </SearchBar>
+      {/* User Table */}
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <tr>
+              <TableHeader>User</TableHeader>
+              <TableHeader>Signup Date</TableHeader>
+              <TableHeader>XP Level</TableHeader>
+              <TableHeader>Plan Type</TableHeader>
+              <TableHeader>Status</TableHeader>
+              <TableHeader>Actions</TableHeader>
+            </tr>
+          </TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell>
+                <UserInfo>
+                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                  <UserDetails>
+                    <UserName>Alex Johnson</UserName>
+                    <UserEmail>alex.j@example.com</UserEmail>
+                  </UserDetails>
+                </UserInfo>
+              </TableCell>
+              <TableCell style={{ color: '#0F172A70' }}>Jan 15, 2025</TableCell>
+              <TableCell>
+                <XPBadge>
+                  <span>2,450 XP</span>
+                  <FaTrophy />
+                </XPBadge>
+              </TableCell>
+              <TableCell>
+                <PlanBadge>Pro</PlanBadge>
+              </TableCell>
+              <TableCell>
+                <StatusBadge>Active</StatusBadge>
+              </TableCell>
+              <TableCell>
+                <ActionGroup>
+                  <ActionButton title="View Details">
+                    <FaEye />
+                  </ActionButton>
+                  <ActionButton title="Impersonate">
+                    <FaUser />
+                  </ActionButton>
+                  <ActionButton title="Reset Password">
+                    <FaKey />
+                  </ActionButton>
+                  <ActionButton title="Ban User">
+                    <FaBan />
+                  </ActionButton>
+                </ActionGroup>
+              </TableCell>
+            </TableRow>
+            {/* More user rows... */}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      <Table>
-        <thead>
-          <tr>
-            <Th>Name</Th>
-            <Th>Email</Th>
-            <Th>Role</Th>
-            <Th>Status</Th>
-            <Th>Created</Th>
-            <Th>Actions</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredUsers.map(user => (
-            <Tr key={user.id}>
-              <Td>{user.full_name}</Td>
-              <Td>{user.email}</Td>
-              <Td>{user.role}</Td>
-              <Td>
-                <StatusBadge $status={user.status}>
-                  {user.status}
-                </StatusBadge>
-              </Td>
-              <Td>{user.created_at}</Td>
-              <Td>
-                <ActionButton>
-                  <FaPen />
-                </ActionButton>
-                <ActionButton 
-                  className="delete"
-                  onClick={() => handleDeleteUser(user.id)}
-                >
-                  <FaTrash />
-                </ActionButton>
-              </Td>
-            </Tr>
-          ))}
-        </tbody>
-      </Table>
+      {/* User Detail Modal (static, hidden by default) */}
+      <Modal>
+        <ModalContent>
+          <ModalHeader>
+            <ModalTitle>User Details</ModalTitle>
+            <CloseButton>
+              <FaTimes />
+            </CloseButton>
+          </ModalHeader>
+          <ModalBody>
+            {/* User Profile */}
+            <ProfileCard>
+              <ProfileHeader>
+                <ProfileAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                <ProfileInfo>
+                  <ProfileName>Alex Johnson</ProfileName>
+                  <ProfileEmail>alex.j@example.com</ProfileEmail>
+                  <LevelInfo>
+                    <LevelBadge>Level 12</LevelBadge>
+                    <MedalGroup>
+                      <FaMedal />
+                      <FaMedal />
+                      <FaMedal />
+                    </MedalGroup>
+                  </LevelInfo>
+                </ProfileInfo>
+              </ProfileHeader>
+            </ProfileCard>
+
+            {/* Activity Log */}
+            <SectionCard>
+              <SectionTitle>Recent Activity</SectionTitle>
+              <ActivityItem>
+                <ActivityContent>
+                  <ActivityIcon>
+                    <FaBookOpen />
+                  </ActivityIcon>
+                  <ActivityText>
+                    <ActivityTitle>Completed "Advanced Role Design"</ActivityTitle>
+                    <ActivitySubtitle>Course Progress: 85%</ActivitySubtitle>
+                  </ActivityText>
+                </ActivityContent>
+                <ActivityTime>2 hours ago</ActivityTime>
+              </ActivityItem>
+              {/* More activity items */}
+            </SectionCard>
+
+            {/* Resources & Downloads */}
+            <SectionCard>
+              <SectionTitle>Resources Downloaded</SectionTitle>
+              <ActivityItem>
+                <ActivityContent>
+                  <ActivityIcon style={{ color: '#EC297B' }}>
+                    <FaFilePdf />
+                  </ActivityIcon>
+                  <ActivityTitle>Role Blueprint Template</ActivityTitle>
+                </ActivityContent>
+                <ActivityTime>Yesterday</ActivityTime>
+              </ActivityItem>
+              {/* More resource items */}
+            </SectionCard>
+
+            {/* Quotes & Roles */}
+            <SectionCard>
+              <SectionTitle>Generated Quotes & Roles</SectionTitle>
+              <ActivityItem>
+                <ActivityContent>
+                  <ActivityIcon style={{ color: '#3B82F6' }}>
+                    <FaFileAlt />
+                  </ActivityIcon>
+                  <ActivityTitle>Senior Product Manager Role</ActivityTitle>
+                </ActivityContent>
+                <ActivityTime>3 days ago</ActivityTime>
+              </ActivityItem>
+              {/* More quote items */}
+            </SectionCard>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </Container>
   );
 };
 
-export default UserManagementTab; 
+export default UserManagementTab;
