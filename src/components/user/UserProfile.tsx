@@ -710,6 +710,32 @@ const SpinningIcon = styled(FiLoader)`
   }
 `;
 
+const XPText = styled.span`
+  color: #00E915;
+  font-weight: 600;
+`;
+
+const ProgressBar = styled.div`
+  height: 1rem;
+  background-color: #F9FAFB;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin: 0.5rem 0;
+`;
+
+const ProgressFill = styled.div<{ $width: number }>`
+  height: 100%;
+  background-color: #00E915;
+  border-radius: 9999px;
+  width: ${props => props.$width}%;
+`;
+
+const ProgressInfo = styled.p`
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
+
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -752,6 +778,11 @@ const StatCard = styled.div`
     padding: 12px;
     gap: 6px;
   }
+`;
+
+const XPProgressCard = styled(StatCard)`
+  grid-column: 1 / -1;
+  margin-bottom: 8px;
 `;
 
 const StatValue = styled.div`
@@ -933,6 +964,9 @@ interface PerformanceStats {
   completed_courses: number;
   total_quizzes: number;
   last_activity: string;
+  current_xp: number;
+  next_level_xp: number;
+  xp_to_next: number;
 }
 
 interface RecentActivity {
@@ -1068,7 +1102,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
     total_courses: 0,
     completed_courses: 0,
     total_quizzes: 0,
-    last_activity: ''
+    last_activity: '',
+    current_xp: 2450,
+    next_level_xp: 3000,
+    xp_to_next: 550
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -1518,7 +1555,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
         total_courses: totalCourses || 0,
         completed_courses: completedCourses || 0,
         total_quizzes: totalQuizzes || 0,
-        last_activity: lastActivity?.created_at || ''
+        last_activity: lastActivity?.created_at || '',
+        current_xp: 2450,
+        next_level_xp: 3000,
+        xp_to_next: 550
       });
     } catch (error) {
       console.error('Error fetching performance stats:', error);
@@ -2058,38 +2098,52 @@ const UserProfile: React.FC<UserProfileProps> = ({ onProfilePictureChange }) => 
           {isLoadingStats ? (
             <LoadingSpinner />
           ) : (
-            <StatsGrid>
-              <StatCard>
-                <StatValue>{performanceStats.total_courses}</StatValue>
-                <StatLabel>
-                  <FiUsers />
-                  Total Courses
-                </StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>{performanceStats.completed_courses}</StatValue>
-                <StatLabel>
-                  <FiUser />
-                  Completed Courses
-                </StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>{performanceStats.total_quizzes}</StatValue>
-                <StatLabel>
-                  <FiShield />
-                  Quizzes Taken
-                </StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>
-                  {performanceStats.last_activity ? new Date(performanceStats.last_activity).toLocaleDateString() : 'N/A'}
-                </StatValue>
-                <StatLabel>
-                  <FiClock />
-                  Last Activity
-                </StatLabel>
-              </StatCard>
-            </StatsGrid>
+            <>
+              <XPProgressCard>
+                <SectionTitle style={{ marginBottom: '0.5rem' }}>
+                  XP Progress
+                </SectionTitle>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <XPText>{performanceStats.current_xp} / {performanceStats.next_level_xp} XP</XPText>
+                </div>
+                <ProgressBar>
+                  <ProgressFill $width={(performanceStats.current_xp / performanceStats.next_level_xp) * 100} />
+                </ProgressBar>
+                <ProgressInfo>{performanceStats.xp_to_next} XP until next level</ProgressInfo>
+              </XPProgressCard>
+              <StatsGrid>
+                <StatCard>
+                  <StatValue>{performanceStats.total_courses}</StatValue>
+                  <StatLabel>
+                    <FiUsers />
+                    Total Courses
+                  </StatLabel>
+                </StatCard>
+                <StatCard>
+                  <StatValue>{performanceStats.completed_courses}</StatValue>
+                  <StatLabel>
+                    <FiUser />
+                    Completed Courses
+                  </StatLabel>
+                </StatCard>
+                <StatCard>
+                  <StatValue>{performanceStats.total_quizzes}</StatValue>
+                  <StatLabel>
+                    <FiShield />
+                    Quizzes Taken
+                  </StatLabel>
+                </StatCard>
+                <StatCard>
+                  <StatValue>
+                    {performanceStats.last_activity ? new Date(performanceStats.last_activity).toLocaleDateString() : 'N/A'}
+                  </StatValue>
+                  <StatLabel>
+                    <FiClock />
+                    Last Activity
+                  </StatLabel>
+                </StatCard>
+              </StatsGrid>
+            </>
           )}
         </Section>
 

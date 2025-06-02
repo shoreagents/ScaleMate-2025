@@ -14,6 +14,11 @@ const FilterBar = styled.div`
   gap: 1rem;
   flex-wrap: wrap;
 
+  @media (max-width: 1301px) {
+    margin-bottom: 2rem;
+    width: 100%;
+  }
+
   @media (max-width: 1088px) {
     flex-direction: column;
     align-items: stretch;
@@ -26,12 +31,83 @@ const FilterGroup = styled.div`
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  flex: 1;
+  width: 100%;
+
+  @media (max-width: 1301px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1rem;
+    width: 100%;
+
+    /* First row: Search and All Plans */
+    & > div:first-child {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    & > select:first-of-type {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    /* Second row: Activity Level and Progress Status */
+    & > select:nth-of-type(2) {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    & > select:last-of-type {
+      grid-column: 2;
+      grid-row: 2;
+    }
+  }
 
   @media (max-width: 1088px) {
-    flex-direction: column;
-    align-items: stretch;
-    width: 100%;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
     gap: 1rem;
+
+    /* Maintain the same 2-row layout */
+    & > div:first-child {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    & > select:first-of-type {
+      grid-column: 2;
+      grid-row: 1;
+    }
+    & > select:nth-of-type(2) {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    & > select:last-of-type {
+      grid-column: 2;
+      grid-row: 2;
+    }
+  }
+
+  @media (max-width: 467px) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+    gap: 0.75rem;
+
+    /* Stack all items vertically */
+    & > div:first-child {
+      grid-column: 1;
+      grid-row: 1;
+    }
+    & > select:first-of-type {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    & > select:nth-of-type(2) {
+      grid-column: 1;
+      grid-row: 3;
+    }
+    & > select:last-of-type {
+      grid-column: 1;
+      grid-row: 4;
+    }
   }
 `;
 
@@ -39,9 +115,18 @@ const SearchContainer = styled.div`
   position: relative;
   width: 16rem;
   min-width: 200px;
+  max-width: 100%;
+
+  @media (max-width: 1301px) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
   @media (max-width: 1088px) {
     width: 100%;
     min-width: 0;
+    max-width: 100%;
   }
 `;
 
@@ -83,9 +168,18 @@ const StyledSelect = styled.select`
   height: 2.5rem;
   box-sizing: border-box;
   min-width: 10rem;
+  max-width: 200px;
+
+  @media (max-width: 1301px) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
   @media (max-width: 1088px) {
     width: 100%;
     min-width: 0;
+    max-width: 100%;
   }
 `;
 
@@ -105,12 +199,52 @@ const StyledButton = styled.button`
   color: white;
   border: none;
   font-weight: 500;
-  @media (max-width: 1088px) {
-    width: 100%;
-    margin-top: 0.5rem;
+
+  @media (max-width: 1301px) {
+    display: none;
   }
+
   &:hover {
     background-color: #2563EB;
+  }
+`;
+
+const FloatingActionButton = styled.button`
+  display: none;
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  padding: 0;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+
+  svg {
+    font-size: 1.25rem;
+  }
+
+  @media (max-width: 1301px) {
+    display: flex;
+  }
+
+  &:hover {
+    background-color: #2563EB;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px -1px rgba(0, 0, 0, 0.1), 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
   }
 `;
 
@@ -119,11 +253,47 @@ const TableContainer = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+  width: 100%;
+
+  @media (max-width: 1301px) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #E5E7EB transparent;
+
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #E5E7EB;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background-color: #D1D5DB;
+    }
+  }
+
+  @media (max-width: 887px) {
+    overflow: visible;
+    background: transparent;
+    border: none;
+  }
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  min-width: 800px;
+
+  @media (max-width: 887px) {
+    display: none;
+  }
 `;
 
 const TableHead = styled.thead`
@@ -398,6 +568,98 @@ const ActivityTime = styled.span`
   color: rgba(15, 23, 42, 0.7);
 `;
 
+const CardContainer = styled.div`
+  display: none;
+
+  @media (max-width: 887px) {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+`;
+
+const UserCard = styled.div`
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+
+  @media (max-width: 379px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
+
+const CardUserInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+
+  @media (max-width: 379px) {
+    width: 100%;
+  }
+`;
+
+const CardStatus = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+
+  @media (max-width: 379px) {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+`;
+
+const CardDetails = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #E5E7EB;
+`;
+
+const DetailItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const DetailLabel = styled.span`
+  font-size: 0.75rem;
+  color: rgba(15, 23, 42, 0.6);
+`;
+
+const DetailValue = styled.span`
+  font-size: 0.875rem;
+  color: #0F172A;
+  font-weight: 500;
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #E5E7EB;
+`;
+
 const UserManagementTab: React.FC = () => {
   return (
     <Container>
@@ -429,7 +691,7 @@ const UserManagementTab: React.FC = () => {
         </FilterGroup>
         <StyledButton>
           <FaPlus />
-          Create User
+          <span>Create User</span>
         </StyledButton>
       </FilterBar>
 
@@ -490,6 +752,53 @@ const UserManagementTab: React.FC = () => {
             {/* More user rows... */}
           </TableBody>
         </Table>
+
+        <CardContainer>
+          <UserCard>
+            <CardHeader>
+              <CardUserInfo>
+                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
+                <UserDetails>
+                  <UserName>Alex Johnson</UserName>
+                  <UserEmail>alex.j@example.com</UserEmail>
+                </UserDetails>
+              </CardUserInfo>
+              <CardStatus>
+                <StatusBadge>Active</StatusBadge>
+                <PlanBadge>Pro</PlanBadge>
+              </CardStatus>
+            </CardHeader>
+            <CardDetails>
+              <DetailItem>
+                <DetailLabel>Signup Date</DetailLabel>
+                <DetailValue>Jan 15, 2025</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>XP Level</DetailLabel>
+                <DetailValue>
+                  <XPBadge>
+                    <span>2,450 XP</span>
+                    <FaTrophy />
+                  </XPBadge>
+                </DetailValue>
+              </DetailItem>
+            </CardDetails>
+            <CardActions>
+              <ActionButton title="View Details">
+                <FaEye />
+              </ActionButton>
+              <ActionButton title="Impersonate">
+                <FaUser />
+              </ActionButton>
+              <ActionButton title="Reset Password">
+                <FaKey />
+              </ActionButton>
+              <ActionButton title="Ban User">
+                <FaBan />
+              </ActionButton>
+            </CardActions>
+          </UserCard>
+        </CardContainer>
       </TableContainer>
 
       {/* User Detail Modal (static, hidden by default) */}
@@ -571,6 +880,11 @@ const UserManagementTab: React.FC = () => {
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      {/* Add FAB at the end of the container */}
+      <FloatingActionButton title="Create User">
+        <FaPlus />
+      </FloatingActionButton>
     </Container>
   );
 };
