@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faPlus, faDownload, faStar as faStarRegular, faTrashCan as faTrashCanRegular, faPen } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faSearch, 
+  faPlus, 
+  faDownload, 
+  faStar as faStarRegular, 
+  faTrashCan as faTrashCanRegular, 
+  faPen,
+  faTimes,
+  faStar
+} from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarRegularRegular } from '@fortawesome/free-regular-svg-icons';
 import { faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
 
@@ -414,19 +423,366 @@ const ActionButton = styled.button`
   }
 `;
 
+const ExportModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ExportModalContent = styled.div`
+  width: 440px;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+`;
+
+const CloseModalButton = styled.button`
+  color: rgba(15, 23, 42, 0.4);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #0F172A;
+  }
+`;
+
+const ModalForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const FormLabel = styled.label`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const FormSelect = styled.select`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #0F172A;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const ToggleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ToggleButton = styled.button<{ $isActive: boolean }>`
+  width: 2.75rem;
+  height: 1.5rem;
+  background-color: ${props => props.$isActive ? '#3B82F6' : '#F1F5F9'};
+  border: 1px solid #E5E7EB;
+  border-radius: 9999px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s;
+`;
+
+const ToggleKnob = styled.span<{ $isActive: boolean }>`
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  transform: ${props => props.$isActive ? 'translateX(1.25rem)' : 'translateX(0)'};
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+`;
+
+const CheckboxList = styled.div`
+  max-height: 10rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+
+  &::-webkit-scrollbar {
+    width: 0.375rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #F1F5F9;
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 9999px;
+  }
+`;
+
+const CheckboxItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const Checkbox = styled.input`
+  accent-color: #3B82F6;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.25rem;
+`;
+
+const CheckboxLabel = styled.label`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const FeaturedTag = styled.span`
+  padding: 0.25rem 0.5rem;
+  background-color: rgba(236, 41, 123, 0.1);
+  color: #EC297B;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+`;
+
+const RadioGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+`;
+
+const RadioLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #0F172A;
+  cursor: pointer;
+`;
+
+const RadioInput = styled.input`
+  accent-color: #3B82F6;
+`;
+
+const ExportModalButton = styled.button`
+  width: 100%;
+  background-color: #3B82F6;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2563EB;
+  }
+`;
+
+const Avatar = styled.img`
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  margin-right: 0.75rem;
+
+  &.agent-avatar {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: 0.5rem;
+  }
+`;
+
+const Tag = styled.span<{ bgColor?: string; textColor?: string }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background-color: ${props => props.bgColor || 'rgba(0, 152, 255, 0.1)'};
+  color: ${props => props.textColor || '#0098FF'};
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+`;
+
+const CardSummary = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const CardNameEmailContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const CardName = styled.span`
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const CardEmail = styled.span`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const DetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const DetailLabel = styled.span`
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const DetailValue = styled.span`
+  color: rgba(15, 23, 42, 0.7);
+  text-align: right;
+`;
+
+interface Role {
+  id: string;
+  name: string;
+  isFeatured: boolean;
+}
+
+interface ExportFormData {
+  filterBy: string;
+  includeFeaturedOnly: boolean;
+  selectedRoles: string[];
+  exportFormat: 'csv' | 'pdf';
+}
+
 const RolesBlueprintTab: React.FC = () => {
-  // Example data (replace with real data as needed)
-  const exampleRole = {
-    title: 'Senior Product Manager',
-    department: 'Product',
-    featured: true,
-    createdBy: {
-      email: 'michael.s@example.com',
-      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
-    },
-    date: 'Mar 15, 2025',
-    status: 'Active',
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportFormData, setExportFormData] = useState<ExportFormData>({
+    filterBy: 'All Departments',
+    includeFeaturedOnly: false,
+    selectedRoles: [],
+    exportFormat: 'csv'
+  });
+
+  const exampleRoles: Role[] = [
+    { id: 'role1', name: 'Senior Product Manager', isFeatured: true },
+    { id: 'role2', name: 'Frontend Engineer', isFeatured: false },
+    { id: 'role3', name: 'UX Designer', isFeatured: false },
+    { id: 'role4', name: 'DevOps Specialist', isFeatured: false },
+    { id: 'role5', name: 'QA Lead', isFeatured: false }
+  ];
+
+  const currentRole = exampleRoles[0];
+
+  const handleOpenExportModal = () => {
+    setIsExportModalOpen(true);
   };
+
+  const handleCloseExportModal = () => {
+    setIsExportModalOpen(false);
+  };
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setExportFormData(prev => ({
+      ...prev,
+      filterBy: e.target.value
+    }));
+  };
+
+  const handleToggleFeatured = () => {
+    setExportFormData(prev => ({
+      ...prev,
+      includeFeaturedOnly: !prev.includeFeaturedOnly
+    }));
+  };
+
+  const handleRoleToggle = (roleId: string) => {
+    setExportFormData(prev => ({
+      ...prev,
+      selectedRoles: prev.selectedRoles.includes(roleId)
+        ? prev.selectedRoles.filter(id => id !== roleId)
+        : [...prev.selectedRoles, roleId]
+    }));
+  };
+
+  const handleFormatChange = (format: 'csv' | 'pdf') => {
+    setExportFormData(prev => ({
+      ...prev,
+      exportFormat: format
+    }));
+  };
+
+  const handleExportSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Exporting roles:', exportFormData);
+    handleCloseExportModal();
+  };
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isExportModalOpen) {
+        handleCloseExportModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isExportModalOpen]);
 
   return (
     <TabContainer>
@@ -448,13 +804,12 @@ const RolesBlueprintTab: React.FC = () => {
             <FontAwesomeIcon icon={faPlus} />
             Add to Templates
           </AddButton>
-          <ExportButton primary>
+          <ExportButton primary onClick={handleOpenExportModal}>
             <FontAwesomeIcon icon={faDownload} />
             Export Roles
           </ExportButton>
         </DesktopActionButtonsGroup>
       </FilterBarContainer>
-      {/* Desktop/Tablet Table */}
       <TableWrapper id="roles-table">
         <StyledTable>
           <TableHeadStyled>
@@ -470,80 +825,163 @@ const RolesBlueprintTab: React.FC = () => {
           <TableBodyStyled>
             <TableRowStyled>
               <TableCellStyled>
-                <span className="font-medium main-text">{exampleRole.title}</span>
-                {exampleRole.featured && (
-                  <span style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', background: 'rgba(236, 41, 123, 0.1)', color: '#EC297B', fontSize: '0.75rem', borderRadius: '9999px', fontWeight: 500 }}>Featured</span>
+                <span className="font-medium main-text">{currentRole.name}</span>
+                {currentRole.isFeatured && (
+                  <FeaturedBadge style={{ marginLeft: '0.5rem' }}>Featured</FeaturedBadge>
                 )}
               </TableCellStyled>
-              <TableCellStyled>{exampleRole.department}</TableCellStyled>
+              <TableCellStyled>Product</TableCellStyled>
               <TableCellStyled>
-                <UserCellContainer>
-                  <AvatarStyled src={exampleRole.createdBy.avatarUrl} alt="User" />
-                  <span>{exampleRole.createdBy.email}</span>
-                </UserCellContainer>
+                <UserCell>
+                  <AvatarStyled src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" />
+                  <span>michael.s@example.com</span>
+                </UserCell>
               </TableCellStyled>
-              <TableCellStyled>{exampleRole.date}</TableCellStyled>
+              <TableCellStyled>Mar 15, 2025</TableCellStyled>
               <TableCellStyled>
-                <span style={{ padding: '0.25rem 0.5rem', background: 'rgba(0, 233, 21, 0.1)', color: '#00E915', borderRadius: '9999px', fontSize: '0.9em', fontWeight: 500 }}>{exampleRole.status}</span>
+                <StatusBadge>Active</StatusBadge>
               </TableCellStyled>
-              <TableCellStyled>
-                <ActionButtonsContainer>
-                  <ActionButtonStyled title="Favorite">
+              <TableCellStyled className="text-right">
+                <ActionGroup>
+                  <ActionButton title="Favorite">
                     <FontAwesomeIcon icon={faStarRegular} />
-                  </ActionButtonStyled>
-                  <ActionButtonStyled className="hover-primary" title="Edit">
+                  </ActionButton>
+                  <ActionButton title="Edit" data-action="edit">
                     <FontAwesomeIcon icon={faPen} />
-                  </ActionButtonStyled>
-                  <ActionButtonStyled className="hover-danger" title="Delete">
+                  </ActionButton>
+                  <ActionButton title="Delete" data-action="delete">
                     <FontAwesomeIcon icon={faTrashCanRegular} />
-                  </ActionButtonStyled>
-                </ActionButtonsContainer>
+                  </ActionButton>
+                </ActionGroup>
               </TableCellStyled>
             </TableRowStyled>
-            {/* More role rows can be added here */}
           </TableBodyStyled>
         </StyledTable>
       </TableWrapper>
-      {/* Mobile Card View */}
       <CardListContainer>
         <RoleCardStyled>
           <CardHeaderStyled>
-            <CardTitleGroup>
-              <CardRoleTitle>{exampleRole.title}</CardRoleTitle>
-              <CardDate>{exampleRole.date}</CardDate>
-            </CardTitleGroup>
+            <CardSummary>
+              <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt={currentRole.name} />
+              <CardNameEmailContainer>
+                <CardName>{currentRole.name}</CardName>
+                <CardEmail>Product</CardEmail>
+              </CardNameEmailContainer>
+            </CardSummary>
+            {currentRole.isFeatured && (
+              <Tag bgColor="rgba(236, 41, 123, 0.1)" textColor="#EC297B">
+                <FontAwesomeIcon icon={faStarSolid} style={{ fontSize: '0.75rem' }} /> Featured
+              </Tag>
+            )}
           </CardHeaderStyled>
           <CardContentStyled>
-            <CardDetailRow>
-              <CardLabelStyled>Department:</CardLabelStyled>
-              <CardValueStyled>{exampleRole.department}</CardValueStyled>
-            </CardDetailRow>
-            <CardDetailRow className="created-by-row">
-              <CardLabelStyled>Created By:</CardLabelStyled>
-              <CardUserDetailStyled>
-                <AvatarStyled src={exampleRole.createdBy.avatarUrl} alt="User" />
-                <CardValueStyled>{exampleRole.createdBy.email}</CardValueStyled>
-              </CardUserDetailStyled>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabelStyled>Status:</CardLabelStyled>
-              <CardValueStyled>{exampleRole.status}</CardValueStyled>
-            </CardDetailRow>
-            <CardActionsStyled>
-              <ActionButtonStyled title="Favorite">
-                <FontAwesomeIcon icon={faStarRegular} />
-              </ActionButtonStyled>
-              <ActionButtonStyled className="hover-primary" title="Edit">
-                <FontAwesomeIcon icon={faPen} />
-              </ActionButtonStyled>
-              <ActionButtonStyled className="hover-danger" title="Delete">
-                <FontAwesomeIcon icon={faTrashCanRegular} />
-              </ActionButtonStyled>
-            </CardActionsStyled>
+            <DetailRow>
+              <DetailLabel>Created By:</DetailLabel>
+              <DetailValue>
+                <div className="agent-container">
+                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Agent" className="agent-avatar" />
+                  <span>michael.s@example.com</span>
+                </div>
+              </DetailValue>
+            </DetailRow>
+            <DetailRow>
+              <DetailLabel>Date:</DetailLabel>
+              <DetailValue>Mar 15, 2025</DetailValue>
+            </DetailRow>
+            <DetailRow>
+              <DetailLabel>Status:</DetailLabel>
+              <DetailValue>
+                <Tag bgColor="rgba(0, 233, 21, 0.1)" textColor="#00E915">Active</Tag>
+              </DetailValue>
+            </DetailRow>
           </CardContentStyled>
         </RoleCardStyled>
-        {/* More cards can be added here */}
       </CardListContainer>
+      <ExportModalOverlay $isOpen={isExportModalOpen} onClick={handleCloseExportModal}>
+        <ExportModalContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>Export Roles</ModalTitle>
+            <CloseModalButton onClick={handleCloseExportModal}>
+              <FontAwesomeIcon icon={faTimes} />
+            </CloseModalButton>
+          </ModalHeader>
+          <ModalForm onSubmit={handleExportSubmit}>
+            <FormGroup>
+              <FormLabel>Filter By</FormLabel>
+              <FormSelect value={exportFormData.filterBy} onChange={handleFilterChange}>
+                <option>All Departments</option>
+                <option>Engineering</option>
+                <option>Product</option>
+                <option>Design</option>
+                <option>By User</option>
+              </FormSelect>
+            </FormGroup>
+
+            <ToggleContainer>
+              <FormLabel>Include Featured Roles Only</FormLabel>
+              <ToggleButton
+                type="button"
+                $isActive={exportFormData.includeFeaturedOnly}
+                onClick={handleToggleFeatured}
+              >
+                <ToggleKnob $isActive={exportFormData.includeFeaturedOnly} />
+              </ToggleButton>
+            </ToggleContainer>
+
+            <FormGroup>
+              <FormLabel>Select Roles</FormLabel>
+              <CheckboxList>
+                {exampleRoles.map(role => (
+                  <CheckboxItem key={role.id}>
+                    <Checkbox
+                      type="checkbox"
+                      id={role.id}
+                      checked={exportFormData.selectedRoles.includes(role.id)}
+                      onChange={() => handleRoleToggle(role.id)}
+                    />
+                    <CheckboxLabel htmlFor={role.id}>
+                      {role.name}
+                      {role.isFeatured && (
+                        <FeaturedTag>
+                          <FontAwesomeIcon icon={faStar} style={{ fontSize: '0.625rem' }} /> Featured
+                        </FeaturedTag>
+                      )}
+                    </CheckboxLabel>
+                  </CheckboxItem>
+                ))}
+              </CheckboxList>
+            </FormGroup>
+
+            <FormGroup>
+              <FormLabel>Export Format</FormLabel>
+              <RadioGroup>
+                <RadioLabel>
+                  <RadioInput
+                    type="radio"
+                    name="exportFormat"
+                    checked={exportFormData.exportFormat === 'csv'}
+                    onChange={() => handleFormatChange('csv')}
+                  />
+                  CSV
+                </RadioLabel>
+                <RadioLabel>
+                  <RadioInput
+                    type="radio"
+                    name="exportFormat"
+                    checked={exportFormData.exportFormat === 'pdf'}
+                    onChange={() => handleFormatChange('pdf')}
+                  />
+                  PDF
+                </RadioLabel>
+              </RadioGroup>
+            </FormGroup>
+
+            <ExportModalButton type="submit">
+              Export Roles
+            </ExportModalButton>
+          </ModalForm>
+        </ExportModalContent>
+      </ExportModalOverlay>
     </TabContainer>
   );
 };
