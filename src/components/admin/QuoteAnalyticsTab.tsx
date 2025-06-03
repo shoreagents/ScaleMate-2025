@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faDownload, faCalendarDays, faEye, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faDownload, faCalendarDays, faEye, faFileLines, faFileArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { faFileLines as farFileLines } from '@fortawesome/free-regular-svg-icons';
 
 // General container for the tab content
@@ -426,6 +426,100 @@ const CardActionsStyled = styled.div`
   padding-top: 0.75rem;
 `;
 
+const ExportModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ExportModalContent = styled.div`
+  width: 440px;
+  background-color: #F9FAFB;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ExportIconContainer = styled.div`
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  background-color: #EEF2FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+
+  svg {
+    font-size: 1.75rem;
+    color: #6366F1;
+  }
+`;
+
+const ExportModalTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  text-align: center;
+  margin-bottom: 0.5rem;
+`;
+
+const ExportModalDescription = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  text-align: center;
+  margin-bottom: 1.5rem;
+`;
+
+const ExportModalButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+`;
+
+const CancelButton = styled.button`
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  color: rgba(15, 23, 42, 0.8);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #F1F5F9;
+  }
+`;
+
+const DownloadButton = styled.button`
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background-color: #3B82F6;
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2563EB;
+  }
+`;
 
 const QuoteAnalyticsTab: React.FC = () => {
   const exampleQuote = {
@@ -441,6 +535,33 @@ const QuoteAnalyticsTab: React.FC = () => {
       avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg',
     },
   };
+
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  const handleOpenExportModal = () => {
+    setIsExportModalOpen(true);
+  };
+
+  const handleCloseExportModal = () => {
+    setIsExportModalOpen(false);
+  };
+
+  const handleExportCSV = () => {
+    // TODO: Implement CSV export logic
+    console.log('Exporting CSV...');
+    handleCloseExportModal();
+  };
+
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isExportModalOpen) {
+        handleCloseExportModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isExportModalOpen]);
 
   return (
     <TabContainer>
@@ -476,7 +597,7 @@ const QuoteAnalyticsTab: React.FC = () => {
             </DateInputGroup>
           </DatesRow>
           <ExportButtonWrapper>
-            <ExportButton>
+            <ExportButton onClick={handleOpenExportModal}>
               <FontAwesomeIcon icon={faDownload} />
               Export CSV
             </ExportButton>
@@ -570,6 +691,25 @@ const QuoteAnalyticsTab: React.FC = () => {
         {/* Add more cards as needed */}
       </CardListContainer>
 
+      <ExportModalOverlay $isOpen={isExportModalOpen} onClick={handleCloseExportModal}>
+        <ExportModalContent onClick={e => e.stopPropagation()}>
+          <ExportIconContainer>
+            <FontAwesomeIcon icon={faFileArrowDown} />
+          </ExportIconContainer>
+          <ExportModalTitle>Export All Quote Records?</ExportModalTitle>
+          <ExportModalDescription>
+            This will download a CSV of all quotes including role name, date, cost, and region.
+          </ExportModalDescription>
+          <ExportModalButtons>
+            <CancelButton onClick={handleCloseExportModal}>
+              Cancel
+            </CancelButton>
+            <DownloadButton onClick={handleExportCSV}>
+              Download CSV
+            </DownloadButton>
+          </ExportModalButtons>
+        </ExportModalContent>
+      </ExportModalOverlay>
     </TabContainer>
   );
 };

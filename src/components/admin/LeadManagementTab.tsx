@@ -10,7 +10,8 @@ import {
   faChevronDown,
   faChevronUp,
   faTimes,
-  faArrowRight
+  faArrowRight,
+  faFileArrowDown
 } from '@fortawesome/free-solid-svg-icons';
 
 const Container = styled.div`
@@ -292,7 +293,7 @@ const FloatingAddButton = styled.button`
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     font-size: 1.5rem; /* For the + icon */
     cursor: pointer;
-    z-index: 1000;
+    z-index: 1000; /* Current z-index */
     transition: background-color 0.2s, transform 0.2s;
 
     &:hover {
@@ -702,9 +703,322 @@ const NoteTextarea = styled.textarea`
   }
 `;
 
+// Add these styled components after the existing styled components
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000; /* Increased from 50 to 2000 to be above FAB */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ModalContent = styled.div`
+  width: 440px;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001; /* Increased from 50 to 2001 to be above overlay */
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+`;
+
+const CloseModalButton = styled.button`
+  color: rgba(15, 23, 42, 0.4);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #0F172A;
+  }
+`;
+
+const ModalForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const FormLabel = styled.label`
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #0F172A;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const FormSelect = styled.select`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #0F172A;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const FormTextarea = styled.textarea`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #0F172A;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  resize: none;
+  min-height: 6rem;
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const TagsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+`;
+
+const TagButton = styled.button<{ $isSelected: boolean; $tagType: 'hot' | 'qualified' | 'quiz-ready' }>`
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #E5E7EB;
+  transition: all 0.2s;
+  cursor: pointer;
+
+  ${props => {
+    switch (props.$tagType) {
+      case 'hot':
+        return `
+          color: #00E915;
+          background-color: ${props.$isSelected ? 'rgba(0, 233, 21, 0.1)' : 'white'};
+          border-color: ${props.$isSelected ? '#00E915' : '#E5E7EB'};
+          &:hover {
+            background-color: rgba(0, 233, 21, 0.1);
+          }
+          &:focus {
+            box-shadow: 0 0 0 2px #00E915;
+          }
+        `;
+      case 'qualified':
+        return `
+          color: #0098FF;
+          background-color: ${props.$isSelected ? 'rgba(0, 152, 255, 0.1)' : 'white'};
+          border-color: ${props.$isSelected ? '#0098FF' : '#E5E7EB'};
+          &:hover {
+            background-color: rgba(0, 152, 255, 0.1);
+          }
+          &:focus {
+            box-shadow: 0 0 0 2px #0098FF;
+          }
+        `;
+      case 'quiz-ready':
+        return `
+          color: #3B82F6;
+          background-color: ${props.$isSelected ? 'rgba(59, 130, 246, 0.1)' : 'white'};
+          border-color: ${props.$isSelected ? '#3B82F6' : '#E5E7EB'};
+          &:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+          }
+          &:focus {
+            box-shadow: 0 0 0 2px #3B82F6;
+          }
+        `;
+    }
+  }}
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  background-color: #3B82F6;
+  color: white;
+  font-weight: 600;
+  font-size: 1.125rem;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2563EB;
+  }
+`;
+
+// Add these types before the component
+type TagType = 'hot' | 'qualified' | 'quiz-ready';
+
+interface FormData {
+  fullName: string;
+  email: string;
+  source: string;
+  tags: TagType[];
+  assignedTo: string;
+  notes: string;
+}
+
+const ExportModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ExportModalContent = styled.div`
+  width: 440px;
+  background-color: #F9FAFB;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ExportIconContainer = styled.div`
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  background-color: #EEF2FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+
+  svg {
+    font-size: 1.75rem;
+    color: #6366F1;
+  }
+`;
+
+const ExportModalTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  text-align: center;
+  margin-bottom: 0.5rem;
+`;
+
+const ExportModalDescription = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  text-align: center;
+  margin-bottom: 1.5rem;
+`;
+
+const ExportModalButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+`;
+
+const CancelButton = styled.button`
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  border: 1px solid #E5E7EB;
+  color: rgba(15, 23, 42, 0.8);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #F1F5F9;
+  }
+`;
+
+const DownloadButton = styled.button`
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background-color: #3B82F6;
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2563EB;
+  }
+`;
+
 const LeadManagementTab = () => {
   const [selectedLead, setSelectedLead] = useState<any>(null); // Can be a specific Lead type
   const [isDetailSidebarOpen, setIsDetailSidebarOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [formData, setFormData] = useState<FormData>({
+    fullName: '',
+    email: '',
+    source: 'Quote Tool',
+    tags: [],
+    assignedTo: 'Sarah M.',
+    notes: ''
+  });
 
   // Example lead data (taken from the single row in your HTML)
   const exampleLead = {
@@ -740,6 +1054,75 @@ const LeadManagementTab = () => {
     // Optionally, clear selectedLead after transition: setTimeout(() => setSelectedLead(null), 300);
   };
 
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleTagToggle = (tag: TagType) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter(t => t !== tag)
+        : [...prev.tags, tag]
+    }));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Implement lead creation logic
+    console.log('Form submitted:', formData);
+    handleCloseModal();
+  };
+
+  const handleOpenExportModal = () => {
+    setIsExportModalOpen(true);
+  };
+
+  const handleCloseExportModal = () => {
+    setIsExportModalOpen(false);
+  };
+
+  const handleExportCSV = () => {
+    // TODO: Implement CSV export logic
+    console.log('Exporting leads CSV...');
+    handleCloseExportModal();
+  };
+
+  // Add useEffect for keyboard events
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        handleCloseModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isModalOpen]);
+
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isExportModalOpen) {
+        handleCloseExportModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isExportModalOpen]);
+
   return (
     <Container>
       <FiltersContainer id="lead-filters">
@@ -769,11 +1152,11 @@ const LeadManagementTab = () => {
             <DateInput type="date" />
           </DateContainer>
           <ButtonGroup>
-            <StyledButton> {/* Export CSV Button */}
+            <StyledButton onClick={handleOpenExportModal}>
               <FontAwesomeIcon icon={faDownload} />
               Export CSV
             </StyledButton>
-            <StyledButton $primary $isFabHidden> {/* Inline Add Lead Button - hidden on mobile */}
+            <StyledButton $primary $isFabHidden onClick={handleOpenModal}>
               <FontAwesomeIcon icon={faPlus} />
               Add Lead
             </StyledButton>
@@ -872,7 +1255,7 @@ const LeadManagementTab = () => {
         </LeadCard>
       </CardListContainer>
 
-      <FloatingAddButton>
+      <FloatingAddButton onClick={handleOpenModal}>
         <FontAwesomeIcon icon={faPlus} />
       </FloatingAddButton>
 
@@ -929,13 +1312,134 @@ const LeadManagementTab = () => {
               </NotesContainer>
               <div style={{marginTop: '1rem'}}>
                 <NoteTextarea placeholder="Add a note..." />
-  </div>
+              </div>
             </InfoCard>
           </SidebarContentWrapper>
         </DetailSidebarAside>
       )}
+
+      {/* Add Lead Modal */}
+      <ModalOverlay $isOpen={isModalOpen} onClick={handleCloseModal}>
+        <ModalContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>Add New Lead</ModalTitle>
+            <CloseModalButton onClick={handleCloseModal}>
+              <FontAwesomeIcon icon={faTimes} />
+            </CloseModalButton>
+          </ModalHeader>
+          <ModalForm onSubmit={handleSubmit}>
+            <FormGroup>
+              <FormLabel>Full Name</FormLabel>
+              <FormInput
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleInputChange}
+                placeholder="Enter full name"
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Email Address</FormLabel>
+              <FormInput
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="example@email.com"
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Source</FormLabel>
+              <FormSelect
+                name="source"
+                value={formData.source}
+                onChange={handleInputChange}
+              >
+                <option>Quote Tool</option>
+                <option>Contact Form</option>
+                <option>Quiz</option>
+              </FormSelect>
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Tags</FormLabel>
+              <TagsContainer>
+                <TagButton
+                  type="button"
+                  $tagType="hot"
+                  $isSelected={formData.tags.includes('hot')}
+                  onClick={() => handleTagToggle('hot')}
+                >
+                  Hot
+                </TagButton>
+                <TagButton
+                  type="button"
+                  $tagType="qualified"
+                  $isSelected={formData.tags.includes('qualified')}
+                  onClick={() => handleTagToggle('qualified')}
+                >
+                  Qualified
+                </TagButton>
+                <TagButton
+                  type="button"
+                  $tagType="quiz-ready"
+                  $isSelected={formData.tags.includes('quiz-ready')}
+                  onClick={() => handleTagToggle('quiz-ready')}
+                >
+                  Quiz-Ready
+                </TagButton>
+              </TagsContainer>
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Assigned To</FormLabel>
+              <FormSelect
+                name="assignedTo"
+                value={formData.assignedTo}
+                onChange={handleInputChange}
+              >
+                <option>Sarah M.</option>
+                <option>Mark D.</option>
+                <option>Julia R.</option>
+                <option>Admin Team</option>
+              </FormSelect>
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Notes</FormLabel>
+              <FormTextarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleInputChange}
+                placeholder="Add notes or context..."
+                rows={3}
+              />
+            </FormGroup>
+            <SubmitButton type="submit">Save Lead</SubmitButton>
+          </ModalForm>
+        </ModalContent>
+      </ModalOverlay>
+
+      <ExportModalOverlay $isOpen={isExportModalOpen} onClick={handleCloseExportModal}>
+        <ExportModalContent onClick={e => e.stopPropagation()}>
+          <ExportIconContainer>
+            <FontAwesomeIcon icon={faFileArrowDown} />
+          </ExportIconContainer>
+          <ExportModalTitle>Export All Lead Records?</ExportModalTitle>
+          <ExportModalDescription>
+            This will download a CSV of all leads including name, email, status, and assigned roles.
+          </ExportModalDescription>
+          <ExportModalButtons>
+            <CancelButton onClick={handleCloseExportModal}>
+              Cancel
+            </CancelButton>
+            <DownloadButton onClick={handleExportCSV}>
+              Download CSV
+            </DownloadButton>
+          </ExportModalButtons>
+        </ExportModalContent>
+      </ExportModalOverlay>
     </Container>
-);
+  );
 };
 
 export default LeadManagementTab; 

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaSearch, FaPlus, FaTrophy, FaEye, FaUser, FaKey, FaBan, FaTimes, FaBookOpen, FaFilePdf, FaFileAlt, FaMedal } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaTrophy, FaEye, FaUser, FaKey, FaBan, FaTimes, FaBookOpen, FaFilePdf, FaFileAlt, FaMedal, FaUserPlus } from 'react-icons/fa';
 
 const Container = styled.div`
   padding: 1.5rem;
@@ -408,43 +408,49 @@ const ActionButton = styled.button`
   }
 `;
 
-const Modal = styled.div`
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: none;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
 `;
 
 const ModalContent = styled.div`
-  position: absolute;
-  right: 0;
-  top: 0;
-  height: 100%;
-  width: 600px;
+  width: 440px;
   background-color: white;
-  box-shadow: -4px 0 6px -1px rgba(0, 0, 0, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
 `;
 
 const ModalHeader = styled.div`
-  padding: 1.5rem;
-  border-bottom: 1px solid #E5E7EB;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
 `;
 
-const ModalTitle = styled.h2`
+const ModalTitle = styled.h3`
   font-size: 1.25rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #0F172A;
 `;
 
-const CloseButton = styled.button`
+const CloseModalButton = styled.button`
   color: rgba(15, 23, 42, 0.4);
+  font-size: 1.5rem;
   background: none;
   border: none;
+  padding: 0.25rem;
   cursor: pointer;
-  padding: 0.5rem;
   transition: color 0.2s;
 
   &:hover {
@@ -452,120 +458,144 @@ const CloseButton = styled.button`
   }
 `;
 
-const ModalBody = styled.div`
-  padding: 1.5rem;
-  height: calc(100vh - 80px);
-  overflow-y: auto;
+const ModalForm = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 `;
 
-const ProfileCard = styled.div`
-  background-color: #F9FAFB;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-`;
-
-const ProfileHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const ProfileAvatar = styled.img`
-  width: 4rem;
-  height: 4rem;
-  border-radius: 9999px;
-  object-fit: cover;
-`;
-
-const ProfileInfo = styled.div`
+const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 `;
 
-const ProfileName = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #0F172A;
-`;
-
-const ProfileEmail = styled.p`
-  color: rgba(15, 23, 42, 0.7);
-`;
-
-const LevelInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-`;
-
-const LevelBadge = styled.span`
-  color: #00E915;
+const FormLabel = styled.label`
+  display: block;
+  font-size: 0.875rem;
   font-weight: 500;
-`;
-
-const MedalGroup = styled.div`
-  display: flex;
-  gap: 0.25rem;
-`;
-
-const SectionCard = styled.div`
-  background-color: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-`;
-
-const SectionTitle = styled.h4`
-  font-size: 1.125rem;
-  font-weight: 600;
   color: #0F172A;
-  margin-bottom: 1rem;
 `;
 
-const ActivityItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #E5E7EB;
+const FormInput = styled.input`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #0F172A;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
 
-  &:last-child {
-    border-bottom: none;
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+
+  &:disabled {
+    background-color: #F9FAFB;
+    cursor: not-allowed;
   }
 `;
 
-const ActivityContent = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+const FormSelect = styled.select`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #0F172A;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
 `;
 
-const ActivityIcon = styled.div`
-  color: #3B82F6;
-`;
-
-const ActivityText = styled.div`
+const RolePlanContainer = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    gap: 1rem;
+  }
 `;
 
-const ActivityTitle = styled.p`
-  color: #0F172A;
+const RolePlanGroup = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 `;
 
-const ActivitySubtitle = styled.p`
-  font-size: 0.875rem;
-  color: rgba(15, 23, 42, 0.7);
+const PasswordBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 `;
 
-const ActivityTime = styled.span`
-  font-size: 0.875rem;
-  color: rgba(15, 23, 42, 0.7);
+const PasswordHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const AutoGenLabel = styled.span`
+  font-size: 0.75rem;
+  color: rgba(15, 23, 42, 0.6);
+`;
+
+const ToggleButton = styled.button<{ $isActive: boolean }>`
+  position: relative;
+  width: 2.5rem;
+  height: 1.5rem;
+  display: flex;
+  align-items: center;
+  background-color: #F1F5F9;
+  border-radius: 9999px;
+  transition: all 0.2s;
+  padding: 0.125rem;
+  cursor: pointer;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0.125rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background-color: ${props => props.$isActive ? '#3B82F6' : '#E5E7EB'};
+    transform: ${props => props.$isActive ? 'translateX(1.25rem)' : 'translateX(0)'};
+    transition: all 0.2s;
+  }
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  background-color: #3B82F6;
+  color: white;
+  font-weight: 600;
+  font-size: 1.125rem;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  &:hover {
+    background-color: #2563EB;
+  }
 `;
 
 const CardContainer = styled.div`
@@ -654,16 +684,84 @@ const DetailValue = styled.span`
 
 const CardActions = styled.div`
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
   gap: 0.75rem;
   padding-top: 0.5rem;
   border-top: 1px solid #E5E7EB;
+  margin-top: 0.5rem;
 `;
 
+interface CreateUserFormData {
+  name: string;
+  email: string;
+  role: string;
+  plan: string;
+  password: string;
+  autoGeneratePassword: boolean;
+}
+
 const UserManagementTab: React.FC = () => {
+  const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+  const [formData, setFormData] = useState<CreateUserFormData>({
+    name: '',
+    email: '',
+    role: '',
+    plan: '',
+    password: '',
+    autoGeneratePassword: false
+  });
+
+  const handleOpenCreateUserModal = () => {
+    setIsCreateUserModalOpen(true);
+  };
+
+  const handleCloseCreateUserModal = () => {
+    setIsCreateUserModalOpen(false);
+    setFormData({
+      name: '',
+      email: '',
+      role: '',
+      plan: '',
+      password: '',
+      autoGeneratePassword: false
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleToggleAutoGen = () => {
+    setFormData(prev => ({
+      ...prev,
+      autoGeneratePassword: !prev.autoGeneratePassword,
+      password: ''
+    }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Form submitted:', formData);
+    handleCloseCreateUserModal();
+  };
+
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isCreateUserModalOpen) {
+        handleCloseCreateUserModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isCreateUserModalOpen]);
+
   return (
     <Container>
-      {/* Filters and Actions */}
       <FilterBar>
         <FilterGroup>
           <SearchContainer>
@@ -689,13 +787,12 @@ const UserManagementTab: React.FC = () => {
             <option>Advanced</option>
           </StyledSelect>
         </FilterGroup>
-        <StyledButton>
+        <StyledButton onClick={handleOpenCreateUserModal}>
           <FaPlus />
           <span>Create User</span>
         </StyledButton>
       </FilterBar>
 
-      {/* User Table */}
       <TableContainer>
         <Table>
           <TableHead>
@@ -749,7 +846,6 @@ const UserManagementTab: React.FC = () => {
                 </ActionGroup>
               </TableCell>
             </TableRow>
-            {/* More user rows... */}
           </TableBody>
         </Table>
 
@@ -801,90 +897,99 @@ const UserManagementTab: React.FC = () => {
         </CardContainer>
       </TableContainer>
 
-      {/* User Detail Modal (static, hidden by default) */}
-      <Modal>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>User Details</ModalTitle>
-            <CloseButton>
-              <FaTimes />
-            </CloseButton>
-          </ModalHeader>
-          <ModalBody>
-            {/* User Profile */}
-            <ProfileCard>
-              <ProfileHeader>
-                <ProfileAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
-                <ProfileInfo>
-                  <ProfileName>Alex Johnson</ProfileName>
-                  <ProfileEmail>alex.j@example.com</ProfileEmail>
-                  <LevelInfo>
-                    <LevelBadge>Level 12</LevelBadge>
-                    <MedalGroup>
-                      <FaMedal />
-                      <FaMedal />
-                      <FaMedal />
-                    </MedalGroup>
-                  </LevelInfo>
-                </ProfileInfo>
-              </ProfileHeader>
-            </ProfileCard>
-
-            {/* Activity Log */}
-            <SectionCard>
-              <SectionTitle>Recent Activity</SectionTitle>
-              <ActivityItem>
-                <ActivityContent>
-                  <ActivityIcon>
-                    <FaBookOpen />
-                  </ActivityIcon>
-                  <ActivityText>
-                    <ActivityTitle>Completed "Advanced Role Design"</ActivityTitle>
-                    <ActivitySubtitle>Course Progress: 85%</ActivitySubtitle>
-                  </ActivityText>
-                </ActivityContent>
-                <ActivityTime>2 hours ago</ActivityTime>
-              </ActivityItem>
-              {/* More activity items */}
-            </SectionCard>
-
-            {/* Resources & Downloads */}
-            <SectionCard>
-              <SectionTitle>Resources Downloaded</SectionTitle>
-              <ActivityItem>
-                <ActivityContent>
-                  <ActivityIcon style={{ color: '#EC297B' }}>
-                    <FaFilePdf />
-                  </ActivityIcon>
-                  <ActivityTitle>Role Blueprint Template</ActivityTitle>
-                </ActivityContent>
-                <ActivityTime>Yesterday</ActivityTime>
-              </ActivityItem>
-              {/* More resource items */}
-            </SectionCard>
-
-            {/* Quotes & Roles */}
-            <SectionCard>
-              <SectionTitle>Generated Quotes & Roles</SectionTitle>
-              <ActivityItem>
-                <ActivityContent>
-                  <ActivityIcon style={{ color: '#3B82F6' }}>
-                    <FaFileAlt />
-                  </ActivityIcon>
-                  <ActivityTitle>Senior Product Manager Role</ActivityTitle>
-                </ActivityContent>
-                <ActivityTime>3 days ago</ActivityTime>
-              </ActivityItem>
-              {/* More quote items */}
-            </SectionCard>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-
-      {/* Add FAB at the end of the container */}
-      <FloatingActionButton title="Create User">
+      <FloatingActionButton onClick={handleOpenCreateUserModal} title="Create User">
         <FaPlus />
       </FloatingActionButton>
+
+      <ModalOverlay $isOpen={isCreateUserModalOpen} onClick={handleCloseCreateUserModal}>
+        <ModalContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>Create New User</ModalTitle>
+            <CloseModalButton onClick={handleCloseCreateUserModal}>
+              <FaTimes />
+            </CloseModalButton>
+          </ModalHeader>
+          <ModalForm onSubmit={handleSubmit} autoComplete="off">
+            <FormGroup>
+              <FormLabel>Full Name</FormLabel>
+              <FormInput
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter full name"
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Email Address</FormLabel>
+              <FormInput
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                placeholder="example@email.com"
+                required
+              />
+            </FormGroup>
+            <RolePlanContainer>
+              <RolePlanGroup>
+                <FormLabel>Role Type</FormLabel>
+                <FormSelect
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Select Role</option>
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                  <option value="content-manager">Content Manager</option>
+                </FormSelect>
+              </RolePlanGroup>
+              <RolePlanGroup>
+                <FormLabel>Plan Tier</FormLabel>
+                <FormSelect
+                  name="plan"
+                  value={formData.plan}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">Select Plan</option>
+                  <option value="free">Free</option>
+                  <option value="pro">Pro</option>
+                  <option value="custom">Custom</option>
+                </FormSelect>
+              </RolePlanGroup>
+            </RolePlanContainer>
+            <PasswordBlock>
+              <PasswordHeader>
+                <FormLabel>Password</FormLabel>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <AutoGenLabel>Auto-generate</AutoGenLabel>
+                  <ToggleButton
+                    type="button"
+                    $isActive={formData.autoGeneratePassword}
+                    onClick={handleToggleAutoGen}
+                  />
+                </div>
+              </PasswordHeader>
+              <FormInput
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder={formData.autoGeneratePassword ? 'Auto-generated password' : 'Set password (optional)'}
+                disabled={formData.autoGeneratePassword}
+              />
+            </PasswordBlock>
+            <SubmitButton type="submit">
+              <FaUserPlus />
+              <span>Create User</span>
+            </SubmitButton>
+          </ModalForm>
+        </ModalContent>
+      </ModalOverlay>
     </Container>
   );
 };
