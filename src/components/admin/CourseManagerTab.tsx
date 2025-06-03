@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FaSearch, FaPlus, FaUsers, FaBook, FaTrophy, FaPen, FaArchive } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaUsers, FaBook, FaTrophy, FaPen, FaArchive, FaPaperPlane, FaTimes } from 'react-icons/fa';
 
 const Container = styled.div`
   padding: 1.5rem;
@@ -306,7 +306,208 @@ const CenteredFooter = styled(CourseFooter)`
   justify-content: center;
 `;
 
+// Modal styled components
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ModalContent = styled.div`
+  width: 100%;
+  max-width: 32rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
+`;
+
+const ModalHeader = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin-bottom: 0.25rem;
+`;
+
+const ModalSubtitle = styled.p`
+  color: rgba(15, 23, 42, 0.6);
+  font-size: 1rem;
+`;
+
+const CloseModalButton = styled.button`
+  position: absolute;
+  top: 1.25rem;
+  right: 1.5rem;
+  color: rgba(15, 23, 42, 0.4);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #0F172A;
+  }
+`;
+
+const ModalForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const FormLabel = styled.label`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #0F172A;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const CourseTypeButtonGroup = styled.div`
+  display: flex;
+  gap: 1rem;
+`;
+
+const CourseTypeButton = styled.button<{ $selected: boolean }>`
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid ${props => props.$selected ? '#3B82F6' : '#E5E7EB'};
+  background: ${props => props.$selected ? 'rgba(59, 130, 246, 0.1)' : 'white'};
+  color: ${props => props.$selected ? '#3B82F6' : '#0F172A'};
+  font-weight: ${props => props.$selected ? 600 : 400};
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+  box-shadow: ${props => props.$selected ? '0 0 0 2px #3B82F6' : 'none'};
+`;
+
+const ToggleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const ToggleButton = styled.button<{ $isActive: boolean }>`
+  width: 3rem;
+  height: 1.75rem;
+  background-color: ${props => props.$isActive ? '#3B82F6' : '#E5E7EB'};
+  border-radius: 9999px;
+  position: relative;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+`;
+
+const ToggleKnob = styled.span<{ $isActive: boolean }>`
+  position: absolute;
+  left: ${props => props.$isActive ? '1.5rem' : '0.25rem'};
+  top: 0.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  background-color: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  transition: left 0.2s;
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  background-color: #3B82F6;
+  color: white;
+  font-weight: 600;
+  font-size: 1.125rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #2563EB;
+  }
+`;
+
 const CourseManagerTab: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    title: '',
+    type: 'Free',
+    tags: '',
+    xp: '',
+    addModulesLater: true
+  });
+
+  // Modal open/close handlers
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
+  // Keyboard close
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) handleCloseModal();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isModalOpen]);
+
+  // Form handlers
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+  const handleTypeSelect = (type: string) => {
+    setFormData(prev => ({ ...prev, type }));
+  };
+  const handleToggleModules = () => {
+    setFormData(prev => ({ ...prev, addModulesLater: !prev.addModulesLater }));
+  };
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Implement create course logic
+    handleCloseModal();
+  };
+
   return (
     <Container>
       <FiltersContainer>
@@ -321,7 +522,7 @@ const CourseManagerTab: React.FC = () => {
             <option>Premium Courses</option>
           </Select>
         </FilterGroup>
-        <FilterBarButton $primary>
+        <FilterBarButton $primary onClick={handleOpenModal}>
           <FaPlus />
           Create New Course
         </FilterBarButton>
@@ -473,9 +674,90 @@ const CourseManagerTab: React.FC = () => {
         </CourseCard>
       </CoursesGrid>
 
-      <FloatingAddButton>
+      <FloatingAddButton onClick={handleOpenModal}>
         <FaPlus />
       </FloatingAddButton>
+
+      {/* Create Course Modal */}
+      <ModalOverlay $isOpen={isModalOpen} onClick={handleCloseModal}>
+        <ModalContent onClick={e => e.stopPropagation()}>
+          <CloseModalButton onClick={handleCloseModal}>
+            <FaTimes />
+          </CloseModalButton>
+          <ModalHeader>
+            <ModalTitle>Create New Course</ModalTitle>
+            <ModalSubtitle>Quickly scaffold a new course. You can add modules later.</ModalSubtitle>
+          </ModalHeader>
+          <ModalForm onSubmit={handleSubmit}>
+            <FormGroup>
+              <FormLabel>Course Title</FormLabel>
+              <FormInput
+                type="text"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                placeholder="Enter course title"
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Course Type</FormLabel>
+              <CourseTypeButtonGroup>
+                <CourseTypeButton
+                  type="button"
+                  $selected={formData.type === 'Free'}
+                  onClick={() => handleTypeSelect('Free')}
+                >
+                  Free
+                </CourseTypeButton>
+                <CourseTypeButton
+                  type="button"
+                  $selected={formData.type === 'Premium'}
+                  onClick={() => handleTypeSelect('Premium')}
+                >
+                  Premium
+                </CourseTypeButton>
+              </CourseTypeButtonGroup>
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Tag(s)</FormLabel>
+              <FormInput
+                type="text"
+                name="tags"
+                value={formData.tags}
+                onChange={handleInputChange}
+                placeholder="Ex: AI, Delegation"
+              />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>XP Reward</FormLabel>
+              <FormInput
+                type="number"
+                name="xp"
+                value={formData.xp}
+                onChange={handleInputChange}
+                placeholder="e.g. 200"
+                style={{ border: '2px solid #00E915', color: '#0F172A', fontWeight: 600 }}
+              />
+            </FormGroup>
+            <ToggleContainer>
+              <FormLabel>Add Modules Later</FormLabel>
+              <ToggleButton
+                type="button"
+                $isActive={formData.addModulesLater}
+                onClick={handleToggleModules}
+                aria-pressed={formData.addModulesLater}
+              >
+                <ToggleKnob $isActive={formData.addModulesLater} />
+              </ToggleButton>
+            </ToggleContainer>
+            <SubmitButton type="submit">
+              <FaPaperPlane style={{ marginRight: 8 }} />
+              Create Course
+            </SubmitButton>
+          </ModalForm>
+        </ModalContent>
+      </ModalOverlay>
     </Container>
   );
 };
