@@ -9,7 +9,8 @@ import {
   faArrowsUpDown,
   faArchive,
   faCloudUpload,
-  faTimes
+  faTimes,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons';
 
 const Container = styled.div`
@@ -483,7 +484,257 @@ const CardActions = styled.div`
   justify-content: center;
 `;
 
+// Modal styled components
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ModalContent = styled.div`
+  width: 100%;
+  max-width: 35rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+  z-index: 2001;
+  overflow: hidden;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #E5E7EB;
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+`;
+
+const CloseModalButton = styled.button`
+  color: rgba(15, 23, 42, 0.4);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  border-radius: 9999px;
+  &:hover { color: #0F172A; background: #F9FAFB; }
+`;
+
+const ModalForm = styled.form`
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const FormLabel = styled.label`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #0F172A;
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+  background: white;
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const AnswerOptionsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const AnswerOptionRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const CorrectToggle = styled.button<{ $isCorrect: boolean }>`
+  border-radius: 9999px;
+  border: 2px solid ${props => props.$isCorrect ? '#84CC16' : '#E5E7EB'};
+  background: ${props => props.$isCorrect ? '#84CC16' : 'white'};
+  width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:focus { outline: 2px solid #3B82F6; }
+`;
+
+const OptionInput = styled.input`
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  color: #0F172A;
+  background: white;
+  &:focus { border-color: #3B82F6; outline: none; }
+`;
+
+const ScoreInput = styled.input`
+  width: 4.5rem;
+  padding: 0.5rem 0.5rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  color: #0F172A;
+  text-align: right;
+  background: white;
+  &:focus { border-color: #3B82F6; outline: none; }
+`;
+
+const RemoveOptionButton = styled.button<{ $disabled?: boolean }>`
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  background: none;
+  color: #EC297B;
+  border: none;
+  font-size: 1rem;
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  opacity: ${props => props.$disabled ? 0.3 : 1};
+  transition: background 0.2s;
+  &:hover { background: #F9FAFB; }
+`;
+
+const AddOptionButton = styled.button`
+  margin-top: 0.5rem;
+  color: #3B82F6;
+  background: none;
+  border: none;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  &:hover { color: #2563EB; }
+`;
+
+const ModalFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid #E5E7EB;
+  background: #F9FAFB;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  padding: 1rem 1.5rem;
+`;
+
+const CancelButton = styled.button`
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  color: #0F172A;
+  border: 1px solid #E5E7EB;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  &:hover { background-color: #F9FAFB; }
+`;
+
+const SubmitButton = styled.button`
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.5rem;
+  background-color: #3B82F6;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+  &:hover { background-color: #2563EB; }
+`;
+
 const QuizManagerTab: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [questionText, setQuestionText] = React.useState('');
+  const [answerOptions, setAnswerOptions] = React.useState([
+    { text: '', score: '', isCorrect: false },
+    { text: '', score: '', isCorrect: false },
+    { text: '', score: '', isCorrect: false },
+    { text: '', score: '', isCorrect: false }
+  ]);
+  const [segmentTag, setSegmentTag] = React.useState('');
+
+  // Modal open/close handlers
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
+
+  // Keyboard close
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) handleCloseModal();
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isModalOpen]);
+
+  // Answer option handlers
+  const handleOptionTextChange = (idx: number, value: string) => {
+    setAnswerOptions(prev => prev.map((opt, i) => i === idx ? { ...opt, text: value } : opt));
+  };
+  const handleOptionScoreChange = (idx: number, value: string) => {
+    setAnswerOptions(prev => prev.map((opt, i) => i === idx ? { ...opt, score: value } : opt));
+  };
+  const handleAddOption = () => {
+    setAnswerOptions(prev => [...prev, { text: '', score: '', isCorrect: false }]);
+  };
+  const handleRemoveOption = (idx: number) => {
+    if (answerOptions.length > 4) {
+      setAnswerOptions(prev => prev.filter((_, i) => i !== idx));
+    }
+  };
+  const handleToggleCorrect = (idx: number) => {
+    setAnswerOptions(prev => prev.map((opt, i) => ({ ...opt, isCorrect: i === idx })));
+  };
+
+  // Form submit
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: Implement add question logic
+    handleCloseModal();
+  };
+
   return (
     <Container>
       <ActionsBar>
@@ -503,7 +754,7 @@ const QuizManagerTab: React.FC = () => {
             <FontAwesomeIcon icon={faEye} />
             Preview Quiz
           </PreviewButton>
-          <AddQuestionButton>
+          <AddQuestionButton onClick={handleOpenModal}>
             <FontAwesomeIcon icon={faPlus} />
             Add Question
           </AddQuestionButton>
@@ -669,9 +920,93 @@ const QuizManagerTab: React.FC = () => {
         </ScoringPanel>
       </ContentGrid>
 
-      <FloatingAddButton>
+      <FloatingAddButton onClick={handleOpenModal}>
         <FontAwesomeIcon icon={faPlus} />
       </FloatingAddButton>
+
+      {/* Create New Quiz Question Modal */}
+      <ModalOverlay $isOpen={isModalOpen} onClick={handleCloseModal}>
+        <ModalContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>Create New Quiz Question</ModalTitle>
+            <CloseModalButton onClick={handleCloseModal}>
+              <FontAwesomeIcon icon={faTimes} />
+            </CloseModalButton>
+          </ModalHeader>
+          <ModalForm onSubmit={handleSubmit}>
+            <FormGroup>
+              <FormLabel>Question Text</FormLabel>
+              <FormInput
+                type="text"
+                value={questionText}
+                onChange={e => setQuestionText(e.target.value)}
+                placeholder="Enter your question here"
+                required
+              />
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Answer Options <span style={{ color: '#EC297B' }}>*</span></FormLabel>
+              <AnswerOptionsList>
+                {answerOptions.map((opt, idx) => (
+                  <AnswerOptionRow key={idx}>
+                    <CorrectToggle
+                      type="button"
+                      $isCorrect={opt.isCorrect}
+                      title="Mark as Correct"
+                      onClick={() => handleToggleCorrect(idx)}
+                    >
+                      {opt.isCorrect && <FontAwesomeIcon icon={faCheck} style={{ color: '#fff', fontSize: 12 }} />}
+                    </CorrectToggle>
+                    <OptionInput
+                      type="text"
+                      value={opt.text}
+                      onChange={e => handleOptionTextChange(idx, e.target.value)}
+                      placeholder={`Option ${idx + 1}`}
+                      required
+                    />
+                    <ScoreInput
+                      type="number"
+                      value={opt.score}
+                      onChange={e => handleOptionScoreChange(idx, e.target.value)}
+                      placeholder="Score"
+                    />
+                    <RemoveOptionButton
+                      type="button"
+                      onClick={() => handleRemoveOption(idx)}
+                      $disabled={answerOptions.length <= 4}
+                      disabled={answerOptions.length <= 4}
+                      title="Remove Option"
+                    >
+                      <FontAwesomeIcon icon={faTimes} />
+                    </RemoveOptionButton>
+                  </AnswerOptionRow>
+                ))}
+              </AnswerOptionsList>
+              <AddOptionButton type="button" onClick={handleAddOption}>
+                <FontAwesomeIcon icon={faPlus} style={{ marginRight: 4 }} /> Add Option
+              </AddOptionButton>
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Segment or Result Tag</FormLabel>
+              <FormInput
+                type="text"
+                value={segmentTag}
+                onChange={e => setSegmentTag(e.target.value)}
+                placeholder="E.g. Experience, Leadership"
+              />
+            </FormGroup>
+            <ModalFooter>
+              <CancelButton type="button" onClick={handleCloseModal}>
+                Cancel
+              </CancelButton>
+              <SubmitButton type="submit">
+                <FontAwesomeIcon icon={faCheck} style={{ marginRight: 8 }} />
+                Add Question
+              </SubmitButton>
+            </ModalFooter>
+          </ModalForm>
+        </ModalContent>
+      </ModalOverlay>
     </Container>
   );
 };
