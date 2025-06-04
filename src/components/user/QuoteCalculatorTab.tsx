@@ -1,8 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFilePdf, faBookmark } from '@fortawesome/free-regular-svg-icons';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFilePdf, faBookmark, faPlus, faDownload, faCalendarCheck, faCheck, faTimes, faXmark } from '@fortawesome/free-solid-svg-icons';
 
 const MainContent = styled.main`
   flex: 1;
@@ -410,7 +409,263 @@ const ConsultButton = styled.button`
   }
 `;
 
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ModalContent = styled.div<{ $variant?: 'pdf' | 'consult' | 'success' }>`
+  width: 100%;
+  max-width: ${props => props.$variant === 'success' ? '24rem' : '28rem'};
+  background-color: ${props => props.$variant === 'pdf' ? '#F9FAFB' : 'white'};
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  margin: 0 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+`;
+
+const ModalHeader = styled.div<{ $variant?: 'pdf' | 'consult' | 'success' }>`
+  padding: ${props => props.$variant === 'consult' ? '1.5rem' : '2rem'};
+  ${props => props.$variant === 'consult' && 'border-bottom: 1px solid #E5E7EB;'}
+  text-align: ${props => props.$variant === 'pdf' || props.$variant === 'success' ? 'center' : 'left'};
+`;
+
+const IconWrapper = styled.div<{ $color: string }>`
+  width: 4rem;
+  height: 4rem;
+  background-color: ${props => `${props.$color}/10`};
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  
+  svg {
+    font-size: 1.5rem;
+    color: ${props => props.$color};
+  }
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin-bottom: 0.5rem;
+`;
+
+const ModalSubtitle = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  margin-bottom: 1.5rem;
+`;
+
+const ModalFormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+`;
+
+const ModalForm = styled.form`
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const FormLabel = styled.label`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const FormInput = styled.input`
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #0F172A;
+  background: white;
+  
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+`;
+
+const FormTextarea = styled.textarea`
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #0F172A;
+  background: white;
+  resize: none;
+  min-height: 6rem;
+  
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  }
+`;
+
+const PrimaryButton = styled.button`
+  flex: 1;
+  padding: 0.625rem 1rem;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #2563EB;
+  }
+`;
+
+const SecondaryButton = styled.button`
+  flex: 1;
+  padding: 0.625rem 1rem;
+  background-color: white;
+  color: rgba(15, 23, 42, 0.7);
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background-color: #F9FAFB;
+  }
+`;
+
+const QuoteReference = styled.div`
+  padding: 0.75rem;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const StatusDot = styled.span`
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background-color: #00E915;
+`;
+
+const ReferenceText = styled.span`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const ReferenceValue = styled.span`
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const DateTimeGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+`;
+
+const CloseModalButton = styled.button`
+  position: absolute;
+  top: 1.25rem;
+  right: 1.5rem;
+  color: rgba(15, 23, 42, 0.4);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  &:hover {
+    color: #0F172A;
+  }
+`;
+
+const HeaderContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const HeaderIcon = styled.div`
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  svg {
+    color: #3B82F6;
+  }
+`;
+
 const QuoteCalculatorTab: React.FC = () => {
+  const [isPdfModalOpen, setIsPdfModalOpen] = React.useState(false);
+  const [isConsultModalOpen, setIsConsultModalOpen] = React.useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = React.useState(false);
+  const [consultDate, setConsultDate] = React.useState('');
+  const [consultTime, setConsultTime] = React.useState('');
+  const [consultNotes, setConsultNotes] = React.useState('');
+
+  const handleOpenPdfModal = () => setIsPdfModalOpen(true);
+  const handleClosePdfModal = () => setIsPdfModalOpen(false);
+  const handleOpenConsultModal = () => setIsConsultModalOpen(true);
+  const handleCloseConsultModal = () => setIsConsultModalOpen(false);
+  const handleOpenSuccessModal = () => setIsSuccessModalOpen(true);
+  const handleCloseSuccessModal = () => setIsSuccessModalOpen(false);
+
+  const handleConsultSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleCloseConsultModal();
+    handleOpenSuccessModal();
+  };
+
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isSuccessModalOpen) handleCloseSuccessModal();
+        else if (isConsultModalOpen) handleCloseConsultModal();
+        else if (isPdfModalOpen) handleClosePdfModal();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isPdfModalOpen, isConsultModalOpen, isSuccessModalOpen]);
+
   return (
     <MainContent>
       <Section id="quote-input">
@@ -510,7 +765,7 @@ const QuoteCalculatorTab: React.FC = () => {
 
       <ActionBar>
         <ButtonGroup>
-          <ActionButton>
+          <ActionButton onClick={handleOpenPdfModal}>
             <FontAwesomeIcon icon={faFilePdf} />
             <span>Download PDF</span>
           </ActionButton>
@@ -519,10 +774,111 @@ const QuoteCalculatorTab: React.FC = () => {
             <span>Save Quote</span>
           </ActionButton>
         </ButtonGroup>
-        <ConsultButton>
+        <ConsultButton onClick={handleOpenConsultModal}>
           Schedule Consultation
         </ConsultButton>
       </ActionBar>
+
+      <ModalOverlay $isOpen={isPdfModalOpen} onClick={handleClosePdfModal}>
+        <ModalContent $variant="pdf" onClick={e => e.stopPropagation()}>
+          <ModalHeader $variant="pdf">
+            <IconWrapper $color="#0098FF">
+              <FontAwesomeIcon icon={faFilePdf} />
+            </IconWrapper>
+            <ModalTitle>Your custom quote is ready</ModalTitle>
+            <ModalSubtitle>
+              Download your personalized quote report with detailed cost breakdown and savings analysis.
+            </ModalSubtitle>
+            <ModalButtonGroup>
+              <PrimaryButton onClick={handleClosePdfModal}>
+                <FontAwesomeIcon icon={faDownload} />
+                Download Quote PDF
+              </PrimaryButton>
+              <SecondaryButton onClick={handleClosePdfModal}>
+                Go Back to Edit
+              </SecondaryButton>
+            </ModalButtonGroup>
+          </ModalHeader>
+        </ModalContent>
+      </ModalOverlay>
+
+      <ModalOverlay $isOpen={isConsultModalOpen} onClick={handleCloseConsultModal}>
+        <ModalContent $variant="consult" onClick={e => e.stopPropagation()}>
+          <CloseModalButton onClick={handleCloseConsultModal} aria-label="Close modal">
+            <FontAwesomeIcon icon={faXmark} />
+          </CloseModalButton>
+          <ModalHeader $variant="consult">
+            <HeaderContent>
+              <HeaderIcon>
+                <FontAwesomeIcon icon={faCalendarCheck} />
+              </HeaderIcon>
+              <div>
+                <ModalTitle>Book Consultation</ModalTitle>
+                <ModalSubtitle>Schedule a one-on-one strategy call</ModalSubtitle>
+              </div>
+            </HeaderContent>
+          </ModalHeader>
+          <ModalForm onSubmit={handleConsultSubmit}>
+            <ModalFormGroup>
+              <FormLabel>Preferred Date & Time</FormLabel>
+              <DateTimeGrid>
+                <FormInput
+                  type="date"
+                  value={consultDate}
+                  onChange={e => setConsultDate(e.target.value)}
+                  required
+                />
+                <FormInput
+                  type="time"
+                  value={consultTime}
+                  onChange={e => setConsultTime(e.target.value)}
+                  required
+                />
+              </DateTimeGrid>
+            </ModalFormGroup>
+            <ModalFormGroup>
+              <FormLabel>
+                Notes or Questions <span style={{ color: 'rgba(15, 23, 42, 0.5)' }}>(Optional)</span>
+              </FormLabel>
+              <FormTextarea
+                value={consultNotes}
+                onChange={e => setConsultNotes(e.target.value)}
+                placeholder="Tell us about your specific needs or questions..."
+              />
+            </ModalFormGroup>
+            <QuoteReference>
+              <StatusDot />
+              <ReferenceText>Quote Reference:</ReferenceText>
+              <ReferenceValue>SDR-JR-001</ReferenceValue>
+            </QuoteReference>
+            <ModalButtonGroup>
+              <SecondaryButton type="button" onClick={handleCloseConsultModal}>
+                Cancel
+              </SecondaryButton>
+              <PrimaryButton type="submit">
+                Confirm Booking
+              </PrimaryButton>
+            </ModalButtonGroup>
+          </ModalForm>
+        </ModalContent>
+      </ModalOverlay>
+
+      <ModalOverlay $isOpen={isSuccessModalOpen} onClick={handleCloseSuccessModal}>
+        <ModalContent $variant="success" onClick={e => e.stopPropagation()}>
+          <ModalHeader $variant="success">
+            <IconWrapper $color="#00E915">
+              <FontAwesomeIcon icon={faCheck} />
+            </IconWrapper>
+            <ModalTitle>Booking Confirmed!</ModalTitle>
+            <ModalSubtitle>
+              Your consultation has been scheduled. You'll receive a confirmation email shortly.
+            </ModalSubtitle>
+            <PrimaryButton onClick={handleCloseSuccessModal}>
+              Got it
+            </PrimaryButton>
+          </ModalHeader>
+        </ModalContent>
+      </ModalOverlay>
     </MainContent>
   );
 };
