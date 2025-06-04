@@ -1312,7 +1312,7 @@ const LeadManagementTab = () => {
               </NotesContainer>
               <div style={{marginTop: '1rem'}}>
                 <NoteTextarea placeholder="Add a note..." />
-              </div>
+  </div>
             </InfoCard>
           </SidebarContentWrapper>
         </DetailSidebarAside>
@@ -1439,7 +1439,7 @@ const LeadManagementTab = () => {
         </ExportModalContent>
       </ExportModalOverlay>
     </Container>
-  );
+);
 };
 
 export default LeadManagementTab; 
