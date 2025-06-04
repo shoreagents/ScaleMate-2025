@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faCheck, faTimes, faPiggyBank } from '@fortawesome/free-solid-svg-icons';
 import { faFilePdf, faBookmark } from '@fortawesome/free-regular-svg-icons';
 
 const MainContent = styled.main`
@@ -361,7 +361,316 @@ const ConsultButton = styled.button`
   }
 `;
 
+// Modal styled components
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ModalContent = styled.div`
+  width: 100%;
+  max-width: 28rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
+
+  @media (max-width: 640px) {
+    max-width: 95vw;
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: 640px) {
+    margin-bottom: 1rem;
+  }
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+
+  @media (max-width: 640px) {
+    font-size: 1.05rem;
+  }
+`;
+
+const CloseModalButton = styled.button`
+  color: rgba(15, 23, 42, 0.4);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  &:hover { color: #0F172A; }
+`;
+
+const ModalSection = styled.div`
+  background: #F9FAFB;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1rem;
+  margin-bottom: 1.25rem;
+
+  @media (max-width: 640px) {
+    padding: 0.75rem 0.5rem;
+    margin-bottom: 1rem;
+  }
+`;
+
+const ModalSectionTitle = styled.h4`
+  font-weight: 600;
+  color: #0F172A;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+
+  @media (max-width: 640px) {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+`;
+
+const ModalSummaryRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+
+  @media (max-width: 640px) {
+    font-size: 0.9rem;
+    margin-bottom: 0.35rem;
+  }
+`;
+
+const ModalSummaryLabel = styled.span`
+  color: rgba(15, 23, 42, 0.7);
+`;
+
+const ModalSummaryValue = styled.span`
+  color: #0F172A;
+  font-weight: 500;
+`;
+
+const ModalSummaryHighlight = styled.span<{ $color: string }>`
+  padding: 0.25rem 0.75rem;
+  background: ${props => props.$color}1A;
+  color: ${props => props.$color};
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+
+  @media (max-width: 640px) {
+    font-size: 0.9rem;
+    padding: 0.2rem 0.5rem;
+  }
+`;
+
+const ModalChecklist = styled.ul`
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  @media (max-width: 640px) {
+    gap: 0.35rem;
+  }
+`;
+
+const ModalChecklistItem = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(15, 23, 42, 0.7);
+  font-size: 0.95rem;
+
+  @media (max-width: 640px) {
+    font-size: 0.9rem;
+    gap: 0.35rem;
+  }
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+`;
+
+const ModalPrimaryButton = styled.button`
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+  &:hover { background-color: #2563EB; }
+
+  @media (max-width: 640px) {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+  }
+`;
+
+const ModalSecondaryButton = styled.button`
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background-color: white;
+  color: #0F172A;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  &:hover { background-color: #F9FAFB; }
+
+  @media (max-width: 640px) {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+  }
+`;
+
+const SavingsBadge = styled.div`
+  background: #84CC161A;
+  border: 1px solid #84CC1633;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  @media (max-width: 640px) {
+    padding: 0.6rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+`;
+
+const SavingsBadgeText = styled.span`
+  color: #84CC16;
+  font-size: 0.95rem;
+  font-weight: 500;
+`;
+
+const ModalForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const ModalFormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const ModalFormLabel = styled.label`
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0F172A;
+
+  @media (max-width: 640px) {
+    font-size: 0.9rem;
+  }
+`;
+
+const ModalFormInput = styled.input`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  color: #0F172A;
+  background: white;
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.75rem;
+  }
+`;
+
+const ModalFormSelect = styled.select`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  color: #0F172A;
+  background: white;
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.75rem;
+  }
+`;
+
 const CostSavingsTab: React.FC = () => {
+  const [isExportModalOpen, setIsExportModalOpen] = React.useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = React.useState(false);
+  const [scheduleDate, setScheduleDate] = React.useState('');
+  const [scheduleTime, setScheduleTime] = React.useState('9:00 AM');
+  const [companyName, setCompanyName] = React.useState('');
+
+  // Accessibility: close modal on escape
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isExportModalOpen) setIsExportModalOpen(false);
+        if (isScheduleModalOpen) setIsScheduleModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isExportModalOpen, isScheduleModalOpen]);
+
+  // Click outside to close
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>, closeFn: () => void) => {
+    if (e.target === e.currentTarget) closeFn();
+  };
+
   return (
     <MainContent>
       <Section id="team-input">
@@ -468,7 +777,7 @@ const CostSavingsTab: React.FC = () => {
 
       <ActionBar>
         <ButtonGroup>
-          <ActionButton>
+          <ActionButton onClick={() => setIsExportModalOpen(true)}>
             <FontAwesomeIcon icon={faFilePdf} />
             <span>Export Report</span>
           </ActionButton>
@@ -477,10 +786,143 @@ const CostSavingsTab: React.FC = () => {
             <span>Save Calculation</span>
           </ActionButton>
         </ButtonGroup>
-        <ConsultButton>
+        <ConsultButton onClick={() => setIsScheduleModalOpen(true)}>
           Schedule Team Review
         </ConsultButton>
       </ActionBar>
+
+      {/* Export Report Modal */}
+      <ModalOverlay $isOpen={isExportModalOpen} onClick={e => handleOverlayClick(e, () => setIsExportModalOpen(false))}>
+        <ModalContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>Export Your Team Savings Report</ModalTitle>
+            <CloseModalButton onClick={() => setIsExportModalOpen(false)} aria-label="Close modal">
+              <FontAwesomeIcon icon={faTimes} />
+            </CloseModalButton>
+          </ModalHeader>
+          <ModalSection>
+            <ModalSectionTitle>Report Summary</ModalSectionTitle>
+            <ModalSummaryRow>
+              <ModalSummaryLabel>Local Team Cost</ModalSummaryLabel>
+              <ModalSummaryValue>$215,000/year</ModalSummaryValue>
+            </ModalSummaryRow>
+            <ModalSummaryRow>
+              <ModalSummaryLabel>Offshore Team Cost</ModalSummaryLabel>
+              <ModalSummaryValue>$93,600/year</ModalSummaryValue>
+            </ModalSummaryRow>
+            <div style={{ borderTop: '1px solid #E5E7EB', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
+              <ModalSummaryRow>
+                <span style={{ fontWeight: 600, color: '#0F172A' }}>Annual Savings</span>
+                <ModalSummaryHighlight $color="#00E915">$121,400</ModalSummaryHighlight>
+              </ModalSummaryRow>
+              <ModalSummaryRow style={{ marginTop: '0.5rem' }}>
+                <span style={{ fontWeight: 600, color: '#0F172A' }}>Monthly Savings</span>
+                <ModalSummaryHighlight $color="#0098FF">$10,116</ModalSummaryHighlight>
+              </ModalSummaryRow>
+            </div>
+          </ModalSection>
+          <ModalSection>
+            <ModalSectionTitle>Report Includes</ModalSectionTitle>
+            <ModalChecklist>
+              <ModalChecklistItem>
+                <FontAwesomeIcon icon={faCheck} color="#84CC16" style={{ fontSize: '1rem' }} />
+                <span>Detailed role breakdown</span>
+              </ModalChecklistItem>
+              <ModalChecklistItem>
+                <FontAwesomeIcon icon={faCheck} color="#84CC16" style={{ fontSize: '1rem' }} />
+                <span>Cost comparison charts</span>
+              </ModalChecklistItem>
+              <ModalChecklistItem>
+                <FontAwesomeIcon icon={faCheck} color="#84CC16" style={{ fontSize: '1rem' }} />
+                <span>ROI analysis</span>
+              </ModalChecklistItem>
+              <ModalChecklistItem>
+                <FontAwesomeIcon icon={faCheck} color="#84CC16" style={{ fontSize: '1rem' }} />
+                <span>Implementation recommendations</span>
+              </ModalChecklistItem>
+            </ModalChecklist>
+          </ModalSection>
+          <ModalButtonGroup>
+            <ModalSecondaryButton onClick={() => setIsExportModalOpen(false)}>
+              Cancel
+            </ModalSecondaryButton>
+            <ModalPrimaryButton onClick={() => setIsExportModalOpen(false)}>
+              <FontAwesomeIcon icon={faFilePdf} />
+              <span>Download PDF Report</span>
+            </ModalPrimaryButton>
+          </ModalButtonGroup>
+        </ModalContent>
+      </ModalOverlay>
+
+      {/* Schedule Team Review Modal */}
+      <ModalOverlay $isOpen={isScheduleModalOpen} onClick={e => handleOverlayClick(e, () => setIsScheduleModalOpen(false))}>
+        <ModalContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>Schedule Team Review</ModalTitle>
+            <CloseModalButton onClick={() => setIsScheduleModalOpen(false)} aria-label="Close modal">
+              <FontAwesomeIcon icon={faTimes} />
+            </CloseModalButton>
+          </ModalHeader>
+          <SavingsBadge>
+            <FontAwesomeIcon icon={faPiggyBank} color="#84CC16" />
+            <SavingsBadgeText>You could be saving $10,116/month</SavingsBadgeText>
+          </SavingsBadge>
+          <ModalForm onSubmit={e => { e.preventDefault(); setIsScheduleModalOpen(false); }}>
+            <ModalFormGroup>
+              <ModalFormLabel>
+                Company Name <span style={{ color: 'rgba(15,23,42,0.5)', fontSize: '0.85em' }}>(optional)</span>
+              </ModalFormLabel>
+              <ModalFormInput
+                type="text"
+                placeholder="Enter your company name"
+                value={companyName}
+                onChange={e => setCompanyName(e.target.value)}
+              />
+            </ModalFormGroup>
+            <ModalFormGroup>
+              <ModalFormLabel>Team Size</ModalFormLabel>
+              <ModalFormInput
+                type="text"
+                value="3 roles"
+                readOnly
+                style={{ background: '#F9FAFB', color: 'rgba(15,23,42,0.7)' }}
+              />
+            </ModalFormGroup>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', ...(window.innerWidth <= 640 ? { gridTemplateColumns: '1fr', gap: '0.75rem' } : {}) }}>
+              <ModalFormGroup>
+                <ModalFormLabel>Preferred Date</ModalFormLabel>
+                <ModalFormInput
+                  type="date"
+                  value={scheduleDate}
+                  onChange={e => setScheduleDate(e.target.value)}
+                />
+              </ModalFormGroup>
+              <ModalFormGroup>
+                <ModalFormLabel>Preferred Time</ModalFormLabel>
+                <ModalFormSelect
+                  value={scheduleTime}
+                  onChange={e => setScheduleTime(e.target.value)}
+                >
+                  <option>9:00 AM</option>
+                  <option>10:00 AM</option>
+                  <option>11:00 AM</option>
+                  <option>2:00 PM</option>
+                  <option>3:00 PM</option>
+                  <option>4:00 PM</option>
+                </ModalFormSelect>
+              </ModalFormGroup>
+            </div>
+            <ModalButtonGroup>
+              <ModalSecondaryButton type="button" onClick={() => setIsScheduleModalOpen(false)}>
+                Cancel
+              </ModalSecondaryButton>
+              <ModalPrimaryButton type="submit">
+                Confirm
+              </ModalPrimaryButton>
+            </ModalButtonGroup>
+          </ModalForm>
+        </ModalContent>
+      </ModalOverlay>
     </MainContent>
   );
 };
