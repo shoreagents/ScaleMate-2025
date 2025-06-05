@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faDownload, faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faDownload, faStar as faStarSolid, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import { faStar as faStarRegular } from '@fortawesome/free-regular-svg-icons';
+import { ModalOverlay, ModalContent, ModalSecondaryButton, ModalPrimaryButton } from '../ui/Modal';
 
 const Container = styled.div`
   padding: 1.5rem;
@@ -281,7 +282,131 @@ const DownloadButton = styled.button`
   }
 `;
 
+const DownloadModalOverlay = styled(ModalOverlay)``;
+const DownloadModalContent = styled(ModalContent)`
+  max-width: 28rem;
+  text-align: center;
+`;
+
+const DownloadModalHeader = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const DownloadIconContainer = styled.div`
+  width: 4rem;
+  height: 4rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+`;
+
+const DownloadIcon = styled.div`
+  color: #3B82F6;
+  font-size: 1.5rem;
+`;
+
+const DownloadModalTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin-bottom: 0.5rem;
+`;
+
+const DownloadModalDescription = styled.p`
+  color: rgba(15, 23, 42, 0.7);
+  margin-bottom: 1rem;
+`;
+
+const DownloadInfoContainer = styled.div`
+  background-color: #F9FAFB;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+`;
+
+const DownloadInfoContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const DownloadInfoLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const DownloadFileName = styled.p`
+  font-weight: 500;
+  color: #0F172A;
+  text-align: left;
+`;
+
+const DownloadFileType = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.6);
+  text-align: left;
+`;
+
+const PremiumTag = styled.span<{ $show: boolean }>`
+  display: ${props => props.$show ? 'inline-block' : 'none'};
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: rgba(236, 41, 123, 0.1);
+  color: #EC297B;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+`;
+
+const DownloadButtonGroup = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const DownloadCancelButton = styled(ModalSecondaryButton)`
+  flex: 1;
+`;
+
+const DownloadConfirmButton = styled(ModalPrimaryButton)`
+  flex: 1;
+`;
+
 const ResourceLibraryTab: React.FC = () => {
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = React.useState(false);
+  const [selectedResource, setSelectedResource] = React.useState<{
+    name: string;
+    type: string;
+    isPremium: boolean;
+  } | null>(null);
+
+  const handleDownload = (resource: { name: string; type: string; isPremium: boolean }) => {
+    setSelectedResource(resource);
+    setIsDownloadModalOpen(true);
+  };
+
+  const handleOverlayClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      setIsDownloadModalOpen(false);
+    }
+  }, []);
+
+  const handleModalContentClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+  }, []);
+
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isDownloadModalOpen) setIsDownloadModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isDownloadModalOpen]);
+
   return (
     <Container>
       <FiltersContainer id="resource-filters">
@@ -331,7 +456,11 @@ const ResourceLibraryTab: React.FC = () => {
             <ResourceDescription>Complete playbook for managing distributed teams effectively.</ResourceDescription>
             <CardFooter>
               <ResourceMeta>12 pages • PDF</ResourceMeta>
-              <DownloadButton>
+              <DownloadButton onClick={() => handleDownload({
+                name: "Offshore Team Management Guide",
+                type: "PDF Document",
+                isPremium: false
+              })}>
                 <FontAwesomeIcon icon={faDownload} />
                 <span>Download</span>
               </DownloadButton>
@@ -359,7 +488,11 @@ const ResourceLibraryTab: React.FC = () => {
             <ResourceDescription>Step-by-step process for seamless role handovers.</ResourceDescription>
             <CardFooter>
               <ResourceMeta>5 pages • PDF</ResourceMeta>
-              <DownloadButton>
+              <DownloadButton onClick={() => handleDownload({
+                name: "Role Transition Checklist",
+                type: "PDF Document",
+                isPremium: false
+              })}>
                 <FontAwesomeIcon icon={faDownload} />
                 <span>Download</span>
               </DownloadButton>
@@ -389,7 +522,11 @@ const ResourceLibraryTab: React.FC = () => {
             <ResourceDescription>Best practices for effective remote team communication.</ResourceDescription>
             <CardFooter>
               <ResourceMeta>8 pages • PDF</ResourceMeta>
-              <DownloadButton>
+              <DownloadButton onClick={() => handleDownload({
+                name: "Communication Guidelines",
+                type: "PDF Document",
+                isPremium: false
+              })}>
                 <FontAwesomeIcon icon={faDownload} />
                 <span>Download</span>
               </DownloadButton>
@@ -397,6 +534,52 @@ const ResourceLibraryTab: React.FC = () => {
           </CardContent>
         </ResourceCard>
       </ResourceGrid>
+
+      <DownloadModalOverlay 
+        $isOpen={isDownloadModalOpen} 
+        onClick={handleOverlayClick}
+      >
+        <DownloadModalContent onClick={handleModalContentClick}>
+          <DownloadModalHeader>
+            <DownloadIconContainer>
+              <DownloadIcon>
+                <FontAwesomeIcon icon={faFilePdf} />
+              </DownloadIcon>
+            </DownloadIconContainer>
+            <DownloadModalTitle>Download Resource</DownloadModalTitle>
+            <DownloadModalDescription>
+              Ready to download your selected resource?
+            </DownloadModalDescription>
+          </DownloadModalHeader>
+
+          <DownloadInfoContainer>
+            <DownloadInfoContent>
+              <DownloadInfoLeft>
+                <FontAwesomeIcon icon={faFilePdf} style={{ color: '#3B82F6' }} />
+                <div>
+                  <DownloadFileName>{selectedResource?.name}</DownloadFileName>
+                  <DownloadFileType>{selectedResource?.type}</DownloadFileType>
+                </div>
+              </DownloadInfoLeft>
+              <PremiumTag $show={selectedResource?.isPremium || false}>
+                Premium Resource
+              </PremiumTag>
+            </DownloadInfoContent>
+          </DownloadInfoContainer>
+
+          <DownloadButtonGroup>
+            <DownloadCancelButton onClick={() => setIsDownloadModalOpen(false)}>
+              Cancel
+            </DownloadCancelButton>
+            <DownloadConfirmButton onClick={() => {
+              // Add download logic here
+              setIsDownloadModalOpen(false);
+            }}>
+              Download
+            </DownloadConfirmButton>
+          </DownloadButtonGroup>
+        </DownloadModalContent>
+      </DownloadModalOverlay>
     </Container>
   );
 };

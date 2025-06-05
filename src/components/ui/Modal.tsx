@@ -10,13 +10,66 @@ interface ModalProps {
   closeOnOverlayClick?: boolean;
 }
 
-const ModalOverlay = styled.div<{ isOpen: boolean }>`
+export const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.75);
-  display: ${props => props.isOpen ? 'block' : 'none'};
-  z-index: 70;
-  backdrop-filter: blur(2px);
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+export const ModalContent = styled.div`
+  width: 100%;
+  max-width: 32rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
+  
+  @media (max-width: 640px) {
+    max-width: 95vw;
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+`;
+
+export const ModalPrimaryButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #2563EB;
+  }
+`;
+
+export const ModalSecondaryButton = styled.button`
+  padding: 0.75rem 1.5rem;
+  background-color: white;
+  color: #0F172A;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: #F9FAFB;
+  }
 `;
 
 const ModalContainer = styled.div<{ isOpen: boolean }>`
@@ -31,23 +84,6 @@ const ModalContainer = styled.div<{ isOpen: boolean }>`
 
   @media (min-width: 640px) {
     padding: 1.5rem;
-  }
-`;
-
-const ModalContent = styled.div`
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 0.75rem;
-  width: 100%;
-  max-width: 32rem;
-  position: relative;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E5E7EB;
-  max-height: 90vh;
-  overflow-y: auto;
-
-  @media (min-width: 640px) {
-    transform: scale(1);
   }
 `;
 
@@ -93,7 +129,7 @@ export const Modal = ({ isOpen, onClose, children, title, closeOnOverlayClick = 
 
   return (
     <>
-      <ModalOverlay isOpen={isOpen} onClick={handleOverlayClick} />
+      <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick} />
       <ModalContainer isOpen={isOpen} onClick={handleOverlayClick}>
         <ModalContent onClick={(e) => e.stopPropagation()}>
           <CloseButton onClick={onClose} aria-label="Close modal">
