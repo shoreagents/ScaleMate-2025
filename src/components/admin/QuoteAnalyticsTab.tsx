@@ -522,18 +522,145 @@ const DownloadButton = styled.button`
 `;
 
 const QuoteAnalyticsTab: React.FC = () => {
-  const exampleQuote = {
-    id: 'quote1',
-    date: 'Mar 15, 2025',
-    role: 'Senior Product Manager',
-    currency: 'USD',
-    offshoreCost: '$45,000',
-    localCost: '$120,000',
-    user: {
-      name: 'Alex J.', // Not in original HTML, but good for alt text or future use
-      email: 'alex.j@example.com',
-      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg',
+  // Add filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRegion, setSelectedRegion] = useState('All Regions');
+  const [selectedStatus, setSelectedStatus] = useState('All Status');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Example quotes data with 6 diverse quotes
+  const exampleQuotes = [
+    {
+      id: 'quote1',
+      date: '2025-03-15',
+      role: 'Senior Product Manager',
+      currency: 'USD',
+      offshoreCost: '$45,000',
+      localCost: '$120,000',
+      region: 'North America',
+      status: 'Saved',
+      user: {
+        name: 'Alex J.',
+        email: 'alex.j@example.com',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg',
+      },
     },
+    {
+      id: 'quote2',
+      date: '2025-03-10',
+      role: 'UX Designer',
+      currency: 'EUR',
+      offshoreCost: '€35,000',
+      localCost: '€85,000',
+      region: 'Europe',
+      status: 'Saved',
+      user: {
+        name: 'Sarah C.',
+        email: 'sarah.c@techcorp.io',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg',
+      },
+    },
+    {
+      id: 'quote3',
+      date: '2025-03-05',
+      role: 'Full Stack Developer',
+      currency: 'SGD',
+      offshoreCost: 'S$55,000',
+      localCost: 'S$130,000',
+      region: 'Asia Pacific',
+      status: 'Abandoned',
+      user: {
+        name: 'Michael R.',
+        email: 'm.rodriguez@startup.co',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg',
+      },
+    },
+    {
+      id: 'quote4',
+      date: '2025-03-01',
+      role: 'DevOps Engineer',
+      currency: 'USD',
+      offshoreCost: '$50,000',
+      localCost: '$125,000',
+      region: 'North America',
+      status: 'Saved',
+      user: {
+        name: 'Emma W.',
+        email: 'emma.w@enterprise.net',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+      },
+    },
+    {
+      id: 'quote5',
+      date: '2025-02-28',
+      role: 'Data Scientist',
+      currency: 'EUR',
+      offshoreCost: '€40,000',
+      localCost: '€95,000',
+      region: 'Europe',
+      status: 'Abandoned',
+      user: {
+        name: 'David K.',
+        email: 'd.kim@agency.com',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg',
+      },
+    },
+    {
+      id: 'quote6',
+      date: '2025-02-25',
+      role: 'Product Designer',
+      currency: 'SGD',
+      offshoreCost: 'S$45,000',
+      localCost: 'S$110,000',
+      region: 'Asia Pacific',
+      status: 'Saved',
+      user: {
+        name: 'Lisa M.',
+        email: 'lisa.m@design.co',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg',
+      },
+    }
+  ];
+
+  // Filter quotes based on search query and selected filters
+  const filteredQuotes = exampleQuotes.filter(quote => {
+    const matchesSearch = searchQuery === '' || 
+      quote.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      quote.user.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesRegion = selectedRegion === 'All Regions' || quote.region === selectedRegion;
+    const matchesStatus = selectedStatus === 'All Status' || quote.status === selectedStatus;
+
+    const quoteDate = new Date(quote.date);
+    const matchesStartDate = !startDate || quoteDate >= new Date(startDate);
+    const matchesEndDate = !endDate || quoteDate <= new Date(endDate);
+
+    return matchesSearch && matchesRegion && matchesStatus && matchesStartDate && matchesEndDate;
+  });
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Handle region filter change
+  const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedRegion(e.target.value);
+  };
+
+  // Handle status filter change
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(e.target.value);
+  };
+
+  // Handle date range changes
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setStartDate(e.target.value);
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEndDate(e.target.value);
   };
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -568,17 +695,22 @@ const QuoteAnalyticsTab: React.FC = () => {
       <FiltersContainer id="quote-filters">
         <TabletFirstFilterRow>
           <SearchContainerStyled>
-            <SearchInput type="text" placeholder="Search roles..." />
+            <SearchInput 
+              type="text" 
+              placeholder="Search roles..." 
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
             <SearchIconStyled icon={faSearch} />
           </SearchContainerStyled>
           <SelectsRow>
-            <StyledSelect>
+            <StyledSelect value={selectedRegion} onChange={handleRegionChange}>
               <option>All Regions</option>
               <option>North America</option>
               <option>Europe</option>
               <option>Asia Pacific</option>
             </StyledSelect>
-            <StyledSelect>
+            <StyledSelect value={selectedStatus} onChange={handleStatusChange}>
               <option>All Status</option>
               <option>Saved</option>
               <option>Abandoned</option>
@@ -589,11 +721,19 @@ const QuoteAnalyticsTab: React.FC = () => {
         <TabletSecondFilterRow>
           <DatesRow>
             <DateInputGroup className="date-input-group-wrapper">
-              <StyledDateInput type="date" />
+              <StyledDateInput 
+                type="date" 
+                value={startDate}
+                onChange={handleStartDateChange}
+              />
             </DateInputGroup>
             <DateSeparator className="date-separator">to</DateSeparator> 
             <DateInputGroup className="date-input-group-wrapper">
-              <StyledDateInput type="date" />
+              <StyledDateInput 
+                type="date" 
+                value={endDate}
+                onChange={handleEndDateChange}
+              />
             </DateInputGroup>
           </DatesRow>
           <ExportButtonWrapper>
@@ -603,7 +743,7 @@ const QuoteAnalyticsTab: React.FC = () => {
             </ExportButton>
           </ExportButtonWrapper>
         </TabletSecondFilterRow>
-          </FiltersContainer>
+      </FiltersContainer>
 
       {/* Desktop/Tablet Table */}
       <TableWrapper id="quote-table">
@@ -620,75 +760,76 @@ const QuoteAnalyticsTab: React.FC = () => {
             </TableRowStyled>
           </TableHeadStyled>
           <TableBodyStyled>
-            <TableRowStyled>
-              <TableCellStyled>{exampleQuote.date}</TableCellStyled>
-              <TableCellStyled className="main-text">{exampleQuote.role}</TableCellStyled>
-              <TableCellStyled className="main-text">{exampleQuote.currency}</TableCellStyled>
-              <TableCellStyled className="font-medium main-text">{exampleQuote.offshoreCost}</TableCellStyled>
-              <TableCellStyled className="font-medium main-text">{exampleQuote.localCost}</TableCellStyled>
-              <TableCellStyled>
-                <UserCellContainer>
-                  <AvatarStyled src={exampleQuote.user.avatarUrl} alt={exampleQuote.user.name || 'User'} />
-                  <span>{exampleQuote.user.email}</span>
-                </UserCellContainer>
-              </TableCellStyled>
-              <TableCellStyled>
-                <ActionButtonsContainer>
-                  <ActionButtonStyled title="View Details">
-                    <FontAwesomeIcon icon={faEye} />
-                  </ActionButtonStyled>
-                  <ActionButtonStyled title="View Document" className="hover-primary">
-                    <FontAwesomeIcon icon={faFileLines} />
-                  </ActionButtonStyled>
-                </ActionButtonsContainer>
-              </TableCellStyled>
-            </TableRowStyled>
-            {/* Add more rows as needed */}
+            {filteredQuotes.map(quote => (
+              <TableRowStyled key={quote.id}>
+                <TableCellStyled>{new Date(quote.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</TableCellStyled>
+                <TableCellStyled className="main-text">{quote.role}</TableCellStyled>
+                <TableCellStyled className="main-text">{quote.currency}</TableCellStyled>
+                <TableCellStyled className="font-medium main-text">{quote.offshoreCost}</TableCellStyled>
+                <TableCellStyled className="font-medium main-text">{quote.localCost}</TableCellStyled>
+                <TableCellStyled>
+                  <UserCellContainer>
+                    <AvatarStyled src={quote.user.avatarUrl} alt={quote.user.name || 'User'} />
+                    <span>{quote.user.email}</span>
+                  </UserCellContainer>
+                </TableCellStyled>
+                <TableCellStyled>
+                  <ActionButtonsContainer>
+                    <ActionButtonStyled title="View Details">
+                      <FontAwesomeIcon icon={faEye} />
+                    </ActionButtonStyled>
+                    <ActionButtonStyled title="View Document" className="hover-primary">
+                      <FontAwesomeIcon icon={faFileLines} />
+                    </ActionButtonStyled>
+                  </ActionButtonsContainer>
+                </TableCellStyled>
+              </TableRowStyled>
+            ))}
           </TableBodyStyled>
         </StyledTable>
       </TableWrapper>
 
       {/* Mobile Card View */}
       <CardListContainer>
-        <QuoteCardStyled>
-          <CardHeaderStyled>
-            <CardTitleGroup>
-              <CardRoleTitle>{exampleQuote.role}</CardRoleTitle>
-              <CardDate>{exampleQuote.date}</CardDate>
-            </CardTitleGroup>
-            {/* No toggle icon needed as details are always open */}
-          </CardHeaderStyled>
-          <CardContentStyled>
-            <CardDetailRow>
-              <CardLabelStyled>User:</CardLabelStyled>
-              <CardUserDetailStyled>
-                <AvatarStyled src={exampleQuote.user.avatarUrl} alt={exampleQuote.user.name || 'User'} style={{width: '1.5rem', height: '1.5rem', marginRight: '0.25rem'}}/>
-                <CardValueStyled>{exampleQuote.user.email}</CardValueStyled>
-              </CardUserDetailStyled>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabelStyled>Currency:</CardLabelStyled>
-              <CardValueStyled>{exampleQuote.currency}</CardValueStyled>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabelStyled>Offshore Cost:</CardLabelStyled>
-              <CardValueStyled className="font-medium">{exampleQuote.offshoreCost}</CardValueStyled>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabelStyled>Local Cost:</CardLabelStyled>
-              <CardValueStyled className="font-medium">{exampleQuote.localCost}</CardValueStyled>
-            </CardDetailRow>
-            <CardActionsStyled>
-              <ActionButtonStyled title="View Details">
-                <FontAwesomeIcon icon={faEye} />
-              </ActionButtonStyled>
-              <ActionButtonStyled title="View Document" className="hover-primary">
-                <FontAwesomeIcon icon={faFileLines} />
-              </ActionButtonStyled>
-            </CardActionsStyled>
-          </CardContentStyled>
-        </QuoteCardStyled>
-        {/* Add more cards as needed */}
+        {filteredQuotes.map(quote => (
+          <QuoteCardStyled key={quote.id}>
+            <CardHeaderStyled>
+              <CardTitleGroup>
+                <CardRoleTitle>{quote.role}</CardRoleTitle>
+                <CardDate>{new Date(quote.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</CardDate>
+              </CardTitleGroup>
+            </CardHeaderStyled>
+            <CardContentStyled>
+              <CardDetailRow>
+                <CardLabelStyled>User:</CardLabelStyled>
+                <CardUserDetailStyled>
+                  <AvatarStyled src={quote.user.avatarUrl} alt={quote.user.name || 'User'} style={{width: '1.5rem', height: '1.5rem', marginRight: '0.25rem'}}/>
+                  <CardValueStyled>{quote.user.email}</CardValueStyled>
+                </CardUserDetailStyled>
+              </CardDetailRow>
+              <CardDetailRow>
+                <CardLabelStyled>Currency:</CardLabelStyled>
+                <CardValueStyled>{quote.currency}</CardValueStyled>
+              </CardDetailRow>
+              <CardDetailRow>
+                <CardLabelStyled>Offshore Cost:</CardLabelStyled>
+                <CardValueStyled className="font-medium">{quote.offshoreCost}</CardValueStyled>
+              </CardDetailRow>
+              <CardDetailRow>
+                <CardLabelStyled>Local Cost:</CardLabelStyled>
+                <CardValueStyled className="font-medium">{quote.localCost}</CardValueStyled>
+              </CardDetailRow>
+              <CardActionsStyled>
+                <ActionButtonStyled title="View Details">
+                  <FontAwesomeIcon icon={faEye} />
+                </ActionButtonStyled>
+                <ActionButtonStyled title="View Document" className="hover-primary">
+                  <FontAwesomeIcon icon={faFileLines} />
+                </ActionButtonStyled>
+              </CardActionsStyled>
+            </CardContentStyled>
+          </QuoteCardStyled>
+        ))}
       </CardListContainer>
 
       <ExportModalOverlay $isOpen={isExportModalOpen} onClick={handleCloseExportModal}>

@@ -711,6 +711,109 @@ const UserManagementTab: React.FC = () => {
     autoGeneratePassword: false
   });
 
+  // Add filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState('All Plans');
+  const [selectedActivity, setSelectedActivity] = useState('Activity Level');
+  const [selectedProgress, setSelectedProgress] = useState('Progress Status');
+
+  // Example user data with 5 diverse users
+  const exampleUsers = [
+    {
+      id: '1',
+      name: 'Alex Johnson',
+      email: 'alex.j@example.com',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg',
+      signupDate: 'Jan 15, 2025',
+      xpLevel: 2450,
+      planType: 'Pro',
+      status: 'Active',
+      activityLevel: 'High',
+      progressStatus: 'Advanced'
+    },
+    {
+      id: '2',
+      name: 'Sarah Chen',
+      email: 'sarah.c@techcorp.io',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg',
+      signupDate: 'Feb 3, 2025',
+      xpLevel: 1800,
+      planType: 'Enterprise',
+      status: 'Active',
+      activityLevel: 'High',
+      progressStatus: 'Intermediate'
+    },
+    {
+      id: '3',
+      name: 'Michael Rodriguez',
+      email: 'm.rodriguez@startup.co',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg',
+      signupDate: 'Mar 1, 2025',
+      xpLevel: 950,
+      planType: 'Free',
+      status: 'Active',
+      activityLevel: 'Medium',
+      progressStatus: 'Beginner'
+    },
+    {
+      id: '4',
+      name: 'Emma Wilson',
+      email: 'emma.w@enterprise.net',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+      signupDate: 'Mar 15, 2025',
+      xpLevel: 3200,
+      planType: 'Enterprise',
+      status: 'Active',
+      activityLevel: 'High',
+      progressStatus: 'Advanced'
+    },
+    {
+      id: '5',
+      name: 'David Kim',
+      email: 'd.kim@agency.com',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg',
+      signupDate: 'Apr 1, 2025',
+      xpLevel: 1500,
+      planType: 'Pro',
+      status: 'Active',
+      activityLevel: 'Medium',
+      progressStatus: 'Intermediate'
+    }
+  ];
+
+  // Filter users based on search query and selected filters
+  const filteredUsers = exampleUsers.filter(user => {
+    const matchesSearch = searchQuery === '' || 
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesPlan = selectedPlan === 'All Plans' || user.planType === selectedPlan;
+    const matchesActivity = selectedActivity === 'Activity Level' || user.activityLevel === selectedActivity;
+    const matchesProgress = selectedProgress === 'Progress Status' || user.progressStatus === selectedProgress;
+
+    return matchesSearch && matchesPlan && matchesActivity && matchesProgress;
+  });
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Handle plan filter change
+  const handlePlanChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedPlan(e.target.value);
+  };
+
+  // Handle activity level filter change
+  const handleActivityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedActivity(e.target.value);
+  };
+
+  // Handle progress status filter change
+  const handleProgressChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedProgress(e.target.value);
+  };
+
   const handleOpenCreateUserModal = () => {
     setIsCreateUserModalOpen(true);
   };
@@ -765,22 +868,27 @@ const UserManagementTab: React.FC = () => {
       <FilterBar>
         <FilterGroup>
           <SearchContainer>
-            <StyledSearchInput type="text" placeholder="Search users..." />
+            <StyledSearchInput 
+              type="text" 
+              placeholder="Search users..." 
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
             <SearchIcon />
           </SearchContainer>
-          <StyledSelect>
+          <StyledSelect value={selectedPlan} onChange={handlePlanChange}>
             <option>All Plans</option>
             <option>Free</option>
             <option>Pro</option>
             <option>Enterprise</option>
           </StyledSelect>
-          <StyledSelect>
+          <StyledSelect value={selectedActivity} onChange={handleActivityChange}>
             <option>Activity Level</option>
             <option>High</option>
             <option>Medium</option>
             <option>Low</option>
           </StyledSelect>
-          <StyledSelect>
+          <StyledSelect value={selectedProgress} onChange={handleProgressChange}>
             <option>Progress Status</option>
             <option>Beginner</option>
             <option>Intermediate</option>
@@ -806,94 +914,98 @@ const UserManagementTab: React.FC = () => {
             </tr>
           </TableHead>
           <TableBody>
-            <TableRow>
-              <TableCell>
-                <UserInfo>
-                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
-                  <UserDetails>
-                    <UserName>Alex Johnson</UserName>
-                    <UserEmail>alex.j@example.com</UserEmail>
-                  </UserDetails>
-                </UserInfo>
-              </TableCell>
-              <TableCell style={{ color: '#0F172A70' }}>Jan 15, 2025</TableCell>
-              <TableCell>
-                <XPBadge>
-                  <span>2,450 XP</span>
-                  <FaTrophy />
-                </XPBadge>
-              </TableCell>
-              <TableCell>
-                <PlanBadge>Pro</PlanBadge>
-              </TableCell>
-              <TableCell>
-                <StatusBadge>Active</StatusBadge>
-              </TableCell>
-              <TableCell>
-                <ActionGroup>
-                  <ActionButton title="View Details">
-                    <FaEye />
-                  </ActionButton>
-                  <ActionButton title="Impersonate">
-                    <FaUser />
-                  </ActionButton>
-                  <ActionButton title="Reset Password">
-                    <FaKey />
-                  </ActionButton>
-                  <ActionButton title="Ban User">
-                    <FaBan />
-                  </ActionButton>
-                </ActionGroup>
-              </TableCell>
-            </TableRow>
+            {filteredUsers.map(user => (
+              <TableRow key={user.id}>
+                <TableCell>
+                  <UserInfo>
+                    <Avatar src={user.avatarUrl} alt={user.name} />
+                    <UserDetails>
+                      <UserName>{user.name}</UserName>
+                      <UserEmail>{user.email}</UserEmail>
+                    </UserDetails>
+                  </UserInfo>
+                </TableCell>
+                <TableCell style={{ color: '#0F172A70' }}>{user.signupDate}</TableCell>
+                <TableCell>
+                  <XPBadge>
+                    <span>{user.xpLevel.toLocaleString()} XP</span>
+                    <FaTrophy />
+                  </XPBadge>
+                </TableCell>
+                <TableCell>
+                  <PlanBadge>{user.planType}</PlanBadge>
+                </TableCell>
+                <TableCell>
+                  <StatusBadge>{user.status}</StatusBadge>
+                </TableCell>
+                <TableCell>
+                  <ActionGroup>
+                    <ActionButton title="View Details">
+                      <FaEye />
+                    </ActionButton>
+                    <ActionButton title="Impersonate">
+                      <FaUser />
+                    </ActionButton>
+                    <ActionButton title="Reset Password">
+                      <FaKey />
+                    </ActionButton>
+                    <ActionButton title="Ban User">
+                      <FaBan />
+                    </ActionButton>
+                  </ActionGroup>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
 
         <CardContainer>
-          <UserCard>
-            <CardHeader>
-              <CardUserInfo>
-                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
-                <UserDetails>
-                  <UserName>Alex Johnson</UserName>
-                  <UserEmail>alex.j@example.com</UserEmail>
-                </UserDetails>
-              </CardUserInfo>
-              <CardStatus>
-                <StatusBadge>Active</StatusBadge>
-                <PlanBadge>Pro</PlanBadge>
-              </CardStatus>
-            </CardHeader>
-            <CardDetails>
-              <DetailItem>
-                <DetailLabel>Signup Date</DetailLabel>
-                <DetailValue>Jan 15, 2025</DetailValue>
-              </DetailItem>
-              <DetailItem>
-                <DetailLabel>XP Level</DetailLabel>
-                <DetailValue>
-                  <XPBadge>
-                    <span>2,450 XP</span>
-                    <FaTrophy />
-                  </XPBadge>
-                </DetailValue>
-              </DetailItem>
-            </CardDetails>
-            <CardActions>
-              <ActionButton title="View Details">
-                <FaEye />
-              </ActionButton>
-              <ActionButton title="Impersonate">
-                <FaUser />
-              </ActionButton>
-              <ActionButton title="Reset Password">
-                <FaKey />
-              </ActionButton>
-              <ActionButton title="Ban User">
-                <FaBan />
-              </ActionButton>
-            </CardActions>
-          </UserCard>
+          {filteredUsers.map(user => (
+            <UserCard key={user.id}>
+              <CardHeader>
+                <CardUserInfo>
+                  <Avatar src={user.avatarUrl} alt={user.name} />
+                  <UserDetails>
+                    <UserName>{user.name}</UserName>
+                    <UserEmail>{user.email}</UserEmail>
+                  </UserDetails>
+                </CardUserInfo>
+                <CardStatus>
+                  <StatusBadge>{user.status}</StatusBadge>
+                  <PlanBadge>{user.planType}</PlanBadge>
+                </CardStatus>
+              </CardHeader>
+              <CardDetails>
+                <DetailItem>
+                  <DetailLabel>Signup Date</DetailLabel>
+                  <DetailValue>{user.signupDate}</DetailValue>
+                </DetailItem>
+                <DetailItem>
+                  <DetailLabel>XP Level</DetailLabel>
+                  <DetailValue>
+                    <XPBadge>
+                      <span>{user.xpLevel.toLocaleString()} XP</span>
+                      <FaTrophy />
+                    </XPBadge>
+                  </DetailValue>
+                </DetailItem>
+              </CardDetails>
+              <CardActions>
+                <ActionButton title="View Details">
+                  <FaEye />
+                </ActionButton>
+                <ActionButton title="Impersonate">
+                  <FaUser />
+                </ActionButton>
+                <ActionButton title="Reset Password">
+                  <FaKey />
+                </ActionButton>
+                <ActionButton title="Ban User">
+                  <FaBan />
+                </ActionButton>
+              </CardActions>
+            </UserCard>
+          ))}
         </CardContainer>
       </TableContainer>
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaSearch, FaPlus, FaUsers, FaBook, FaTrophy, FaPen, FaArchive, FaPaperPlane, FaTimes } from 'react-icons/fa';
 
@@ -469,6 +469,9 @@ const SubmitButton = styled.button`
 `;
 
 const CourseManagerTab: React.FC = () => {
+  // Add filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState('All Types');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [formData, setFormData] = React.useState({
     title: '',
@@ -477,6 +480,108 @@ const CourseManagerTab: React.FC = () => {
     xp: '',
     addModulesLater: true
   });
+
+  // Example courses data
+  const exampleCourses = [
+    {
+      id: 'course1',
+      title: 'Project Management Fundamentals',
+      type: 'Premium Courses',
+      status: 'Active',
+      enrolled: 234,
+      modules: 12,
+      xp: 500,
+      thumbnail: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/8129a716c7-483d23aecd87f86a7c5b.png',
+      instructors: [
+        { id: 'i1', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg' },
+        { id: 'i2', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg' },
+        { id: 'i3', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg' }
+      ]
+    },
+    {
+      id: 'course2',
+      title: 'Digital Marketing Essentials',
+      type: 'Free Courses',
+      status: 'Draft',
+      enrolled: 0,
+      modules: 8,
+      xp: 300,
+      thumbnail: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/b4bdde4df1-6e1193f09828cf1a0343.png',
+      instructors: []
+    },
+    {
+      id: 'course3',
+      title: 'Leadership Skills 101',
+      type: 'Premium Courses',
+      status: 'Active',
+      enrolled: 156,
+      modules: 10,
+      xp: 400,
+      thumbnail: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/086157b763-f979e2ff769e362e5de2.png',
+      instructors: [
+        { id: 'i4', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg' },
+        { id: 'i5', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg' }
+      ]
+    },
+    {
+      id: 'course4',
+      title: 'Data Analytics Bootcamp',
+      type: 'Premium Courses',
+      status: 'Active',
+      enrolled: 189,
+      modules: 15,
+      xp: 600,
+      thumbnail: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/8129a716c7-483d23aecd87f86a7c5b.png',
+      instructors: [
+        { id: 'i6', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg' },
+        { id: 'i7', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg' }
+      ]
+    },
+    {
+      id: 'course5',
+      title: 'Web Development Basics',
+      type: 'Free Courses',
+      status: 'Active',
+      enrolled: 312,
+      modules: 10,
+      xp: 350,
+      thumbnail: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/b4bdde4df1-6e1193f09828cf1a0343.png',
+      instructors: [
+        { id: 'i8', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg' }
+      ]
+    },
+    {
+      id: 'course6',
+      title: 'UX Design Principles',
+      type: 'Premium Courses',
+      status: 'Draft',
+      enrolled: 0,
+      modules: 12,
+      xp: 450,
+      thumbnail: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/086157b763-f979e2ff769e362e5de2.png',
+      instructors: []
+    }
+  ];
+
+  // Filter courses based on search query and selected type
+  const filteredCourses = exampleCourses.filter(course => {
+    const matchesSearch = searchQuery === '' || 
+      course.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesType = selectedType === 'All Types' || course.type === selectedType;
+
+    return matchesSearch && matchesType;
+  });
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Handle type filter change
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedType(e.target.value);
+  };
 
   // Modal open/close handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -514,9 +619,14 @@ const CourseManagerTab: React.FC = () => {
         <FilterGroup>
           <SearchInput>
             <FaSearch />
-            <input type="text" placeholder="Search courses..." />
+            <input 
+              type="text" 
+              placeholder="Search courses..." 
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
           </SearchInput>
-          <Select>
+          <Select value={selectedType} onChange={handleTypeChange}>
             <option>All Types</option>
             <option>Free Courses</option>
             <option>Premium Courses</option>
@@ -529,149 +639,69 @@ const CourseManagerTab: React.FC = () => {
       </FiltersContainer>
 
       <CoursesGrid>
-        {/* Course Card 1 */}
-        <CourseCard>
-          <CourseImage>
-            <CourseThumbnail 
-              src="https://storage.googleapis.com/uxpilot-auth.appspot.com/8129a716c7-483d23aecd87f86a7c5b.png" 
-              alt="modern online course thumbnail showing project management concepts, minimal design style" 
-            />
-            <StatusTag $color="#00E915">Active</StatusTag>
-          </CourseImage>
-          <CourseContent>
-            <CourseHeader>
-              <CourseTitle>Project Management Fundamentals</CourseTitle>
-              <CourseType $color="#3B82F6">Premium</CourseType>
-            </CourseHeader>
-            <CourseStats>
-              <StatItem>
-                <StatIcon>
-                  <FaUsers />
-                </StatIcon>
-                <span>234 Enrolled</span>
-              </StatItem>
-              <StatItem>
-                <StatIcon>
-                  <FaBook />
-                </StatIcon>
-                <span>12 Modules</span>
-              </StatItem>
-              <StatItem>
-                <StatIcon $color="#00E915">
-                  <FaTrophy />
-                </StatIcon>
-                <span>500 XP</span>
-              </StatItem>
-            </CourseStats>
-            <CourseFooter>
-              <AvatarGroup>
-                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" />
-                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" />
-                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" />
-              </AvatarGroup>
-              <ActionButtons>
-                <IconButton $color="#3B82F6" title="Edit">
-                  <FaPen />
-                </IconButton>
-                <IconButton $color="#EC297B" title="Archive">
-                  <FaArchive />
-                </IconButton>
-              </ActionButtons>
-            </CourseFooter>
-          </CourseContent>
-        </CourseCard>
-
-        {/* Course Card 2 */}
-        <CourseCard>
-          <CourseImage>
-            <CourseThumbnail 
-              src="https://storage.googleapis.com/uxpilot-auth.appspot.com/b4bdde4df1-6e1193f09828cf1a0343.png" 
-              alt="digital marketing course thumbnail with social media icons, modern design" 
-            />
-            <StatusTag $color="#EC297B">Draft</StatusTag>
-          </CourseImage>
-          <CourseContent>
-            <CourseHeader>
-              <CourseTitle>Digital Marketing Essentials</CourseTitle>
-              <CourseType $color="#00E915">Free</CourseType>
-            </CourseHeader>
-            <CourseStats>
-              <StatItem>
-                <StatIcon>
-                  <FaUsers />
-                </StatIcon>
-                <span>0 Enrolled</span>
-              </StatItem>
-              <StatItem>
-                <StatIcon>
-                  <FaBook />
-                </StatIcon>
-                <span>8 Modules</span>
-              </StatItem>
-              <StatItem>
-                <StatIcon $color="#00E915">
-                  <FaTrophy />
-                </StatIcon>
-                <span>300 XP</span>
-              </StatItem>
-            </CourseStats>
-            <CenteredFooter>
-              <PreviewButton as={Button}>Preview</PreviewButton>
-              <Button $primary>Publish</Button>
-            </CenteredFooter>
-          </CourseContent>
-        </CourseCard>
-
-        {/* Course Card 3 */}
-        <CourseCard>
-          <CourseImage>
-            <CourseThumbnail 
-              src="https://storage.googleapis.com/uxpilot-auth.appspot.com/086157b763-f979e2ff769e362e5de2.png" 
-              alt="leadership skills course thumbnail with abstract team illustration, corporate style" 
-            />
-            <StatusTag $color="#00E915">Active</StatusTag>
-          </CourseImage>
-          <CourseContent>
-            <CourseHeader>
-              <CourseTitle>Leadership Skills 101</CourseTitle>
-              <CourseType $color="#3B82F6">Premium</CourseType>
-            </CourseHeader>
-            <CourseStats>
-              <StatItem>
-                <StatIcon>
-                  <FaUsers />
-                </StatIcon>
-                <span>156 Enrolled</span>
-              </StatItem>
-              <StatItem>
-                <StatIcon>
-                  <FaBook />
-                </StatIcon>
-                <span>10 Modules</span>
-              </StatItem>
-              <StatItem>
-                <StatIcon $color="#00E915">
-                  <FaTrophy />
-                </StatIcon>
-                <span>400 XP</span>
-              </StatItem>
-            </CourseStats>
-            <CourseFooter>
-              <AvatarGroup>
-                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" />
-                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" />
-              </AvatarGroup>
-              <ActionButtons>
-                <IconButton $color="#3B82F6" title="Edit">
-                  <FaPen />
-                </IconButton>
-                <IconButton $color="#EC297B" title="Archive">
-                  <FaArchive />
-                </IconButton>
-              </ActionButtons>
-            </CourseFooter>
-          </CourseContent>
-        </CourseCard>
+        {filteredCourses.map(course => (
+          <CourseCard key={course.id}>
+            <CourseImage>
+              <CourseThumbnail 
+                src={course.thumbnail}
+                alt={`${course.title} course thumbnail`}
+              />
+              <StatusTag $color={course.status === 'Active' ? '#00E915' : '#EC297B'}>
+                {course.status}
+              </StatusTag>
+            </CourseImage>
+            <CourseContent>
+              <CourseHeader>
+                <CourseTitle>{course.title}</CourseTitle>
+                <CourseType $color={course.type === 'Premium Courses' ? '#3B82F6' : '#00E915'}>
+                  {course.type}
+                </CourseType>
+              </CourseHeader>
+              <CourseStats>
+                <StatItem>
+                  <StatIcon>
+                    <FaUsers />
+                  </StatIcon>
+                  <span>{course.enrolled} Enrolled</span>
+                </StatItem>
+                <StatItem>
+                  <StatIcon>
+                    <FaBook />
+                  </StatIcon>
+                  <span>{course.modules} Modules</span>
+                </StatItem>
+                <StatItem>
+                  <StatIcon $color="#00E915">
+                    <FaTrophy />
+                  </StatIcon>
+                  <span>{course.xp} XP</span>
+                </StatItem>
+              </CourseStats>
+              {course.status === 'Draft' ? (
+                <CenteredFooter>
+                  <PreviewButton as={Button}>Preview</PreviewButton>
+                  <Button $primary>Publish</Button>
+                </CenteredFooter>
+              ) : (
+                <CourseFooter>
+                  <AvatarGroup>
+                    {course.instructors.map(instructor => (
+                      <Avatar key={instructor.id} src={instructor.avatar} alt="Instructor" />
+                    ))}
+                  </AvatarGroup>
+                  <ActionButtons>
+                    <IconButton $color="#3B82F6" title="Edit">
+                      <FaPen />
+                    </IconButton>
+                    <IconButton $color="#EC297B" title="Archive">
+                      <FaArchive />
+                    </IconButton>
+                  </ActionButtons>
+                </CourseFooter>
+              )}
+            </CourseContent>
+          </CourseCard>
+        ))}
       </CoursesGrid>
 
       <FloatingAddButton onClick={handleOpenModal}>

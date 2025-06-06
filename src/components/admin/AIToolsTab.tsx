@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -596,8 +596,11 @@ const SubmitButton = styled.button`
 `;
 
 const AIToolsTab: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [formData, setFormData] = React.useState({
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [selectedAccessLevel, setSelectedAccessLevel] = useState('All Access Levels');
+  const [formData, setFormData] = useState({
     name: '',
     logo: null as File | null,
     logoUrl: '',
@@ -606,6 +609,79 @@ const AIToolsTab: React.FC = () => {
     link: '',
     verified: false
   });
+
+  // Sample data for AI tools
+  const exampleTools = [
+    {
+      id: 1,
+      name: 'Role Copilot',
+      version: 'v2.1.0',
+      category: 'AI Assistant',
+      description: 'AI-powered role description generator',
+      accessLevel: 'Premium',
+      icon: faRobot,
+      iconColor: '#3B82F6',
+      isStarred: true
+    },
+    {
+      id: 2,
+      name: 'Smart Quotes',
+      version: 'v1.5.2',
+      category: 'Automation',
+      description: 'Automated quote generation system',
+      accessLevel: 'Free',
+      icon: faWandMagicSparkles,
+      iconColor: '#3B82F6',
+      isStarred: false
+    },
+    {
+      id: 3,
+      name: 'Content Generator',
+      version: 'v1.0.0',
+      category: 'Marketing',
+      description: 'AI-powered content creation tool',
+      accessLevel: 'Premium',
+      icon: faRobot,
+      iconColor: '#3B82F6',
+      isStarred: false
+    },
+    {
+      id: 4,
+      name: 'Data Analyzer',
+      version: 'v2.3.1',
+      category: 'Analytics',
+      description: 'Advanced data analysis and visualization',
+      accessLevel: 'Enterprise',
+      icon: faRobot,
+      iconColor: '#3B82F6',
+      isStarred: true
+    },
+    {
+      id: 5,
+      name: 'Code Assistant',
+      version: 'v1.8.0',
+      category: 'Development',
+      description: 'AI-powered coding assistant',
+      accessLevel: 'Premium',
+      icon: faRobot,
+      iconColor: '#3B82F6',
+      isStarred: false
+    }
+  ];
+
+  // Filter tools based on search query and selected filters
+  const filteredTools = exampleTools.filter(tool => {
+    const matchesSearch = tool.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         tool.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All Categories' || tool.category === selectedCategory;
+    const matchesAccessLevel = selectedAccessLevel === 'All Access Levels' || tool.accessLevel === selectedAccessLevel;
+    
+    return matchesSearch && matchesCategory && matchesAccessLevel;
+  });
+
+  // Get unique categories and access levels for dropdowns
+  const categories = ['All Categories', ...new Set(exampleTools.map(tool => tool.category))];
+  const accessLevels = ['All Access Levels', ...new Set(exampleTools.map(tool => tool.accessLevel))];
 
   // Modal open/close handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -650,14 +726,34 @@ const AIToolsTab: React.FC = () => {
         <SearchContainer>
           <TopRow>
             <SearchWrapper>
-              <SearchInput type="text" placeholder="Search tools..." />
+              <SearchInput 
+                type="text" 
+                placeholder="Search tools..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
               <SearchIcon icon={faSearch} />
             </SearchWrapper>
-            <FilterButton>AI Tools</FilterButton>
+            <FilterButton 
+              as="select"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </FilterButton>
           </TopRow>
           <FilterButtons>
-            <FilterButton>Automation</FilterButton>
-            <FilterButton>Marketing</FilterButton>
+            <FilterButton 
+              as="select"
+              value={selectedAccessLevel}
+              onChange={(e) => setSelectedAccessLevel(e.target.value)}
+            >
+              {accessLevels.map(level => (
+                <option key={level} value={level}>{level}</option>
+              ))}
+            </FilterButton>
           </FilterButtons>
         </SearchContainer>
         <AddToolButton onClick={handleOpenModal}>
@@ -679,171 +775,95 @@ const AIToolsTab: React.FC = () => {
             </tr>
           </TableHead>
           <TableBody>
-            <tr>
-              <TableCell>
-                <ToolInfo>
-                  <ToolIcon $color="#3B82F6">
-                    <FontAwesomeIcon icon={faRobot} />
-                  </ToolIcon>
-                  <ToolDetails>
-                    <ToolName>Role Copilot</ToolName>
-                    <ToolVersion>v2.1.0</ToolVersion>
-                  </ToolDetails>
-                </ToolInfo>
-              </TableCell>
-              <TableCell>
-                <CategoryTag>AI Assistant</CategoryTag>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>
-                  AI-powered role description generator
-                </span>
-              </TableCell>
-              <TableCell>
-                <AccessLevelTag $color="#00E915">Premium</AccessLevelTag>
-              </TableCell>
-              <TableCell>
-                <ActionButtons>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faPen} />
-                  </ActionButton>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faEyeSlash} />
-                  </ActionButton>
-                  <ActionButton $color="#EC297B">
-                    <FontAwesomeIcon icon={faStarSolid} />
-                  </ActionButton>
-                </ActionButtons>
-              </TableCell>
-            </tr>
-            <tr>
-              <TableCell>
-                <ToolInfo>
-                  <ToolIcon $color="#3B82F6">
-                    <FontAwesomeIcon icon={faWandMagicSparkles} />
-                  </ToolIcon>
-                  <ToolDetails>
-                    <ToolName>Smart Quotes</ToolName>
-                    <ToolVersion>v1.5.2</ToolVersion>
-                  </ToolDetails>
-                </ToolInfo>
-              </TableCell>
-              <TableCell>
-                <CategoryTag>Automation</CategoryTag>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>
-                  Automated quote generation system
-                </span>
-              </TableCell>
-              <TableCell>
-                <AccessLevelTag $color="#00E915">Free</AccessLevelTag>
-              </TableCell>
-              <TableCell>
-                <ActionButtons>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faPen} />
-                  </ActionButton>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faEyeSlash} />
-                  </ActionButton>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faStarRegular} />
-                  </ActionButton>
-                </ActionButtons>
-              </TableCell>
-            </tr>
+            {filteredTools.map(tool => (
+              <tr key={tool.id}>
+                <TableCell>
+                  <ToolInfo>
+                    <ToolIcon $color={tool.iconColor}>
+                      <FontAwesomeIcon icon={tool.icon} />
+                    </ToolIcon>
+                    <ToolDetails>
+                      <ToolName>{tool.name}</ToolName>
+                      <ToolVersion>{tool.version}</ToolVersion>
+                    </ToolDetails>
+                  </ToolInfo>
+                </TableCell>
+                <TableCell>
+                  <CategoryTag>{tool.category}</CategoryTag>
+                </TableCell>
+                <TableCell>
+                  <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>
+                    {tool.description}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <AccessLevelTag $color="#00E915">{tool.accessLevel}</AccessLevelTag>
+                </TableCell>
+                <TableCell>
+                  <ActionButtons>
+                    <ActionButton>
+                      <FontAwesomeIcon icon={faPen} />
+                    </ActionButton>
+                    <ActionButton>
+                      <FontAwesomeIcon icon={faEyeSlash} />
+                    </ActionButton>
+                    <ActionButton $color={tool.isStarred ? "#EC297B" : undefined}>
+                      <FontAwesomeIcon icon={tool.isStarred ? faStarSolid : faStarRegular} />
+                    </ActionButton>
+                  </ActionButtons>
+                </TableCell>
+              </tr>
+            ))}
           </TableBody>
         </Table>
       </ToolsTable>
 
       {/* Mobile Card View */}
       <CardListContainer>
-        <ToolCard>
-          <CardHeader>
-            <CardTitleGroup>
-              <CardToolTitle>
-                <ToolIcon $color="#3B82F6">
-                  <FontAwesomeIcon icon={faRobot} />
-                </ToolIcon>
-                Role Copilot
-              </CardToolTitle>
-              <CardVersion>v2.1.0</CardVersion>
-            </CardTitleGroup>
-          </CardHeader>
-          <CardContent>
-            <CardDetailRow>
-              <CardLabel>Category:</CardLabel>
-              <CardValue>
-                <CategoryTag>AI Assistant</CategoryTag>
-              </CardValue>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabel>Description:</CardLabel>
-              <CardValue>AI-powered role description generator</CardValue>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabel>Access Level:</CardLabel>
-              <CardValue>
-                <AccessLevelTag $color="#00E915">Premium</AccessLevelTag>
-              </CardValue>
-            </CardDetailRow>
-            <CardActions>
-              <ActionButton>
-                <FontAwesomeIcon icon={faPen} />
-              </ActionButton>
-              <ActionButton>
-                <FontAwesomeIcon icon={faEyeSlash} />
-              </ActionButton>
-              <ActionButton $color="#EC297B">
-                <FontAwesomeIcon icon={faStarSolid} />
-              </ActionButton>
-            </CardActions>
-          </CardContent>
-        </ToolCard>
-
-        <ToolCard>
-          <CardHeader>
-            <CardTitleGroup>
-              <CardToolTitle>
-                <ToolIcon $color="#3B82F6">
-                  <FontAwesomeIcon icon={faWandMagicSparkles} />
-                </ToolIcon>
-                Smart Quotes
-              </CardToolTitle>
-              <CardVersion>v1.5.2</CardVersion>
-            </CardTitleGroup>
-          </CardHeader>
-          <CardContent>
-            <CardDetailRow>
-              <CardLabel>Category:</CardLabel>
-              <CardValue>
-                <CategoryTag>Automation</CategoryTag>
-              </CardValue>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabel>Description:</CardLabel>
-              <CardValue>Automated quote generation system</CardValue>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabel>Access Level:</CardLabel>
-              <CardValue>
-                <AccessLevelTag $color="#00E915">Free</AccessLevelTag>
-              </CardValue>
-            </CardDetailRow>
-            <CardActions>
-              <ActionButton>
-                <FontAwesomeIcon icon={faPen} />
-              </ActionButton>
-              <ActionButton>
-                <FontAwesomeIcon icon={faEyeSlash} />
-              </ActionButton>
-              <ActionButton>
-                <FontAwesomeIcon icon={faStarRegular} />
-              </ActionButton>
-            </CardActions>
-          </CardContent>
-        </ToolCard>
+        {filteredTools.map(tool => (
+          <ToolCard key={tool.id}>
+            <CardHeader>
+              <CardTitleGroup>
+                <CardToolTitle>
+                  <ToolIcon $color={tool.iconColor}>
+                    <FontAwesomeIcon icon={tool.icon} />
+                  </ToolIcon>
+                  {tool.name}
+                </CardToolTitle>
+                <CardVersion>{tool.version}</CardVersion>
+              </CardTitleGroup>
+            </CardHeader>
+            <CardContent>
+              <CardDetailRow>
+                <CardLabel>Category:</CardLabel>
+                <CardValue>
+                  <CategoryTag>{tool.category}</CategoryTag>
+                </CardValue>
+              </CardDetailRow>
+              <CardDetailRow>
+                <CardLabel>Description:</CardLabel>
+                <CardValue>{tool.description}</CardValue>
+              </CardDetailRow>
+              <CardDetailRow>
+                <CardLabel>Access Level:</CardLabel>
+                <CardValue>
+                  <AccessLevelTag $color="#00E915">{tool.accessLevel}</AccessLevelTag>
+                </CardValue>
+              </CardDetailRow>
+              <CardActions>
+                <ActionButton>
+                  <FontAwesomeIcon icon={faPen} />
+                </ActionButton>
+                <ActionButton>
+                  <FontAwesomeIcon icon={faEyeSlash} />
+                </ActionButton>
+                <ActionButton $color={tool.isStarred ? "#EC297B" : undefined}>
+                  <FontAwesomeIcon icon={tool.isStarred ? faStarSolid : faStarRegular} />
+                </ActionButton>
+              </CardActions>
+            </CardContent>
+          </ToolCard>
+        ))}
       </CardListContainer>
 
       <FloatingAddButton onClick={handleOpenModal}>
