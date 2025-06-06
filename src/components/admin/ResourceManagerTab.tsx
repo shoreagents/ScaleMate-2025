@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FaSearch, FaUpload, FaChevronDown, FaFilePdf, FaFileWord, FaPen, FaArchive, FaStar, FaCloudUploadAlt, FaTimes } from 'react-icons/fa';
 
@@ -63,6 +63,35 @@ const SearchInput = styled.div`
 `;
 
 const FilterButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 2rem 0.5rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #0F172A;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+  height: 2.5rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #F9FAFB;
+  }
+
+  @media (max-width: 1088px) {
+    width: 100%;
+  }
+`;
+
+const FilterSelect = styled.select`
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -522,6 +551,11 @@ const SubmitButton = styled.button`
 `;
 
 const ResourceManagerTab: React.FC = () => {
+  // Add filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState('All Types');
+  const [selectedAccess, setSelectedAccess] = useState('All Access');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [formData, setFormData] = React.useState({
     title: '',
@@ -531,6 +565,103 @@ const ResourceManagerTab: React.FC = () => {
     access: 'Free',
     dragActive: false
   });
+
+  // Example resources data
+  const exampleResources = [
+    {
+      id: 'res1',
+      title: 'Team Scaling Guide 2025',
+      type: 'PDF',
+      status: 'Premium',
+      lastUpdated: 'Jan 15, 2025',
+      tags: ['Onboarding', 'Leadership'],
+      icon: <FaFilePdf style={{ color: '#EC297B' }} />
+    },
+    {
+      id: 'res2',
+      title: 'Onboarding Checklist',
+      type: 'DOC',
+      status: 'Free',
+      lastUpdated: 'Jan 10, 2025',
+      tags: ['Onboarding', 'Templates'],
+      icon: <FaFileWord style={{ color: '#0098FF' }} />
+    },
+    {
+      id: 'res3',
+      title: 'Delegation Framework',
+      type: 'PDF',
+      status: 'Premium',
+      lastUpdated: 'Jan 12, 2025',
+      tags: ['Delegation', 'Leadership'],
+      icon: <FaFilePdf style={{ color: '#EC297B' }} />
+    },
+    {
+      id: 'res4',
+      title: 'Team Communication Template',
+      type: 'DOC',
+      status: 'Free',
+      lastUpdated: 'Jan 8, 2025',
+      tags: ['Templates', 'Communication'],
+      icon: <FaFileWord style={{ color: '#0098FF' }} />
+    },
+    {
+      id: 'res5',
+      title: 'Leadership Playbook',
+      type: 'PDF',
+      status: 'Premium',
+      lastUpdated: 'Jan 14, 2025',
+      tags: ['Leadership', 'Guide'],
+      icon: <FaFilePdf style={{ color: '#EC297B' }} />
+    },
+    {
+      id: 'res6',
+      title: 'Project Management Template',
+      type: 'DOC',
+      status: 'Free',
+      lastUpdated: 'Jan 9, 2025',
+      tags: ['Templates', 'Project Management'],
+      icon: <FaFileWord style={{ color: '#0098FF' }} />
+    }
+  ];
+
+  // Filter options
+  const typeOptions = ['All Types', 'PDF', 'DOC'];
+  const accessOptions = ['All Access', 'Premium', 'Free'];
+
+  // Filter resources based on search query, type, access, and tag
+  const filteredResources = exampleResources.filter(resource => {
+    const matchesSearch = searchQuery === '' || 
+      resource.title.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesType = selectedType === 'All Types' || resource.type === selectedType;
+
+    const matchesAccess = selectedAccess === 'All Access' || resource.status === selectedAccess;
+
+    const matchesTag = !selectedTag || resource.tags.includes(selectedTag);
+
+    return matchesSearch && matchesType && matchesAccess && matchesTag;
+  });
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Handle type filter change
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedType(e.target.value);
+  };
+
+  // Handle access filter change
+  const handleAccessChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedAccess(e.target.value);
+  };
+
+  // Handle tag filter change
+  const handleTagClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const tag = e.currentTarget.textContent || '';
+    setSelectedTag(selectedTag === tag ? null : tag);
+  };
 
   // Modal open/close handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -554,9 +685,6 @@ const ResourceManagerTab: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       setFormData(prev => ({ ...prev, file: e.target.files![0] }));
     }
-  };
-  const handleAccessChange = (access: string) => {
-    setFormData(prev => ({ ...prev, access }));
   };
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -588,14 +716,33 @@ const ResourceManagerTab: React.FC = () => {
         <FilterGroup>
           <SearchInput>
             <FaSearch />
-            <input type="text" placeholder="Search resources..." />
+            <input 
+              type="text" 
+              placeholder="Search resources..." 
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
           </SearchInput>
-          <FilterButton>
-            All Types
-          </FilterButton>
-          <FilterButton>
-            Access Level
-          </FilterButton>
+          <FilterSelect 
+            value={selectedType} 
+            onChange={handleTypeChange}
+          >
+            {typeOptions.map(option => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </FilterSelect>
+          <FilterSelect 
+            value={selectedAccess} 
+            onChange={handleAccessChange}
+          >
+            {accessOptions.map(option => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </FilterSelect>
         </FilterGroup>
         <UploadButton onClick={handleOpenModal}>
           <FaUpload />
@@ -605,10 +752,38 @@ const ResourceManagerTab: React.FC = () => {
 
       <TagFilterContainer>
         <TagLabel>Popular Tags:</TagLabel>
-        <TagButton>Onboarding</TagButton>
-        <TagButton>Delegation</TagButton>
-        <TagButton>Leadership</TagButton>
-        <TagButton>Templates</TagButton>
+        <TagButton 
+          onClick={handleTagClick}
+          style={{ 
+            backgroundColor: selectedTag === 'Onboarding' ? 'rgba(0, 152, 255, 0.2)' : 'rgba(0, 152, 255, 0.1)'
+          }}
+        >
+          Onboarding
+        </TagButton>
+        <TagButton 
+          onClick={handleTagClick}
+          style={{ 
+            backgroundColor: selectedTag === 'Delegation' ? 'rgba(0, 152, 255, 0.2)' : 'rgba(0, 152, 255, 0.1)'
+          }}
+        >
+          Delegation
+        </TagButton>
+        <TagButton 
+          onClick={handleTagClick}
+          style={{ 
+            backgroundColor: selectedTag === 'Leadership' ? 'rgba(0, 152, 255, 0.2)' : 'rgba(0, 152, 255, 0.1)'
+          }}
+        >
+          Leadership
+        </TagButton>
+        <TagButton 
+          onClick={handleTagClick}
+          style={{ 
+            backgroundColor: selectedTag === 'Templates' ? 'rgba(0, 152, 255, 0.2)' : 'rgba(0, 152, 255, 0.1)'
+          }}
+        >
+          Templates
+        </TagButton>
       </TagFilterContainer>
 
       {/* Desktop/Tablet Table */}
@@ -624,133 +799,80 @@ const ResourceManagerTab: React.FC = () => {
             </tr>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell>
-                <ResourceTitle>
-                  <FaFilePdf style={{ color: '#EC297B' }} />
-                  Team Scaling Guide 2025
-                </ResourceTitle>
-              </TableCell>
-              <TableCell>PDF</TableCell>
-              <TableCell>
-                <StatusTag $color="#EC297B">Premium</StatusTag>
-              </TableCell>
-              <TableCell>Jan 15, 2025</TableCell>
-              <TableCell>
-                <ActionButtons>
-                  <IconButton $color="#3B82F6" title="Edit">
-                    <FaPen />
-                  </IconButton>
-                  <IconButton $color="#EC297B" title="Archive">
-                    <FaArchive />
-                  </IconButton>
-                  <IconButton $color="#0098FF" title="Star">
-                    <FaStar />
-                  </IconButton>
-                </ActionButtons>
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>
-                <ResourceTitle>
-                  <FaFileWord style={{ color: '#0098FF' }} />
-                  Onboarding Checklist
-                </ResourceTitle>
-              </TableCell>
-              <TableCell>DOC</TableCell>
-              <TableCell>
-                <StatusTag $color="#00E915">Free</StatusTag>
-              </TableCell>
-              <TableCell>Jan 10, 2025</TableCell>
-              <TableCell>
-                <ActionButtons>
-                  <IconButton $color="#3B82F6" title="Edit">
-                    <FaPen />
-                  </IconButton>
-                  <IconButton $color="#EC297B" title="Archive">
-                    <FaArchive />
-                  </IconButton>
-                  <IconButton $color="#0098FF" title="Star">
-                    <FaStar />
-                  </IconButton>
-                </ActionButtons>
-              </TableCell>
-            </TableRow>
+            {filteredResources.map(resource => (
+              <TableRow key={resource.id}>
+                <TableCell>
+                  <ResourceTitle>
+                    {resource.icon}
+                    {resource.title}
+                  </ResourceTitle>
+                </TableCell>
+                <TableCell>{resource.type}</TableCell>
+                <TableCell>
+                  <StatusTag $color={resource.status === 'Premium' ? '#EC297B' : '#00E915'}>
+                    {resource.status}
+                  </StatusTag>
+                </TableCell>
+                <TableCell>{resource.lastUpdated}</TableCell>
+                <TableCell>
+                  <ActionButtons>
+                    <IconButton $color="#3B82F6" title="Edit">
+                      <FaPen />
+                    </IconButton>
+                    <IconButton $color="#EC297B" title="Archive">
+                      <FaArchive />
+                    </IconButton>
+                    <IconButton $color="#0098FF" title="Star">
+                      <FaStar />
+                    </IconButton>
+                  </ActionButtons>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
 
       {/* Mobile Card View */}
       <CardListContainer>
-        <ResourceCard>
-          <CardHeader>
-            <CardTitleGroup>
-              <CardResourceTitle>
-                <FaFilePdf style={{ color: '#EC297B' }} />
-                Team Scaling Guide 2025
-              </CardResourceTitle>
-              <CardDate>Jan 15, 2025</CardDate>
-            </CardTitleGroup>
-          </CardHeader>
-          <CardContent>
-            <CardDetailRow>
-              <CardLabel>Type:</CardLabel>
-              <CardValue>PDF</CardValue>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabel>Status:</CardLabel>
-              <CardValue>
-                <StatusTag $color="#EC297B">Premium</StatusTag>
-              </CardValue>
-            </CardDetailRow>
-            <CardActions>
-              <IconButton $color="#3B82F6" title="Edit">
-                <FaPen />
-              </IconButton>
-              <IconButton $color="#EC297B" title="Archive">
-                <FaArchive />
-              </IconButton>
-              <IconButton $color="#0098FF" title="Star">
-                <FaStar />
-              </IconButton>
-            </CardActions>
-          </CardContent>
-        </ResourceCard>
-
-        <ResourceCard>
-          <CardHeader>
-            <CardTitleGroup>
-              <CardResourceTitle>
-                <FaFileWord style={{ color: '#0098FF' }} />
-                Onboarding Checklist
-              </CardResourceTitle>
-              <CardDate>Jan 10, 2025</CardDate>
-            </CardTitleGroup>
-          </CardHeader>
-          <CardContent>
-            <CardDetailRow>
-              <CardLabel>Type:</CardLabel>
-              <CardValue>DOC</CardValue>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabel>Status:</CardLabel>
-              <CardValue>
-                <StatusTag $color="#00E915">Free</StatusTag>
-              </CardValue>
-            </CardDetailRow>
-            <CardActions>
-              <IconButton $color="#3B82F6" title="Edit">
-                <FaPen />
-              </IconButton>
-              <IconButton $color="#EC297B" title="Archive">
-                <FaArchive />
-              </IconButton>
-              <IconButton $color="#0098FF" title="Star">
-                <FaStar />
-              </IconButton>
-            </CardActions>
-          </CardContent>
-        </ResourceCard>
+        {filteredResources.map(resource => (
+          <ResourceCard key={resource.id}>
+            <CardHeader>
+              <CardTitleGroup>
+                <CardResourceTitle>
+                  {resource.icon}
+                  {resource.title}
+                </CardResourceTitle>
+                <CardDate>{resource.lastUpdated}</CardDate>
+              </CardTitleGroup>
+            </CardHeader>
+            <CardContent>
+              <CardDetailRow>
+                <CardLabel>Type:</CardLabel>
+                <CardValue>{resource.type}</CardValue>
+              </CardDetailRow>
+              <CardDetailRow>
+                <CardLabel>Status:</CardLabel>
+                <CardValue>
+                  <StatusTag $color={resource.status === 'Premium' ? '#EC297B' : '#00E915'}>
+                    {resource.status}
+                  </StatusTag>
+                </CardValue>
+              </CardDetailRow>
+              <CardActions>
+                <IconButton $color="#3B82F6" title="Edit">
+                  <FaPen />
+                </IconButton>
+                <IconButton $color="#EC297B" title="Archive">
+                  <FaArchive />
+                </IconButton>
+                <IconButton $color="#0098FF" title="Star">
+                  <FaStar />
+                </IconButton>
+              </CardActions>
+            </CardContent>
+          </ResourceCard>
+        ))}
       </CardListContainer>
 
       {/* Upload Resource Modal */}

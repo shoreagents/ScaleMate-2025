@@ -700,7 +700,15 @@ const DetailValue = styled.span`
 interface Role {
   id: string;
   name: string;
+  department: string;
   isFeatured: boolean;
+  createdBy: {
+    name: string;
+    email: string;
+    avatarUrl: string;
+  };
+  date: string;
+  status: string;
 }
 
 interface ExportFormData {
@@ -711,6 +719,8 @@ interface ExportFormData {
 }
 
 const RolesBlueprintTab: React.FC = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('All Departments');
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportFormData, setExportFormData] = useState<ExportFormData>({
     filterBy: 'All Departments',
@@ -719,15 +729,105 @@ const RolesBlueprintTab: React.FC = () => {
     exportFormat: 'csv'
   });
 
-  const exampleRoles: Role[] = [
-    { id: 'role1', name: 'Senior Product Manager', isFeatured: true },
-    { id: 'role2', name: 'Frontend Engineer', isFeatured: false },
-    { id: 'role3', name: 'UX Designer', isFeatured: false },
-    { id: 'role4', name: 'DevOps Specialist', isFeatured: false },
-    { id: 'role5', name: 'QA Lead', isFeatured: false }
+  const exampleRoles = [
+    {
+      id: 'role1',
+      name: 'Senior Product Manager',
+      department: 'Product',
+      isFeatured: true,
+      createdBy: {
+        name: 'Michael S.',
+        email: 'michael.s@example.com',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg'
+      },
+      date: '2025-03-15',
+      status: 'Active'
+    },
+    {
+      id: 'role2',
+      name: 'Frontend Engineer',
+      department: 'Engineering',
+      isFeatured: false,
+      createdBy: {
+        name: 'Sarah L.',
+        email: 'sarah.l@techcorp.io',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg'
+      },
+      date: '2025-03-10',
+      status: 'Active'
+    },
+    {
+      id: 'role3',
+      name: 'UX Designer',
+      department: 'Design',
+      isFeatured: true,
+      createdBy: {
+        name: 'Alex K.',
+        email: 'alex.k@design.co',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg'
+      },
+      date: '2025-03-05',
+      status: 'Draft'
+    },
+    {
+      id: 'role4',
+      name: 'DevOps Specialist',
+      department: 'Engineering',
+      isFeatured: false,
+      createdBy: {
+        name: 'Emma W.',
+        email: 'emma.w@enterprise.net',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg'
+      },
+      date: '2025-03-01',
+      status: 'Active'
+    },
+    {
+      id: 'role5',
+      name: 'QA Lead',
+      department: 'Engineering',
+      isFeatured: false,
+      createdBy: {
+        name: 'David R.',
+        email: 'david.r@agency.com',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg'
+      },
+      date: '2025-02-28',
+      status: 'Draft'
+    },
+    {
+      id: 'role6',
+      name: 'Product Designer',
+      department: 'Design',
+      isFeatured: true,
+      createdBy: {
+        name: 'Lisa M.',
+        email: 'lisa.m@design.co',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg'
+      },
+      date: '2025-02-25',
+      status: 'Active'
+    }
   ];
 
-  const currentRole = exampleRoles[0];
+  const filteredRoles = exampleRoles.filter(role => {
+    const matchesSearch = searchQuery === '' || 
+      role.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      role.department.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      role.createdBy.email.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesDepartment = selectedDepartment === 'All Departments' || role.department === selectedDepartment;
+
+    return matchesSearch && matchesDepartment;
+  });
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedDepartment(e.target.value);
+  };
 
   const handleOpenExportModal = () => {
     setIsExportModalOpen(true);
@@ -789,10 +889,15 @@ const RolesBlueprintTab: React.FC = () => {
       <FilterBarContainer id="role-filters">
         <DesktopInputGroup>
           <SearchContainer>
-            <SearchInput type="text" placeholder="Search roles..." />
+            <SearchInput 
+              type="text" 
+              placeholder="Search roles..." 
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
             <SearchIcon icon={faSearch} />
           </SearchContainer>
-          <StyledSelect>
+          <StyledSelect value={selectedDepartment} onChange={handleDepartmentChange}>
             <option>All Departments</option>
             <option>Engineering</option>
             <option>Product</option>
@@ -823,79 +928,83 @@ const RolesBlueprintTab: React.FC = () => {
             </TableRowStyled>
           </TableHeadStyled>
           <TableBodyStyled>
-            <TableRowStyled>
-              <TableCellStyled>
-                <span className="font-medium main-text">{currentRole.name}</span>
-                {currentRole.isFeatured && (
-                  <FeaturedBadge style={{ marginLeft: '0.5rem' }}>Featured</FeaturedBadge>
-                )}
-              </TableCellStyled>
-              <TableCellStyled>Product</TableCellStyled>
-              <TableCellStyled>
-                <UserCell>
-                  <AvatarStyled src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" />
-                  <span>michael.s@example.com</span>
-                </UserCell>
-              </TableCellStyled>
-              <TableCellStyled>Mar 15, 2025</TableCellStyled>
-              <TableCellStyled>
-                <StatusBadge>Active</StatusBadge>
-              </TableCellStyled>
-              <TableCellStyled className="text-right">
-                <ActionGroup>
-                  <ActionButton title="Favorite">
-                    <FontAwesomeIcon icon={faStarRegular} />
-                  </ActionButton>
-                  <ActionButton title="Edit" data-action="edit">
-                    <FontAwesomeIcon icon={faPen} />
-                  </ActionButton>
-                  <ActionButton title="Delete" data-action="delete">
-                    <FontAwesomeIcon icon={faTrashCanRegular} />
-                  </ActionButton>
-                </ActionGroup>
-              </TableCellStyled>
-            </TableRowStyled>
+            {filteredRoles.map(role => (
+              <TableRowStyled key={role.id}>
+                <TableCellStyled>
+                  <span className="font-medium main-text">{role.name}</span>
+                  {role.isFeatured && (
+                    <FeaturedBadge style={{ marginLeft: '0.5rem' }}>Featured</FeaturedBadge>
+                  )}
+                </TableCellStyled>
+                <TableCellStyled>{role.department}</TableCellStyled>
+                <TableCellStyled>
+                  <UserCell>
+                    <AvatarStyled src={role.createdBy.avatarUrl} alt={role.createdBy.name} />
+                    <span>{role.createdBy.email}</span>
+                  </UserCell>
+                </TableCellStyled>
+                <TableCellStyled>{new Date(role.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</TableCellStyled>
+                <TableCellStyled>
+                  <StatusBadge>{role.status}</StatusBadge>
+                </TableCellStyled>
+                <TableCellStyled className="text-right">
+                  <ActionGroup>
+                    <ActionButton title="Favorite">
+                      <FontAwesomeIcon icon={faStarRegular} />
+                    </ActionButton>
+                    <ActionButton title="Edit" data-action="edit">
+                      <FontAwesomeIcon icon={faPen} />
+                    </ActionButton>
+                    <ActionButton title="Delete" data-action="delete">
+                      <FontAwesomeIcon icon={faTrashCanRegular} />
+                    </ActionButton>
+                  </ActionGroup>
+                </TableCellStyled>
+              </TableRowStyled>
+            ))}
           </TableBodyStyled>
         </StyledTable>
       </TableWrapper>
       <CardListContainer>
-        <RoleCardStyled>
-          <CardHeaderStyled>
-            <CardSummary>
-              <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt={currentRole.name} />
-              <CardNameEmailContainer>
-                <CardName>{currentRole.name}</CardName>
-                <CardEmail>Product</CardEmail>
-              </CardNameEmailContainer>
-            </CardSummary>
-            {currentRole.isFeatured && (
-              <Tag bgColor="rgba(236, 41, 123, 0.1)" textColor="#EC297B">
-                <FontAwesomeIcon icon={faStarSolid} style={{ fontSize: '0.75rem' }} /> Featured
-              </Tag>
-            )}
-          </CardHeaderStyled>
-          <CardContentStyled>
-            <DetailRow>
-              <DetailLabel>Created By:</DetailLabel>
-              <DetailValue>
-                <div className="agent-container">
-                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Agent" className="agent-avatar" />
-                  <span>michael.s@example.com</span>
-                </div>
-              </DetailValue>
-            </DetailRow>
-            <DetailRow>
-              <DetailLabel>Date:</DetailLabel>
-              <DetailValue>Mar 15, 2025</DetailValue>
-            </DetailRow>
-            <DetailRow>
-              <DetailLabel>Status:</DetailLabel>
-              <DetailValue>
-                <Tag bgColor="rgba(0, 233, 21, 0.1)" textColor="#00E915">Active</Tag>
-              </DetailValue>
-            </DetailRow>
-          </CardContentStyled>
-        </RoleCardStyled>
+        {filteredRoles.map(role => (
+          <RoleCardStyled key={role.id}>
+            <CardHeaderStyled>
+              <CardSummary>
+                <Avatar src={role.createdBy.avatarUrl} alt={role.name} />
+                <CardNameEmailContainer>
+                  <CardName>{role.name}</CardName>
+                  <CardEmail>{role.department}</CardEmail>
+                </CardNameEmailContainer>
+              </CardSummary>
+              {role.isFeatured && (
+                <Tag bgColor="rgba(236, 41, 123, 0.1)" textColor="#EC297B">
+                  <FontAwesomeIcon icon={faStarSolid} style={{ fontSize: '0.75rem' }} /> Featured
+                </Tag>
+              )}
+            </CardHeaderStyled>
+            <CardContentStyled>
+              <DetailRow>
+                <DetailLabel>Created By:</DetailLabel>
+                <DetailValue>
+                  <div className="agent-container">
+                    <Avatar src={role.createdBy.avatarUrl} alt="Agent" className="agent-avatar" />
+                    <span>{role.createdBy.email}</span>
+                  </div>
+                </DetailValue>
+              </DetailRow>
+              <DetailRow>
+                <DetailLabel>Date:</DetailLabel>
+                <DetailValue>{new Date(role.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</DetailValue>
+              </DetailRow>
+              <DetailRow>
+                <DetailLabel>Status:</DetailLabel>
+                <DetailValue>
+                  <Tag bgColor="rgba(0, 233, 21, 0.1)" textColor="#00E915">{role.status}</Tag>
+                </DetailValue>
+              </DetailRow>
+            </CardContentStyled>
+          </RoleCardStyled>
+        ))}
       </CardListContainer>
       <ExportModalOverlay $isOpen={isExportModalOpen} onClick={handleCloseExportModal}>
         <ExportModalContent onClick={e => e.stopPropagation()}>
