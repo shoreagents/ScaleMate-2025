@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -686,15 +686,77 @@ const SubmitButton = styled.button`
 `;
 
 const QuizManagerTab: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [questionText, setQuestionText] = React.useState('');
-  const [answerOptions, setAnswerOptions] = React.useState([
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [selectedStatus, setSelectedStatus] = useState('All Status');
+  const [questionText, setQuestionText] = useState('');
+  const [answerOptions, setAnswerOptions] = useState([
     { text: '', score: '', isCorrect: false },
     { text: '', score: '', isCorrect: false },
     { text: '', score: '', isCorrect: false },
     { text: '', score: '', isCorrect: false }
   ]);
-  const [segmentTag, setSegmentTag] = React.useState('');
+  const [segmentTag, setSegmentTag] = useState('');
+
+  // Sample quiz questions data
+  const exampleQuestions = [
+    {
+      id: 1,
+      question: 'How many years of management experience do you have?',
+      type: 'Slider',
+      category: 'Experience',
+      status: 'Active'
+    },
+    {
+      id: 2,
+      question: 'What is your preferred leadership style?',
+      type: 'Multiple Choice',
+      category: 'Leadership',
+      status: 'Active'
+    },
+    {
+      id: 3,
+      question: 'How do you handle team conflicts?',
+      type: 'Multiple Choice',
+      category: 'Conflict Resolution',
+      status: 'Draft'
+    },
+    {
+      id: 4,
+      question: 'Rate your communication skills (1-10)',
+      type: 'Rating',
+      category: 'Communication',
+      status: 'Active'
+    },
+    {
+      id: 5,
+      question: 'What is your experience with remote team management?',
+      type: 'Multiple Choice',
+      category: 'Remote Work',
+      status: 'Active'
+    },
+    {
+      id: 6,
+      question: 'How do you prioritize tasks in a project?',
+      type: 'Multiple Choice',
+      category: 'Project Management',
+      status: 'Draft'
+    }
+  ];
+
+  // Get unique categories and statuses for dropdowns
+  const categories = ['All Categories', ...new Set(exampleQuestions.map(q => q.category))];
+  const statuses = ['All Status', ...new Set(exampleQuestions.map(q => q.status))];
+
+  // Filter questions based on search query and selected filters
+  const filteredQuestions = exampleQuestions.filter(question => {
+    const matchesSearch = question.question.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All Categories' || question.category === selectedCategory;
+    const matchesStatus = selectedStatus === 'All Status' || question.status === selectedStatus;
+    
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
 
   // Modal open/close handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -738,15 +800,36 @@ const QuizManagerTab: React.FC = () => {
   return (
     <Container>
       <ActionsBar>
-        {/* Desktop layout (≥1237px) - unchanged */}
+        {/* Desktop layout */}
         <SearchContainer>
           <SearchWrapper>
-            <SearchInput type="text" placeholder="Search questions..." />
+            <SearchInput 
+              type="text" 
+              placeholder="Search questions..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <SearchIcon icon={faSearch} />
           </SearchWrapper>
           <FilterButtons>
-            <FilterButton>All Categories</FilterButton>
-            <FilterButton>Active Only</FilterButton>
+            <FilterButton 
+              as="select"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </FilterButton>
+            <FilterButton 
+              as="select"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              {statuses.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </FilterButton>
           </FilterButtons>
         </SearchContainer>
         <ActionButtons>
@@ -759,17 +842,38 @@ const QuizManagerTab: React.FC = () => {
             Add Question
           </AddQuestionButton>
         </ActionButtons>
-        {/* Mobile layout (≤1236px) - two rows, equal width */}
+        {/* Mobile layout */}
         <MobileActionsGrid>
           <MobileRow>
             <SearchWrapper>
-              <SearchInput type="text" placeholder="Search questions..." />
+              <SearchInput 
+                type="text" 
+                placeholder="Search questions..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
               <SearchIcon icon={faSearch} />
             </SearchWrapper>
-            <FilterButton>All Categories</FilterButton>
+            <FilterButton 
+              as="select"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+            >
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </FilterButton>
           </MobileRow>
           <MobileRow>
-            <FilterButton>Active Only</FilterButton>
+            <FilterButton 
+              as="select"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              {statuses.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </FilterButton>
             <PreviewButton>
               <FontAwesomeIcon icon={faEye} />
               Preview Quiz
@@ -792,74 +896,82 @@ const QuizManagerTab: React.FC = () => {
                 </tr>
               </TableHead>
               <TableBody>
-                <tr>
-                  <TableCell>
-                    <QuestionText>How many years of management experience do you have?</QuestionText>
-                  </TableCell>
-                  <TableCell>
-                    <TypeBadge>Slider</TypeBadge>
-                  </TableCell>
-                  <TableCell>
-                    <CategoryBadge>Experience</CategoryBadge>
-                  </TableCell>
-                  <TableCell>
-                    <StatusIndicator>
-                      <StatusDot />
-                      Active
-                    </StatusIndicator>
-                  </TableCell>
-                  <TableCell>
-                    <TableActionButtons>
-                      <ActionButton>
-                        <FontAwesomeIcon icon={faPen} />
-                      </ActionButton>
-                      <ActionButton>
-                        <FontAwesomeIcon icon={faArrowsUpDown} />
-                      </ActionButton>
-                      <ActionButton $color="#EC297B">
-                        <FontAwesomeIcon icon={faArchive} />
-                      </ActionButton>
-                    </TableActionButtons>
-                  </TableCell>
-                </tr>
+                {filteredQuestions.map(question => (
+                  <tr key={question.id}>
+                    <TableCell>
+                      <QuestionText>{question.question}</QuestionText>
+                    </TableCell>
+                    <TableCell>
+                      <TypeBadge>{question.type}</TypeBadge>
+                    </TableCell>
+                    <TableCell>
+                      <CategoryBadge>{question.category}</CategoryBadge>
+                    </TableCell>
+                    <TableCell>
+                      <StatusIndicator>
+                        <StatusDot style={{ 
+                          backgroundColor: question.status === 'Active' ? '#00E915' : '#EC297B' 
+                        }} />
+                        {question.status}
+                      </StatusIndicator>
+                    </TableCell>
+                    <TableCell>
+                      <TableActionButtons>
+                        <ActionButton>
+                          <FontAwesomeIcon icon={faPen} />
+                        </ActionButton>
+                        <ActionButton>
+                          <FontAwesomeIcon icon={faArrowsUpDown} />
+                        </ActionButton>
+                        <ActionButton $color="#EC297B">
+                          <FontAwesomeIcon icon={faArchive} />
+                        </ActionButton>
+                      </TableActionButtons>
+                    </TableCell>
+                  </tr>
+                ))}
               </TableBody>
             </Table>
           </QuestionsTable>
           {/* Card view for mobile/tablet */}
           <CardListContainer>
-            <QuestionCard>
-              <CardHeader>
-                <CardQuestionText>How many years of management experience do you have?</CardQuestionText>
-              </CardHeader>
-              <CardMeta>
-                <CardMetaRow>
-                  <CardLabel>Type:</CardLabel>
-                  <CardBadge $color="#3B82F6" $bg="rgba(59,130,246,0.1)">Slider</CardBadge>
-                </CardMetaRow>
-                <CardMetaRow>
-                  <CardLabel>Category:</CardLabel>
-                  <CardBadge $color="#00E915" $bg="rgba(0,233,21,0.1)">Experience</CardBadge>
-                </CardMetaRow>
-                <CardMetaRow>
-                  <CardLabel>Status:</CardLabel>
-                  <CardStatus>
-                    <StatusDot />
-                    Active
-                  </CardStatus>
-                </CardMetaRow>
-              </CardMeta>
-              <CardActions>
-                <ActionButton>
-                  <FontAwesomeIcon icon={faPen} />
-                </ActionButton>
-                <ActionButton>
-                  <FontAwesomeIcon icon={faArrowsUpDown} />
-                </ActionButton>
-                <ActionButton $color="#EC297B">
-                  <FontAwesomeIcon icon={faArchive} />
-                </ActionButton>
-              </CardActions>
-            </QuestionCard>
+            {filteredQuestions.map(question => (
+              <QuestionCard key={question.id}>
+                <CardHeader>
+                  <CardQuestionText>{question.question}</CardQuestionText>
+                </CardHeader>
+                <CardMeta>
+                  <CardMetaRow>
+                    <CardLabel>Type:</CardLabel>
+                    <CardBadge $color="#3B82F6" $bg="rgba(59,130,246,0.1)">{question.type}</CardBadge>
+                  </CardMetaRow>
+                  <CardMetaRow>
+                    <CardLabel>Category:</CardLabel>
+                    <CardBadge $color="#00E915" $bg="rgba(0,233,21,0.1)">{question.category}</CardBadge>
+                  </CardMetaRow>
+                  <CardMetaRow>
+                    <CardLabel>Status:</CardLabel>
+                    <CardStatus>
+                      <StatusDot style={{ 
+                        backgroundColor: question.status === 'Active' ? '#00E915' : '#EC297B' 
+                      }} />
+                      {question.status}
+                    </CardStatus>
+                  </CardMetaRow>
+                </CardMeta>
+                <CardActions>
+                  <ActionButton>
+                    <FontAwesomeIcon icon={faPen} />
+                  </ActionButton>
+                  <ActionButton>
+                    <FontAwesomeIcon icon={faArrowsUpDown} />
+                  </ActionButton>
+                  <ActionButton $color="#EC297B">
+                    <FontAwesomeIcon icon={faArchive} />
+                  </ActionButton>
+                </CardActions>
+              </QuestionCard>
+            ))}
           </CardListContainer>
         </>
         <ScoringPanel>

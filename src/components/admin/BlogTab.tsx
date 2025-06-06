@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -545,6 +545,10 @@ const SubmitButton = styled.button`
 `;
 
 const BlogTab: React.FC = () => {
+  // Add filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [selectedStatus, setSelectedStatus] = useState('All Status');
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [formData, setFormData] = React.useState({
     title: '',
@@ -556,6 +560,110 @@ const BlogTab: React.FC = () => {
     schedule: false,
     scheduleDate: ''
   });
+
+  // Example blog posts data
+  const examplePosts = [
+    {
+      id: 'post1',
+      title: '10 Tips for Scaling Remote Teams',
+      category: 'Leadership',
+      author: {
+        name: 'Sarah Chen',
+        avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg'
+      },
+      status: 'Draft',
+      date: 'Jan 15, 2025',
+      tags: ['Leadership', 'Remote']
+    },
+    {
+      id: 'post2',
+      title: 'The Future of Work: AI Integration',
+      category: 'Technology',
+      author: {
+        name: 'Mike Wilson',
+        avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg'
+      },
+      status: 'Published',
+      date: 'Jan 10, 2025',
+      tags: ['Technology', 'AI']
+    },
+    {
+      id: 'post3',
+      title: 'Building High-Performance Teams',
+      category: 'Team Building',
+      author: {
+        name: 'Alex Patel',
+        avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg'
+      },
+      status: 'Draft',
+      date: 'Jan 12, 2025',
+      tags: ['Team Building', 'Leadership']
+    },
+    {
+      id: 'post4',
+      title: 'Effective Project Management Strategies',
+      category: 'Management',
+      author: {
+        name: 'Lisa Tran',
+        avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg'
+      },
+      status: 'Published',
+      date: 'Jan 8, 2025',
+      tags: ['Management', 'Strategy']
+    },
+    {
+      id: 'post5',
+      title: 'Remote Team Communication Best Practices',
+      category: 'Team Building',
+      author: {
+        name: 'Sarah Chen',
+        avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg'
+      },
+      status: 'Draft',
+      date: 'Jan 14, 2025',
+      tags: ['Remote', 'Communication']
+    },
+    {
+      id: 'post6',
+      title: 'AI Tools for Team Productivity',
+      category: 'Technology',
+      author: {
+        name: 'Mike Wilson',
+        avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg'
+      },
+      status: 'Published',
+      date: 'Jan 9, 2025',
+      tags: ['Technology', 'Productivity']
+    }
+  ];
+
+  // Filter posts based on search query, category, and status
+  const filteredPosts = examplePosts.filter(post => {
+    const matchesSearch = searchQuery === '' || 
+      post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      post.author.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesCategory = selectedCategory === 'All Categories' || post.category === selectedCategory;
+
+    const matchesStatus = selectedStatus === 'All Status' || post.status === selectedStatus;
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  // Handle category filter change
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategory(e.target.value);
+  };
+
+  // Handle status filter change
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedStatus(e.target.value);
+  };
 
   // Modal open/close handlers
   const handleOpenModal = () => setIsModalOpen(true);
@@ -613,9 +721,7 @@ const BlogTab: React.FC = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, category: e.target.value }));
-  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement create blog draft logic
@@ -627,14 +733,25 @@ const BlogTab: React.FC = () => {
       <ActionsBar>
         <SearchContainer>
           <div style={{ position: 'relative' }}>
-            <SearchInput type="text" placeholder="Search posts..." />
+            <SearchInput 
+              type="text" 
+              placeholder="Search posts..." 
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
             <SearchIcon icon={faSearch} />
           </div>
-          <CategorySelect>
+          <CategorySelect value={selectedCategory} onChange={handleCategoryChange}>
             <option>All Categories</option>
             <option>Leadership</option>
             <option>Team Building</option>
             <option>Management</option>
+            <option>Technology</option>
+          </CategorySelect>
+          <CategorySelect value={selectedStatus} onChange={handleStatusChange}>
+            <option>All Status</option>
+            <option>Published</option>
+            <option>Draft</option>
           </CategorySelect>
         </SearchContainer>
         <NewPostButton onClick={handleOpenModal}>
@@ -656,157 +773,92 @@ const BlogTab: React.FC = () => {
             </tr>
           </TableHead>
           <TableBody>
-            <tr>
-              <TableCell>
-                <PostTitle>
-                  <TitleText>10 Tips for Scaling Remote Teams</TitleText>
-                  <CategoryTag $color="#00E915">Leadership</CategoryTag>
-                </PostTitle>
-              </TableCell>
-              <TableCell>
-                <AuthorInfo>
-                  <AuthorAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" />
-                  <AuthorName>Sarah Chen</AuthorName>
-                </AuthorInfo>
-              </TableCell>
-              <TableCell>
-                <StatusBadge $color="#EC297B">Draft</StatusBadge>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>Jan 15, 2025</span>
-              </TableCell>
-              <TableCell>
-                <ActionButtons>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faPen} />
-                  </ActionButton>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faCopy} />
-                  </ActionButton>
-                  <ActionButton $color="#EC297B">
-                    <FontAwesomeIcon icon={faTrash} />
-                  </ActionButton>
-                </ActionButtons>
-              </TableCell>
-            </tr>
-            <tr>
-              <TableCell>
-                <PostTitle>
-                  <TitleText>The Future of Work: AI Integration</TitleText>
-                  <CategoryTag $color="#00E915">Technology</CategoryTag>
-                </PostTitle>
-              </TableCell>
-              <TableCell>
-                <AuthorInfo>
-                  <AuthorAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" />
-                  <AuthorName>Mike Wilson</AuthorName>
-                </AuthorInfo>
-              </TableCell>
-              <TableCell>
-                <StatusBadge $color="#00E915">Published</StatusBadge>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>Jan 10, 2025</span>
-              </TableCell>
-              <TableCell>
-                <ActionButtons>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faPen} />
-                  </ActionButton>
-                  <ActionButton>
-                    <FontAwesomeIcon icon={faCopy} />
-                  </ActionButton>
-                  <ActionButton $color="#EC297B">
-                    <FontAwesomeIcon icon={faTrash} />
-                  </ActionButton>
-                </ActionButtons>
-              </TableCell>
-            </tr>
+            {filteredPosts.map(post => (
+              <tr key={post.id}>
+                <TableCell>
+                  <PostTitle>
+                    <TitleText>{post.title}</TitleText>
+                    <CategoryTag $color="#00E915">{post.category}</CategoryTag>
+                  </PostTitle>
+                </TableCell>
+                <TableCell>
+                  <AuthorInfo>
+                    <AuthorAvatar src={post.author.avatar} />
+                    <AuthorName>{post.author.name}</AuthorName>
+                  </AuthorInfo>
+                </TableCell>
+                <TableCell>
+                  <StatusBadge $color={post.status === 'Published' ? '#00E915' : '#EC297B'}>
+                    {post.status}
+                  </StatusBadge>
+                </TableCell>
+                <TableCell>
+                  <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>{post.date}</span>
+                </TableCell>
+                <TableCell>
+                  <ActionButtons>
+                    <ActionButton>
+                      <FontAwesomeIcon icon={faPen} />
+                    </ActionButton>
+                    <ActionButton>
+                      <FontAwesomeIcon icon={faCopy} />
+                    </ActionButton>
+                    <ActionButton $color="#EC297B">
+                      <FontAwesomeIcon icon={faTrash} />
+                    </ActionButton>
+                  </ActionButtons>
+                </TableCell>
+              </tr>
+            ))}
           </TableBody>
         </Table>
       </BlogTable>
 
       {/* Mobile Card View */}
       <CardListContainer>
-        <PostCard>
-          <CardHeader>
-            <CardTitleGroup>
-              <CardPostTitle>
-                10 Tips for Scaling Remote Teams
-                <CategoryTag $color="#00E915">Leadership</CategoryTag>
-              </CardPostTitle>
-              <CardDate>Jan 15, 2025</CardDate>
-            </CardTitleGroup>
-          </CardHeader>
-          <CardContent>
-            <CardDetailRow>
-              <CardLabel>Author:</CardLabel>
-              <CardValue>
-                <AuthorInfo>
-                  <AuthorAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" />
-                  <AuthorName>Sarah Chen</AuthorName>
-                </AuthorInfo>
-              </CardValue>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabel>Status:</CardLabel>
-              <CardValue>
-                <StatusBadge $color="#EC297B">Draft</StatusBadge>
-              </CardValue>
-            </CardDetailRow>
-            <CardActions>
-              <ActionButton>
-                <FontAwesomeIcon icon={faPen} />
-              </ActionButton>
-              <ActionButton>
-                <FontAwesomeIcon icon={faCopy} />
-              </ActionButton>
-              <ActionButton $color="#EC297B">
-                <FontAwesomeIcon icon={faTrash} />
-              </ActionButton>
-            </CardActions>
-          </CardContent>
-        </PostCard>
-
-        <PostCard>
-          <CardHeader>
-            <CardTitleGroup>
-              <CardPostTitle>
-                The Future of Work: AI Integration
-                <CategoryTag $color="#00E915">Technology</CategoryTag>
-              </CardPostTitle>
-              <CardDate>Jan 10, 2025</CardDate>
-            </CardTitleGroup>
-          </CardHeader>
-          <CardContent>
-            <CardDetailRow>
-              <CardLabel>Author:</CardLabel>
-              <CardValue>
-                <AuthorInfo>
-                  <AuthorAvatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" />
-                  <AuthorName>Mike Wilson</AuthorName>
-                </AuthorInfo>
-              </CardValue>
-            </CardDetailRow>
-            <CardDetailRow>
-              <CardLabel>Status:</CardLabel>
-              <CardValue>
-                <StatusBadge $color="#00E915">Published</StatusBadge>
-              </CardValue>
-            </CardDetailRow>
-            <CardActions>
-              <ActionButton>
-                <FontAwesomeIcon icon={faPen} />
-              </ActionButton>
-              <ActionButton>
-                <FontAwesomeIcon icon={faCopy} />
-              </ActionButton>
-              <ActionButton $color="#EC297B">
-                <FontAwesomeIcon icon={faTrash} />
-              </ActionButton>
-            </CardActions>
-          </CardContent>
-        </PostCard>
+        {filteredPosts.map(post => (
+          <PostCard key={post.id}>
+            <CardHeader>
+              <CardTitleGroup>
+                <CardPostTitle>
+                  {post.title}
+                  <CategoryTag $color="#00E915">{post.category}</CategoryTag>
+                </CardPostTitle>
+                <CardDate>{post.date}</CardDate>
+              </CardTitleGroup>
+            </CardHeader>
+            <CardContent>
+              <CardDetailRow>
+                <CardLabel>Author:</CardLabel>
+                <CardValue>
+                  <AuthorInfo>
+                    <AuthorAvatar src={post.author.avatar} />
+                    <AuthorName>{post.author.name}</AuthorName>
+                  </AuthorInfo>
+                </CardValue>
+              </CardDetailRow>
+              <CardDetailRow>
+                <CardLabel>Status:</CardLabel>
+                <CardValue>
+                  <StatusBadge $color={post.status === 'Published' ? '#00E915' : '#EC297B'}>
+                    {post.status}
+                  </StatusBadge>
+                </CardValue>
+              </CardDetailRow>
+              <CardActions>
+                <ActionButton>
+                  <FontAwesomeIcon icon={faPen} />
+                </ActionButton>
+                <ActionButton>
+                  <FontAwesomeIcon icon={faCopy} />
+                </ActionButton>
+                <ActionButton $color="#EC297B">
+                  <FontAwesomeIcon icon={faTrash} />
+                </ActionButton>
+              </CardActions>
+            </CardContent>
+          </PostCard>
+        ))}
       </CardListContainer>
 
       <FloatingAddButton onClick={handleOpenModal}>
@@ -840,7 +892,7 @@ const BlogTab: React.FC = () => {
               <CategorySelect
                 name="category"
                 value={formData.category}
-                onChange={handleCategoryChange}
+                onChange={handleInputChange}
               >
                 <option>Leadership</option>
                 <option>Technology</option>
