@@ -1007,10 +1007,14 @@ const DownloadButton = styled.button`
 `;
 
 const LeadManagementTab = () => {
-  const [selectedLead, setSelectedLead] = useState<any>(null); // Can be a specific Lead type
+  const [selectedLead, setSelectedLead] = useState<any>(null);
   const [isDetailSidebarOpen, setIsDetailSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSource, setSelectedSource] = useState('All Sources');
+  const [selectedTag, setSelectedTag] = useState('All Tags');
+  const [selectedDate, setSelectedDate] = useState('');
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
@@ -1020,29 +1024,145 @@ const LeadManagementTab = () => {
     notes: ''
   });
 
-  // Example lead data (taken from the single row in your HTML)
-  const exampleLead = {
-    id: '123',
-    name: 'Michael Cooper',
-    email: 'm.cooper@example.com',
-    avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
-    source: 'Quote',
-    tags: ['Hot', 'Qualified'],
-    lastAction: 'Viewed pricing',
-    assignedTo: {
-      name: 'Sarah M.',
-      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg'
+  // Example lead data with 5 diverse leads
+  const exampleLeads = [
+    {
+      id: '123',
+      name: 'Michael Cooper',
+      email: 'm.cooper@example.com',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+      source: 'Quote',
+      tags: ['Hot', 'Qualified'],
+      lastAction: 'Viewed pricing',
+      lastActionDate: '2024-04-09',
+      assignedTo: {
+        name: 'Sarah M.',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg'
+      },
+      interestScore: 85,
+      notes: [
+        {
+          id: 'note1',
+          agentAvatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg',
+          text: 'Showed high interest in VA services. Following up next week.',
+          timestamp: '2 hours ago'
+        }
+      ]
     },
-    interestScore: 85,
-    notes: [
-      {
-        id: 'note1',
-        agentAvatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg',
-        text: 'Showed high interest in VA services. Following up next week.',
-        timestamp: '2 hours ago'
-      }
-    ]
-  };
+    {
+      id: '124',
+      name: 'Emma Rodriguez',
+      email: 'emma.r@techstartup.io',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg',
+      source: 'Quiz',
+      tags: ['Quiz-ready', 'Hot'],
+      lastAction: 'Completed readiness quiz',
+      lastActionDate: '2024-04-08',
+      assignedTo: {
+        name: 'Mark D.',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg'
+      },
+      interestScore: 92,
+      notes: [
+        {
+          id: 'note1',
+          agentAvatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg',
+          text: 'Scored high on leadership assessment. Interested in executive coaching.',
+          timestamp: '1 hour ago'
+        }
+      ]
+    },
+    {
+      id: '125',
+      name: 'James Wilson',
+      email: 'jwilson@enterprise.com',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg',
+      source: 'Contact',
+      tags: ['Qualified'],
+      lastAction: 'Requested demo',
+      lastActionDate: '2024-04-07',
+      assignedTo: {
+        name: 'Julia R.',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg'
+      },
+      interestScore: 78,
+      notes: [
+        {
+          id: 'note1',
+          agentAvatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg',
+          text: 'Enterprise client looking for team training solutions.',
+          timestamp: '3 hours ago'
+        }
+      ]
+    },
+    {
+      id: '126',
+      name: 'Sophia Chen',
+      email: 'sophia.c@startup.co',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-7.jpg',
+      source: 'Quote',
+      tags: ['Hot', 'Quiz-ready'],
+      lastAction: 'Downloaded pricing guide',
+      lastActionDate: '2024-04-06',
+      assignedTo: {
+        name: 'Sarah M.',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg'
+      },
+      interestScore: 88,
+      notes: [
+        {
+          id: 'note1',
+          agentAvatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg',
+          text: 'Startup founder interested in team development package.',
+          timestamp: '4 hours ago'
+        }
+      ]
+    },
+    {
+      id: '127',
+      name: 'David Thompson',
+      email: 'dthompson@corporate.net',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg',
+      source: 'Contact',
+      tags: ['Qualified'],
+      lastAction: 'Scheduled call',
+      lastActionDate: '2024-04-05',
+      assignedTo: {
+        name: 'Mark D.',
+        avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg'
+      },
+      interestScore: 75,
+      notes: [
+        {
+          id: 'note1',
+          agentAvatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg',
+          text: 'HR Director looking for leadership development program.',
+          timestamp: '5 hours ago'
+        }
+      ]
+    }
+  ];
+
+  // Filter leads based on search query, source filter, tag filter, and date filter
+  const filteredLeads = exampleLeads.filter(lead => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = (
+      lead.name.toLowerCase().includes(searchLower) ||
+      lead.email.toLowerCase().includes(searchLower) ||
+      lead.source.toLowerCase().includes(searchLower) ||
+      lead.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
+      lead.lastAction.toLowerCase().includes(searchLower) ||
+      lead.assignedTo.name.toLowerCase().includes(searchLower)
+    );
+
+    const matchesSource = selectedSource === 'All Sources' || lead.source === selectedSource;
+    const matchesTag = selectedTag === 'All Tags' || lead.tags.includes(selectedTag);
+    
+    // Add date filtering
+    const matchesDate = !selectedDate || lead.lastActionDate === selectedDate;
+
+    return matchesSearch && matchesSource && matchesTag && matchesDate;
+  });
 
   const openLeadDetailSidebar = (leadData: any) => {
     setSelectedLead(leadData);
@@ -1123,22 +1243,43 @@ const LeadManagementTab = () => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isExportModalOpen]);
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleSourceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedSource(e.target.value);
+  };
+
+  const handleTagChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedTag(e.target.value);
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(e.target.value);
+  };
+
   return (
     <Container>
       <FiltersContainer id="lead-filters">
         <FilterGroup>
           <SearchContainer>
-            <SearchInput type="text" placeholder="Search leads..." />
+            <SearchInput 
+              type="text" 
+              placeholder="Search leads..." 
+              value={searchQuery}
+              onChange={handleSearchChange}
+            />
             <SearchIcon icon={faSearch} />
           </SearchContainer>
           <SelectsRow>
-            <Select>
+            <Select value={selectedSource} onChange={handleSourceChange}>
               <option>All Sources</option>
               <option>Quote</option>
               <option>Contact</option>
               <option>Quiz</option>
             </Select>
-            <Select>
+            <Select value={selectedTag} onChange={handleTagChange}>
               <option>All Tags</option>
               <option>Hot</option>
               <option>Qualified</option>
@@ -1149,7 +1290,11 @@ const LeadManagementTab = () => {
         
         <DateAndActionsGroup>
           <DateContainer>
-            <DateInput type="date" />
+            <DateInput 
+              type="date" 
+              value={selectedDate}
+              onChange={handleDateChange}
+            />
           </DateContainer>
           <ButtonGroup>
             <StyledButton onClick={handleOpenExportModal}>
@@ -1178,81 +1323,134 @@ const LeadManagementTab = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow onClick={() => openLeadDetailSidebar(exampleLead)}>
-              <TableCell>
-                <div className="lead-name-container">
-                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="Lead" />
-                  <span className="lead-name">Michael Cooper</span>
-                </div>
-              </TableCell>
-              <TableCell style={{ color: 'rgba(15, 23, 42, 0.7)' }}>m.cooper@example.com</TableCell>
-              <TableCell>
-                <Tag bgColor="rgba(0, 152, 255, 0.1)" textColor="#0098FF">Quote</Tag>
-              </TableCell>
-              <TableCell>
-                <Tag bgColor="rgba(0, 233, 21, 0.1)" textColor="#00E915">Hot</Tag>
-                <Tag bgColor="rgba(0, 152, 255, 0.1)" textColor="#0098FF">Qualified</Tag>
-              </TableCell>
-              <TableCell style={{ color: 'rgba(15, 23, 42, 0.7)' }}>Viewed pricing</TableCell>
-              <TableCell>
-                <div className="agent-container">
-                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg" alt="Agent" className="agent-avatar" />
-                  <span>Sarah M.</span>
-                </div>
-              </TableCell>
-            </TableRow>
+            {filteredLeads.map(lead => (
+              <TableRow key={lead.id} onClick={() => openLeadDetailSidebar(lead)}>
+                <TableCell>
+                  <div className="lead-name-container">
+                    <Avatar src={lead.avatarUrl} alt={lead.name} />
+                    <span className="lead-name">{lead.name}</span>
+                  </div>
+                </TableCell>
+                <TableCell style={{ color: 'rgba(15, 23, 42, 0.7)' }}>{lead.email}</TableCell>
+                <TableCell>
+                  <Tag 
+                    bgColor={
+                      lead.source === 'Quote' ? 'rgba(0, 152, 255, 0.1)' :
+                      lead.source === 'Quiz' ? 'rgba(59, 130, 246, 0.1)' :
+                      'rgba(15, 23, 42, 0.1)'
+                    }
+                    textColor={
+                      lead.source === 'Quote' ? '#0098FF' :
+                      lead.source === 'Quiz' ? '#3B82F6' :
+                      '#0F172A'
+                    }
+                  >
+                    {lead.source}
+                  </Tag>
+                </TableCell>
+                <TableCell>
+                  {lead.tags.map(tag => (
+                    <Tag 
+                      key={tag}
+                      bgColor={
+                        tag === 'Hot' ? 'rgba(0, 233, 21, 0.1)' :
+                        tag === 'Qualified' ? 'rgba(0, 152, 255, 0.1)' :
+                        'rgba(59, 130, 246, 0.1)'
+                      }
+                      textColor={
+                        tag === 'Hot' ? '#00E915' :
+                        tag === 'Qualified' ? '#0098FF' :
+                        '#3B82F6'
+                      }
+                    >
+                      {tag}
+                    </Tag>
+                  ))}
+                </TableCell>
+                <TableCell style={{ color: 'rgba(15, 23, 42, 0.7)' }}>{lead.lastAction}</TableCell>
+                <TableCell>
+                  <div className="agent-container">
+                    <Avatar src={lead.assignedTo.avatarUrl} alt={lead.assignedTo.name} className="agent-avatar" />
+                    <span>{lead.assignedTo.name}</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </StyledTable>
       </TableWrapper>
 
       {/* Mobile Card View (Hidden on Desktop/Tablet) */}
       <CardListContainer>
-        <LeadCard>
-          <CardHeader onClick={() => openLeadDetailSidebar(exampleLead)}>
-            <CardSummary>
-              <Avatar src={exampleLead.avatarUrl} alt={exampleLead.name} />
-              <CardNameEmailContainer>
-                <CardName>{exampleLead.name}</CardName>
-                <CardEmail>{exampleLead.email}</CardEmail>
-              </CardNameEmailContainer>
-            </CardSummary>
-          </CardHeader>
-          <CardDetails>
-            <DetailRow>
-              <DetailLabel>Source:</DetailLabel>
-              <DetailValue>
-                <Tag bgColor="rgba(0, 152, 255, 0.1)" textColor="#0098FF">{exampleLead.source}</Tag>
-              </DetailValue>
-            </DetailRow>
-            <DetailRow>
-              <DetailLabel>Tags:</DetailLabel>
-              <DetailValue className="tags-container">
-                {exampleLead.tags.map(tag => (
+        {filteredLeads.map(lead => (
+          <LeadCard key={lead.id}>
+            <CardHeader onClick={() => openLeadDetailSidebar(lead)}>
+              <CardSummary>
+                <Avatar src={lead.avatarUrl} alt={lead.name} />
+                <CardNameEmailContainer>
+                  <CardName>{lead.name}</CardName>
+                  <CardEmail>{lead.email}</CardEmail>
+                </CardNameEmailContainer>
+              </CardSummary>
+            </CardHeader>
+            <CardDetails>
+              <DetailRow>
+                <DetailLabel>Source:</DetailLabel>
+                <DetailValue>
                   <Tag 
-                    key={tag} 
-                    bgColor={tag === 'Hot' ? 'rgba(0, 233, 21, 0.1)' : 'rgba(0, 152, 255, 0.1)'} 
-                    textColor={tag === 'Hot' ? '#00E915' : '#0098FF'}
+                    bgColor={
+                      lead.source === 'Quote' ? 'rgba(0, 152, 255, 0.1)' :
+                      lead.source === 'Quiz' ? 'rgba(59, 130, 246, 0.1)' :
+                      'rgba(15, 23, 42, 0.1)'
+                    }
+                    textColor={
+                      lead.source === 'Quote' ? '#0098FF' :
+                      lead.source === 'Quiz' ? '#3B82F6' :
+                      '#0F172A'
+                    }
                   >
-                    {tag}
+                    {lead.source}
                   </Tag>
-                ))}
-              </DetailValue>
-            </DetailRow>
-            <DetailRow>
-              <DetailLabel>Last Action:</DetailLabel>
-              <DetailValue>{exampleLead.lastAction}</DetailValue>
-            </DetailRow>
-            <DetailRow>
-              <DetailLabel>Assigned To:</DetailLabel>
-              <DetailValue>
-                <div className="agent-container">
-                  <Avatar src={exampleLead.assignedTo.avatarUrl} alt={exampleLead.assignedTo.name} className="agent-avatar" />
-                  <span>{exampleLead.assignedTo.name}</span>
-                </div>
-              </DetailValue>
-            </DetailRow>
-          </CardDetails>
-        </LeadCard>
+                </DetailValue>
+              </DetailRow>
+              <DetailRow>
+                <DetailLabel>Tags:</DetailLabel>
+                <DetailValue className="tags-container">
+                  {lead.tags.map(tag => (
+                    <Tag 
+                      key={tag}
+                      bgColor={
+                        tag === 'Hot' ? 'rgba(0, 233, 21, 0.1)' :
+                        tag === 'Qualified' ? 'rgba(0, 152, 255, 0.1)' :
+                        'rgba(59, 130, 246, 0.1)'
+                      }
+                      textColor={
+                        tag === 'Hot' ? '#00E915' :
+                        tag === 'Qualified' ? '#0098FF' :
+                        '#3B82F6'
+                      }
+                    >
+                      {tag}
+                    </Tag>
+                  ))}
+                </DetailValue>
+              </DetailRow>
+              <DetailRow>
+                <DetailLabel>Last Action:</DetailLabel>
+                <DetailValue>{lead.lastAction}</DetailValue>
+              </DetailRow>
+              <DetailRow>
+                <DetailLabel>Assigned To:</DetailLabel>
+                <DetailValue>
+                  <div className="agent-container">
+                    <Avatar src={lead.assignedTo.avatarUrl} alt={lead.assignedTo.name} className="agent-avatar" />
+                    <span>{lead.assignedTo.name}</span>
+                  </div>
+                </DetailValue>
+              </DetailRow>
+            </CardDetails>
+          </LeadCard>
+        ))}
       </CardListContainer>
 
       <FloatingAddButton onClick={handleOpenModal}>
@@ -1312,7 +1510,7 @@ const LeadManagementTab = () => {
               </NotesContainer>
               <div style={{marginTop: '1rem'}}>
                 <NoteTextarea placeholder="Add a note..." />
-  </div>
+              </div>
             </InfoCard>
           </SidebarContentWrapper>
         </DetailSidebarAside>
@@ -1439,7 +1637,7 @@ const LeadManagementTab = () => {
         </ExportModalContent>
       </ExportModalOverlay>
     </Container>
-);
+  );
 };
 
 export default LeadManagementTab; 

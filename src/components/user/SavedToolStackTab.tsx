@@ -9,7 +9,9 @@ import {
   faBookmark,
   faGripVertical,
   faTrash,
-  faPlus
+  faPlus,
+  faTimes,
+  faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
 
 const Container = styled.div`
@@ -283,8 +285,201 @@ const AddNewIcon = styled(FontAwesomeIcon)`
   margin-bottom: 0.5rem;
 `;
 
+// Modal styled components
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ModalContent = styled.div`
+  width: 100%;
+  max-width: 28rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
+
+  @media (max-width: 640px) {
+    max-width: 95vw;
+    padding: 1rem;
+    border-radius: 0.75rem;
+  }
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: 640px) {
+    margin-bottom: 1rem;
+  }
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+
+  @media (max-width: 640px) {
+    font-size: 1.05rem;
+  }
+`;
+
+const CloseModalButton = styled.button`
+  color: rgba(15, 23, 42, 0.4);
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  transition: color 0.2s;
+  &:hover { color: #0F172A; }
+`;
+
+const ModalFormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+`;
+
+const ModalFormLabel = styled.label`
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const ModalFormInput = styled.input`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  color: #0F172A;
+  background: white;
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const ModalFormSelect = styled.select`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  color: #0F172A;
+  background: white;
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const ModalFormTextarea = styled.textarea`
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  color: #0F172A;
+  background: white;
+  min-height: 5rem;
+  resize: none;
+  &:focus {
+    outline: none;
+    border-color: #3B82F6;
+  }
+`;
+
+const ModalButtonGroup = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+`;
+
+const ModalPrimaryButton = styled.button`
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  &:hover { background-color: #2563EB; }
+`;
+
+const ModalSecondaryButton = styled.button`
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background-color: white;
+  color: #0F172A;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  &:hover { background-color: #F9FAFB; }
+`;
+
+const DeleteModalContent = styled(ModalContent)`
+  background-color: #F9FAFB;
+  text-align: center;
+`;
+
+const WarningIconContainer = styled.div`
+  width: 4rem;
+  height: 4rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+`;
+
+const WarningIcon = styled.div`
+  color: #EF4444;
+  font-size: 1.5rem;
+`;
+
+const DeleteModalDescription = styled.p`
+  color: rgba(15, 23, 42, 0.7);
+  margin-bottom: 1.5rem;
+`;
+
+const DeleteButton = styled(ModalPrimaryButton)`
+  background-color: #EC297B;
+  &:hover { background-color: #D61F69; }
+`;
+
 const SavedToolStackTab: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState('All Tools');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const filterOptions = [
     'All Tools',
@@ -295,6 +490,23 @@ const SavedToolStackTab: React.FC = () => {
 
   const handleFilterSelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedFilter(event.target.value);
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>, closeModal: () => void) => {
+    if (e.target === e.currentTarget) {
+      closeModal();
+    }
+  };
+
+  const handleAddTool = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAddModalOpen(false);
+    // Add tool logic here
+  };
+
+  const handleDeleteTool = () => {
+    setIsDeleteModalOpen(false);
+    // Delete tool logic here
   };
 
   return (
@@ -347,7 +559,7 @@ const SavedToolStackTab: React.FC = () => {
             <NotesTextarea placeholder="Add notes..." />
             <ButtonGroup>
               <PrimaryButton>Open Tool</PrimaryButton>
-              <SecondaryButton>
+              <SecondaryButton onClick={() => setIsDeleteModalOpen(true)}>
                 <FontAwesomeIcon icon={faTrash} />
               </SecondaryButton>
             </ButtonGroup>
@@ -378,7 +590,7 @@ const SavedToolStackTab: React.FC = () => {
             <NotesTextarea placeholder="Add notes...">Using this for daily task automation.</NotesTextarea>
             <ButtonGroup>
               <PrimaryButton>Open Tool</PrimaryButton>
-              <SecondaryButton>
+              <SecondaryButton onClick={() => setIsDeleteModalOpen(true)}>
                 <FontAwesomeIcon icon={faTrash} />
               </SecondaryButton>
             </ButtonGroup>
@@ -387,12 +599,81 @@ const SavedToolStackTab: React.FC = () => {
 
         {/* Add New Tool Card */}
         <AddNewCard>
-          <AddNewButton>
+          <AddNewButton onClick={() => setIsAddModalOpen(true)}>
             <AddNewIcon icon={faPlus} />
             <span>Add New Tool</span>
           </AddNewButton>
         </AddNewCard>
       </StackGrid>
+
+      {/* Add New Tool Modal */}
+      <ModalOverlay $isOpen={isAddModalOpen} onClick={e => handleOverlayClick(e, () => setIsAddModalOpen(false))}>
+        <ModalContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>Add New Tool</ModalTitle>
+            <CloseModalButton onClick={() => setIsAddModalOpen(false)} aria-label="Close modal">
+              <FontAwesomeIcon icon={faTimes} />
+            </CloseModalButton>
+          </ModalHeader>
+          <form onSubmit={handleAddTool}>
+            <ModalFormGroup>
+              <ModalFormLabel>Tool Name</ModalFormLabel>
+              <ModalFormInput type="text" placeholder="Enter tool name" required />
+            </ModalFormGroup>
+            <ModalFormGroup>
+              <ModalFormLabel>Category</ModalFormLabel>
+              <ModalFormSelect required>
+                <option value="">Select category</option>
+                <option value="Productivity">Productivity</option>
+                <option value="Communication">Communication</option>
+                <option value="Project Management">Project Management</option>
+                <option value="Design">Design</option>
+                <option value="Development">Development</option>
+                <option value="Marketing">Marketing</option>
+              </ModalFormSelect>
+            </ModalFormGroup>
+            <ModalFormGroup>
+              <ModalFormLabel>Tool Link</ModalFormLabel>
+              <ModalFormInput type="url" placeholder="https://example.com" required />
+            </ModalFormGroup>
+            <ModalFormGroup>
+              <ModalFormLabel>Reason for Adding (Optional)</ModalFormLabel>
+              <ModalFormTextarea placeholder="Why are you adding this tool to your stack?" />
+            </ModalFormGroup>
+            <ModalButtonGroup>
+              <ModalSecondaryButton type="button" onClick={() => setIsAddModalOpen(false)}>
+                Cancel
+              </ModalSecondaryButton>
+              <ModalPrimaryButton type="submit">
+                Add to My Stack
+              </ModalPrimaryButton>
+            </ModalButtonGroup>
+          </form>
+        </ModalContent>
+      </ModalOverlay>
+
+      {/* Delete Tool Modal */}
+      <ModalOverlay $isOpen={isDeleteModalOpen} onClick={e => handleOverlayClick(e, () => setIsDeleteModalOpen(false))}>
+        <DeleteModalContent onClick={e => e.stopPropagation()}>
+          <WarningIconContainer>
+            <WarningIcon>
+              <FontAwesomeIcon icon={faExclamationTriangle} />
+            </WarningIcon>
+          </WarningIconContainer>
+          <ModalTitle>Remove Tool</ModalTitle>
+          <DeleteModalDescription>
+            Are you sure you want to remove this tool from your stack? This action cannot be undone.
+          </DeleteModalDescription>
+          <ModalButtonGroup>
+            <ModalSecondaryButton onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </ModalSecondaryButton>
+            <DeleteButton onClick={handleDeleteTool}>
+              Delete
+            </DeleteButton>
+          </ModalButtonGroup>
+        </DeleteModalContent>
+      </ModalOverlay>
     </Container>
   );
 };
