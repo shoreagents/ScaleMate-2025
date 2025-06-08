@@ -657,6 +657,11 @@ const ResourceManagerTab: React.FC = () => {
     setSelectedAccess(e.target.value);
   };
 
+  // Add new handler for radio button changes
+  const handleAccessRadioChange = (value: string) => {
+    setFormData(prev => ({ ...prev, access: value }));
+  };
+
   // Handle tag filter change
   const handleTagClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     const tag = e.currentTarget.textContent || '';
@@ -957,7 +962,7 @@ const ResourceManagerTab: React.FC = () => {
                     type="radio"
                     name="access"
                     checked={formData.access === 'Free'}
-                    onChange={() => handleAccessChange('Free')}
+                    onChange={() => handleAccessRadioChange('Free')}
                   />
                   Free
                 </RadioLabel>
@@ -966,7 +971,7 @@ const ResourceManagerTab: React.FC = () => {
                     type="radio"
                     name="access"
                     checked={formData.access === 'Gated'}
-                    onChange={() => handleAccessChange('Gated')}
+                    onChange={() => handleAccessRadioChange('Gated')}
                   />
                   Gated
                 </RadioLabel>
