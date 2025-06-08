@@ -12,6 +12,14 @@
 - **Why:** Following the backup rule to ensure recoverability in case of errors or unintended changes
 - **Result:** Backup successfully created and verified
 
+### 2024-04-09: Cleanup - Removed Unused Admin API Endpoint
+- **Action:** Deleted unused API endpoint
+- **Files:** 
+  - Deleted: `src/pages/api/admin/actions.ts`
+- **Why:** The admin management forms are using direct Supabase client calls instead of the API endpoint
+- **Result:** Removed unused code while maintaining existing functionality
+- **Impact:** No functional changes as the endpoint was not being used
+
 ## Project Milestones
 
 ### Phase 1: Foundation (Updated)
@@ -418,3 +426,350 @@ This document follows an append-only policy:
   - `src/components/auth-modals/courses/CoursesAuthModal.tsx`
 - Added proper TypeScript props interface for SignInForm component
 - Fixed ref callback typing in OTP input fields 
+
+## 2024-04-09: Directory Restructuring - Modals to Forms
+
+### What Changed
+- Renamed `/src/components/modals` directory to `/src/components/forms` to better reflect the purpose of the components
+- Moved all form components to the new directory
+- Updated import paths in affected files:
+  - `src/pages/user/dashboard/index.tsx`
+  - `src/pages/admin/dashboard/index.tsx`
+
+### Why
+- Improves code organization by using more accurate naming
+- Better reflects that these components are form-based modals
+- Maintains consistency with the recent renaming of modal files to include "Form" suffix
+
+### Files Affected
+- Directory: `/src/components/modals` → `/src/components/forms`
+- `src/pages/user/dashboard/index.tsx`
+- `src/pages/admin/dashboard/index.tsx`
+
+### Result
+- Successfully moved all files to new directory
+- Updated all import paths
+- No build errors or regressions 
+
+## 2024-04-09: UI Simplification - Remove Success Modal
+
+### What Changed
+- Removed success modal from admin dashboard after FirstTimeSetupForm completion
+- Removed all related styled components and state management
+- Simplified the setup completion flow
+
+### Why
+- Reduces UI complexity by removing redundant success notification
+- FirstTimeSetupForm already provides sufficient feedback
+- Improves user experience by reducing modal transitions
+
+### Files Affected
+- `src/pages/admin/dashboard/index.tsx`
+
+### Result
+- Successfully removed success modal and related code
+- Simplified setup completion flow
+- No build errors or regressions 
+
+## 2024-04-09: UI Label Update - Last Activity to Last Signed-In
+
+### What Changed
+- Updated all instances of "Last Activity" to "Last Signed-In" in AdminManagementTab
+- Changed labels in both table headers and user cards
+- Maintained consistent terminology across the admin interface
+
+### Why
+- More accurately reflects that the timestamp shows when a user last signed in
+- Improves clarity for administrators monitoring user activity
+- Maintains consistency with the data being displayed (last_sign_in field)
+
+### Files Affected
+- `src/components/admin/AdminManagementTab.tsx`
+
+### Result
+- Successfully updated all labels
+- No functional changes to the component
+- Improved clarity of user activity information 
+
+## 2024-04-09: Last Sign-In Data Fix - Part 2
+
+### What Changed
+- Created new RPC function `get_user_last_sign_in` to safely access auth.users data
+- Updated `AdminManagementTab` to use the RPC function instead of direct table access
+- Added proper TypeScript interfaces for profile and last sign-in data
+- Fixed type safety in the data mapping process
+
+### Why
+- Previous attempt failed due to incorrect schema access
+- RPC function provides a secure way to access auth.users data
+- TypeScript improvements ensure type safety throughout the process
+- Maintains proper separation of concerns between auth and public schemas
+
+### Files Affected
+- Created: `supabase/migrations/20240409_add_last_sign_in_rpc.sql`
+- Modified: `src/components/admin/AdminManagementTab.tsx`
+
+### Result
+- Successfully fetches and displays real last sign-in times
+- Improved type safety and error handling
+- No build errors or regressions
+- Secure access to auth data through RPC 
+
+## 2024-04-09 - Modal Width Adjustment
+- **What**: Updated shared Modal component width from 530px to 480px
+- **Why**: To maintain consistent modal sizing across the application
+- **Files Changed**: `src/components/ui/Modal.tsx`
+- **Changes Made**:
+  - Modified `ModalContent` styled component's max-width from 530px to 480px
+  - Affects all modals using the shared Modal component
+- **Result**: All modals now have a consistent width of 480px
+- **Notes**: No functional changes, purely visual adjustment 
+
+## 2024-04-09 - Modal Padding Adjustment
+- **What**: Updated shared Modal component padding to be consistent on all sides
+- **Why**: To maintain consistent spacing and improve visual balance
+- **Files Changed**: `src/components/ui/Modal.tsx`
+- **Changes Made**:
+  - Modified `ModalBody` styled component's padding from `64px 32px 32px 32px` to `32px`
+  - Affects all modals using the shared Modal component
+- **Result**: All modals now have consistent 32px padding on all sides
+- **Notes**: No functional changes, purely visual adjustment for better spacing consistency 
+
+## 2024-04-09 - Animated Graph Width Adjustment
+- **What**: Updated the animated graph in FirstTimeSetupForm to be full width
+- **Why**: To improve visual presentation and better utilize available space
+- **Files Changed**: `src/components/forms/FirstTimeSetupForm.tsx`
+- **Changes Made**:
+  - Modified `AnimatedGraph` styled component to use full width with centered content
+  - Updated SVG properties to be responsive while maintaining aspect ratio
+  - Added `preserveAspectRatio` and `maxWidth` constraints for proper scaling
+- **Result**: Graph now scales properly to fill the modal width while maintaining its proportions
+- **Notes**: No functional changes, purely visual adjustment for better presentation 
+
+## 2024-04-10
+### Enhanced User Deletion Function with Safety Measures
+- **What**: Updated migration `20240410000001_add_delete_user_function.sql` with comprehensive safety features and cleanup
+- **Why**: To ensure secure and auditable user deletion while preventing accidental or malicious deletions, and to maintain a single source of truth for audit logging
+- **Files Changed**: 
+  - `supabase/migrations/20240410000001_add_delete_user_function.sql`
+  - Removed: `supabase/migrations/20240410000002_drop_user_deletion_logs.sql`
+- **Changes Made**:
+  - Combined both migrations into a single file
+  - Added DROP TABLE statement for `user_deletion_logs` table
+  - Created `delete_user_completely` function with proper security settings
+  - Added role-based access control (admin-only)
+  - Implemented self-deletion prevention
+  - Added last admin protection
+  - Enhanced error handling and transaction safety
+  - Integrated with existing `admin_audit_log` for deletion tracking
+- **Safety Features**:
+  - Only administrators can delete users
+  - Users cannot delete their own accounts
+  - Last administrator cannot be deleted
+  - All deletions are logged in `admin_audit_log` with full context
+  - Transaction ensures atomic operations
+- **Next Steps**: 
+  - Apply migration to Supabase project
+  - Test all safety features
+  - Verify audit logging in admin dashboard
+  - Verify `user_deletion_logs` table is removed
+- **Notes**: Function maintains SECURITY DEFINER with enhanced safety checks and uses existing audit logging system. Combined migrations for cleaner deployment. 
+
+## 2024-04-10: Consolidated Error Logging
+
+### Removed Separate Error Logging System
+- Removed `error_logs` table migration as it was redundant
+- Updated `update_user_profile_v2` to use `admin_audit_log` for error tracking
+- Consolidated all admin action and error logging into `admin_audit_log`
+- Purpose: Simplify logging system and maintain single source of truth for admin actions
+
+### Technical Details
+- All errors during admin operations now logged in `admin_audit_log` with action type 'ERROR'
+- Maintains existing audit logging structure with additional error context
+- Preserves IP address tracking and admin identification
+- Keeps all admin-related logging in one place for easier monitoring
+
+### Next Steps
+- Monitor error logging in admin_audit_log
+- Review error patterns in admin dashboard
+- Consider adding error log viewing interface in admin dashboard 
+
+## 2024-04-10: Migration Cleanup
+
+### Consolidated Migration Files
+- Removed duplicate migration `20240410000009_consolidate_audit_logs.sql`
+- Kept `0008_consolidate_audit_logs.sql` as the canonical version
+- Purpose: Maintain clean migration history and prevent conflicts
+
+### Technical Details
+- Kept version with better security practices:
+  - Explicit salt generation for password hashing
+  - Proper trigger preservation
+  - Includes GRANT EXECUTE statement
+  - Follows migration numbering sequence
+- Ensures consistent database state across environments
+
+### Next Steps
+- Apply migrations in staging
+- Verify user profile updates work correctly
+- Monitor password updates for security 
+
+## 2024-04-10 15:45 - Migration Cleanup: Removed Redundant pgcrypto Extension
+
+### Changes Made
+- Removed redundant `pgcrypto` extension creation from `0008_consolidate_audit_logs.sql`
+- Verified that `pgcrypto` is already enabled by default in Supabase projects
+- Confirmed that `gen_random_uuid()` (from `pgcrypto`) is already in use throughout the database
+
+### Technical Details
+- `pgcrypto` is a core extension that's always available in Supabase projects
+- The extension is already being used for:
+  - UUID generation in `admin_audit_log` and other tables
+  - Cryptographic functions throughout the database
+- No impact on existing functionality as the extension remains available
+
+### Next Steps
+- [ ] Apply migrations in staging to verify no issues
+- [ ] Verify user profile updates still work correctly
+- [ ] Monitor for any unexpected behavior in UUID generation or password hashing
+
+## 2024-04-10: Migration Cleanup
+
+### Consolidated Migration Files
+- Removed duplicate migration `0009_add_gender_to_profiles.sql`
+
+### Changes Made
+- Created new migration `0009_add_gender_to_profiles.sql`
+- Added `gender` column to `profiles` table with appropriate constraints
+- Updated `handle_new_user` trigger to handle gender during user creation
+- Added column comment for documentation
+
+### Technical Details
+- Column type: TEXT with CHECK constraint
+- Allowed values: 'male', 'female', 'other', 'prefer_not_to_say'
+- Updated trigger function to capture gender from user metadata
+- Maintains existing RLS policies (no changes needed)
+
+### Next Steps
+- [ ] Apply migration to staging
+- [ ] Verify user profile updates work correctly with gender field
+- [ ] Test new user registration with gender data
+- [ ] Monitor for any validation errors in gender updates 
+
+## 2024-04-10: Update Role Constraint in Profiles Table
+
+### Summary
+Updated the role constraint in the `profiles` table to allow all roles defined in the `update_user_profile_v2` function. This fixes the "violates check constraint profiles_role_check" error when trying to set roles like 'moderator', 'developer', or 'author'.
+
+### Technical Details
+- Created migration `0010_update_role_constraint.sql`
+- Dropped existing `profiles_role_check` constraint that only allowed 'user' and 'admin'
+- Added new constraint allowing all roles: 'user', 'admin', 'moderator', 'developer', 'author'
+- Updated column comment to reflect the change
+- This aligns with the allowed roles in `update_user_profile_v2` function
+
+### Next Steps
+1. Apply the migration to staging
+2. Verify that role updates work for all allowed roles
+3. Test user creation with different roles
+4. Monitor for any role-related issues in the admin dashboard
+
+## 2024-04-10: Migration Cleanup
+
+### Consolidated Migration Files
+- Removed duplicate migration `0011_add_role_to_profiles.sql`
+
+### Changes Made
+- Created new migration `0011_add_role_to_profiles.sql`
+- Added `role` column to `profiles` table with appropriate constraints
+- Updated `handle_new_user` trigger to handle role during user creation
+- Added column comment for documentation
+
+### Technical Details
+- Column type: TEXT with CHECK constraint
+- Allowed values: 'user', 'admin', 'moderator', 'developer', 'author'
+- Updated trigger function to capture role from user metadata
+- Maintains existing RLS policies (no changes needed)
+
+### Next Steps
+- [ ] Apply migration to staging
+- [ ] Verify user profile updates work correctly with role field
+- [ ] Test new user registration with role data
+- [ ] Monitor for any validation errors in role updates 
+
+## 2024-04-10: Enhanced Audit Logging with Previous Values
+
+### Summary
+Updated the `update_user_profile_v2` function to include previous values in the audit log, making it easier to track what changed in each update.
+
+### Technical Details
+- Created migration `0011_add_previous_values_to_audit.sql`
+- Modified `update_user_profile_v2` to store both previous and new values
+- Added `previous_values` field to audit log details
+- Maintains existing audit structure while adding more context
+- Example audit log entry now includes:
+  ```json
+  {
+    "target_user_id": "...",
+    "target_user_role": "user",
+    "updated_fields": {
+      "first_name": "New Name",
+      "gender": "male"
+    },
+    "previous_values": {
+      "first_name": "Old Name",
+      "gender": "female"
+    }
+  }
+  ```
+
+### Next Steps
+1. Apply the migration to staging
+2. Verify that audit logs now show both previous and new values
+3. Update admin dashboard to display change history more clearly
+4. Test various profile updates to ensure proper logging
+
+## 2024-04-10: Migration Cleanup
+
+### Consolidated Migration Files
+- Removed duplicate migration `0011_add_role_to_profiles.sql`
+
+### Changes Made
+- Created new migration `0011_add_role_to_profiles.sql`
+- Added `role` column to `profiles` table with appropriate constraints
+- Updated `handle_new_user` trigger to handle role during user creation
+- Added column comment for documentation
+
+### Technical Details
+- Column type: TEXT with CHECK constraint
+- Allowed values: 'user', 'admin', 'moderator', 'developer', 'author'
+- Updated trigger function to capture role from user metadata
+- Maintains existing RLS policies (no changes needed)
+
+### Next Steps
+- [ ] Apply migration to staging
+- [ ] Verify user profile updates work correctly with role field
+- [ ] Test new user registration with role data
+- [ ] Monitor for any validation errors in role updates 
+
+## 2024-04-09: Removed Password Fields from User Edit Form
+
+### Summary
+- Removed password fields from the user edit form in `EditUserForm.tsx`
+- Simplified form validation logic
+- Updated form submission handling
+- Improved code organization and fixed linter errors
+
+### Technical Details
+- Removed password-related state variables and handlers
+- Updated `handleInputChange` to use field-specific updates
+- Moved styled components before their usage
+- Added proper name attributes to form inputs
+- Simplified form validation to focus on required fields
+- Updated button text and loading states
+
+### Next Steps
+- Test user profile updates without password fields
+- Verify form validation works correctly
+- Check that all form fields update properly
+- Ensure audit logging still works for non-password changes

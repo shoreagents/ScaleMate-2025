@@ -169,16 +169,28 @@ export default function QuoteCalculator() {
           <Grid>
             <FormSection>
               <div>
-                <Label>Select Role</Label>
-                <Select value={role} onChange={(e) => setRole(e.target.value)}>
+                <Label htmlFor="role-select">Select Role</Label>
+                <Select 
+                  id="role-select"
+                  name="role-select"
+                  value={role} 
+                  onChange={(e) => setRole(e.target.value)}
+                  aria-label="Select a role"
+                >
                   <option value="customer-service">Customer Service Representative</option>
                   <option value="virtual-assistant">Virtual Assistant</option>
                   <option value="digital-marketing">Digital Marketing Specialist</option>
                 </Select>
               </div>
               <div>
-                <Label>Experience Level</Label>
-                <Select value={experience} onChange={(e) => setExperience(e.target.value)}>
+                <Label htmlFor="experience-select">Experience Level</Label>
+                <Select 
+                  id="experience-select"
+                  name="experience-select"
+                  value={experience} 
+                  onChange={(e) => setExperience(e.target.value)}
+                  aria-label="Select experience level"
+                >
                   <option value="entry">Entry Level (1-2 years)</option>
                   <option value="mid">Mid Level (3-5 years)</option>
                   <option value="senior">Senior Level (5+ years)</option>

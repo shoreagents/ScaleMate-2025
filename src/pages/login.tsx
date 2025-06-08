@@ -160,17 +160,17 @@ const LoginPage = () => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user && !preventRedirect) {
-        // Get user's role
-        const { data: roles } = await supabase
-          .from('user_roles')
+        // Get user's role from profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
           .select('role')
-          .eq('user_id', user.id);
+          .eq('id', user.id)
+          .single();
 
-        if (roles && roles.length > 0) {
-          const userRoles = roles.map(r => r.role);
-          if (userRoles.includes('admin') || userRoles.includes('moderator')) {
+        if (profile) {
+          if (profile.role === 'admin') {
             router.push('/admin/dashboard');
-          } else if (userRoles.includes('user')) {
+          } else {
             // If there's a redirectTo parameter, use it
             if (redirectTo && typeof redirectTo === 'string') {
               router.push(redirectTo);

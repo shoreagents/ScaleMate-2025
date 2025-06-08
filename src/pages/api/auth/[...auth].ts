@@ -159,36 +159,89 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           try {
             console.log('Checking email existence:', sanitizedEmail);
             
-            // Check if user exists by attempting to sign in with OTP
-            const { error: checkError } = await supabase.auth.signInWithOtp({
+            // First try to sign in with a dummy password to check if email exists
+            const { error: checkError } = await supabase.auth.signInWithPassword({
               email: sanitizedEmail,
-              options: {
-                shouldCreateUser: false
-              }
+              password: 'dummy-password-for-check'
             });
 
             console.log('Email check result:', { 
               hasError: !!checkError,
               errorMessage: checkError?.message,
-              errorStatus: checkError?.status,
-              fullError: checkError
+              errorStatus: checkError?.status
             });
 
-            // If we get a "User not found" error, the email doesn't exist
+            // If we get "User not found", the email doesn't exist
             if (checkError && checkError.message.includes('User not found')) {
               console.log('Email does not exist');
               return res.status(200).json({ exists: false });
             }
 
-            // If we get an OTP configuration error, the email doesn't exist
-            if (checkError && checkError.message.includes('Signups not allowed for otp')) {
-              console.log('OTP not configured, assuming email does not exist');
+            // If we get "Email not confirmed", the user exists but hasn't verified
+            if (checkError && checkError.message.toLowerCase().includes('email not confirmed')) {
+              console.log('Email exists but is not confirmed');
+              return res.status(200).json({ 
+                exists: true,
+                status: 'unconfirmed',
+                message: 'Account already exists. Sign in to confirm email.'
+              });
+            }
+
+            // If we get "Invalid login credentials", check user status with admin API
+            if (checkError && checkError.message.includes('Invalid login credentials')) {
+              // Get user details from admin API
+              const { data: userData, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+              
+              if (userError) {
+                console.log('Error getting user details:', userError);
+                return res.status(200).json({ 
+                  exists: true,
+                  status: 'unconfirmed',
+                  message: 'Email exists but verification status is unclear. Please try signing in.'
+                });
+              }
+
+              // Find the user with matching email
+              const user = userData?.users?.find(u => u.email === sanitizedEmail);
+              
+              if (!user) {
+                console.log('User not found in admin list');
+                return res.status(200).json({ exists: false });
+              }
+
+              console.log('User details:', {
+                email: user.email,
+                emailConfirmed: user.email_confirmed_at,
+                lastSignIn: user.last_sign_in_at
+              });
+
+              // Check if email is confirmed
+              if (user.email_confirmed_at) {
+                console.log('Email exists and is confirmed');
+                return res.status(200).json({ 
+                  exists: true,
+                  status: 'confirmed',
+                  message: 'Email already exists'
+                });
+              } else {
+                console.log('Email exists but is not confirmed');
+                return res.status(200).json({ 
+                  exists: true,
+                  status: 'unconfirmed',
+                  message: 'Account already exists. Sign in to confirm email.'
+                });
+              }
+            }
+
+            // If we get any other error, log it and assume email doesn't exist
+            if (checkError) {
+              console.log('Unexpected error during email check:', checkError);
               return res.status(200).json({ exists: false });
             }
 
-            // If we get any other error or no error, the user exists
-            console.log('Email exists');
-            return res.status(200).json({ exists: true });
+            // This case should never happen with signInWithPassword
+            console.log('Unexpected success during email check');
+            return res.status(200).json({ exists: false });
           } catch (error: any) {
             console.error('Email check error:', {
               message: error.message,

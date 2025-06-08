@@ -1,11 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import styled from 'styled-components';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import styled, { createGlobalStyle } from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiUserPlus, FiTrash2, FiEdit2, FiCheck, FiX, FiAlertCircle, FiUser, FiShield, FiInfo, FiUserCheck, FiUserX, FiEye, FiEyeOff, FiLoader, FiCode, FiEdit } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion, FaSearch, FaTimes } from 'react-icons/fa';
 import type { FC, ReactElement } from 'react';
-import { LoadingSpinner as PageLoadingSpinner } from '@/components/ui/LoadingSpinner';
 import ProfileSidebar from '@/components/layout/ProfileSidebar';
+import { AddUserForm, EditUserForm, DeleteConfirmationForm } from '../forms/admin';
+import { AdminFormData, UserEditFormData, Admin, UserRole, UserToDelete, TabType, SortField, BaseUser } from '../../types/admin';
+import { useRouter } from 'next/router';
+import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 const Container = styled.div`
   padding: 24px;
@@ -57,6 +62,18 @@ const TableContainer = styled.div`
   border: 1px solid #E5E7EB;
   overflow: hidden;
   margin-top: 1.5rem;
+  
+  @media (max-width: 1024px) {
+    display: none;
+  }
+`;
+
+const TableScrollContainer = styled.div`
+  width: 100%;
+  
+  @media (max-width: 1024px) {
+    display: none;
+  }
 `;
 
 const Table = styled.table`
@@ -198,7 +215,6 @@ const ActionButton = styled.button<{ $variant?: 'danger' | 'success' }>`
 const ActionGroup = styled.div`
   display: flex;
   gap: 8px;
-  align-items: center;
 `;
 
 const StatusBadge = styled.span<{ $status: 'active' | 'pending' | 'not-confirmed' }>`
@@ -256,6 +272,13 @@ const ModalContent = styled.div`
   border-radius: 12px;
   width: 100%;
   max-width: 530px;
+  
+  @media (max-width: 550px) {
+    padding: 16px 20px 24px 20px;
+    max-width: 95%;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -268,6 +291,10 @@ const ModalTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  
+  @media (max-width: 550px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -286,12 +313,21 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  
+  @media (max-width: 550px) {
+    gap: 12px;
+  }
 `;
 
 const FormRow = styled.div`
   display: flex;
   gap: 16px;
   width: 100%;
+  
+  @media (max-width: 550px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -299,6 +335,10 @@ const FormGroup = styled.div`
   flex-direction: column;
   gap: 8px;
   flex: 1;
+  
+  @media (max-width: 550px) {
+    gap: 6px;
+  }
 `;
 
 const RequiredAsterisk = styled.span`
@@ -311,6 +351,11 @@ const Label = styled.label`
   font-weight: 500;
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
+  
+  @media (max-width: 550px) {
+    min-width: unset;
+    font-size: 0.8125rem;
+  }
 `;
 
 const Input = styled.input`
@@ -322,6 +367,11 @@ const Input = styled.input`
   &:focus {
     outline: none;
     border-color: #3B82F6;
+  }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
   }
 `;
 
@@ -335,6 +385,11 @@ const Select = styled.select`
   &:focus {
     outline: none;
     border-color: #3B82F6;
+  }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    font-size: 0.8125rem;
   }
 `;
 
@@ -350,6 +405,17 @@ const ErrorMessage = styled.div`
     width: 16px;
     height: 16px;
     flex-shrink: 0;
+  }
+  
+  @media (max-width: 550px) {
+    font-size: 0.8125rem;
+    margin-top: 6px;
+    gap: 6px;
+    
+    svg {
+      width: 14px;
+      height: 14px;
+    }
   }
 `;
 
@@ -369,6 +435,11 @@ const HelperText = styled.div`
   display: flex;
   align-items: center;
   gap: 4px;
+  
+  @media (max-width: 550px) {
+    font-size: 0.6875rem;
+    gap: 3px;
+  }
 `;
 
 const RoleSelectContainer = styled.div`
@@ -407,6 +478,12 @@ const RoleSelect = styled.select`
     outline: none;
     border-color: #3B82F6;
   }
+  
+  @media (max-width: 550px) {
+    padding: 8px 10px;
+    padding-right: 24px;
+    font-size: 0.8125rem;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -415,6 +492,12 @@ const ButtonGroup = styled.div`
   gap: 12px;
   justify-content: flex-end;
   margin-top: 16px;
+  
+  @media (max-width: 550px) {
+    gap: 8px;
+    margin-top: 12px;
+    flex-direction: column;
+  }
 `;
 
 const ModalButton = styled.button`
@@ -425,6 +508,11 @@ font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  @media (max-width: 550px) {
+    padding: 10px 16px;
+    width: 100%;
+  }
 `;
 
 const CancelButton = styled(ModalButton)`
@@ -482,20 +570,6 @@ const LoadingOverlay = styled.div`
   z-index: 1000;
 `;
 
-const LoadingSpinner = styled.div`
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f3f4f6;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
 const LoadingText = styled.div`
   margin-top: 16px;
   color: #374151;
@@ -510,24 +584,32 @@ const FilterContainer = styled.div`
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  
+  @media (max-width: 470px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
-const SearchInput = styled.div`
+const SearchWrapper = styled.div`
   position: relative;
   width: 16rem;
 
-  input {
+  @media (max-width: 470px) {
     width: 100%;
+  }
+`;
+
+const StyledSearchInput = styled.input`
     padding: 0.5rem 1rem 0.5rem 2.5rem;
   border: 1px solid #E5E7EB;
     border-radius: 0.5rem;
-  }
-
-  svg {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
+  width: 100%;
+  font-size: 0.875rem;
+  background-color: white;
+  height: 2.5rem;
+  box-sizing: border-box;
+  &::placeholder {
     color: rgba(15, 23, 42, 0.4);
   }
 `;
@@ -547,6 +629,10 @@ const InfoMessage = styled.div`
 const PasswordInputContainer = styled.div`
   position: relative;
   width: 100%;
+  
+  @media (max-width: 550px) {
+    display: flex;
+  }
 `;
 
 const PasswordInput = styled(Input)`
@@ -621,64 +707,65 @@ const AvatarSpinner = styled.div`
   }
 `;
 
-interface BaseUser {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-  created_at: string;
-  last_login?: string;
-  profile_picture?: string;
-}
+const StyledAddUserButton = styled.button`
+  padding: 0.5rem 1rem;
+  background-color: #3B82F6;
+  color: white;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  border: none;
+  height: 2.5rem;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  &:hover {
+    background-color: #2563EB;
+  }
 
-interface Admin extends BaseUser {
-  role: 'admin';
-  last_sign_in: string | null;
-  phone: string;
-  gender: string;
-  username: string;
-  roles: string[];
-  status: 'active' | 'pending';
-}
+  @media (max-width: 470px) {
+    display: none;
+  }
+`;
 
-interface UserRole extends BaseUser {
-  role: 'user' | 'admin' | 'moderator' | 'developer' | 'author';  // Add developer and author roles
-  last_sign_in: string | null;
-  phone: string;
-  gender: string;
-  username: string;
-  roles: string[];
-  status: string;
-}
+const CircularAddButton = styled.button`
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+  z-index: 40;
 
-type UserToDelete = UserRole | Admin;
+  @media (max-width: 470px) {
+    display: flex;
+  }
 
-type SortField = 'email' | 'name' | 'roles' | 'last_sign_in';
+  &:hover {
+    background-color: #2563EB;
+    transform: scale(1.05);
+  }
 
-type TabType = 'admins' | 'moderators' | 'users' | 'regular-users' | 'developers' | 'authors';
+  &:active {
+    transform: scale(0.95);
+  }
 
-interface AdminFormData {
-  first_name: string;
-  last_name: string;
-  username: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  phone: string;
-  gender: string;
-  role: 'admin' | 'moderator' | 'user' | 'developer' | 'author';
-}
-
-interface UserEditFormData {
-  email: string;
-  password: string;
-  role: 'admin' | 'moderator' | 'user' | 'developer' | 'author';
-  first_name: string;
-  last_name: string;
-  phone: string;
-  gender: string;
-  username: string;
-}
+  svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+`;
 
 interface AdminManagementTabProps {
   onUserDeleted?: () => void;
@@ -714,21 +801,77 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(normalized);
 };
 
+const GlobalStyles = createGlobalStyle`
+  @media (max-width: 470px) {
+    .full-text {
+      display: none;
+    }
+    .short-text {
+      display: inline !important;
+    }
+  }
+`;
+
+// Add styled component for success message
+const StyledSuccessMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: #ECFDF5;
+  border-radius: 0.375rem;
+  color: #059669;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+`;
+
+interface LastSignInData {
+  id: string;
+  last_sign_in_at: string | null;
+}
+
+interface ProfileData {
+  id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  created_at: string;
+  phone_number: string | null;
+  gender: string | null;
+  username: string | null;
+  profile_picture_url: string | null;
+  role: string;
+  location: string;
+}
+
+// Update the CurrentUserIndicator styled component
+const CurrentUserIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgb(107, 114, 128);
+  font-size: 0.875rem;
+  padding: 0.5rem;
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+`;
+
 const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModalStateChange }): ReactElement => {
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [allUsers, setAllUsers] = useState<UserRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
-  const [formData, setFormData] = useState({
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null); // Add this line
+  const [formData, setFormData] = useState<AdminFormData>({
     first_name: '',
     last_name: '',
-    username: '',
     email: '',
     password: '',
-    confirmPassword: '', // Add confirmPassword field
-    phone: '',
-    gender: '',
+    confirmPassword: '',
     role: 'user'
   });
   const [error, setError] = useState<string | null>(null);
@@ -738,9 +881,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
   const [isConfirmingDelete, setIsConfirmingDelete] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('users');
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
-  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Admin | UserRole | null>(null);
-  const [newRole, setNewRole] = useState<'admin' | 'user'>('admin');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<UserEditFormData>({
     email: '',
@@ -748,9 +889,11 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
     role: 'user',
     first_name: '',
     last_name: '',
-    phone: '',
+    phone_number: '',
+    location: '',
     gender: '',
-    username: ''
+    username: '',
+    profile_picture: null
   });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [filterEmail, setFilterEmail] = useState('');
@@ -758,7 +901,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserToDelete | null>(null);
-  const [successMessage, setSuccessMessage] = useState<{ title: string; description: string }>({ title: '', description: '' });
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showSortIcon, setShowSortIcon] = useState(false);
   const [activeSortColumn, setActiveSortColumn] = useState<SortField | null>(null);
@@ -785,8 +927,6 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Add back the showSuccessModal state
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-
   const [loadingProfilePictures, setLoadingProfilePictures] = useState<{ [key: string]: boolean }>({});
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -803,16 +943,33 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
     padding: 1rem;
     background-color: white;
     border-top: 1px solid #E5E7EB;
+    
+    @media (max-width: 470px) {
+      flex-direction: column;
+      gap: 1rem;
+      padding: 0.75rem;
+    }
   `;
 
   const PageInfo = styled.div`
     font-size: 0.875rem;
     color: #6B7280;
+    
+    @media (max-width: 470px) {
+      font-size: 0.75rem;
+      text-align: center;
+    }
   `;
 
   const PageButtons = styled.div`
     display: flex;
     gap: 0.5rem;
+    
+    @media (max-width: 470px) {
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
   `;
 
   const PageButton = styled.button<{ $active?: boolean }>`
@@ -832,6 +989,12 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+    
+    @media (max-width: 470px) {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.75rem;
+      min-width: 2rem;
     }
   `;
 
@@ -973,14 +1136,15 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: roles } = await supabase
-        .from('user_roles')
+      setCurrentUserId(user.id); // Add this line
+
+      const { data: profile } = await supabase
+        .from('profiles')
         .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
+        .eq('id', user.id)
         .single();
 
-      setIsCurrentUserAdmin(!!roles);
+      setIsCurrentUserAdmin(profile?.role === 'admin');
     } catch (error) {
       console.error('Error checking user role:', error);
       setIsCurrentUserAdmin(false);
@@ -989,46 +1153,56 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
 
   const fetchAllUsers = async () => {
     try {
-      const { data: users, error: usersError } = await supabase
-        .from('user_details')
-        .select(`
-          user_id,
-          email,
-          first_name,
-          last_name,
-          phone,
-          gender,
-          created_at,
-          last_sign_in_at,
-          roles,
-          username,
-          profile_picture
-        `)
+      // Get profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .returns<ProfileData[]>()
         .order('created_at', { ascending: false });
 
-      if (usersError) throw usersError;
+      if (profilesError) throw profilesError;
+      if (!profiles) throw new Error('No profiles found');
 
-      // Format the data to match UserRole interface
-      const formattedUsers: UserRole[] = users.map(user => ({
-        id: user.user_id,
-        email: user.email,
-        roles: user.roles || [],
-        created_at: user.created_at,
-        last_sign_in: user.last_sign_in_at || null,
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        phone: user.phone || '',
-        gender: user.gender || '',
-        username: user.username || '',
-        profile_picture: user.profile_picture || '',
-        role: 'user',
-        status: 'active'
-      }));
+      // Get last sign in times for all users using RPC
+      const { data: authUsers, error: authError } = await supabase
+        .rpc('get_user_last_sign_in', {
+          user_ids: profiles.map(p => p.id)
+        });
+
+      if (authError) throw authError;
+
+      // Create a map of user IDs to their last sign in times
+      const lastSignInMap = new Map<string, string | null>();
+      if (authUsers) {
+        (authUsers as LastSignInData[]).forEach(user => {
+          lastSignInMap.set(user.id, user.last_sign_in_at);
+        });
+      }
+
+      const formattedUsers: UserRole[] = profiles.map(profile => {
+        const lastSignIn = lastSignInMap.get(profile.id) || null;
+        return {
+          id: profile.id,
+          email: profile.email,
+          first_name: profile.first_name || '',
+          last_name: profile.last_name || '',
+          created_at: profile.created_at,
+          last_sign_in: lastSignIn,
+          phone_number: profile.phone_number || '', // Change from phone to phone_number
+          gender: profile.gender || '',
+          username: profile.username || '',
+          profile_picture: profile.profile_picture_url || '',
+          role: profile.role as 'user' | 'admin' | 'moderator' | 'developer' | 'author',
+          roles: [profile.role],
+          status: 'active',
+          location: profile.location || ''
+        };
+      });
 
       setAllUsers(formattedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
-      setError('Error fetching users. Please try again.');
+      setError('Failed to fetch users. Please try again.');
     }
   };
 
@@ -1038,19 +1212,9 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
       setError(null);
 
       const { data: users, error: usersError } = await supabase
-        .from('user_details')
-        .select(`
-          user_id,
-          email,
-          first_name,
-          last_name,
-          phone,
-          gender,
-          created_at,
-          last_sign_in_at,
-          roles,
-          username
-        `)
+        .from('profiles')
+        .select('*')
+        .eq('role', 'admin')
         .order('created_at', { ascending: false });
 
       if (usersError) {
@@ -1062,22 +1226,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
         return;
       }
 
-      const formattedAdmins: Admin[] = users
-        .filter(user => user.roles.includes('admin'))
-        .map(user => ({
-          id: user.user_id,
-          email: user.email,
-          status: 'active',
-          created_at: user.created_at,
-          last_sign_in: user.last_sign_in_at || null,
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
-          phone: user.phone || '',
-          gender: user.gender || '',
-          username: user.username || '',
-          roles: user.roles || [],
-          role: 'admin'
-        }));
+      const formattedAdmins: Admin[] = users.map(user => ({
+        id: user.id,
+        email: user.email,
+        status: 'active',
+        created_at: user.created_at,
+        last_sign_in: user.last_sign_in_at || null,
+        first_name: user.first_name || '',
+        last_name: user.last_name || '',
+        phone_number: user.phone_number || '', // Change from phone to phone_number
+        gender: user.gender || '',
+        username: user.username || '',
+        roles: [user.role],
+        role: 'admin',
+        location: user.location || ''
+      }));
 
       setAdmins(formattedAdmins);
     } catch (error) {
@@ -1089,16 +1252,15 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
   };
 
   const handleAddAdmin = () => {
-    if (!isCurrentUserAdmin) {
-      setError('Only admin users can add new admins');
-      return;
-    }
-    setEditingAdmin(null);
-    setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
-    setError(null);
-    setSuccess(null);
+    setFormData({
+      first_name: '',
+      last_name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      role: 'user'
+    });
     setIsModalOpen(true);
-    onModalStateChange?.(true);
   };
 
   const handleEditAdmin = (admin: Admin) => {
@@ -1109,25 +1271,29 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
       role: admin.role,
       first_name: admin.first_name,
       last_name: admin.last_name,
-      phone: admin.phone,
+      phone_number: admin.phone_number || '', // Change from phone to phone_number
+      location: admin.location || '',
       gender: admin.gender,
-      username: admin.username
+      username: admin.username,
+      profile_picture: admin.profile_picture || null
     });
     setIsEditModalOpen(true);
     onModalStateChange?.(true);
   };
 
-  const handleEditUser = (user: UserRole) => {
+  const handleEditUser = (user: Admin | UserRole) => {
     setSelectedUser(user);
     setEditFormData({
       email: user.email,
       password: '',
       role: user.role,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      phone: user.phone,
-      gender: user.gender,
-      username: user.username
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      phone_number: user.phone_number || '', // Change from phone to phone_number
+      location: user.location || '',
+      gender: user.gender || '',
+      username: user.username || '',
+      profile_picture: user.profile_picture || null
     });
     setIsEditModalOpen(true);
     onModalStateChange?.(true);
@@ -1222,38 +1388,21 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
     return (
       formData.first_name.trim() !== '' &&
       formData.last_name.trim() !== '' &&
-      formData.username.trim() !== '' &&
       formData.email.trim() !== '' &&
       formData.password.trim() !== '' &&
       formData.confirmPassword.trim() !== '' &&
-      formData.phone.trim() !== '' &&
-      formData.gender.trim() !== '' &&
-      !usernameError &&
-      usernameExists === false &&
       passwordsMatch === true &&
       passwordLength
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (isSubmitting || rateLimitCountdown !== null) {
-      return;
-    }
+  const handleSubmit = async (formData: AdminFormData) => {
+    try {
+      setIsSubmitting(true);
+      setModalError(null);
 
     if (formData.password !== formData.confirmPassword) {
       setModalError('Passwords do not match');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setLastAttemptTime(Date.now());
-
-    const submitRequest = async () => {
-      try {
-        if (!formData.email || !formData.password || !formData.first_name || !formData.last_name) {
-          setModalError('Email, password, first name, and last name are required');
           return;
         }
 
@@ -1266,20 +1415,20 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
         // Normalize email before checking existence
         const normalizedEmail = normalizeEmail(formData.email);
 
-        // First check if user exists
+      // Check if email already exists
         const { data: existingUser, error: checkError } = await supabase
-          .from('user_details')
-          .select('user_id')
-          .eq('email', normalizedEmail)
+        .from('profiles')
+        .select('email')
+        .eq('email', normalizedEmail)
           .single();
 
         if (checkError && checkError.code !== 'PGRST116') {
-          setModalError('Error checking user: ' + checkError.message);
+        setModalError('Error checking email: ' + checkError.message);
           return;
         }
 
         if (existingUser) {
-          setModalError('A user with this email already exists');
+        setModalError('Email already exists');
           return;
         }
 
@@ -1295,7 +1444,7 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
               email: normalizedEmail,
               password: formData.password,
               options: {
-                emailRedirectTo: `${window.location.origin}`
+              emailRedirectTo: `${window.location.origin}/auth/callback/direct`
               }
             });
 
@@ -1333,18 +1482,17 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
         await createUserWithRetry();
 
         if (!authData?.user) {
-          setModalError('Failed to create user');
           return;
         }
 
         // Create user profile using RPC function
         const { error: profileError } = await supabase.rpc('update_user_profile_v2', {
-          p_user_id: authData.user.id,
-          p_first_name: formData.first_name,
-          p_last_name: formData.last_name,
-          p_phone: formData.phone || null,
-          p_gender: formData.gender || null,
-          p_username: formData.username
+        target_user_id: authData.user.id,
+        update_data: {
+          first_name: formData.first_name,
+          last_name: formData.last_name
+        },
+        p_new_role: formData.role
         });
 
         if (profileError) {
@@ -1352,92 +1500,81 @@ const AdminManagementTab: FC<AdminManagementTabProps> = ({ onUserDeleted, onModa
           return;
         }
 
-        // First remove any existing roles using enable_user_roles_rls
-        const { error: deleteRolesError } = await supabase.rpc('enable_user_roles_rls', {
-          p_action: 'delete',
-          p_new_role: 'user', // This will remove all roles
-          p_target_user_id: authData.user.id
-        });
-
-        if (deleteRolesError) {
-          setModalError('Error clearing existing roles: ' + deleteRolesError.message);
-          return;
-        }
-
-        // Then assign the selected role
-        const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-          p_action: 'insert',
-          p_new_role: formData.role,
-          p_target_user_id: authData.user.id
-        });
-
-        if (roleError) {
-          setModalError('Error assigning role: ' + roleError.message);
-          return;
-        }
-
         // Log the user creation activity for the admin
         const { data: { user: adminUser } } = await supabase.auth.getUser();
         if (adminUser) {
-          await supabase.rpc('log_profile_change', {
-            p_user_id: adminUser.id,
-            p_type: 'user_creation',
-            p_description: `Created New User
-
-Name: ${formData.first_name} ${formData.last_name}
-Email: ${formData.email}
-Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
+        // Log with a more appropriate action type and structure
+        await supabase.from('admin_audit_log').insert({
+          admin_id: adminUser.id,
+          action: 'ADD_NEW_USER',
+          details: {
+            new_user_id: authData.user.id,
+            user_details: {
+              email: normalizedEmail,
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              role: formData.role
+            },
+            created_at: new Date().toISOString()
+          },
+          ip_address: process.env.NODE_ENV === 'production' ? 'REDACTED' : '127.0.0.1'
           });
         }
 
-        showSuccess(
-          'User Created',
-          'The user has been successfully created and can now log in with their credentials.'
-        );
       setIsModalOpen(false);
-        setFormData({ first_name: '', last_name: '', username: '', email: '', password: '', confirmPassword: '', phone: '', gender: '', role: 'user' });
+      setFormData({ first_name: '', last_name: '', email: '', password: '', confirmPassword: '', role: 'user' });
         setRetryCount(0);
-        setUsernameError(null);
-        setUsernameExists(null);
-        setCheckingUsername(false);
-        setCurrentUsername('');
         setPasswordsMatch(null);
         setPasswordLength(false);
         await fetchAllUsers();
     } catch (error) {
-        console.error('Error in handleSubmit:', error);
-        setModalError(error instanceof Error ? error.message : 'Failed to create user');
+      console.error('Error creating user:', error);
+      setModalError(error instanceof Error ? error.message : 'Failed to create user. Please try again.');
       } finally {
         setIsSubmitting(false);
-      }
-    };
-
-    addToQueue(submitRequest);
+    }
   };
 
-  const handleDeleteAdmin = async (adminId: string) => {
+  const handleDeleteUser = async (user: UserToDelete | string) => {
     try {
-      // Use the enable_user_roles_rls function to delete admin role
-      const { error: deleteError } = await supabase.rpc('enable_user_roles_rls', {
-        p_action: 'delete',
-        p_new_role: 'admin',
-        p_target_user_id: adminId
+      const userId = typeof user === 'string' ? user : user.id;
+      const userEmail = typeof user === 'string' ? '' : user.email;
+      const userName = typeof user === 'string' ? '' : `${user.first_name} ${user.last_name}`.trim();
+      
+      // Delete user completely using the new RPC function
+      const { error: deleteError } = await supabase.rpc('delete_user_completely', {
+        target_user_id: userId
       });
 
       if (deleteError) {
-        console.error('Error removing admin role:', deleteError);
-        throw new Error(`Failed to remove admin role: ${deleteError.message}`);
+        console.error('Error deleting user:', deleteError);
+        throw new Error('Failed to delete user');
       }
 
-      // Refresh the admin list
-      await fetchAdmins();
-      showSuccess(
-        'Admin Removed',
-        'The admin role has been successfully removed from the user.'
-      );
+      // Log the deletion activity for the admin
+      const { data: { user: adminUser } } = await supabase.auth.getUser();
+      if (adminUser) {
+        await supabase.rpc('log_profile_change', {
+          p_user_id: adminUser.id,
+          p_type: 'user_deletion',
+          p_description: `Deleted User
+
+Name: ${userName || 'N/A'}
+Email: ${userEmail || userId}
+Role: ${typeof user === 'string' ? 'N/A' : user.roles.map(role => role.charAt(0).toUpperCase() + role.slice(1)).join(', ')}`
+        });
+      }
+
+      // Close the delete modal first
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+      setErrorMessage('');
+
+      // Then show success message
+      await fetchAllUsers();
     } catch (error) {
-      console.error('Error deleting admin:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete admin');
+      console.error('Error in handleDeleteUser:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete user');
     }
   };
 
@@ -1473,76 +1610,6 @@ Role: ${formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}`
     }
   };
 
-  const handleRoleToggle = (user: UserRole) => {
-    setSelectedUser(user);
-    setNewRole(user.roles.includes('admin') ? 'user' : 'admin');
-    setIsRoleModalOpen(true);
-  };
-
-  const confirmRoleChange = async () => {
-    if (!selectedUser) return;
-    
-    try {
-      await handleUpdateUserRole(selectedUser.id, newRole);
-      setIsRoleModalOpen(false);
-      setSelectedUser(null);
-    } catch (error) {
-      console.error('Error in confirmRoleChange:', {
-        error,
-        user: selectedUser,
-        newRole
-      });
-      setModalError(error instanceof Error ? error.message : 'Failed to update user role. Please check the console for details.');
-    }
-  };
-
-  const handleDeleteUser = async (user: UserToDelete | string) => {
-    try {
-      const userId = typeof user === 'string' ? user : user.id;
-      const userEmail = typeof user === 'string' ? '' : user.email;
-      const userName = typeof user === 'string' ? '' : `${user.first_name} ${user.last_name}`.trim();
-      
-      // Delete user completely using the new RPC function
-      const { error: deleteError } = await supabase.rpc('delete_user_completely', {
-        p_user_id: userId
-      });
-
-      if (deleteError) {
-        console.error('Error deleting user:', deleteError);
-        throw new Error('Failed to delete user');
-      }
-
-      // Log the deletion activity for the admin
-      const { data: { user: adminUser } } = await supabase.auth.getUser();
-      if (adminUser) {
-        await supabase.rpc('log_profile_change', {
-          p_user_id: adminUser.id,
-          p_type: 'user_deletion',
-          p_description: `Deleted User
-
-Name: ${userName || 'N/A'}
-Email: ${userEmail || userId}
-Role: ${typeof user === 'string' ? 'N/A' : user.roles.map(role => role.charAt(0).toUpperCase() + role.slice(1)).join(', ')}`
-        });
-      }
-
-      // Close the delete modal first
-      setIsDeleteModalOpen(false);
-      setUserToDelete(null);
-      setErrorMessage('');
-
-      // Then show success message
-      showSuccess(
-        'User Deleted',
-        'The user has been successfully deleted from the system.'
-      );
-      await fetchAllUsers();
-    } catch (error) {
-      console.error('Error in handleDeleteUser:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete user');
-    }
-  };
-
   const handleDeleteConfirm = async () => {
     if (!userToDelete) return;
     
@@ -1554,120 +1621,92 @@ Role: ${typeof user === 'string' ? 'N/A' : user.roles.map(role => role.charAt(0)
     }
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUser) return;
+  const handleEditSubmit = async (formData: UserEditFormData): Promise<void> => {
+    console.log('Starting user update process...');
+
+    if (!selectedUser) {
+      console.error('No user selected for update');
+      setModalError('No user selected for update');
+      return;
+    }
 
     // Validate required fields
-    if (!editFormData.first_name.trim() || !editFormData.last_name.trim() || !editFormData.username.trim()) {
+    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.username.trim()) {
       setModalError('First name, last name, and username are required');
       return;
     }
 
+    // Validate password if provided
+    if (formData.password && formData.password.length < 6) {
+      setModalError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setModalError(null);
+
     try {
-      // Update user profile
-      const { error: profileError } = await supabase.rpc('update_user_profile_v2', {
-        p_user_id: selectedUser.id,
-        p_first_name: editFormData.first_name.trim(),
-        p_last_name: editFormData.last_name.trim(),
-        p_phone: editFormData.phone,
-        p_gender: editFormData.gender,
-        p_username: editFormData.username.trim()
-      });
-
-      if (profileError) {
-        throw new Error(`Failed to update profile: ${profileError.message}`);
-      }
-
-      // Update role if changed
-      if (editFormData.role !== selectedUser.roles[0]) {
-        const { error: roleError } = await supabase.rpc('enable_user_roles_rls', {
-        p_action: 'update',
-        p_new_role: editFormData.role,
-        p_target_user_id: selectedUser.id
-      });
-
-        if (roleError) {
-          throw new Error(`Failed to update role: ${roleError.message}`);
-        }
-      }
-
-      // Update local state first to prevent flicker
-      const updatedUser: UserRole = {
-        ...selectedUser,
-        first_name: editFormData.first_name.trim(),
-        last_name: editFormData.last_name.trim(),
-        phone: editFormData.phone,
-        gender: editFormData.gender,
-        username: editFormData.username.trim(),
-        roles: [editFormData.role],
-        role: editFormData.role as 'user' | 'admin' | 'moderator'
+      console.log('Preparing update data...');
+      const updateData = {
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+        username: formData.username.trim(),
+        ...(formData.phone_number && { phone_number: formData.phone_number.replace(/[^\d+]/g, '') }),
+        ...(formData.location && { location: formData.location }),
+        ...(formData.gender && { gender: formData.gender }),
+        ...(formData.profile_picture && { profile_picture_url: formData.profile_picture.trim() })
       };
 
-      // Update the allUsers array with the new data
-      setAllUsers(prevUsers => 
-        prevUsers.map(user => 
-          user.id === selectedUser.id ? updatedUser : user
-        )
-      );
-
-      // Update admins array if the user is an admin
-      if (updatedUser.roles.includes('admin')) {
-        setAdmins(prevAdmins => 
-          prevAdmins.map(admin => 
-            admin.id === selectedUser.id ? {
-              ...admin,
-              first_name: editFormData.first_name.trim(),
-              last_name: editFormData.last_name.trim(),
-              phone: editFormData.phone,
-              gender: editFormData.gender,
-              username: editFormData.username.trim(),
-              roles: [editFormData.role]
-            } : admin
-          )
-        );
-      }
-
-      // First close the edit modal
-      setIsEditModalOpen(false);
-      setSelectedUser(null);
-      setModalError(null);
-      setUsernameError(null);
-      setUsernameExists(null);
-      setCheckingUsername(false);
-      setCurrentUsername('');
-      setPasswordsMatch(null);
-      setPasswordLength(false);
-      
-      // Then show the success modal
-      showSuccess(
-        'User Updated',
-        'The user profile has been successfully updated with the new information.'
-      );
-
-      // Log the user update activity for the admin
-      const { data: { user: adminUser } } = await supabase.auth.getUser();
-      if (adminUser) {
-        await supabase.rpc('log_profile_change', {
-          p_user_id: adminUser.id,
-          p_type: 'user_update',
-          p_description: `Updated User Profile
-
-Name: ${editFormData.first_name} ${editFormData.last_name}
-Email: ${editFormData.email}
-Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
+      // Call the update function
+      const { error: updateError } = await supabase
+        .rpc('update_user_profile_v2', {
+          target_user_id: selectedUser.id,
+          update_data: updateData,
+          p_new_role: formData.role,
+          p_new_password: formData.password || null
         });
+
+      if (updateError) {
+        throw new Error(updateError.message);
       }
-    } catch (error) {
-      console.error('Error in handleEditSubmit:', error);
-      setModalError(error instanceof Error ? error.message : 'Failed to update user profile');
+
+      // Close modal immediately after successful update
+      setIsEditModalOpen(false);
+      
+      // Then refresh the data in the background
+      try {
+        await fetchAllUsers();
+        const updatedUser = [...admins, ...allUsers].find(user => user.id === selectedUser.id);
+        if (updatedUser) {
+          setSelectedUser(updatedUser);
+          setEditFormData({
+            email: updatedUser.email,
+            password: '',
+            role: updatedUser.role,
+            first_name: updatedUser.first_name || '',
+            last_name: updatedUser.last_name || '',
+            phone_number: updatedUser.phone_number || '',
+            location: updatedUser.location || '',
+            gender: updatedUser.gender || '',
+            username: updatedUser.username || '',
+            profile_picture: updatedUser.profile_picture || null
+          });
+        }
+      } catch (fetchError) {
+        console.error('Error refreshing user data:', fetchError);
+        // Don't throw here - the update was successful, we just couldn't refresh the view
+      }
+    } catch (err) {
+      console.error('Error in handleEditSubmit:', err);
+      setModalError(err instanceof Error ? err.message : 'Failed to update user');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleModalClose = () => {
     setIsEditModalOpen(false);
     setSelectedUser(null);
-    hideSuccess();
     setModalError(null);
     setUsernameError(null);
     setUsernameExists(null);
@@ -1675,6 +1714,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
     setCurrentUsername('');
     setPasswordsMatch(null);
     setPasswordLength(false);
+    // Remove the editFormData reset since we want to preserve the data
     onModalStateChange?.(false);
   };
 
@@ -1838,11 +1878,8 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
 
   // Update isBasicInfoValid function
   const isBasicInfoValid = () => {
-    const isCurrentUsername = formData.username === currentUsername;
     return formData.first_name.trim() !== '' && 
-           formData.last_name.trim() !== '' &&
-           !usernameError &&
-           (!usernameExists || isCurrentUsername);
+           formData.last_name.trim() !== '';
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, field: keyof AdminFormData) => {
@@ -1904,30 +1941,6 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
     if (formData.password) {
       setPasswordsMatch(value === formData.password);
     }
-  };
-
-  const handleDelete = async (user: UserToDelete) => {
-    try {
-      // Use handleDeleteUser for all roles (user, admin, moderator)
-        await handleDeleteUser(user);
-    } catch (error) {
-      console.error('Error deleting user:', error);
-    }
-  };
-
-  // Update the showSuccess function
-  const showSuccess = (title: string, message: string) => {
-    setSuccessMessage({
-      title,
-      description: message
-    });
-    setShowSuccessModal(true);
-  };
-
-  // Update the hideSuccess function
-  const hideSuccess = () => {
-    setShowSuccessModal(false);
-    setSuccessMessage({ title: '', description: '' });
   };
 
   // Update the handleImageLoad function to be more robust
@@ -1992,12 +2005,80 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
     });
   };
 
+  // Change the implementation to use a helper function for pagination that doesn't require IIFE
+  const renderPaginationButtons = (currentPage: number, totalPages: number) => {
+    const pages = [];
+    // Use a fixed value for mobile screens
+    const maxVisiblePages = 3;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if there are fewer than the max visible
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      // Calculate start and end of visible range around current page
+      let startPage = Math.max(2, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages - 1, startPage + maxVisiblePages - 3);
+      
+      // Adjust if at the beginning
+      if (currentPage <= Math.floor(maxVisiblePages / 2)) {
+        endPage = maxVisiblePages - 1;
+      }
+      
+      // Adjust if at the end
+      if (currentPage > totalPages - Math.floor(maxVisiblePages / 2)) {
+        startPage = totalPages - maxVisiblePages + 2;
+      }
+      
+      // Add ellipsis after first page if needed
+      if (startPage > 2) {
+        pages.push('...');
+      }
+      
+      // Add visible range of pages
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      
+      // Add ellipsis before last page if needed
+      if (endPage < totalPages - 1) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      if (totalPages > 1) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages.map((page, index) => 
+      typeof page === 'number' ? (
+        <PageButton
+          key={index}
+          $active={currentPage === page}
+          onClick={() => handlePageChange(page)}
+        >
+          {page}
+        </PageButton>
+      ) : (
+        <span key={index} style={{ alignSelf: 'center', color: '#6B7280', fontSize: '0.75rem' }}>
+          {page}
+        </span>
+      )
+    );
+  };
+
   if (loading) {
-    return <PageLoadingSpinner />;
+    return <LoadingSpinner />;
   }
 
   return (
     <Container>
+      <GlobalStyles />
 
       <TabContainer>
         <TabButton 
@@ -2057,36 +2138,34 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
       )}
 
       {success && (
-        <SuccessMessage>
+        <StyledSuccessMessage>
           <FiCheck size={16} />
           {success}
-        </SuccessMessage>
-      )}
-
-      {isRefreshing && (
-        <LoadingOverlay>
-          <LoadingSpinner />
-          <LoadingText>Updating lists...</LoadingText>
-        </LoadingOverlay>
+        </StyledSuccessMessage>
       )}
 
       {activeTab === 'admins' ? (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
+            <SearchWrapper>
+              <StyledSearchInput
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
-              <FaSearch />
-            </SearchInput>
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-            <Button $primary onClick={handleAddAdmin}>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
               <FiUserPlus />
               Add User
-            </Button>
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2096,6 +2175,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
+            <TableScrollContainer>
           <Table>
               <TableHead>
               <tr>
@@ -2151,7 +2231,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   $sortable
                 >
                   <HeaderContent>
-                    <span>Last Activity</span>
+                    <span>Last Signed-In</span>
                   <SortIcon 
                       $active={sortField === 'last_sign_in'} 
                     $direction={sortDirection}
@@ -2208,102 +2288,212 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   </TableCell>
                   {isCurrentUserAdmin && (
                     <TableCell style={{ width: '120px' }}>
-                    <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
-                        >
-                        <FiEdit2 size={18} />
-                      </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
+                      {user.id === currentUserId ? (
+                        <CurrentUserIndicator>
+                          <FiUserCheck />
+                          <span>Current User</span>
+                        </CurrentUserIndicator>
+                      ) : (
+                        <ActionGroup>
+                          <Tooltip text="Update User Info" position="top">
+                          <ActionButton 
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(user);
+                              handleEditUser(user);
                             }}
+                          >
+                            <FiEdit2 size={18} />
+                          </ActionButton>
+                          </Tooltip>
+                          <Tooltip text="Delete User" position="top">
+                              <ActionButton 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                handleDeleteClick(user);
+                                }}
+                              $variant="danger"
                             >
-                              <FiCheck size={18} />
+                              <FiTrash2 size={18} />
                             </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
-                      <ActionButton 
-                        $variant="danger"
-                      onClick={(e) => {
-                            e.stopPropagation();
-                              setUserToDelete(user);
-                          setIsDeleteModalOpen(true);
-                        }}
-                      >
-                        <FiTrash2 size={18} />
-                      </ActionButton>
-                        )}
-                    </ActionGroup>
+                          </Tooltip>
+                        </ActionGroup>
+                      )}
                     </TableCell>
                   )}
                 </TableRow>
               ))}
               </TableBody>
           </Table>
+            </TableScrollContainer>
           <PaginationControls>
             <PageInfo>
+                <span className="full-text">
               Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
             </PageInfo>
             <PageButtons>
               <PageButton 
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
               >
-                Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
               </PageButton>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, totalPages)}
                 <PageButton
-                  key={page}
-                  $active={currentPage === page}
-                  onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
                 >
-                  {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
-              ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Signed-In</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    {user.id === currentUserId ? (
+                      <CurrentUserIndicator>
+                        <FiUserCheck />
+                        <span>Current User</span>
+                      </CurrentUserIndicator>
+                    ) : (
+                      <>
+                        <Tooltip text="Update User Info" position="top">
+                        <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
+                        >
+                          <FiEdit2 size={18} />
+                        </ActionButton>
+                        </Tooltip>
+                        <Tooltip text="Delete User" position="top">
+                        <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                              handleDeleteClick(user);
+                          }}
+                            $variant="danger"
+                        >
+                          <FiTrash2 size={18} />
+                        </ActionButton>
+                        </Tooltip>
+                      </>
+                    )}
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, totalPages)}
               <PageButton 
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
-                Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
               </PageButton>
             </PageButtons>
           </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : activeTab === 'moderators' ? (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
+            <SearchWrapper>
+              <StyledSearchInput
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
-              <FaSearch />
-            </SearchInput>
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-              <Button $primary onClick={handleAddAdmin}>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
-              </Button>
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2313,6 +2503,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
+            <TableScrollContainer>
           <Table>
               <TableHead>
               <tr>
@@ -2368,7 +2559,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   $sortable
                 >
                   <HeaderContent>
-                    <span>Last Activity</span>
+                    <span>Last Signed-In</span>
                   <SortIcon 
                       $active={sortField === 'last_sign_in'} 
                     $direction={sortDirection}
@@ -2425,102 +2616,212 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   </TableCell>
                   {isCurrentUserAdmin && (
                     <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
-                        >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(user);
-                            }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
+                      {user.id === currentUserId ? (
+                        <CurrentUserIndicator>
+                          <FiUserCheck />
+                          <span>Current User</span>
+                        </CurrentUserIndicator>
+                      ) : (
+                        <ActionGroup>
+                          <Tooltip text="Update User Info" position="top">
                           <ActionButton 
-                            $variant="danger"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditUser(user);
                             }}
                           >
-                            <FiTrash2 size={18} />
+                            <FiEdit2 size={18} />
                           </ActionButton>
-                        )}
-                      </ActionGroup>
+                          </Tooltip>
+                          <Tooltip text="Delete User" position="top">
+                              <ActionButton 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                handleDeleteClick(user);
+                                }}
+                              $variant="danger"
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          </Tooltip>
+                        </ActionGroup>
+                      )}
                     </TableCell>
                   )}
                 </TableRow>
               ))}
               </TableBody>
           </Table>
+            </TableScrollContainer>
           <PaginationControls>
             <PageInfo>
+                <span className="full-text">
               Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
             </PageInfo>
             <PageButtons>
               <PageButton 
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
               >
-                Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
               </PageButton>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, totalPages)}
                 <PageButton
-                  key={page}
-                  $active={currentPage === page}
-                  onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
                 >
-                  {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
-              ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Signed-In</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? new Date(user.last_sign_in).toLocaleDateString()
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    {user.id === currentUserId ? (
+                      <CurrentUserIndicator>
+                        <FiUserCheck />
+                        <span>Current User</span>
+                      </CurrentUserIndicator>
+                    ) : (
+                      <>
+                        <Tooltip text="Update User Info" position="top">
+                        <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
+                        >
+                          <FiEdit2 size={18} />
+                        </ActionButton>
+                        </Tooltip>
+                        <Tooltip text="Delete User" position="top">
+                        <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                              handleDeleteClick(user);
+                          }}
+                            $variant="danger"
+                        >
+                          <FiTrash2 size={18} />
+                        </ActionButton>
+                        </Tooltip>
+                      </>
+                    )}
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, totalPages)}
               <PageButton 
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
-                Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
               </PageButton>
             </PageButtons>
           </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : activeTab === 'developers' ? (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
+            <SearchWrapper>
+              <StyledSearchInput
                 type="text"
                 placeholder="Search ..."
                 value={filterEmail}
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
-              <FaSearch />
-            </SearchInput>
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-              <Button $primary onClick={handleAddAdmin}>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
-              </Button>
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2530,6 +2831,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
+            <TableScrollContainer>
             <Table>
               <TableHead>
                 <tr>
@@ -2614,27 +2916,31 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                     </TableCell>
-                    {isCurrentUserAdmin && (
+                    {isCurrentUserAdmin && user.id !== currentUserId && (
                       <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
+                          <Tooltip text="Update User Info" position="top">
                           <ActionButton 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditUser(user);
                             }}
-                            title="Update Info"
                           >
                             <FiEdit2 size={18} />
                           </ActionButton>
+                          </Tooltip>
+                          <Tooltip text="Delete User" position="top">
                           <ActionButton 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteClick(user);
                             }}
                             title="Delete User"
+                              $variant="danger"
                           >
                             <FiTrash2 size={18} />
                           </ActionButton>
+                          </Tooltip>
                         </ActionGroup>
                       </TableCell>
                     )}
@@ -2642,53 +2948,168 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 ))}
               </tbody>
             </Table>
+            </TableScrollContainer>
             <PaginationControls>
               <PageInfo>
+                <span className="full-text">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: Math.ceil(allUsers.length / rowsPerPage) }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                   <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                   >
-                    {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                   </PageButton>
-                ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData(allUsers.filter(user => user.roles.includes('developer'))).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Signed-In</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && user.id !== currentUserId && (
+                  <CardActions>
+                    <Tooltip text="Update User Info" position="top">
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    </Tooltip>
+                    <Tooltip text="Delete User" position="top">
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(user);
+                      }}
+                      title="Delete User"
+                        $variant="danger"
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                    </Tooltip>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                 <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                 >
-                  Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
               </PageButtons>
             </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : activeTab === 'authors' ? (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
+            <SearchWrapper>
+              <StyledSearchInput
                 type="text"
                 placeholder="Search ..."
                 value={filterEmail}
                 onChange={(e) => setFilterEmail(e.target.value)}
               />
-              <FaSearch />
-            </SearchInput>
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-              <Button $primary onClick={handleAddAdmin}>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
-              </Button>
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2698,6 +3119,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
+            <TableScrollContainer>
             <Table>
               <TableHead>
                 <tr>
@@ -2782,27 +3204,30 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                         : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
                       }
                     </TableCell>
-                    {isCurrentUserAdmin && (
+                    {isCurrentUserAdmin && user.id !== currentUserId && (
                       <TableCell style={{ width: '120px' }}>
                         <ActionGroup>
+                          <Tooltip text="Update User Info" position="top">
                           <ActionButton 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEditUser(user);
                             }}
-                            title="Update Info"
                           >
                             <FiEdit2 size={18} />
                           </ActionButton>
+                          </Tooltip>
+                          <Tooltip text="Delete User" position="top">
                           <ActionButton 
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteClick(user);
                             }}
-                            title="Delete User"
+                              $variant="danger"
                           >
                             <FiTrash2 size={18} />
                           </ActionButton>
+                          </Tooltip>
                         </ActionGroup>
                       </TableCell>
                     )}
@@ -2810,53 +3235,167 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                 ))}
               </tbody>
             </Table>
+            </TableScrollContainer>
             <PaginationControls>
               <PageInfo>
+                <span className="full-text">
                 Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
               </PageInfo>
               <PageButtons>
                 <PageButton 
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
                 </PageButton>
-                {Array.from({ length: Math.ceil(allUsers.length / rowsPerPage) }, (_, i) => i + 1).map((page) => (
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                   <PageButton
-                    key={page}
-                    $active={currentPage === page}
-                    onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                   >
-                    {page}
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                   </PageButton>
-                ))}
+              </PageButtons>
+            </PaginationControls>
+          </TableContainer>
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData(allUsers.filter(user => user.roles.includes('author'))).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
+                  >
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Signed-In</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && user.id !== currentUserId && (
+                  <CardActions>
+                    <Tooltip text="Update User Info" position="top">
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                    >
+                      <FiEdit2 size={18} />
+                    </ActionButton>
+                    </Tooltip>
+                    <Tooltip text="Delete User" position="top">
+                    <ActionButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(user);
+                      }}
+                        $variant="danger"
+                    >
+                      <FiTrash2 size={18} />
+                    </ActionButton>
+                    </Tooltip>
+                  </CardActions>
+                )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, allUsers.length)} of {allUsers.length}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, Math.ceil(allUsers.length / rowsPerPage))}
                 <PageButton 
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === Math.ceil(allUsers.length / rowsPerPage)}
                 >
-                  Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
                 </PageButton>
               </PageButtons>
             </PaginationControls>
-          </TableContainer>
+          </CardViewContainer>
         </>
       ) : (
         <>
           <FilterContainer>
-            <SearchInput>
-              <input
+            <SearchWrapper>
+              <StyledSearchInput
               type="text"
               placeholder="Search ..."
               value={filterEmail}
               onChange={(e) => setFilterEmail(e.target.value)}
             />
-              <FaSearch />
-            </SearchInput>
+              <FaSearch style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'rgba(15, 23, 42, 0.4)' }} />
+            </SearchWrapper>
             {isCurrentUserAdmin && (
-              <Button $primary onClick={handleAddAdmin}>
+              <>
+                <StyledAddUserButton onClick={handleAddAdmin}>
                 <FiUserPlus />
                 Add User
-              </Button>
+                </StyledAddUserButton>
+                <CircularAddButton onClick={handleAddAdmin} aria-label="Add User">
+                  <FiUserPlus />
+                </CircularAddButton>
+              </>
             )}
           </FilterContainer>
           {!isCurrentUserAdmin && (
@@ -2866,6 +3405,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             </InfoMessage>
           )}
           <TableContainer>
+            <TableScrollContainer>
           <Table>
               <TableHead>
               <tr>
@@ -2921,7 +3461,7 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   $sortable
                 >
                   <HeaderContent>
-                    <span>Last Activity</span>
+                    <span>Last Signed-In</span>
                   <SortIcon 
                       $active={sortField === 'last_sign_in'} 
                     $direction={sortDirection}
@@ -2978,405 +3518,194 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   </TableCell>
                   {isCurrentUserAdmin && (
                     <TableCell style={{ width: '120px' }}>
-                      <ActionGroup>
-                        <ActionButton 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEditUser(user);
-                        }}
-                          title="Update Info"
-                        >
-                          <FiEdit2 size={18} />
-                        </ActionButton>
-                        {isConfirmingDelete === user.id ? (
-                          <>
-                            <ActionButton 
-                              $variant="success"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(user);
-                            }}
-                            >
-                              <FiCheck size={18} />
-                            </ActionButton>
-                            <ActionButton 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsConfirmingDelete(null);
-                            }}
-                            >
-                              <FiX size={18} />
-                            </ActionButton>
-                          </>
-                        ) : (
+                      {user.id === currentUserId ? (
+                        <CurrentUserIndicator>
+                          <FiUserCheck />
+                          <span>Current User</span>
+                        </CurrentUserIndicator>
+                      ) : (
+                        <ActionGroup>
+                          <Tooltip text="Update User Info" position="top">
                           <ActionButton 
-                            $variant="danger"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                              setUserToDelete(user);
-                              setIsDeleteModalOpen(true);
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditUser(user);
                             }}
                           >
-                            <FiTrash2 size={18} />
+                            <FiEdit2 size={18} />
                           </ActionButton>
-                        )}
-                      </ActionGroup>
+                          </Tooltip>
+                          <Tooltip text="Delete User" position="top">
+                              <ActionButton 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                handleDeleteClick(user);
+                                }}
+                              $variant="danger"
+                            >
+                              <FiTrash2 size={18} />
+                            </ActionButton>
+                          </Tooltip>
+                        </ActionGroup>
+                      )}
                     </TableCell>
                   )}
                 </TableRow>
               ))}
               </TableBody>
           </Table>
+            </TableScrollContainer>
           <PaginationControls>
             <PageInfo>
+                <span className="full-text">
               Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
             </PageInfo>
             <PageButtons>
               <PageButton 
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
               >
-                Previous
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
               </PageButton>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PageButton
-                  key={page}
-                  $active={currentPage === page}
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </PageButton>
-              ))}
+                {renderPaginationButtons(currentPage, totalPages)}
               <PageButton 
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
-                Next
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
               </PageButton>
             </PageButtons>
           </PaginationControls>
           </TableContainer>
-        </>
-      )}
-
-      <Modal $isOpen={isModalOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>Add New User</ModalTitle>
-            <CloseButton onClick={() => {
-              setIsModalOpen(false);
-              setRateLimitCountdown(null);
-              setRetryCount(0);
-              requestQueue.current = [];
-              if (countdownRef.current) {
-                clearInterval(countdownRef.current);
-              }
-              if (retryTimeoutRef.current) {
-                clearTimeout(retryTimeoutRef.current);
-              }
-              setUsernameError(null);
-              setUsernameExists(null);
-              setCheckingUsername(false);
-              setCurrentUsername('');
-              setPasswordsMatch(null);
-              setPasswordLength(false);
-            }}>
-              <FaTimes size={20} />
-            </CloseButton>
-          </ModalHeader>
-
-          <Form onSubmit={handleSubmit}>
-            <FormRow>
-            <FormGroup>
-                <Label htmlFor="first-name">
-                  First Name
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <Input
-                  id="first-name"
-                  type="text"
-                  pattern="[A-Za-z ]*"
-                  value={formData.first_name}
-                  onChange={(e) => handleInputChange(e, 'first_name')}
-                  required
-                  disabled={isSubmitting || rateLimitCountdown !== null}
-                  placeholder="Enter first name"
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="last-name">
-                  Last Name
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <Input
-                  id="last-name"
-                  type="text"
-                  pattern="[A-Za-z ]*"
-                  value={formData.last_name}
-                  onChange={(e) => handleInputChange(e, 'last_name')}
-                  required
-                  disabled={isSubmitting || rateLimitCountdown !== null}
-                  placeholder="Enter last name"
-                />
-              </FormGroup>
-            </FormRow>
-
-            <FormRow>
-              <FormGroup>
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  pattern="[0-9]*"
-                  value={formData.phone}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setFormData({ ...formData, phone: e.target.value });
-                    }
-                  }}
-                  disabled={isSubmitting || rateLimitCountdown !== null}
-                  placeholder="Enter phone number"
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="gender">Gender</Label>
-                <GenderSelectContainer>
-                  <GenderSelect
-                    id="gender"
-                    value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    disabled={isSubmitting || rateLimitCountdown !== null}
+          
+          {/* Add CardViewContainer here */}
+          <CardViewContainer>
+            {getPaginatedData([...admins, ...allUsers]).map((user, index) => (
+              <UserCard key={user.id} onClick={() => handleNameClick(user)}>
+                <CardHeader>
+                  <Avatar 
+                    $imageUrl={user.profile_picture} 
+                    $isLoading={Boolean(loadingProfilePictures[user.id])}
                   >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </GenderSelect>
-                  <GenderIcon>
-                    {formData.gender === 'male' ? <FaMale size={18} /> :
-                     formData.gender === 'female' ? <FaFemale size={18} /> :
-                     formData.gender === 'other' ? <FaTransgender size={18} /> :
-                     formData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
-                     <FaQuestion size={18} />}
-                  </GenderIcon>
-                </GenderSelectContainer>
-              </FormGroup>
-            </FormRow>
-
-            <FormGroup>
-              <Label htmlFor="email">
-                Email
-                <RequiredAsterisk>*</RequiredAsterisk>
-              </Label>
-              <InputWrapper>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => {
-                    setFormData({ ...formData, email: e.target.value });
-                    if (modalError && modalError.includes('A user with this email already exists')) {
-                      setModalError(null);
-                    }
-                  }}
-                  required
-                  disabled={isSubmitting || rateLimitCountdown !== null}
-                  placeholder="your@email.com"
-                />
-                {modalError && modalError.includes('A user with this email already exists') && (
-                  <HelperText style={{ color: '#dc2626' }}>
-                    <FiX size={14} />
-                    A user with this email already exists
-                  </HelperText>
-                )}
-              </InputWrapper>
-            </FormGroup>
-
-            <FormRow>
-              <FormGroup>
-                <Label htmlFor="username">
-                  Username
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <InputWrapper>
-                  <Input
-                    id="username"
-                    type="text"
-                    pattern="[a-zA-Z0-9._-]*"
-                    value={formData.username}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      validateUsername(value);
-                      if (value === '' || e.target.validity.valid) {
-                        setFormData({ ...formData, username: value });
-                      }
-                    }}
-                    placeholder="Enter username"
-                    required
-                    disabled={isSubmitting || rateLimitCountdown !== null}
-                  />
-                  {usernameError && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      {usernameError}
-                    </HelperText>
-                  )}
-                  {checkingUsername && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiLoader size={14} />
-                      Checking username...
-                    </HelperText>
-                  )}
-                  {!checkingUsername && !usernameError && usernameExists === false && (
-                    <HelperText style={{ color: '#059669' }}>
-                      <FiCheck size={14} />
-                      Username is available
-                    </HelperText>
-                  )}
-                  {!checkingUsername && !usernameError && usernameExists === true && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      Username is already taken
-                    </HelperText>
-                  )}
-                </InputWrapper>
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="role">
-                  Role
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <RoleSelectContainer>
-                  <RoleSelect
-                    id="role"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as 'admin' | 'moderator' | 'user' | 'developer' | 'author' })}
-                    required
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                    <option value="moderator">Moderator</option>
-                    <option value="developer">Developer</option>
-                    <option value="author">Author</option>
-                  </RoleSelect>
-                  <RoleIcon>
-                    {formData.role === 'admin' ? <FiShield size={18} /> : 
-                     formData.role === 'moderator' ? <FiUserCheck size={18} /> : 
-                     formData.role === 'developer' ? <FiCode size={18} /> :
-                     formData.role === 'author' ? <FiEdit size={18} /> :
-                     <FiUser size={18} />}
-                  </RoleIcon>
-                </RoleSelectContainer>
-              </FormGroup>
-            </FormRow>
-
-            <FormRow>
-              <FormGroup>
-                <Label htmlFor="password">
-                  Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <PasswordInputContainer>
-                  <PasswordInput
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={handlePasswordChange}
-                    required
-                    disabled={isSubmitting || rateLimitCountdown !== null}
-                    placeholder="Enter password"
-                  />
-                  <ViewPasswordButton
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={isSubmitting || rateLimitCountdown !== null}
-                  >
-                    {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                  </ViewPasswordButton>
-                </PasswordInputContainer>
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="confirmPassword">
-                  Confirm Password
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <PasswordInputContainer>
-                  <PasswordInput
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={formData.confirmPassword}
-                    onChange={handleConfirmPasswordChange}
-                    required
-                    disabled={isSubmitting || rateLimitCountdown !== null}
-                    placeholder="Confirm your password"
-                  />
-                  <ViewPasswordButton
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    disabled={isSubmitting || rateLimitCountdown !== null}
-                  >
-                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                  </ViewPasswordButton>
-                </PasswordInputContainer>
-              </FormGroup>
-            </FormRow>
-
-            <div style={{ display: 'flex', flexDirection: 'column', marginTop: '-8px' }}>
-              {formData.password && (
-                <PasswordMatchIndicator $matches={passwordLength}>
-                  {passwordLength ? (
-                    <>
-                      <FiCheck size={14} />
-                      Password length is valid
-                    </>
-                  ) : (
-                    <>
-                      <FiX size={14} />
-                      Password must be at least 8 characters
-                    </>
-                  )}
-                </PasswordMatchIndicator>
-              )}
-              {passwordsMatch !== null && (
-                <PasswordMatchIndicator $matches={passwordsMatch}>
-                  {passwordsMatch ? (
-                    <>
-                      <FiCheck size={14} />
-                      Passwords match
-                    </>
-                  ) : (
-                    <>
-                      <FiX size={14} />
-                      Passwords do not match
-                    </>
-                  )}
-                </PasswordMatchIndicator>
-              )}
-            </div>
-
-            {modalError && !modalError.includes('A user with this email already exists') && (
-              <ErrorMessage>
-                <FiAlertCircle />
-                {modalError}
-                {rateLimitCountdown !== null && retryCount > 0 && retryCount < MAX_RETRIES && (
-                  <div style={{ fontSize: '0.875rem', marginTop: '4px' }}>
-                    Attempt {retryCount} of {MAX_RETRIES}
+                    {user.profile_picture && (
+                      <img
+                        src={user.profile_picture}
+                        alt={`${user.first_name}'s profile`}
+                        onLoad={() => handleImageLoad(user.id)}
+                        onError={() => handleImageError(user.id)}
+                        style={{ display: loadingProfilePictures[user.id] ? 'none' : 'block' }}
+                      />
+                    )}
+                    {!user.profile_picture && <FiUser />}
+                    {loadingProfilePictures[user.id] && <AvatarSpinner />}
+                  </Avatar>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <UserName>{`${user.first_name || ''} ${user.last_name || ''}`.trim() || '-'}</UserName>
+                    <UserEmail style={{ fontSize: '0.75rem' }}>{user.email}</UserEmail>
                   </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <CardItem>
+                    <CardLabel>Roles</CardLabel>
+                    <CardValue>
+                      <RoleBadges>
+                        {user.roles.map((role: string, idx: number) => (
+                          <RoleBadge key={idx} $role={role}>
+                            {role}
+                          </RoleBadge>
+                        ))}
+                      </RoleBadges>
+                    </CardValue>
+                  </CardItem>
+                  
+                  <CardItem>
+                    <CardLabel>Last Signed-In</CardLabel>
+                    <CardValue>
+                      {user.last_sign_in 
+                        ? <span style={{ color: '#6B7280' }}>{new Date(user.last_sign_in).toLocaleDateString()}</span>
+                        : <StatusBadge $status="not-confirmed">Not Confirmed</StatusBadge>
+                      }
+                    </CardValue>
+                  </CardItem>
+                </CardContent>
+                
+                {isCurrentUserAdmin && (
+                  <CardActions>
+                    {user.id === currentUserId ? (
+                      <CurrentUserIndicator>
+                        <FiUserCheck />
+                        <span>Current User</span>
+                      </CurrentUserIndicator>
+                    ) : (
+                      <>
+                        <ActionButton 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditUser(user);
+                          }}
+                          title="Update Info"
+                        >
+                          <FiEdit2 size={18} />
+                        </ActionButton>
+                        <ActionButton 
+                          $variant="danger"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUserToDelete(user);
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
+                          <FiTrash2 size={18} />
+                        </ActionButton>
+                      </>
+                    )}
+                  </CardActions>
                 )}
-              </ErrorMessage>
-            )}
+              </UserCard>
+            ))}
+            
+            <PaginationControls>
+              <PageInfo>
+                <span className="full-text">
+                  Showing {((currentPage - 1) * rowsPerPage) + 1} to {Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount} entries
+                </span>
+                <span className="short-text" style={{ display: 'none' }}>
+                  {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalFilteredCount)} of {totalFilteredCount}
+                </span>
+              </PageInfo>
+              <PageButtons>
+                <PageButton 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <span className="full-text">Previous</span>
+                  <span className="short-text" style={{ display: 'none' }}>Prev</span>
+                </PageButton>
+                {renderPaginationButtons(currentPage, totalPages)}
+              <PageButton 
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                  >
+                  <span className="full-text">Next</span>
+                  <span className="short-text" style={{ display: 'none' }}>Next</span>
+              </PageButton>
+            </PageButtons>
+          </PaginationControls>
+          </CardViewContainer>
+                    </>
+                  )}
 
-     
-
-            <ButtonGroup>
-              <CancelButton 
-                type="button"
-                onClick={() => {
+      {/* Replace inline modals with new components */}
+      <AddUserForm
+        isOpen={isModalOpen}
+        onClose={() => {
                   setIsModalOpen(false);
                   setRateLimitCountdown(null);
                   setRetryCount(0);
@@ -3394,366 +3723,39 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
                   setPasswordsMatch(null);
                   setPasswordLength(false);
                 }}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </CancelButton>
-              <SaveButton 
-                type="submit"
-                disabled={Boolean(
-                  !formData.first_name.trim() || 
-                  !formData.last_name.trim() || 
-                  !formData.username.trim() || 
-                  !formData.email.trim() || 
-                  !formData.password.trim() || 
-                  !formData.confirmPassword.trim() || 
-                  usernameError ||
-                  usernameExists === true ||
-                  passwordsMatch !== true ||
-                  passwordLength !== true ||
-                  isSubmitting || 
-                  rateLimitCountdown !== null
-                )}
-              >
-                {isSubmitting ? 'Creating...' : 
-                 rateLimitCountdown !== null ? `Time remaining: ${formatTime(rateLimitCountdown)}` : 
-                 'Create User'}
-              </SaveButton>
-            </ButtonGroup>
-          </Form>
-        </ModalContent>
-      </Modal>
+        onSubmit={handleSubmit}
+        onModalStateChange={onModalStateChange}
+        isSubmitting={isSubmitting}
+        error={modalError}
+        success={success}
+        rateLimitCountdown={rateLimitCountdown}
+        retryCount={retryCount}
+        maxRetries={MAX_RETRIES}
+      />
 
-      {/* Edit User Modal */}
-      <Modal $isOpen={isEditModalOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>Update User Profile</ModalTitle>
-            <CloseButton onClick={handleModalClose}>
-              <FaTimes size={20} />
-            </CloseButton>
-          </ModalHeader>
+      <EditUserForm
+        isOpen={isEditModalOpen}
+        onClose={handleModalClose}
+        onSubmit={handleEditSubmit}
+        onModalStateChange={(isOpen: boolean) => onModalStateChange?.(isOpen)}
+        isSubmitting={isSubmitting}
+        error={modalError}
+        selectedUser={selectedUser}
+        initialFormData={editFormData}
+      />
 
-          <Form onSubmit={handleEditSubmit}>
-            
-          <FormRow>
-            <FormGroup>
-                <Label htmlFor="edit-first-name">
-                  First Name
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <Input
-                  id="edit-first-name"
-                  type="text"
-                  pattern="[A-Za-z ]*"
-                  value={editFormData.first_name}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || e.target.validity.valid) {
-                      setEditFormData({ ...editFormData, first_name: value });
-                    }
-                  }}
-                  placeholder="Enter first name"
-                  required
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="edit-last-name">
-                  Last Name
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <Input
-                  id="edit-last-name"
-                  type="text"
-                  pattern="[A-Za-z ]*"
-                  value={editFormData.last_name}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || e.target.validity.valid) {
-                      setEditFormData({ ...editFormData, last_name: value });
-                    }
-                  }}
-                  required
-                  placeholder="Enter last name"
-                />
-              </FormGroup>
-            </FormRow>
-
-            <FormRow>
-              <FormGroup>
-                <Label htmlFor="edit-phone">Phone</Label>
-                <Input
-                  id="edit-phone"
-                  type="tel"
-                  pattern="[0-9]*"
-                  value={editFormData.phone}
-                  onChange={(e) => {
-                    if (e.target.validity.valid) {
-                      setEditFormData({ ...editFormData, phone: e.target.value });
-                    }
-                  }}
-                  placeholder="Enter phone number"
-                />
-              </FormGroup>
-
-              <FormGroup>
-                <Label htmlFor="edit-gender">Gender</Label>
-                <GenderSelectContainer>
-                  <GenderSelect
-                    id="edit-gender"
-                    value={editFormData.gender}
-                    onChange={(e) => setEditFormData({ ...editFormData, gender: e.target.value })}
-                  >
-                    <option value="">Select gender </option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                    <option value="prefer-not-to-say">Prefer not to say</option>
-                  </GenderSelect>
-                  <GenderIcon>
-                    {editFormData.gender === 'male' ? <FaMale size={18} /> :
-                     editFormData.gender === 'female' ? <FaFemale size={18} /> :
-                     editFormData.gender === 'other' ? <FaTransgender size={18} /> :
-                     editFormData.gender === 'prefer-not-to-say' ? <FaQuestion size={18} /> :
-                     <FaQuestion size={18} />}
-                  </GenderIcon>
-                </GenderSelectContainer>
-              </FormGroup>
-            </FormRow>
-
-            <FormGroup>
-              <Label htmlFor="edit-email">
-                Email
-                <RequiredAsterisk>*</RequiredAsterisk>
-              </Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={editFormData.email}
-                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                required
-                disabled
-                className="disabled-input"
-              />
-              <HelperText>Email cannot be changed</HelperText>
-            </FormGroup>
-
-            <FormRow>
-            <FormGroup>
-                <Label htmlFor="edit-username">
-                  Username
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-                <InputWrapper>
-              <Input
-                    id="edit-username"
-                    type="text"
-                    pattern="[a-zA-Z0-9._-]*"
-                    value={editFormData.username}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      validateUsername(value);
-                      if (value === '' || e.target.validity.valid) {
-                        setEditFormData({ ...editFormData, username: value });
-                      }
-                    }}
-                    placeholder="Enter username"
-                    required
-                    style={{ width: '100%' }}
-                  />
-                  {usernameError && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      {usernameError}
-                    </HelperText>
-                  )}
-                  {checkingUsername && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiLoader size={14} />
-                      Checking username...
-                    </HelperText>
-                  )}
-                  {!checkingUsername && !usernameError && usernameExists === false && (
-                    <HelperText style={{ color: '#059669' }}>
-                      <FiCheck size={14} />
-                      Username is available
-                    </HelperText>
-                  )}
-                  {!checkingUsername && !usernameError && usernameExists === true && editFormData.username === currentUsername && (
-                    <HelperText style={{ color: '#6b7280' }}>
-                      <FiCheck size={14} />
-                      This is the current username
-                    </HelperText>
-                  )}
-                  {!checkingUsername && !usernameError && usernameExists === true && editFormData.username !== currentUsername && (
-                    <HelperText style={{ color: '#dc2626' }}>
-                      <FiX size={14} />
-                      Username is already taken
-                    </HelperText>
-                  )}
-                </InputWrapper>
-            </FormGroup>
-
-            <FormGroup>
-                <Label htmlFor="edit-role">
-                  Role
-                  <RequiredAsterisk>*</RequiredAsterisk>
-                </Label>
-              <RoleSelectContainer>
-                <RoleSelect
-                  id="edit-role"
-                  value={editFormData.role}
-                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'admin' | 'moderator' | 'user' | 'developer' | 'author' })}
-                  required
-                >
-                  <option value="">Select role</option>
-                  <option value="user">User</option>
-                  <option value="admin">Admin</option>
-                  <option value="moderator">Moderator</option>
-                  <option value="developer">Developer</option>
-                  <option value="author">Author</option>
-                </RoleSelect>
-                <RoleIcon>
-                    {editFormData.role === 'admin' ? <FiShield size={18} /> : 
-                     editFormData.role === 'moderator' ? <FiUserCheck size={18} /> : 
-                     editFormData.role === 'developer' ? <FiCode size={18} /> :
-                     editFormData.role === 'author' ? <FiEdit size={18} /> :
-                     <FiUser size={18} />}
-                </RoleIcon>
-              </RoleSelectContainer>
-            </FormGroup>
-            </FormRow>
-
-            
-
-            {modalError && (
-              <ErrorMessage>
-                <FiAlertCircle />
-                {modalError}
-              </ErrorMessage>
-            )}
-
-            {modalSuccess && (
-              <SuccessMessage>
-                <FiCheck size={16} />
-                {modalSuccess}
-              </SuccessMessage>
-            )}
-
-            <ButtonGroup>
-              <CancelButton 
-                type="button"
-                onClick={handleModalClose}
-              >
-                Cancel
-              </CancelButton>
-              <SaveButton 
-                type="submit"
-                disabled={Boolean(
-                  !editFormData.first_name.trim() || 
-                  !editFormData.last_name.trim() || 
-                  !editFormData.role || 
-                  !editFormData.username.trim() || 
-                  usernameError ||
-                  (usernameExists === true && editFormData.username !== currentUsername)
-                )}
-              >
-                Save Changes
-              </SaveButton>
-            </ButtonGroup>
-          </Form>
-        </ModalContent>
-      </Modal>
-
-      {/* Role Change Confirmation Modal */}
-      <Modal $isOpen={isRoleModalOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>
-              {newRole === 'admin' ? 'Make Admin' : 'Remove Admin Role'}
-            </ModalTitle>
-            <CloseButton onClick={() => {
-              setIsRoleModalOpen(false);
-              setSelectedUser(null);
-            }}>
-              <FaTimes size={20} />
-            </CloseButton>
-          </ModalHeader>
-
-          <p style={{ marginBottom: '20px' }}>
-            Are you sure you want to {newRole === 'admin' ? 'make' : 'remove'} {selectedUser?.email} an admin?
-          </p>
-
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <Button 
-              onClick={() => {
-                setIsRoleModalOpen(false);
-                setSelectedUser(null);
+      <DeleteConfirmationForm
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setUserToDelete(null);
+          setErrorMessage('');
               }}
-              style={{ backgroundColor: '#6B7280' }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={confirmRoleChange}
-              style={{ backgroundColor: newRole === 'admin' ? '#3B82F6' : '#EF4444' }}
-            >
-              {newRole === 'admin' ? 'Make Admin' : 'Remove Admin'}
-            </Button>
-          </div>
-        </ModalContent>
-      </Modal>
-
-      {/* Delete User Confirmation Modal */}
-      {isDeleteModalOpen && userToDelete && (
-        <DeleteModal $isOpen={isDeleteModalOpen}>
-          <DeleteModalContent>
-            <DeleteIcon>
-              <FiTrash2 size={24} />
-            </DeleteIcon>
-            <DeleteTitle>Delete User</DeleteTitle>
-            <DeleteMessage>
-                  Are you sure you want to delete {userToDelete.username || userToDelete.email}? This action cannot be undone.
-            </DeleteMessage>
-                {errorMessage && (
-              <ErrorMessage>
-                <FiAlertCircle />
-                    {errorMessage}
-              </ErrorMessage>
-                )}
-            <DeleteButtonGroup>
-              <DeleteCancelButton onClick={() => {
-                      setIsDeleteModalOpen(false);
-                      setUserToDelete(null);
-                      setErrorMessage('');
-              }}>
-                    Cancel
-              </DeleteCancelButton>
-              <DeleteConfirmButton onClick={handleDeleteConfirm}>
-                    Delete
-              </DeleteConfirmButton>
-            </DeleteButtonGroup>
-          </DeleteModalContent>
-        </DeleteModal>
-      )}
-
-      {showSuccessModal && (
-        <SuccessModal $isOpen={showSuccessModal}>
-          <SuccessModalContent>
-            <SuccessIcon>
-              <FiCheck size={24} />
-            </SuccessIcon>
-            <SuccessTitle>{successMessage.title}</SuccessTitle>
-            <SuccessMessage>
-              {successMessage.description}
-            </SuccessMessage>
-            <SuccessButton onClick={hideSuccess}>
-              Continue
-            </SuccessButton>
-          </SuccessModalContent>
-        </SuccessModal>
-      )}
+        onConfirm={handleDeleteConfirm}
+        onModalStateChange={onModalStateChange}
+        isSubmitting={isSubmitting}
+        userToDelete={userToDelete}
+      />
 
       {selectedUser && (
         <ProfileSidebar
@@ -3763,8 +3765,8 @@ Role: ${editFormData.role.charAt(0).toUpperCase() + editFormData.role.slice(1)}`
             name: `${selectedUser.first_name} ${selectedUser.last_name}`,
             email: selectedUser.email,
             username: selectedUser.username,
-            role: selectedUser.roles, // Pass the full array of roles
-            phone: selectedUser.phone,
+            role: selectedUser.roles,
+            phone: selectedUser.phone_number, // Change from phone to phone_number
             gender: selectedUser.gender,
             joinedDate: formatDate(selectedUser.created_at),
             lastLogin: formatDate(selectedUser.last_sign_in),
@@ -3791,6 +3793,11 @@ const TabContainer = styled.div`
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    gap: 0.25rem;
+  }
 `;
 
 const TabButton = styled.button<{ $active: boolean; $type: string }>`
@@ -3816,7 +3823,7 @@ const TabButton = styled.button<{ $active: boolean; $type: string }>`
   color: ${props => {
       switch (props.$type) {
         case 'all':
-          return props.$active ? '#1F2937' : '#4B5563';
+          return props.$active ? '#4B5563' : '#4B5563';
         case 'admin':
           return props.$active ? '#EC4899' : '#EC4899';
         case 'moderator':
@@ -3837,6 +3844,12 @@ const TabButton = styled.button<{ $active: boolean; $type: string }>`
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
 
   &:hover {
     background-color: ${props => {
@@ -3984,148 +3997,68 @@ const PasswordMatchIndicator = styled.div<{ $matches: boolean }>`
   gap: 4px;
 `;
 
-const SuccessModal = styled.div<{ $isOpen: boolean }>`
-  display: ${props => props.$isOpen ? 'flex' : 'none'};
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(15, 23, 42, 0.75);
-  z-index: 50;
-  backdrop-filter: blur(2px);
-`;
-
-const SuccessModalContent = styled.div`
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-`;
-
-const SuccessIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background-color: ${props => props.theme.colors.success}15;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  color: ${props => props.theme.colors.success};
-`;
-
-const SuccessTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
-  margin-bottom: 0.5rem;
-`;
-
-const SuccessMessage = styled.p`
-  font-size: 0.875rem;
-  color: ${props => props.theme.colors.text.secondary};
-  margin-bottom: 1.5rem;
-`;
-
-const SuccessButton = styled.button`
-  padding: 0.875rem 1.5rem;
-  background: ${props => props.theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-
-  &:hover {
-    background: ${props => props.theme.colors.primaryDark};
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-`;
-
-// Add new styled components for delete modal
-const DeleteModal = styled.div<{ $isOpen: boolean }>`
-  display: ${props => props.$isOpen ? 'flex' : 'none'};
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(15, 23, 42, 0.75);
-  z-index: 50;
-  backdrop-filter: blur(2px);
-`;
-
-const DeleteModalContent = styled.div`
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-`;
-
-const DeleteIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background-color: ${props => props.theme.colors.error}15;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  color: ${props => props.theme.colors.error};
-`;
-
-const DeleteTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
-  margin-bottom: 0.5rem;
-`;
-
-const DeleteMessage = styled.p`
-  font-size: 0.875rem;
-  color: ${props => props.theme.colors.text.secondary};
-  margin-bottom: 1.5rem;
-`;
-
-const DeleteButtonGroup = styled.div`
-  display: flex;
+// Add these new styled components after the DeleteCancelButton component
+const CardViewContainer = styled.div`
+  display: none;
+  flex-direction: column;
   gap: 1rem;
-  justify-content: center;
-`;
+  margin-top: 1rem;
 
-const DeleteConfirmButton = styled(ModalButton)`
-  background-color: #EF4444;
-  color: white;
-
-  &:hover {
-    background-color: #DC2626;
+  @media (max-width: 1024px) {
+    display: flex;
   }
 `;
 
-const DeleteCancelButton = styled(ModalButton)`
-  background: transparent;
-  border: 1.5px solid #9aa2b3;
-  color: ${props => props.theme.colors.text.primary};
+const UserCard = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  cursor: pointer;
+`;
 
-  &:hover {
-    background: ${props => props.theme.colors.background.secondary};
-    border-color: ${props => props.theme.colors.text.primary};
+const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+`;
+
+const CardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const CardItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  
+  &:not(:last-child) {
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #F3F4F6;
   }
+`;
+
+const CardLabel = styled.span`
+  color: #6B7280;
+  font-weight: 500;
+`;
+
+const CardValue = styled.span`
+  color: #1F2937;
+  font-weight: 500;
+  text-align: right;
+`;
+
+const CardActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 `;
 
 export default AdminManagementTab; 

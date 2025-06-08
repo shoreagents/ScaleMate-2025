@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { FaArrowLeft, FaArrowRight, FaComments, FaClock } from 'react-icons/fa';
+import { NavigationButtons, BackButton, ContinueButton } from '../RoleBuilderTab';
 
 const Section = styled.section`
   background-color: white;
@@ -8,6 +9,18 @@ const Section = styled.section`
   border: 1px solid #E5E7EB;
   padding: 2rem;
   width: 100%;
+  
+  @media only screen and (max-width: 1023px) {
+    padding: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -15,11 +28,29 @@ const SectionTitle = styled.h2`
   font-weight: 700;
   color: #0F172A;
   margin-bottom: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const SectionDescription = styled.p`
   color: rgba(15, 23, 42, 0.7);
   margin-bottom: 2rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const Label = styled.label`
@@ -27,6 +58,14 @@ const Label = styled.label`
   color: #0F172A;
   font-weight: 500;
   margin-bottom: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const TextArea = styled.textarea`
@@ -41,6 +80,16 @@ const TextArea = styled.textarea`
     outline: none;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
   }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
 `;
 
 const HoursGrid = styled.div`
@@ -48,6 +97,21 @@ const HoursGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
+  
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const HoursCard = styled.div<{ $selected?: boolean }>`
@@ -62,23 +126,54 @@ const HoursCard = styled.div<{ $selected?: boolean }>`
     border-color: #6366F1;
     background-color: rgba(99, 102, 241, 0.05);
   }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.75rem;
+  }
 `;
 
 const HoursHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 const HoursTitle = styled.span`
   font-weight: 500;
   color: #0F172A;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const HoursDescription = styled.p`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
   margin-top: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.8125rem;
+    margin-top: 0.375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+  }
 `;
 
 const CommunicationGrid = styled.div`
@@ -86,6 +181,17 @@ const CommunicationGrid = styled.div`
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const CommunicationCard = styled.div<{ $selected?: boolean }>`
@@ -100,6 +206,14 @@ const CommunicationCard = styled.div<{ $selected?: boolean }>`
     border-color: #6366F1;
     background-color: rgba(99, 102, 241, 0.05);
   }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.75rem;
+  }
 `;
 
 const CommunicationHeader = styled.div`
@@ -107,27 +221,70 @@ const CommunicationHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.5rem;
+  gap: 0.75rem;
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
+    margin-bottom: 0.375rem;
+  }
 `;
 
 const CommunicationInfo = styled.div`
   display: flex;
   align-items: center;
+  min-width: 0;
+  flex: 1;
 `;
 
 const CommunicationIcon = styled.div<{ $selected?: boolean }>`
   font-size: 1.25rem;
   color: ${props => props.$selected ? '#6366F1' : 'rgba(15, 23, 42, 0.7)'};
   margin-right: 0.75rem;
+  flex-shrink: 0;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.125rem;
+    margin-right: 0.625rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1rem;
+    margin-right: 0.5rem;
+  }
 `;
 
 const CommunicationTitle = styled.span`
   font-weight: 500;
   color: #0F172A;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const CommunicationDescription = styled.p`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.8125rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 const RadioCircle = styled.div<{ $selected?: boolean }>`
@@ -138,6 +295,12 @@ const RadioCircle = styled.div<{ $selected?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  
+  @media only screen and (max-width: 480px) {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
 `;
 
 const RadioDot = styled.div`
@@ -145,43 +308,10 @@ const RadioDot = styled.div`
   height: 0.75rem;
   border-radius: 9999px;
   background-color: #6366F1;
-`;
-
-const NavigationContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const BackButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  color: #0F172A;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: none;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: #F9FAFB;
-  }
-`;
-
-const ContinueButton = styled.button`
-  background-color: #3B82F6;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: none;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: rgba(59, 130, 246, 0.9);
+  
+  @media only screen and (max-width: 480px) {
+    width: 0.625rem;
+    height: 0.625rem;
   }
 `;
 
@@ -295,14 +425,14 @@ const Step4: React.FC<Step4Props> = ({ onBack, onContinue }) => {
         </CommunicationGrid>
       </div>
 
-      <NavigationContainer>
+      <NavigationButtons>
         <BackButton onClick={onBack}>
           <FaArrowLeft /> Back to Tools
         </BackButton>
         <ContinueButton onClick={onContinue}>
           Generate Role <FaArrowRight />
         </ContinueButton>
-      </NavigationContainer>
+      </NavigationButtons>
     </Section>
   );
 };

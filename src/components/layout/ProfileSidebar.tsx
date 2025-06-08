@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { 
   FaTimes, FaUser, FaEnvelope, FaPhone, 
@@ -50,12 +50,6 @@ interface ProfileSidebarProps {
       rolesCreated: number;
       quotesSent: number;
     };
-    recentActivity?: Array<{
-      id: string;
-      type: 'lead' | 'role' | 'quote';
-      description: string;
-      timestamp: string;
-    }>;
     username?: string;
   };
 }
@@ -801,24 +795,13 @@ const getActivityIcon = (type: string, description: string) => {
 };
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profile }) => {
-  const [isInfoVisible, setIsInfoVisible] = React.useState(false);
-  const [visibleDates, setVisibleDates] = React.useState<Record<string, boolean>>({});
-  const [visibleItems, setVisibleItems] = React.useState<Record<string, number>>({});
-  const [recentActivity, setRecentActivity] = React.useState<Array<{
-    id: string;
-    type: string;
-    description: string;
-    timestamp: string;
-    date: string;
-    time: string;
-  }>>([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Add click outside handler
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      const sidebar = document.getElementById('profile-sidebar');
-      if (sidebar && !sidebar.contains(event.target as Node)) {
-        onClose();
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
       }
     };
 
@@ -830,86 +813,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen, onClose]);
-
-  React.useEffect(() => {
-    const fetchRecentActivity = async () => {
-      if (!profile?.user_id) return;
-
-      try {
-        const { data: activity, error } = await supabase
-          .from('user_activity')
-          .select('*')
-          .eq('user_id', profile.user_id)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        setRecentActivity(activity.map(item => {
-          const date = new Date(item.created_at);
-          return {
-            id: item.id,
-            type: item.type,
-            description: item.description,
-            timestamp: date.toLocaleString(),
-            date: date.toLocaleDateString(),
-            time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          };
-        }));
-      } catch (error) {
-        console.error('Error fetching recent activity:', error);
-      }
-    };
-
-    if (isOpen) {
-      fetchRecentActivity();
-    }
-  }, [isOpen, profile]);
-
-  // Group activities by date
-  const groupedActivities = React.useMemo(() => {
-    return recentActivity.reduce((groups, activity) => {
-      const date = activity.date;
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(activity);
-      return groups;
-    }, {} as Record<string, typeof recentActivity>);
-  }, [recentActivity]);
-
-  // Initialize visible dates when activities are loaded
-  React.useEffect(() => {
-    const dates = Object.keys(groupedActivities);
-    const initialVisibility = dates.reduce((acc, date) => {
-      acc[date] = false;
-      return acc;
-    }, {} as Record<string, boolean>);
-    setVisibleDates(initialVisibility);
-  }, [groupedActivities]);
-
-  // Initialize visible items when activities are loaded
-  React.useEffect(() => {
-    const dates = Object.keys(groupedActivities);
-    const initialVisibility = dates.reduce((acc, date) => {
-      acc[date] = 5; // Show first 5 items initially
-      return acc;
-    }, {} as Record<string, number>);
-    setVisibleItems(initialVisibility);
-  }, [groupedActivities]);
-
-  const toggleDateVisibility = (date: string) => {
-    setVisibleDates(prev => ({
-      ...prev,
-      [date]: !prev[date]
-    }));
-  };
-
-  const showMoreItems = (date: string) => {
-    setVisibleItems(prev => ({
-      ...prev,
-      [date]: prev[date] + 5
-    }));
-  };
 
   if (!profile) return null;
 
@@ -1028,54 +931,6 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({ isOpen, onClose, profil
             </Card>
           )}
         </LeftColumn>
-
-        <RightColumn>
-          <Card>
-            <SectionTitle>
-              <FaHistory />
-              Recent Activities
-            </SectionTitle>
-            <ActivityList>
-              {recentActivity.length > 0 ? (
-                Object.entries(groupedActivities).map(([date, activities]) => (
-                  <React.Fragment key={date}>
-                    <ActivityDate 
-                      onClick={() => toggleDateVisibility(date)}
-                      $isActive={visibleDates[date]}
-                    >
-                      {date}
-                    </ActivityDate>
-                    <ActivityGroup $isVisible={visibleDates[date]}>
-                      {activities.slice(0, visibleItems[date]).map((activity) => (
-                        <ActivityItem key={activity.id}>
-                          {getActivityIcon(activity.type, activity.description)}
-                          <ActivityContent>
-                            <p>{activity.description.replace('Removed Gender', 'Unset Gender')}</p>
-                            <span>{activity.time}</span>
-                          </ActivityContent>
-                        </ActivityItem>
-                      ))}
-                      {activities.length > visibleItems[date] && (
-                        <ShowMoreButton onClick={() => showMoreItems(date)}>
-                          Show More
-                        </ShowMoreButton>
-                      )}
-                    </ActivityGroup>
-                  </React.Fragment>
-                ))
-              ) : (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '2rem', 
-                  color: 'rgba(15,23,42,0.7)',
-                  fontSize: '0.875rem'
-                }}>
-                  No recent activities to show
-                </div>
-              )}
-            </ActivityList>
-          </Card>
-        </RightColumn>
       </SidebarContent>
     </Sidebar>
   );

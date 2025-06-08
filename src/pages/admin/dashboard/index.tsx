@@ -51,7 +51,7 @@ import AIToolsTab from '@/components/admin/AIToolsTab';
 import QuizManagerTab from '@/components/admin/QuizManagerTab';
 import ContentBlocksTab from '@/components/admin/ContentBlocksTab';
 import SystemSettingsTab from '@/components/admin/SystemSettingsTab';
-import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
+import FirstTimeSetupForm from '@/components/forms/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
 import WithRoleProtection from '@/components/auth/withRoleProtection';
 
@@ -674,76 +674,6 @@ const ProfileIcon = styled.div<{ $imageUrl?: string | null }>`
   }
 `;
 
-const SuccessModal = styled.div<{ $isOpen: boolean }>`
-  display: ${props => props.$isOpen ? 'flex' : 'none'};
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(15, 23, 42, 0.75);
-  z-index: 50;
-  backdrop-filter: blur(2px);
-`;
-
-const SuccessModalContent = styled.div`
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const SuccessIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background-color: ${props => props.theme.colors.success}15;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  color: ${props => props.theme.colors.success};
-`;
-
-const SuccessTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
-  margin-bottom: 0.5rem;
-`;
-
-const ModalSuccessMessage = styled.p`
-  font-size: 0.875rem;
-  color: ${props => props.theme.colors.text.secondary};
-  margin-bottom: 1.5rem;
-`;
-
-const SuccessButton = styled.button`
-  padding: 0.875rem 1.5rem;
-  background: ${props => props.theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-
-  &:hover {
-    background: ${props => props.theme.colors.primaryDark};
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-`;
-
 interface AdminDashboardData {
   users: Array<{
     id: string;
@@ -799,64 +729,180 @@ async function fetchAdminDashboardData(): Promise<AdminDashboardData> {
 const DashboardPage = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showSetupForm, setShowSetupForm] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
+  // Initial data fetch
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await fetchAdminDashboardData();
         setDashboardData(data);
       } catch (err) {
-        setError(err as Error);
-      } finally {
-        setIsLoading(false);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       }
     };
 
     fetchData();
   }, []);
 
+  // Real-time updates for dashboard data
   useEffect(() => {
-    const fetchUserData = async () => {
-      setIsLoadingProfile(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile } = await supabase
-            .from('profiles')
+    if (!dashboardData) return;
+
+    // Set up real-time subscriptions for different tables
+    const usersSubscription = supabase
+      .channel('users-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'users'
+        },
+        async () => {
+          // Refetch users data when changes occur
+          const { data: users } = await supabase
+            .from('users')
             .select('*')
-            .eq('id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (users && dashboardData) {
+            setDashboardData({
+              ...dashboardData,
+              users: users
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    const analyticsSubscription = supabase
+      .channel('analytics-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'analytics'
+        },
+        async () => {
+          // Refetch analytics data when changes occur
+          const { data: analytics } = await supabase
+            .from('analytics')
+            .select('*')
             .single();
 
-          if (profile) {
-            setUserData(profile);
-            setProfilePicture(profile.profile_picture);
-            // Check if setup is needed - only if username is missing
-            if (!profile.username) {
+          if (analytics && dashboardData) {
+            setDashboardData({
+              ...dashboardData,
+              analytics: analytics
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    const leadsSubscription = supabase
+      .channel('leads-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'leads'
+        },
+        async () => {
+          // Refetch recent leads when changes occur
+          const { data: recent_leads } = await supabase
+            .from('leads')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+          if (recent_leads && dashboardData) {
+            setDashboardData({
+              ...dashboardData,
+              recent_leads: recent_leads
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      usersSubscription.unsubscribe();
+      analyticsSubscription.unsubscribe();
+      leadsSubscription.unsubscribe();
+    };
+  }, [dashboardData]);
+
+  // Profile data fetch and real-time updates
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+          if (userProfile) {
+            setUserData(userProfile);
+            if (!userProfile.username) {
               setShowSetupForm(true);
             }
           }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-      } finally {
-        setIsLoadingProfile(false);
       }
     };
 
     fetchUserData();
-  }, []);
+
+    // Set up real-time subscription for profile updates
+    const profileSubscription = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userData?.id}`
+        },
+        async () => {
+          // Refetch profile data when changes occur
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const { data: userProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            if (userProfile) {
+              setUserData(userProfile);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      profileSubscription.unsubscribe();
+    };
+  }, [userData?.id]);
 
   const handleProfilePictureChange = (newPictureUrl: string) => {
-    setProfilePicture(newPictureUrl);
+    // This function is no longer needed since DashboardHeader handles profile picture internally
   };
 
   const handleLogout = async () => {
@@ -881,7 +927,6 @@ const DashboardPage = () => {
 
   const handleSetupComplete = () => {
     setShowSetupForm(false);
-    setShowSuccessModal(true);
   };
 
   const renderContent = () => {
@@ -914,14 +959,6 @@ const DashboardPage = () => {
         return <QuizManagerTab />;
       case 'content-blocks':
         return <ContentBlocksTab />;
-      case 'achievements':
-        return <GenericTab title="Achievements Management" />;
-      case 'notifications':
-        return <GenericTab title="Notifications Management" />;
-      case 'help-center':
-        return <GenericTab title="Help Center Management" />;
-      case 'database':
-        return <GenericTab title="Database Management" />;
       default:
         return <DashboardTab />;
     }
@@ -939,25 +976,14 @@ const DashboardPage = () => {
     { id: 'ai-tools', label: 'AI Tool Library', icon: <FaRobot /> },
     { id: 'quiz-management', label: 'Quiz Management', icon: <FaCircleQuestion /> },
     { id: 'content-blocks', label: 'Content Blocks', icon: <FaFileLines /> },
-    { id: 'database', label: 'Database', icon: <FaDatabase /> },
-    { id: 'help-center', label: 'Help Center', icon: <FaCircleQuestion /> },
     { id: 'admin-management', label: 'Admin Management', icon: <FaUserShield /> },
-    { id: 'system-settings', label: 'System Settings', icon: <FaGear /> }
   ];
-
-  if (isLoading) {
-    return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-        </div>
-    );
-  }
 
   if (error) {
     return (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-red-500">Error loading dashboard data</div>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500">Error loading dashboard data</div>
+      </div>
     );
   }
 
@@ -969,16 +995,16 @@ const DashboardPage = () => {
           navItems={navItems}
           activeTab={activeTab}
           onTabClick={handleTabClick}
-          isModalOpen={showSetupForm || showSuccessModal || (activeTab === 'admin-management' && isModalOpen)}
+          isModalOpen={showSetupForm || (activeTab === 'admin-management' && isModalOpen)}
         />
         <MainContent>
           <DashboardHeader
             title={getTabTitle(activeTab)}
-            profilePicture={profilePicture}
             onLogout={handleLogout}
             onProfileClick={() => setActiveTab('profile')}
             showProfile={activeTab === 'profile'}
           />
+          {error && <ErrorMessage>{error}</ErrorMessage>}
           {renderContent()}
         </MainContent>
 
@@ -990,23 +1016,6 @@ const DashboardPage = () => {
             currentUsername={userData.username || ''}
             onSetupComplete={handleSetupComplete}
           />
-        )}
-
-        {showSuccessModal && (
-          <SuccessModal $isOpen={showSuccessModal}>
-            <SuccessModalContent>
-              <SuccessIcon>
-                <FiCheck size={24} />
-              </SuccessIcon>
-              <SuccessTitle>Setup Complete!</SuccessTitle>
-              <ModalSuccessMessage>
-                Your account has been successfully set up. You can now use your new credentials to log in.
-              </ModalSuccessMessage>
-              <SuccessButton onClick={() => setShowSuccessModal(false)}>
-                Continue
-              </SuccessButton>
-            </SuccessModalContent>
-          </SuccessModal>
         )}
       </DashboardContainer>
     </WithRoleProtection>

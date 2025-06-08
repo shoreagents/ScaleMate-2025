@@ -1,3 +1,4 @@
+
 import React from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -16,6 +17,10 @@ const MainContent = styled.main`
   flex: 1;
   padding: 1.5rem;
   background-color: #F9FAFB;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const Section = styled.section`
@@ -24,6 +29,11 @@ const Section = styled.section`
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -68,6 +78,18 @@ const BadgesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const BadgeCard = styled.div<{ $locked?: boolean }>`
@@ -77,6 +99,10 @@ const BadgeCard = styled.div<{ $locked?: boolean }>`
   border: 1px solid #E5E7EB;
   text-align: center;
   opacity: ${props => props.$locked ? 0.5 : 1};
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.75rem;
+  }
 `;
 
 const BadgeIcon = styled.div<{ $locked?: boolean }>`
@@ -109,6 +135,11 @@ const ActivityGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const ActivityCard = styled.div`
@@ -116,6 +147,10 @@ const ActivityCard = styled.div`
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const ActivityList = styled.div`
@@ -134,12 +169,22 @@ const ActivityItem = styled.div`
   &:last-child {
     border-bottom: none;
   }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 `;
 
 const ActivityInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const ActivityIcon = styled(FontAwesomeIcon)`
@@ -162,12 +207,22 @@ const RewardItem = styled.div`
   padding: 0.75rem;
   background-color: #F9FAFB;
   border-radius: 0.5rem;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 `;
 
 const RewardInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 0.75rem;
+
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const RewardIcon = styled(FontAwesomeIcon)`

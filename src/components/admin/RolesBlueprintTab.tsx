@@ -1,69 +1,109 @@
-import React, { useState } from 'react';
+import React from 'react';
 import styled from 'styled-components';
-import { FaSearch, FaPlus, FaDownload, FaTimes, FaStar, FaPen, FaTrash, FaCheck, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch, faPlus, faDownload, faStar as faStarRegular, faTrashCan as faTrashCanRegular, faPen } from '@fortawesome/free-solid-svg-icons';
+import { faStar as faStarRegularRegular } from '@fortawesome/free-regular-svg-icons';
+import { faStar as faStarSolid } from '@fortawesome/free-solid-svg-icons';
 
-const Container = styled.div`
+const TabContainer = styled.div`
   padding: 1.5rem;
 `;
 
-const FiltersContainer = styled.div`
+const FilterBarContainer = styled.div`
+  margin-bottom: 1.5rem; 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
-  @media (max-width: 480px) {
-    display: none;
+
+  @media (max-width: 1167px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1rem; 
   }
 `;
 
-const FilterGroup = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const SearchInput = styled.div`
+const SearchContainer = styled.div`
   position: relative;
   width: 16rem;
 
-  input {
+  @media (max-width: 1167px) {
     width: 100%;
-    padding: 0.5rem 1rem 0.5rem 2.5rem;
-    border: 1px solid #E5E7EB;
-    border-radius: 0.5rem;
+    min-width: 0;
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
   }
+`;
 
-  svg {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
+const SearchInput = styled.input`
+  width: 100%;
+  padding: 0.5rem 1rem 0.5rem 2.5rem; 
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem; 
+  font-size: 0.875rem;
+  height: 2.5rem; 
+  box-sizing: border-box;
+  
+  &::placeholder {
     color: rgba(15, 23, 42, 0.4);
   }
 `;
 
-const Select = styled.select`
-  padding: 0.5rem 1rem;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.5rem;
+const SearchIcon = styled(FontAwesomeIcon)`
+  position: absolute;
+  left: 0.75rem; 
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(15, 23, 42, 0.4); 
 `;
 
-const Button = styled.button<{ $primary?: boolean }>`
+const StyledSelect = styled.select`
+  padding: 0.5rem 2rem 0.5rem 1rem; 
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem; 
+  font-size: 0.875rem;
+  color: #0F172A;
+  background-color: white;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+  height: 2.5rem; 
+  box-sizing: border-box; 
+  min-width: 12rem;
+
+  @media (max-width: 1167px) {
+    min-width: 0;
+    width: 100%;
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    padding-right: 2rem;
+  }
+`;
+
+const StyledButton = styled.button<{ primary?: boolean }>`
+  padding: 0.5rem 1rem; 
+  border-radius: 0.5rem; 
+  font-size: 0.875rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
+  justify-content: center;
+  gap: 0.5rem; 
   cursor: pointer;
-  transition: all 0.2s;
+  height: 2.5rem; 
+  box-sizing: border-box; 
+  transition: background-color 0.2s, border-color 0.2s;
+  white-space: nowrap; 
+  width: auto;
 
-  ${props => props.$primary ? `
+  ${props => props.primary ? `
     background-color: #3B82F6;
     color: white;
-    border: none;
+    border: 1px solid #3B82F6;
     &:hover {
       background-color: #2563EB;
+      border-color: #2563EB;
     }
   ` : `
     background-color: white;
@@ -73,584 +113,438 @@ const Button = styled.button<{ $primary?: boolean }>`
       background-color: #F9FAFB;
     }
   `}
+
+  @media (max-width: 1167px) {
+    width: 100%;
+    min-width: 0;
+  }
 `;
 
-const TableContainer = styled.div`
+const AddButton = styled(StyledButton)`
+  @media (max-width: 1167px) {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+  }
+  @media (max-width: 423px) {
+    white-space: normal;
+    text-align: center;
+    word-break: break-word;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+`;
+
+const ExportButton = styled(StyledButton)`
+  @media (max-width: 1167px) {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+  }
+  @media (max-width: 352px) {
+    white-space: normal;
+    text-align: center;
+    word-break: break-word;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+`;
+
+const DesktopInputGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  @media (max-width: 1167px) {
+    display: contents;
+  }
+`;
+
+const DesktopActionButtonsGroup = styled.div`
+  display: flex;
+  gap: 0.75rem;
+
+  @media (max-width: 1167px) {
+    display: contents;
+  }
+`;
+
+const TableWrapper = styled.div`
   background-color: white;
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   overflow: hidden;
-  @media (max-width: 480px) {
+  margin-top: 1.5rem;
+
+  @media (min-width: 889px) {
+    overflow-x: auto;
+  }
+  @media (max-width: 888px) {
     display: none;
   }
 `;
 
-const Table = styled.table`
+const StyledTable = styled.table`
   width: 100%;
 `;
 
-const TableHead = styled.thead`
+const TableHeadStyled = styled.thead`
   background-color: #F9FAFB;
   border-bottom: 1px solid #E5E7EB;
 `;
 
-const TableHeader = styled.th`
+const TableBodyStyled = styled.tbody`
+  & > tr:not(:first-child) {
+    border-top: 1px solid #E5E7EB;
+  }
+  & > tr:hover {
+    background-color: #F9FAFB;
+  }
+`;
+
+const TableRowStyled = styled.tr`
+  cursor: pointer;
+`;
+
+const TableHeaderCellStyled = styled.th`
   padding: 1rem 1.5rem;
   text-align: left;
   font-size: 0.875rem;
   font-weight: 600;
   color: #0F172A;
-`;
-
-const TableBody = styled.tbody`
-  tr {
-    border-bottom: 1px solid #E5E7EB;
-    &:hover {
-      background-color: #F9FAFB;
-    }
-    &:last-child {
-      border-bottom: none;
-    }
+  &.text-right {
+    text-align: right;
   }
 `;
 
-const TableCell = styled.td`
+const TableCellStyled = styled.td`
   padding: 1rem 1.5rem;
-`;
-
-const RoleTitle = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const RoleName = styled.span`
-  font-weight: 500;
-  color: #0F172A;
-`;
-
-const Tag = styled.span<{ $color: string }>`
-  padding: 0.25rem 0.5rem;
-  background-color: ${props => `${props.$color}10`};
-  color: ${props => props.$color};
-  border-radius: 9999px;
-  font-size: 0.75rem;
-`;
-
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const Avatar = styled.img`
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-`;
-
-const UserEmail = styled.span`
   color: rgba(15, 23, 42, 0.7);
-`;
-
-const ActionButton = styled.button<{ $color?: string }>`
-  color: rgba(15, 23, 42, 0.7);
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: all 0.2s;
-  background: none;
-  border: none;
-
-  &:hover {
-    color: ${props => props.$color || '#0F172A'};
-  }
-`;
-
-const Modal = styled.div<{ $isOpen: boolean }>`
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: ${props => props.$isOpen ? 'block' : 'none'};
-`;
-
-const ModalContent = styled.div`
-  position: absolute;
-  right: 0;
-  top: 0;
-  height: 100%;
-  width: 500px;
-  background-color: #F1F5F9;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-`;
-
-const ModalHeader = styled.div`
-  padding: 1.5rem;
-  background-color: white;
-  border-bottom: 1px solid #E5E7EB;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0F172A;
-`;
-
-const CloseButton = styled.button`
-  color: rgba(15, 23, 42, 0.4);
-  &:hover {
+  &.main-text {
     color: #0F172A;
   }
-`;
-
-const ModalBody = styled.div`
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  overflow-y: auto;
-  height: calc(100vh - 80px);
-`;
-
-const Card = styled.div`
-  background-color: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-`;
-
-const CardTitle = styled.h3`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #0F172A;
-  margin-bottom: 1rem;
-`;
-
-const InfoRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-
-  &:last-child {
-    margin-bottom: 0;
+  &.font-medium {
+    font-weight: 500;
   }
 `;
 
-const InfoLabel = styled.span`
-  color: rgba(15, 23, 42, 0.7);
-`;
-
-const InfoValue = styled.span<{ $bold?: boolean; $color?: string }>`
-  color: ${props => props.$color || '#0F172A'};
-  font-weight: ${props => props.$bold ? '600' : '500'};
-  font-size: ${props => props.$bold ? '1.125rem' : '1rem'};
-`;
-
-const Divider = styled.div`
-  border-top: 1px solid #E5E7EB;
-  padding-top: 1rem;
-  margin-top: 1rem;
-`;
-
-const TaskItem = styled.div`
+const UserCellContainer = styled.div`
   display: flex;
   align-items: center;
+`;
+
+const AvatarStyled = styled.img`
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  margin-right: 0.5rem;
+`;
+
+const ActionButtonsContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 0.75rem;
-  margin-bottom: 0.75rem;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
 `;
 
-const TaskIcon = styled.div`
-  color: #00E915;
+const ActionButtonStyled = styled.button`
+  color: rgba(15, 23, 42, 0.7);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  font-size: 1rem;
+  &:hover { color: #0F172A; }
+  &.hover-primary:hover { color: #3B82F6; }
+  &.hover-danger:hover { color: #EC297B; }
 `;
 
-const TaskText = styled.span`
-  color: #0F172A;
-`;
-
-// Mobile-specific styled components
-const MobileFilters = styled.div`
+const CardListContainer = styled.div`
   display: none;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  @media (max-width: 480px) {
-    display: flex;
+  margin-top: 1.5rem;
+  @media (max-width: 888px) {
+    display: block;
   }
 `;
 
-const MobileSearchInput = styled.div`
-  position: relative;
-  width: 100%;
-  input {
-    width: 100%;
-    padding: 0.5rem 1rem 0.5rem 2.5rem;
-    border: 1px solid #E5E7EB;
-    border-radius: 0.5rem;
-  }
-  svg {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(15, 23, 42, 0.4);
-  }
-`;
-
-const MobileFilterRow = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const MobileFilterCol = styled.div`
-  flex: 1 1 0%;
-  min-width: 0;
-  select {
-    width: 100%;
-  }
-`;
-
-const MobileRoles = styled.div`
-  display: none;
-  flex-direction: column;
-  gap: 1rem;
-  @media (max-width: 480px) {
-    display: flex;
-  }
-`;
-
-const MobileRoleCard = styled.div`
+const RoleCardStyled = styled.div`
   background-color: white;
   border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
   padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+`;
+
+const CardHeaderStyled = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+`;
+
+const CardTitleGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
 `;
 
-const MobileRoleHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const MobileRoleTitle = styled.h3`
+const CardRoleTitle = styled.h3`
   font-size: 1rem;
   font-weight: 600;
   color: #0F172A;
   margin: 0;
 `;
 
-const MobileRoleActions = styled.div`
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+const CardDate = styled.span`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
 `;
 
-const MobileActionButton = styled.button`
+const CardContentStyled = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const CardDetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.875rem;
+
+  &.created-by-row {
+    @media (max-width: 411px) {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+  }
+`;
+
+const CardLabelStyled = styled.span`
+  font-weight: 500;
+  color: #0F172A;
+`;
+
+const CardValueStyled = styled.span`
   color: rgba(15, 23, 42, 0.7);
-  padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: all 0.2s;
-  background: none;
-  border: none;
-  &:hover {
+  text-align: left;
+  &.font-medium {
+    font-weight: 500;
     color: #0F172A;
   }
 `;
 
-const MobileExportContainer = styled.div`
-  display: none;
-  @media (max-width: 480px) {
-    display: flex;
-    flex-direction: row;
-    gap: 0.75rem;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100vw;
-    background: white;
-    padding: 0.75rem 1rem 1rem 1rem;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
-    z-index: 100;
-    justify-content: center;
+const CardUserDetailStyled = styled.div`
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+
+  @media (max-width: 411px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    img {
+      margin-right: 0 !important;
+    }
+    span {
+      display: block;
+      width: 100%;
+    }
   }
 `;
 
-const MobileAddTemplateButton = styled(Button)`
-  flex: 1 1 0%;
-  font-size: 1rem;
+const CardActionsStyled = styled.div`
+  display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 0.75rem;
 `;
 
-const MobileExportButton = styled(Button)`
-  flex: 1 1 0%;
-  font-size: 1rem;
-  justify-content: center;
+const FeaturedBadge = styled.span`
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: rgba(236, 41, 123, 0.1);
+  color: #EC297B;
+  font-size: 0.75rem;
+  border-radius: 9999px;
+  font-weight: 500;
 `;
 
-const MobileRoleExpandButton = styled.button`
+const StatusBadge = styled.span`
+  padding: 0.25rem 0.5rem;
+  background: rgba(0, 233, 21, 0.1);
+  color: #00E915;
+  border-radius: 9999px;
+  font-size: 0.9em;
+  font-weight: 500;
+`;
+
+const UserCell = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const ActionGroup = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+`;
+
+const ActionButton = styled.button`
+  color: rgba(15, 23, 42, 0.7);
   background: none;
   border: none;
   cursor: pointer;
-  color: #6B7280;
+  font-size: 1.1rem;
   padding: 0.25rem;
-  border-radius: 0.25rem;
-  transition: all 0.2s;
+  transition: color 0.2s;
+
   &:hover {
     color: #0F172A;
+  }
+
+  &[data-action='edit']:hover {
+    color: #3B82F6;
+  }
+  &[data-action='delete']:hover {
+    color: #EC297B;
   }
 `;
 
 const RolesBlueprintTab: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isRoleExpanded, setIsRoleExpanded] = useState(false);
+  // Example data (replace with real data as needed)
+  const exampleRole = {
+    title: 'Senior Product Manager',
+    department: 'Product',
+    featured: true,
+    createdBy: {
+      email: 'michael.s@example.com',
+      avatarUrl: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg',
+    },
+    date: 'Mar 15, 2025',
+    status: 'Active',
+  };
 
   return (
-    <Container>
-      <MobileFilters>
-        <MobileSearchInput>
-          <FaSearch />
-          <input type="text" placeholder="Search roles..." />
-        </MobileSearchInput>
-        <MobileFilterRow>
-          <MobileFilterCol>
-            <Select>
-              <option>All Departments</option>
-              <option>Engineering</option>
-              <option>Product</option>
-              <option>Design</option>
-            </Select>
-          </MobileFilterCol>
-        </MobileFilterRow>
-      </MobileFilters>
-
-      <MobileRoles>
-        <MobileRoleCard>
-          <MobileRoleHeader>
-            <div>
-              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Role Title</span><br />
-              <MobileRoleTitle>Senior Product Manager</MobileRoleTitle>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Tag $color="#EC297B">Featured</Tag>
-              <MobileRoleExpandButton onClick={() => setIsRoleExpanded(!isRoleExpanded)} aria-label={isRoleExpanded ? 'Collapse' : 'Expand'}>
-                {isRoleExpanded ? <FaChevronUp /> : <FaChevronDown />}
-              </MobileRoleExpandButton>
-            </div>
-          </MobileRoleHeader>
-          {isRoleExpanded && (
-            <>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Department</span><br />
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem' }}>Product</span>
-              </div>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Created By</span><br />
-                <UserInfo>
-                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" />
-                  <UserEmail>michael.s@example.com</UserEmail>
-                </UserInfo>
-              </div>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Date</span><br />
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)', fontSize: '0.95rem' }}>Mar 15, 2025</span>
-              </div>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'rgba(15,23,42,0.7)' }}>Status</span><br />
-                <Tag $color="#00E915">Active</Tag>
-              </div>
-              <MobileRoleActions>
-                <MobileActionButton title="Star">
-                  <FaStar />
-                </MobileActionButton>
-                <MobileActionButton title="Edit">
-                  <FaPen />
-                </MobileActionButton>
-                <MobileActionButton title="Delete">
-                  <FaTrash />
-                </MobileActionButton>
-              </MobileRoleActions>
-            </>
-          )}
-        </MobileRoleCard>
-      </MobileRoles>
-
-      <MobileExportContainer>
-        <MobileAddTemplateButton>
-          <FaPlus />
-          Add to Templates
-        </MobileAddTemplateButton>
-        <MobileExportButton $primary>
-          <FaDownload />
-          Export Roles
-        </MobileExportButton>
-      </MobileExportContainer>
-
-      <FiltersContainer>
-        <FilterGroup>
-          <SearchInput>
-            <FaSearch />
-            <input type="text" placeholder="Search roles..." />
-          </SearchInput>
-          <Select>
+    <TabContainer>
+      <FilterBarContainer id="role-filters">
+        <DesktopInputGroup>
+          <SearchContainer>
+            <SearchInput type="text" placeholder="Search roles..." />
+            <SearchIcon icon={faSearch} />
+          </SearchContainer>
+          <StyledSelect>
             <option>All Departments</option>
             <option>Engineering</option>
             <option>Product</option>
             <option>Design</option>
-          </Select>
-        </FilterGroup>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <Button>
-            <FaPlus />
+          </StyledSelect>
+        </DesktopInputGroup>
+        <DesktopActionButtonsGroup>
+          <AddButton>
+            <FontAwesomeIcon icon={faPlus} />
             Add to Templates
-          </Button>
-          <Button $primary>
-            <FaDownload />
+          </AddButton>
+          <ExportButton primary>
+            <FontAwesomeIcon icon={faDownload} />
             Export Roles
-          </Button>
-        </div>
-      </FiltersContainer>
-
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>Role Title</TableHeader>
-              <TableHeader>Department</TableHeader>
-              <TableHeader>Created By</TableHeader>
-              <TableHeader>Date</TableHeader>
-              <TableHeader>Status</TableHeader>
-              <TableHeader style={{ textAlign: 'right' }}>Actions</TableHeader>
-            </tr>
-          </TableHead>
-          <TableBody>
-            <tr>
-              <TableCell>
-                <RoleTitle>
-                  <RoleName>Senior Product Manager</RoleName>
-                  <Tag $color="#EC297B">Featured</Tag>
-                </RoleTitle>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>Product</span>
-              </TableCell>
-              <TableCell>
-                <UserInfo>
-                  <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg" alt="User" />
-                  <UserEmail>michael.s@example.com</UserEmail>
-                </UserInfo>
-              </TableCell>
-              <TableCell>
-                <span style={{ color: 'rgba(15, 23, 42, 0.7)' }}>Mar 15, 2025</span>
-              </TableCell>
-              <TableCell>
-                <Tag $color="#00E915">Active</Tag>
-              </TableCell>
-              <TableCell>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem' }}>
-                  <ActionButton title="Star">
-                    <FaStar />
-                  </ActionButton>
-                  <ActionButton $color="#3B82F6" title="Edit">
-                    <FaPen />
-                  </ActionButton>
-                  <ActionButton $color="#EC297B" title="Delete">
-                    <FaTrash />
-                  </ActionButton>
-                </div>
-              </TableCell>
-            </tr>
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Modal $isOpen={isModalOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>Role Details</ModalTitle>
-            <CloseButton onClick={() => setIsModalOpen(false)}>
-              <FaTimes />
-            </CloseButton>
-          </ModalHeader>
-
-          <ModalBody>
-            <Card>
-              <CardTitle>Role Summary</CardTitle>
-              <InfoRow>
-                <InfoLabel>Role Title</InfoLabel>
-                <InfoValue>Senior Product Manager</InfoValue>
-              </InfoRow>
-              <InfoRow>
-                <InfoLabel>Experience Level</InfoLabel>
-                <Tag $color="#3B82F6">Senior (8+ years)</Tag>
-              </InfoRow>
-              <InfoRow>
-                <InfoLabel>Region</InfoLabel>
-                <InfoValue>North America</InfoValue>
-              </InfoRow>
-            </Card>
-
-            <Card>
-              <CardTitle>Cost Breakdown</CardTitle>
-              <InfoRow>
-                <InfoLabel>Base Salary</InfoLabel>
-                <InfoValue>$100,000</InfoValue>
-              </InfoRow>
-              <InfoRow>
-                <InfoLabel>Benefits</InfoLabel>
-                <InfoValue>$20,000</InfoValue>
-              </InfoRow>
-              <Divider>
-                <InfoRow>
-                  <InfoValue $bold>Total Cost</InfoValue>
-                  <InfoValue $bold $color="#3B82F6">$120,000</InfoValue>
-                </InfoRow>
-              </Divider>
-            </Card>
-
-            <Card>
-              <CardTitle>Tasks & Requirements</CardTitle>
-              <TaskItem>
-                <TaskIcon>
-                  <FaCheck />
-                </TaskIcon>
-                <TaskText>Product Strategy Development</TaskText>
-              </TaskItem>
-              <TaskItem>
-                <TaskIcon>
-                  <FaCheck />
-                </TaskIcon>
-                <TaskText>Team Leadership</TaskText>
-              </TaskItem>
-              <TaskItem>
-                <TaskIcon>
-                  <FaCheck />
-                </TaskIcon>
-                <TaskText>Stakeholder Management</TaskText>
-              </TaskItem>
-            </Card>
-
-            <Card>
-              <CardTitle>Created By</CardTitle>
-              <UserInfo>
-                <Avatar src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg" alt="User" />
-                <div>
-                  <div style={{ fontWeight: 500, color: '#0F172A' }}>Alex Johnson</div>
-                  <div style={{ fontSize: '0.875rem', color: 'rgba(15, 23, 42, 0.7)' }}>alex.j@example.com</div>
-                </div>
-              </UserInfo>
-            </Card>
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-    </Container>
+          </ExportButton>
+        </DesktopActionButtonsGroup>
+      </FilterBarContainer>
+      {/* Desktop/Tablet Table */}
+      <TableWrapper id="roles-table">
+        <StyledTable>
+          <TableHeadStyled>
+            <TableRowStyled>
+              <TableHeaderCellStyled>Role Title</TableHeaderCellStyled>
+              <TableHeaderCellStyled>Department</TableHeaderCellStyled>
+              <TableHeaderCellStyled>Created By</TableHeaderCellStyled>
+              <TableHeaderCellStyled>Date</TableHeaderCellStyled>
+              <TableHeaderCellStyled>Status</TableHeaderCellStyled>
+              <TableHeaderCellStyled className="text-right">Actions</TableHeaderCellStyled>
+            </TableRowStyled>
+          </TableHeadStyled>
+          <TableBodyStyled>
+            <TableRowStyled>
+              <TableCellStyled>
+                <span className="font-medium main-text">{exampleRole.title}</span>
+                {exampleRole.featured && (
+                  <span style={{ marginLeft: '0.5rem', padding: '0.25rem 0.5rem', background: 'rgba(236, 41, 123, 0.1)', color: '#EC297B', fontSize: '0.75rem', borderRadius: '9999px', fontWeight: 500 }}>Featured</span>
+                )}
+              </TableCellStyled>
+              <TableCellStyled>{exampleRole.department}</TableCellStyled>
+              <TableCellStyled>
+                <UserCellContainer>
+                  <AvatarStyled src={exampleRole.createdBy.avatarUrl} alt="User" />
+                  <span>{exampleRole.createdBy.email}</span>
+                </UserCellContainer>
+              </TableCellStyled>
+              <TableCellStyled>{exampleRole.date}</TableCellStyled>
+              <TableCellStyled>
+                <span style={{ padding: '0.25rem 0.5rem', background: 'rgba(0, 233, 21, 0.1)', color: '#00E915', borderRadius: '9999px', fontSize: '0.9em', fontWeight: 500 }}>{exampleRole.status}</span>
+              </TableCellStyled>
+              <TableCellStyled>
+                <ActionButtonsContainer>
+                  <ActionButtonStyled title="Favorite">
+                    <FontAwesomeIcon icon={faStarRegular} />
+                  </ActionButtonStyled>
+                  <ActionButtonStyled className="hover-primary" title="Edit">
+                    <FontAwesomeIcon icon={faPen} />
+                  </ActionButtonStyled>
+                  <ActionButtonStyled className="hover-danger" title="Delete">
+                    <FontAwesomeIcon icon={faTrashCanRegular} />
+                  </ActionButtonStyled>
+                </ActionButtonsContainer>
+              </TableCellStyled>
+            </TableRowStyled>
+            {/* More role rows can be added here */}
+          </TableBodyStyled>
+        </StyledTable>
+      </TableWrapper>
+      {/* Mobile Card View */}
+      <CardListContainer>
+        <RoleCardStyled>
+          <CardHeaderStyled>
+            <CardTitleGroup>
+              <CardRoleTitle>{exampleRole.title}</CardRoleTitle>
+              <CardDate>{exampleRole.date}</CardDate>
+            </CardTitleGroup>
+          </CardHeaderStyled>
+          <CardContentStyled>
+            <CardDetailRow>
+              <CardLabelStyled>Department:</CardLabelStyled>
+              <CardValueStyled>{exampleRole.department}</CardValueStyled>
+            </CardDetailRow>
+            <CardDetailRow className="created-by-row">
+              <CardLabelStyled>Created By:</CardLabelStyled>
+              <CardUserDetailStyled>
+                <AvatarStyled src={exampleRole.createdBy.avatarUrl} alt="User" />
+                <CardValueStyled>{exampleRole.createdBy.email}</CardValueStyled>
+              </CardUserDetailStyled>
+            </CardDetailRow>
+            <CardDetailRow>
+              <CardLabelStyled>Status:</CardLabelStyled>
+              <CardValueStyled>{exampleRole.status}</CardValueStyled>
+            </CardDetailRow>
+            <CardActionsStyled>
+              <ActionButtonStyled title="Favorite">
+                <FontAwesomeIcon icon={faStarRegular} />
+              </ActionButtonStyled>
+              <ActionButtonStyled className="hover-primary" title="Edit">
+                <FontAwesomeIcon icon={faPen} />
+              </ActionButtonStyled>
+              <ActionButtonStyled className="hover-danger" title="Delete">
+                <FontAwesomeIcon icon={faTrashCanRegular} />
+              </ActionButtonStyled>
+            </CardActionsStyled>
+          </CardContentStyled>
+        </RoleCardStyled>
+        {/* More cards can be added here */}
+      </CardListContainer>
+    </TabContainer>
   );
 };
 

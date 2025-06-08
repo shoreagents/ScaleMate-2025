@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { supabase } from '@/lib/supabase';
 import { 
   FaUserPlus, 
   FaFilter, 
@@ -166,51 +165,63 @@ interface User {
   created_at: string;
 }
 
+// Mock data
+const mockUsers: User[] = [
+  {
+    id: '1',
+    email: 'john.doe@example.com',
+    full_name: 'John Doe',
+    role: 'user',
+    status: 'active',
+    created_at: '2024-04-01'
+  },
+  {
+    id: '2',
+    email: 'jane.smith@example.com',
+    full_name: 'Jane Smith',
+    role: 'admin',
+    status: 'active',
+    created_at: '2024-03-28'
+  },
+  {
+    id: '3',
+    email: 'bob.johnson@example.com',
+    full_name: 'Bob Johnson',
+    role: 'moderator',
+    status: 'inactive',
+    created_at: '2024-03-25'
+  },
+  {
+    id: '4',
+    email: 'alice.brown@example.com',
+    full_name: 'Alice Brown',
+    role: 'user',
+    status: 'active',
+    created_at: '2024-03-20'
+  },
+  {
+    id: '5',
+    email: 'charlie.wilson@example.com',
+    full_name: 'Charlie Wilson',
+    role: 'user',
+    status: 'active',
+    created_at: '2024-03-15'
+  }
+];
+
 const UserManagementTab: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Simulate initial loading
   useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('users')
-        .select(`
-          id,
-          email,
-          full_name,
-          created_at,
-          user_roles (
-            role
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formattedUsers: User[] = data.map(user => ({
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-        role: user.user_roles?.[0]?.role || 'user',
-        status: 'active' as const,
-        created_at: new Date(user.created_at).toLocaleDateString()
-      }));
-
-      setUsers(formattedUsers);
-    } catch (err) {
-      console.error('Error fetching users:', err);
-      setError('Failed to fetch users');
-    } finally {
+    const timer = setTimeout(() => {
       setLoading(false);
-    }
-  };
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -221,22 +232,11 @@ const UserManagementTab: React.FC = () => {
     user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleDeleteUser = async (userId: string) => {
+  const handleDeleteUser = (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
-    try {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
-
-      if (error) throw error;
-
+    // Simulate delete with client-side state update
       setUsers(users.filter(user => user.id !== userId));
-    } catch (err) {
-      console.error('Error deleting user:', err);
-      setError('Failed to delete user');
-    }
   };
 
   if (loading) {

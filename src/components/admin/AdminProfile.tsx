@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiLoader, FiActivity, FiClock, FiUsers, FiShield } from 'react-icons/fi';
-import { FaMale, FaFemale, FaTransgender, FaQuestion, FaHistory, FaUserPlus, FaUserEdit, FaUserMinus, FaUserCog, FaShieldAlt, FaKey, FaUserCircle } from 'react-icons/fa';
+import { FaMale, FaFemale, FaTransgender, FaQuestion, FaHistory, FaUserPlus, FaUserEdit, FaUserMinus, FaUserCog, FaShieldAlt, FaKey } from 'react-icons/fa';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const Container = styled.div`
@@ -13,18 +13,51 @@ const Container = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  
+  @media (max-width: 1227px) {
+    grid-template-columns: 1fr;
+  }
+  
+  @media (max-width: 1024px) {
+    padding: 1.25rem;
+    gap: 20px;
+  }
+  
+  @media (max-width: 884px) {
+    padding: 1rem;
+    gap: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+    gap: 12px;
+  }
 `;
 
 const LeftColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
 `;
 
 const RightColumn = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+  
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
 `;
 
 const Section = styled.div`
@@ -33,16 +66,51 @@ const Section = styled.div`
   padding: 10px 24px 24px 24px;
   border: 1px solid #E5E7EB;
   margin-bottom: 24px;
+  
+  @media (max-width: 884px) {
+    padding: 10px 20px 20px 20px;
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 10px 20px 20px 20px;
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px 16px 16px 16px;
+    margin-bottom: 12px;
+  }
 `;
 
 const ProfileSection = styled(Section)`
   display: flex;
   gap: 48px;
   align-items: flex-start;
+  
+  @media (max-width: 884px) {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  
+  @media (max-width: 640px) {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 24px;
+  }
 `;
 
 const ProfileInfo = styled.div`
   flex: 1;
+  
+  @media (max-width: 884px) {
+    width: 100%;
+  }
+  
+  @media (max-width: 640px) {
+    width: 100%;
+  }
 `;
 
 const ProfilePicture = styled.div`
@@ -55,10 +123,33 @@ const ProfilePicture = styled.div`
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: visible;
   flex-shrink: 0;
   margin-left: auto;
   align-self: center;
+  
+  @media (max-width: 884px) {
+    margin-left: 0;
+    align-self: flex-start;
+    width: 160px;
+    height: 160px;
+  }
+  
+  @media (max-width: 768px) {
+    width: 180px;
+    height: 180px;
+  }
+  
+  @media (max-width: 640px) {
+    margin-left: 0;
+    align-self: flex-start;
+    width: 150px;
+    height: 150px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 120px;
+    height: 120px;
+  }
 `;
 
 const ProfileImage = styled.img`
@@ -103,6 +194,18 @@ const SectionTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  @media (max-width: 884px) {
+    font-size: 1.125rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 1.125rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -110,6 +213,20 @@ const FormGroup = styled.div`
   align-items: flex-start;
   gap: 32px;
   margin-bottom: 16px;
+  
+  @media (max-width: 884px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 12px;
+  }
 `;
 
 const InputWrapper = styled.div`
@@ -132,6 +249,19 @@ const Label = styled.label`
   font-weight: 500;
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
+  
+  @media (max-width: 884px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 640px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: unset;
+    width: 100%;
+  }
 `;
 
 const Input = styled.input`
@@ -151,6 +281,11 @@ const Input = styled.input`
   &:disabled {
     background: #f9fafb;
     color: ${props => props.theme.colors.text.primary};
+  }
+  
+  @media (max-width: 480px) {
+    padding: 6px 10px;
+    font-size: 0.75rem;
   }
 `;
 
@@ -238,6 +373,20 @@ const InfoRow = styled.div<InfoRowProps>`
     border-bottom: none;
     padding-bottom: 0;
   }
+  
+  @media (max-width: 884px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 640px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 `;
 
 const InfoLabel = styled.span<InfoLabelProps>`
@@ -246,6 +395,19 @@ const InfoLabel = styled.span<InfoLabelProps>`
   color: ${props => props.theme.colors.text.primary};
   min-width: 120px;
   display: ${props => props.$isEditing ? 'none' : 'block'};
+  
+  @media (max-width: 884px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 640px) {
+    min-width: 100px;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: unset;
+    width: 100%;
+  }
 `;
 
 const InfoValue = styled.div<InfoValueProps>`
@@ -294,6 +456,12 @@ font-size: 0.875rem;
   gap: 12px;
   justify-content: flex-start;
   margin-top: 32px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    gap: 8px;
+    margin-top: 24px;
+  }
 `;
 
 const ModalButton = styled.button`
@@ -319,6 +487,10 @@ font-size: 0.875rem;
     background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
   }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const SaveButton = styled(ModalButton)`
@@ -337,6 +509,10 @@ font-size: 0.875rem;
     cursor: not-allowed;
     opacity: 0.7;
   }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+  }
 `;
 
 const ProfileModal = styled.div<{ $isOpen: boolean }>`
@@ -349,7 +525,10 @@ const ProfileModal = styled.div<{ $isOpen: boolean }>`
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   padding: 20px;
-  overflow-y: auto;
+  
+  @media (max-width: 480px) {
+    padding: 10px;
+  }
 `;
 
 const ProfileModalContent = styled.div`
@@ -366,6 +545,11 @@ const ProfileModalContent = styled.div`
   ${ButtonGroup} {
     justify-content: center;
   }
+  
+  @media (max-width: 480px) {
+    max-width: 90%;
+    padding: 20px;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -374,6 +558,10 @@ const ModalHeader = styled.div`
   align-items: flex-start;
   margin-bottom: 24px;
   position: relative;
+  
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const ModalTitle = styled.h3`
@@ -382,6 +570,10 @@ const ModalTitle = styled.h3`
   color: ${props => props.theme.colors.text.primary};
   margin: 0;
   text-align: left;
+  
+  @media (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const ModalDescription = styled.p`
@@ -390,6 +582,11 @@ const ModalDescription = styled.p`
   text-align: left;
   margin: 8px 0 0;
   line-height: 1.5;
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    margin: 4px 0 0;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -417,10 +614,15 @@ const ImagePreview = styled.div`
   background-color: #f3f4f6;
   margin: 0 auto 24px;
   position: relative;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  @media (max-width: 480px) {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 16px;
+  }
 `;
 
 const PreviewImage = styled.img`
@@ -483,6 +685,11 @@ const PasswordRow = styled.div`
   display: flex;
   gap: 16px;
   width: 100%;
+  
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 12px;
+  }
 `;
 
 const PasswordColumn = styled.div`
@@ -529,6 +736,20 @@ const StatsGrid = styled.div`
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin-top: 16px;
+  
+  @media (max-width: 1227px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media (max-width: 884px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 const StatCard = styled.div`
@@ -539,12 +760,24 @@ const StatCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  
+  @media (max-width: 884px) {
+    padding: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 `;
 
 const StatValue = styled.div`
   font-size: 1.5rem;
   font-weight: 600;
   color: ${props => props.theme.colors.text.primary};
+  
+  @media (max-width: 884px) {
+    font-size: 1.25rem;
+  }
 `;
 
 const StatLabel = styled.div`
@@ -553,108 +786,67 @@ const StatLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-`;
-
-const ActivityList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const ActivityGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const ActivityDate = styled.div`
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #6B7280;
-  padding: 0.5rem 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  user-select: none;
-
-  &:hover {
-    color: #374151;
+  
+  @media (max-width: 884px) {
+    font-size: 0.8125rem;
+    gap: 4px;
   }
 `;
 
-const ActivityItem = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: #F9FAFB;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background: #F3F4F6;
+const AccountInfoCard = styled(StatCard)`
+  grid-column: 1 / -1;
+  padding: 20px;
+  
+  @media (max-width: 884px) {
+    padding: 16px;
   }
 `;
 
-const ActivityIcon = styled.div`
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.5rem;
-  background: white;
+const AccountInfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+  
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+`;
+
+const AccountInfoItem = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #6B7280;
-  flex-shrink: 0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  flex-direction: column;
+  gap: 4px;
 `;
 
-const ActivityContent = styled.div`
-  flex: 1;
-  min-width: 0;
-`;
-
-const ActivityTitle = styled.div`
-  font-weight: 500;
-  color: #1F2937;
-  margin-bottom: 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
-const ActivityTime = styled.div`
+const AccountInfoLabel = styled.div`
   font-size: 0.75rem;
-  color: #6B7280;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 `;
 
-const ShowMoreButton = styled.button`
-  background: none;
-  border: none;
-  color: #3B82F6;
+const AccountInfoValue = styled.div`
   font-size: 0.875rem;
-  padding: 0.5rem;
-  cursor: pointer;
-  text-align: left;
-  width: 100%;
-  border-radius: 0.375rem;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background: #F3F4F6;
-  }
+  color: ${props => props.theme.colors.text.primary};
+  font-weight: 500;
 `;
 
-interface AdminProfileData {
+interface Profile {
+  id: string;
   first_name: string;
   last_name: string;
-  email: string;
-  phone: string;
-  gender: string;
-  profile_picture: string;
-  last_password_change: string;
   username: string;
+  phone_number: string;
+  gender: string;
+  profile_picture_url: string;
+  last_password_change: string;
+  email: string;
+  role: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface PerformanceStats {
@@ -662,15 +854,6 @@ interface PerformanceStats {
   active_users: number;
   total_admins: number;
   last_activity: string;
-}
-
-interface RecentActivity {
-  id: string;
-  type: string;
-  description: string;
-  timestamp: string;
-  date: string;
-  time: string;
 }
 
 interface AdminProfileProps {
@@ -683,25 +866,33 @@ const capitalizeFirstLetter = (string: string) => {
 };
 
 const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onModalStateChange }) => {
-  const [originalProfileData, setOriginalProfileData] = useState<AdminProfileData>({
+  const [originalProfileData, setOriginalProfileData] = useState<Profile>({
+    id: '',
     first_name: '',
     last_name: '',
-    email: '',
-    phone: '',
+    username: '',
+    phone_number: '',
     gender: '',
-    profile_picture: '',
+    profile_picture_url: '',
     last_password_change: '',
-    username: ''
+    email: '',
+    role: '',
+    created_at: '',
+    updated_at: ''
   });
-  const [profileData, setProfileData] = useState<AdminProfileData>({
+  const [profileData, setProfileData] = useState<Profile>({
+    id: '',
     first_name: '',
     last_name: '',
-    email: '',
-    phone: '',
+    username: '',
+    phone_number: '',
     gender: '',
-    profile_picture: '',
+    profile_picture_url: '',
     last_password_change: '',
-    username: ''
+    email: '',
+    role: '',
+    created_at: '',
+    updated_at: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
@@ -737,16 +928,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
     total_admins: 0,
     last_activity: ''
   });
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
-  const [isLoadingActivities, setIsLoadingActivities] = useState(true);
-  const [visibleDates, setVisibleDates] = useState<Record<string, boolean>>({});
-  const [visibleItems, setVisibleItems] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchProfileData();
     fetchPerformanceStats();
-    fetchRecentActivities();
   }, []);
 
   const fetchProfileData = async () => {
@@ -757,20 +943,24 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .single();
 
       if (error) throw error;
 
       const profileData = {
+        id: user.id,
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         email: user.email || '',
-        phone: profile.phone || '',
+        phone_number: profile.phone_number || '',
         gender: profile.gender || '',
-        profile_picture: profile.profile_picture || '',
+        profile_picture_url: profile.profile_picture_url || '',
         last_password_change: profile.last_password_change || '',
         username: profile.username || '',
+        role: profile.role || '',
+        created_at: profile.created_at || '',
+        updated_at: profile.updated_at || ''
       };
 
       setProfileData(profileData);
@@ -803,68 +993,20 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Track changes for activity logging
-      const changes: string[] = [];
-      if (profileData.first_name !== originalProfileData.first_name) {
-        changes.push(`Changed First Name from "${originalProfileData.first_name || 'Not Set'}" to "${profileData.first_name}"`);
-      }
-      if (profileData.last_name !== originalProfileData.last_name) {
-        changes.push(`Changed Last Name from "${originalProfileData.last_name || 'Not Set'}" to "${profileData.last_name}"`);
-      }
-      if (profileData.username !== originalProfileData.username) {
-        changes.push(`Changed Username from "${originalProfileData.username || 'Not Set'}" to "${profileData.username}"`);
-      }
-      if (profileData.gender !== originalProfileData.gender) {
-        changes.push(profileData.gender ? 
-          (originalProfileData.gender ? 
-            `Changed Gender from "${capitalizeFirstLetter(originalProfileData.gender)}" to "${capitalizeFirstLetter(profileData.gender)}"` :
-            `Set Gender to "${capitalizeFirstLetter(profileData.gender)}"`) : 
-          'Removed Gender');
-      }
-      if (profileData.phone !== originalProfileData.phone) {
-        changes.push(profileData.phone ? 
-          (originalProfileData.phone ? 
-            `Changed Phone from "${originalProfileData.phone}" to "${profileData.phone}"` :
-            `Added Phone: "${profileData.phone}"`) : 
-          'Removed Phone');
-      }
-
       // Update profile
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
           first_name: profileData.first_name,
           last_name: profileData.last_name,
-          phone: profileData.phone,
+          phone_number: profileData.phone_number,
           gender: profileData.gender,
           username: profileData.username,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', user.id);
+        .eq('id', user.id);
 
       if (updateError) throw updateError;
-
-      // Log each change as a separate activity
-      for (const change of changes) {
-        let activityType = 'profile';
-        if (change.includes('Username')) {
-          activityType = 'username';
-        } else if (change.includes('First Name') || change.includes('Last Name')) {
-          activityType = 'name';
-        } else if (change.includes('Profile Picture')) {
-          activityType = 'profile_picture_change';
-        } else if (change.includes('Phone')) {
-          activityType = 'phone';
-        } else if (change.includes('Gender')) {
-          activityType = 'gender_change';
-        }
-
-        await supabase.rpc('log_profile_change', {
-          p_user_id: user.id,
-          p_type: activityType,
-          p_description: change
-        });
-      }
 
       if (isEditing) {
         setBasicInfoSuccess('Profile updated successfully');
@@ -937,7 +1079,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
         .update({
           last_password_change: new Date().toISOString()
         })
-        .eq('user_id', user.id);
+        .eq('id', user.id);
 
       if (profileError) {
         console.error('Profile update error:', profileError);
@@ -992,12 +1134,12 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
 
   // Add useEffect to set initial preview image when modal opens
   useEffect(() => {
-    if (isProfileModalOpen && profileData.profile_picture) {
-      setPreviewImage(profileData.profile_picture);
+    if (isProfileModalOpen && profileData.profile_picture_url) {
+      setPreviewImage(profileData.profile_picture_url);
     } else if (isProfileModalOpen) {
       setPreviewImage(null);
     }
-  }, [isProfileModalOpen, profileData.profile_picture]);
+  }, [isProfileModalOpen, profileData.profile_picture_url]);
 
   const handleProfilePictureUpload = async () => {
     if (!selectedFile) return;
@@ -1013,8 +1155,8 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       const filePath = `${fileName}`;
 
       // First, try to delete any existing profile picture
-      if (profileData.profile_picture) {
-        const existingPath = profileData.profile_picture.split('/').pop();
+      if (profileData.profile_picture_url) {
+        const existingPath = profileData.profile_picture_url.split('/').pop();
         if (existingPath) {
           await supabase.storage
             .from('profile-pictures')
@@ -1044,10 +1186,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
-          profile_picture: publicUrl,
+          profile_picture_url: publicUrl,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', user.id);
+        .eq('id', user.id);
 
       if (updateError) {
         console.error('Profile update error:', updateError);
@@ -1058,13 +1200,13 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       await supabase.rpc('log_profile_change', {
         p_user_id: user.id,
         p_type: 'profile_picture_change',
-        p_description: profileData.profile_picture ? 
+        p_description: profileData.profile_picture_url ? 
           'Changed Profile Picture' : 
           'Set Profile Picture for the first time'
       });
 
       // Update local state
-      setProfileData(prev => ({ ...prev, profile_picture: publicUrl }));
+      setProfileData(prev => ({ ...prev, profile_picture_url: publicUrl }));
       setIsProfileModalOpen(false);
       setPreviewImage(null);
       setSelectedFile(null);
@@ -1133,61 +1275,25 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
   };
 
   const checkUsernameExists = async (username: string) => {
-    if (!username) {
-      setUsernameExists(null);
-      setCheckingUsername(false);
-      return;
-    }
-
     try {
       setCheckingUsername(true);
-
-      // Get the profile of the current user from user_details view
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: userProfile } = await supabase
-        .from('user_details')
+      const { data: profiles, error } = await supabase
+        .from('profiles')
         .select('username')
-        .eq('user_id', user.id)
-        .single();
-
-      // Store current username for UI comparison
-      if (userProfile?.username) {
-        setCurrentUsername(userProfile.username);
-      }
-
-      // If username is the same as the current user, set exists to true and return early
-      if (userProfile?.username === username) {
-        setUsernameExists(true);
-        setCheckingUsername(false);
-        return;
-      }
-      
-      // Query the user_details view
-      const { data, error } = await supabase
-        .from('user_details')
-        .select('username, user_id')
         .eq('username', username)
-        .limit(1);
+        .neq('id', user.id);
 
-      if (error) {
-        console.error('Error checking username:', error);
-        setUsernameExists(null);
-      } else if (data && data.length > 0) {
-        // If we found a user with this username, check if it's the same user
-        const foundUser = data[0];
-        if (foundUser.user_id === user.id) {
-          setUsernameExists(true); // It's the same user's current username
-        } else {
-          setUsernameExists(true); // Username is taken by another user
-        }
-      } else {
-        setUsernameExists(false); // Username is available
-      }
+      if (error) throw error;
+
+      const exists = profiles && profiles.length > 0;
+      setUsernameExists(exists);
+      setCurrentUsername(username);
     } catch (error) {
       console.error('Error checking username:', error);
-      setUsernameExists(null);
+      setUsernameError('Failed to check username availability');
     } finally {
       setCheckingUsername(false);
     }
@@ -1272,102 +1378,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       console.error('Error fetching performance stats:', error);
     } finally {
       setIsLoadingStats(false);
-    }
-  };
-
-  const fetchRecentActivities = async () => {
-    try {
-      setIsLoadingActivities(true);
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: activity, error } = await supabase
-        .from('user_activity')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const formattedActivities = activity.map(item => {
-        const date = new Date(item.created_at);
-        return {
-          id: item.id,
-          type: item.type,
-          description: item.description,
-          timestamp: date.toLocaleString(),
-          date: date.toLocaleDateString(),
-          time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-      });
-
-      setRecentActivity(formattedActivities);
-    } catch (error) {
-      console.error('Error fetching recent activity:', error);
-    } finally {
-      setIsLoadingActivities(false);
-    }
-  };
-
-  // Group activities by date
-  const groupedActivities = React.useMemo(() => {
-    return recentActivity.reduce((groups, activity) => {
-      const date = activity.date;
-      if (!groups[date]) {
-        groups[date] = [];
-      }
-      groups[date].push(activity);
-      return groups;
-    }, {} as Record<string, typeof recentActivity>);
-  }, [recentActivity]);
-
-  // Initialize visible dates when activities are loaded
-  React.useEffect(() => {
-    const dates = Object.keys(groupedActivities);
-    const initialVisibility = dates.reduce((acc, date) => {
-      acc[date] = false;
-      return acc;
-    }, {} as Record<string, boolean>);
-    setVisibleDates(initialVisibility);
-  }, [groupedActivities]);
-
-  // Initialize visible items when activities are loaded
-  React.useEffect(() => {
-    const dates = Object.keys(groupedActivities);
-    const initialVisibility = dates.reduce((acc, date) => {
-      acc[date] = 5; // Show first 5 items initially
-      return acc;
-    }, {} as Record<string, number>);
-    setVisibleItems(initialVisibility);
-  }, [groupedActivities]);
-
-  const toggleDateVisibility = (date: string) => {
-    setVisibleDates(prev => ({
-      ...prev,
-      [date]: !prev[date]
-    }));
-  };
-
-  const showMoreItems = (date: string) => {
-    setVisibleItems(prev => ({
-      ...prev,
-      [date]: prev[date] + 5
-    }));
-  };
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'user_management':
-        return <FaUserCog />;
-      case 'system_update':
-        return <FaShieldAlt />;
-      case 'security_change':
-        return <FaKey />;
-      case 'profile_picture_change':
-        return <FaUserCircle />;
-      default:
-        return <FaHistory />;
     }
   };
 
@@ -1542,8 +1552,8 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
             )}
           </ProfileInfo>
           <ProfilePicture>
-            {profileData.profile_picture ? (
-              <ProfileImage src={profileData.profile_picture} alt="Profile" />
+            {profileData.profile_picture_url ? (
+              <ProfileImage src={profileData.profile_picture_url} alt="Profile" />
             ) : (
               <FiUser size={80} color="#6b7280" />
             )}
@@ -1583,10 +1593,10 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
                   <Input
                     type="tel"
                     pattern="[0-9]*"
-                    value={profileData.phone}
+                    value={profileData.phone_number}
                     onChange={(e) => {
                       if (e.target.validity.valid) {
-                        setProfileData({ ...profileData, phone: e.target.value });
+                        setProfileData({ ...profileData, phone_number: e.target.value });
                       }
                     }}
                     placeholder="Enter your phone number"
@@ -1618,7 +1628,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
               </InfoRow>
               <InfoRow $isEditing={isEditingContact} style={{ borderBottom: 'none' }}>
                 <InfoLabel $isEditing={isEditingContact}>Phone</InfoLabel>
-                <InfoValue $isEditing={isEditingContact}>{profileData.phone || '-'}</InfoValue>
+                <InfoValue $isEditing={isEditingContact}>{profileData.phone_number || '-'}</InfoValue>
               </InfoRow>
               <div style={{ marginTop: '16px' }}>
                 <EditButton onClick={() => {
@@ -1839,49 +1849,51 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
                   Last Activity
                 </StatLabel>
               </StatCard>
+              <AccountInfoCard>
+                <StatLabel>
+                  <FaUserCog />
+                  Account Info
+                </StatLabel>
+                <AccountInfoGrid>
+                  <AccountInfoItem>
+                    <AccountInfoLabel>
+                      <FaShieldAlt />
+                      Role
+                    </AccountInfoLabel>
+                    <AccountInfoValue>
+                      {profileData.role ? capitalizeFirstLetter(profileData.role) : 'Admin'}
+                    </AccountInfoValue>
+                  </AccountInfoItem>
+                  <AccountInfoItem>
+                    <AccountInfoLabel>
+                      <FaUserPlus />
+                      Account Created
+                    </AccountInfoLabel>
+                    <AccountInfoValue>
+                      {profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : 'N/A'}
+                    </AccountInfoValue>
+                  </AccountInfoItem>
+                  <AccountInfoItem>
+                    <AccountInfoLabel>
+                      <FaUserEdit />
+                      Last Updated
+                    </AccountInfoLabel>
+                    <AccountInfoValue>
+                      {profileData.updated_at ? new Date(profileData.updated_at).toLocaleDateString() : 'N/A'}
+                    </AccountInfoValue>
+                  </AccountInfoItem>
+                  <AccountInfoItem>
+                    <AccountInfoLabel>
+                      <FaKey />
+                      Last Password Change
+                    </AccountInfoLabel>
+                    <AccountInfoValue>
+                      {profileData.last_password_change ? new Date(profileData.last_password_change).toLocaleDateString() : 'Never'}
+                    </AccountInfoValue>
+                  </AccountInfoItem>
+                </AccountInfoGrid>
+              </AccountInfoCard>
             </StatsGrid>
-          )}
-        </Section>
-
-        <Section>
-          <SectionTitle>
-            <FaHistory />
-            Recent Activities
-          </SectionTitle>
-          {isLoadingActivities ? (
-            <LoadingSpinner />
-          ) : recentActivity.length === 0 ? (
-            <div style={{ padding: '1rem', color: '#6B7280', textAlign: 'center' }}>
-              No recent activities found
-            </div>
-          ) : (
-            <ActivityList>
-              {Object.entries(groupedActivities).map(([date, activities]) => (
-                <ActivityGroup key={date}>
-                  <ActivityDate onClick={() => toggleDateVisibility(date)}>
-                    {date}
-                  </ActivityDate>
-                  {visibleDates[date] && activities
-                    .slice(0, visibleItems[date])
-                    .map((activity) => (
-                      <ActivityItem key={activity.id}>
-                        <ActivityIcon>
-                          {getActivityIcon(activity.type)}
-                        </ActivityIcon>
-                        <ActivityContent>
-                          <ActivityTitle>{activity.description}</ActivityTitle>
-                          <ActivityTime>{activity.time}</ActivityTime>
-                        </ActivityContent>
-                      </ActivityItem>
-                    ))}
-                  {visibleDates[date] && activities.length > visibleItems[date] && (
-                    <ShowMoreButton onClick={() => showMoreItems(date)}>
-                      Show more activities
-                    </ShowMoreButton>
-                  )}
-                </ActivityGroup>
-              ))}
-            </ActivityList>
           )}
         </Section>
       </RightColumn>

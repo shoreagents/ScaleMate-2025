@@ -1043,19 +1043,19 @@ const testDbConnection = async () => {
     
     if (error) throw error;
     
-    console.log('✅ Database connection successful');
-    document.getElementById('connection-status').textContent = 'Connected';
+    console.log('✅ Connection healthy');
+    document.getElementById('connection-status').textContent = 'Connection healthy';
     document.getElementById('connection-status').className = 'status-connected';
     
-    return { success: true, message: 'Connection successful' };
+    return { success: true, message: 'Connection healthy' };
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    document.getElementById('connection-status').textContent = 'Disconnected';
+    console.error('❌ Connection failed:', error.message);
+    document.getElementById('connection-status').textContent = 'Connection failed';
     document.getElementById('connection-status').className = 'status-error';
     
     return { 
       success: false, 
-      message: `Connection failed: ${error.message}`,
+      message: 'Connection failed',
       error 
     };
   }

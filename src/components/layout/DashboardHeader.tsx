@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { FiBell, FiUser, FiLogOut } from 'react-icons/fi';
 import { FaHome, FaBell, FaUser } from 'react-icons/fa';
 import { useRouter } from 'next/router';
+import { useProfile } from '@/contexts/ProfileContext';
 
 const ContentHeader = styled.div`
   position: fixed;
@@ -17,7 +18,7 @@ const ContentHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 3.5rem;
+  height: 4rem;
 
   @media (max-width: 768px) {
     left: 0;
@@ -133,46 +134,25 @@ const DropdownItem = styled.div<{ $isLogout?: boolean }>`
   }
 `;
 
-const ProfileIcon = styled.div<{ $imageUrl?: string | null; $isLoading?: boolean }>`
-  width: 20px;
-  height: 20px;
+const ProfileIcon = styled.div`
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
+  border-radius: 50%;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-
-  @media (min-width: 769px) {
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-`;
-
-const AvatarSpinner = styled.div`
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(59, 130, 246, 0.1);
-  border-radius: 50%;
-  border-top-color: #3B82F6;
-  animation: spin 1s ease-in-out infinite;
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
 `;
 
 interface DashboardHeaderProps {
   title: string;
-  profilePicture?: string | null;
   onLogout: () => void;
   onProfileClick: () => void;
   showProfile?: boolean;
@@ -183,7 +163,6 @@ interface DashboardHeaderProps {
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   title,
-  profilePicture,
   onLogout,
   onProfileClick,
   showProfile = false,
@@ -192,8 +171,9 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   hasNotifications = false
 }) => {
   const router = useRouter();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { profilePicture } = useProfile();
   const [isMobile, setIsMobile] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -202,16 +182,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  const handleHomeClick = () => {
+    router.push('/');
+    setIsProfileOpen(false);
+  };
+
   const handleProfileClick = () => {
     if (onProfileClick) {
       onProfileClick();
       setIsProfileOpen(false);
     }
-  };
-
-  const handleHomeClick = () => {
-    router.push('/');
-    setIsProfileOpen(false);
   };
 
   return (
@@ -225,12 +205,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             </IconButton>
           </NotificationBadge>
         )}
-        <ProfileContainer id="profile-menu">
+        <ProfileContainer>
           <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
-            <ProfileIcon $imageUrl={profilePicture} $isLoading={isLoading}>
-              {isLoading ? (
-                <AvatarSpinner />
-              ) : profilePicture ? (
+            <ProfileIcon>
+              {profilePicture ? (
                 <img src={profilePicture} alt="Profile" />
               ) : (
                 <FaUser size={20} color="#9CA3AF" />

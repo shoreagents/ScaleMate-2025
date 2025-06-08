@@ -18,14 +18,14 @@ const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   inset: 0;
   background-color: rgba(15, 23, 42, 0.75);
   display: ${props => props.$isOpen ? 'block' : 'none'};
-  z-index: 70;
+  z-index: 1000;
   backdrop-filter: blur(2px);
 `;
 
 const ModalContainer = styled.div<{ $isOpen: boolean }>`
   position: fixed;
   inset: 0;
-  z-index: 70;
+  z-index: 1000;
   display: ${props => props.$isOpen ? 'flex' : 'none'};
   min-height: 100vh;
   padding: 1rem;
@@ -40,11 +40,11 @@ const ModalContainer = styled.div<{ $isOpen: boolean }>`
 const ModalContent = styled.div`
   position: relative;
   width: 100%;
-  max-width: 530px;
+  max-width: 480px;
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  overflow-y: auto;
+  overflow: visible;
   transform: translateY(0);
   transition: transform 0.2s ease-out;
 `;
@@ -73,8 +73,20 @@ const CloseButton = styled.button`
   }
 `;
 
+const ModalHeader = styled.div`
+  padding: 24px 32px 12px 32px;
+  border-bottom: 1px solid ${props => props.theme.colors.border};
+`;
+
+const ModalTitle = styled.h2`
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.text.primary};
+`;
+
 const ModalBody = styled.div`
-  padding: 64px 32px 32px 32px;
+  padding: 32px;
 `;
 
 export const Modal: React.FC<ModalProps> = ({
@@ -124,6 +136,11 @@ export const Modal: React.FC<ModalProps> = ({
             <CloseButton onClick={onClose} aria-label="Close modal">
               <FaTimes size={20} />
             </CloseButton>
+          )}
+          {title && (
+            <ModalHeader>
+              <ModalTitle>{title}</ModalTitle>
+            </ModalHeader>
           )}
           <ModalBody>{children}</ModalBody>
         </ModalContent>

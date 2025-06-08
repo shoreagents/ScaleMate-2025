@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { FaArrowLeft, FaArrowRight, FaPlus, FaSearch } from 'react-icons/fa';
 import { FaSalesforce, FaHubspot, FaSlack, FaGoogle } from 'react-icons/fa';
+import { NavigationButtons, BackButton, ContinueButton, PrimaryButton } from '../RoleBuilderTab';
 
 const Section = styled.section`
   background-color: white;
@@ -9,6 +10,18 @@ const Section = styled.section`
   border: 1px solid #E5E7EB;
   padding: 2rem;
   width: 100%;
+  
+  @media only screen and (max-width: 1023px) {
+    padding: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -16,16 +29,42 @@ const SectionTitle = styled.h2`
   font-weight: 700;
   color: #0F172A;
   margin-bottom: 0.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1.125rem;
+  }
 `;
 
 const SectionDescription = styled.p`
   color: rgba(15, 23, 42, 0.7);
   margin-bottom: 2rem;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const SearchContainer = styled.div`
   position: relative;
   margin-bottom: 2rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-bottom: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const SearchIcon = styled.div`
@@ -35,6 +74,14 @@ const SearchIcon = styled.div`
   transform: translateY(-50%);
   color: rgba(15, 23, 42, 0.4);
   pointer-events: none;
+  
+  @media only screen and (max-width: 767px) {
+    left: 0.625rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    left: 0.5rem;
+  }
 `;
 
 const SearchInput = styled.input`
@@ -48,12 +95,34 @@ const SearchInput = styled.input`
     outline: none;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
   }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.625rem 0.875rem 0.625rem 2.25rem;
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.5rem 0.75rem 0.5rem 2rem;
+    font-size: 0.875rem;
+  }
 `;
 
 const ToolCategories = styled.div`
   display: flex;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const CategoryButton = styled.button<{ $active?: boolean }>`
@@ -63,9 +132,23 @@ const CategoryButton = styled.button<{ $active?: boolean }>`
   color: ${props => props.$active ? 'white' : '#0F172A'};
   border: ${props => props.$active ? 'none' : '1px solid #E5E7EB'};
   transition: all 0.2s;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 
   &:hover {
     background-color: ${props => props.$active ? '#6366F1' : '#F9FAFB'};
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.375rem 0.875rem;
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
   }
 `;
 
@@ -74,6 +157,22 @@ const ToolGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
+  width: 100%;
+  
+  @media only screen and (max-width: 1023px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  @media only screen and (max-width: 767px) {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const ToolCard = styled.div<{ $selected?: boolean }>`
@@ -83,10 +182,20 @@ const ToolCard = styled.div<{ $selected?: boolean }>`
   background-color: ${props => props.$selected ? 'rgba(99, 102, 241, 0.05)' : 'transparent'};
   cursor: pointer;
   transition: all 0.2s;
+  width: 100%;
+  overflow: hidden;
 
   &:hover {
     border-color: #6366F1;
     background-color: rgba(99, 102, 241, 0.05);
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.875rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    padding: 0.75rem;
   }
 `;
 
@@ -94,28 +203,78 @@ const ToolHeader = styled.div`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 const ToolInfo = styled.div`
   display: flex;
   align-items: center;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 `;
 
 const ToolIcon = styled.div<{ $selected?: boolean }>`
   font-size: 1.5rem;
   color: ${props => props.$selected ? '#6366F1' : 'rgba(15, 23, 42, 0.7)'};
   margin-right: 0.75rem;
+  flex-shrink: 0;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 1.25rem;
+    margin-right: 0.625rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 1.125rem;
+    margin-right: 0.5rem;
+  }
 `;
 
 const ToolTitle = styled.h4`
   font-weight: 500;
   color: #0F172A;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 const ToolDescription = styled.p`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
   margin-top: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  
+  @media only screen and (max-width: 767px) {
+    font-size: 0.8125rem;
+    margin-top: 0.625rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+  }
 `;
 
 const RadioCircle = styled.div<{ $selected?: boolean }>`
@@ -126,6 +285,12 @@ const RadioCircle = styled.div<{ $selected?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  
+  @media only screen and (max-width: 480px) {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
 `;
 
 const RadioDot = styled.div`
@@ -133,16 +298,39 @@ const RadioDot = styled.div`
   height: 0.75rem;
   border-radius: 9999px;
   background-color: #6366F1;
+  
+  @media only screen and (max-width: 480px) {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
 `;
 
 const CustomToolContainer = styled.div`
   margin-bottom: 2rem;
+  
+  @media only screen and (max-width: 767px) {
+    margin-bottom: 1.5rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    margin-bottom: 1.25rem;
+  }
 `;
 
 const CustomToolInput = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  
+  @media only screen and (max-width: 767px) {
+    gap: 0.75rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    gap: 0.5rem;
+    flex-direction: column;
+    width: 100%;
+  }
 `;
 
 const Input = styled.input`
@@ -151,63 +339,59 @@ const Input = styled.input`
   border: 1px solid #E5E7EB;
   border-radius: 0.5rem;
   outline: none;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   &:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
   }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.375rem 0.875rem;
+    font-size: 0.9375rem;
+  }
+  
+  @media only screen and (max-width: 480px) {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
 `;
 
 const AddButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 1rem;
-  color: #6366F1;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
   border: none;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: rgba(99, 102, 241, 0.05);
-  }
-`;
-
-const NavigationContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const BackButton = styled.button`
-  padding: 0.75rem 1.5rem;
-  color: #0F172A;
   border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: none;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: #F9FAFB;
-  }
-`;
-
-const ContinueButton = styled.button`
-  background-color: #3B82F6;
+  background-color: #6366F1;
   color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
   font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border: none;
   transition: all 0.2s;
 
   &:hover {
-    background-color: rgba(59, 130, 246, 0.9);
+    background-color: #4F46E5;
+  }
+
+  &:disabled {
+    background-color: #E5E7EB;
+    cursor: not-allowed;
+  }
+  
+  @media only screen and (max-width: 767px) {
+    padding: 0.375rem 0.875rem;
+    font-size: 0.9375rem;
+  }
+
+  @media only screen and (max-width: 480px) {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    justify-content: center;
   }
 `;
 
@@ -375,14 +559,14 @@ const Step3: React.FC<Step3Props> = ({ onBack, onContinue }) => {
         </CustomToolInput>
       </CustomToolContainer>
 
-      <NavigationContainer>
+      <NavigationButtons>
         <BackButton onClick={onBack}>
           <FaArrowLeft /> Back to Tasks
         </BackButton>
         <ContinueButton onClick={onContinue}>
           Continue to Expectations <FaArrowRight />
         </ContinueButton>
-      </NavigationContainer>
+      </NavigationButtons>
     </Section>
   );
 };

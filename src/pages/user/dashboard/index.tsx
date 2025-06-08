@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { 
   FaHouse, 
   FaUsersGear, 
@@ -28,8 +29,7 @@ import AIToolLibraryTab from '@/components/user/AIToolLibraryTab';
 import SavedToolStackTab from '@/components/user/SavedToolStackTab';
 import GamifiedTrackerTab from '@/components/user/GamifiedTrackerTab';
 import UserProfile from '@/components/user/UserProfile';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import FirstTimeSetupForm from '@/components/auth/FirstTimeSetupForm';
+import FirstTimeSetupForm from '@/components/forms/FirstTimeSetupForm';
 import { FiCheck } from 'react-icons/fi';
 import { useDownloadModal } from '@/hooks/useDownloadModal';
 import DashboardSidebar, { NavItem } from '@/components/layout/DashboardSidebar';
@@ -60,86 +60,6 @@ const MainContent = styled.main`
   }
 `;
 
-const SuccessModal = styled.div<{ $isOpen: boolean }>`
-  display: ${props => props.$isOpen ? 'flex' : 'none'};
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(15, 23, 42, 0.75);
-  z-index: 50;
-  backdrop-filter: blur(2px);
-`;
-
-const SuccessModalContent = styled.div`
-  background-color: white;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const SuccessIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background-color: ${props => props.theme.colors.success}15;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-  color: ${props => props.theme.colors.success};
-`;
-
-const SuccessTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
-  margin-bottom: 0.5rem;
-`;
-
-const SuccessMessage = styled.p`
-  font-size: 0.875rem;
-  color: ${props => props.theme.colors.text.secondary};
-  margin-bottom: 1.5rem;
-`;
-
-const SuccessButton = styled.button`
-  padding: 0.875rem 1.5rem;
-  background: ${props => props.theme.colors.primary};
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  width: 100%;
-
-  &:hover {
-    background: ${props => props.theme.colors.primaryDark};
-  }
-
-  &:active {
-    transform: scale(0.98);
-  }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: #f5f5f5;
-  gap: 1rem;
-`;
-
 const ErrorMessage = styled.div`
   color: #dc2626;
   text-align: center;
@@ -157,7 +77,7 @@ interface UserProfileData {
   email: string;
   phone: string;
   gender: string;
-  profile_picture: string | null;
+  profile_picture_url: string | null;
   last_password_change: string | null;
   username: string;
   created_at: string;
@@ -185,84 +105,83 @@ interface DashboardData {
 
 const DashboardPage = () => {
   const router = useRouter();
-  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [userData, setUserData] = useState<UserProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSetupForm, setShowSetupForm] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const { openModal } = useDownloadModal();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Check for error messages in URL
+  // Initial data fetch - runs immediately without waiting for user
   useEffect(() => {
-    const { error: urlError } = router.query;
-    if (urlError) {
-      setError(urlError as string);
-      // Remove error from URL
-      router.replace(router.pathname, undefined, { shallow: true });
-    }
-  }, [router.query]);
-
-  useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
-        // Get profile data
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        if (!authUser) {
-          throw new Error('No authenticated user found');
-        }
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .single();
-
-        if (profileError) {
-          throw profileError;
-        }
-
-        if (profile) {
-          setUserData(profile);
-          setProfilePicture(profile.profile_picture);
-          
-          // Check if setup is needed
-          if (!profile.username) {
-            setShowSetupForm(true);
+          if (error) {
+            setError(error.message);
+            return;
           }
 
-          // Set dashboard data
-          setDashboardData({
-            profile: {
-              name: `${profile.first_name} ${profile.last_name}`,
-              email: profile.email,
-              created_at: profile.created_at
-            },
-            progress: {
-              completed_tools: 0,
-              total_tools: 0,
-              xp_points: 0
-            },
-            recent_activity: []
-          });
+          if (profile) {
+            setUserData(profile);
+            if (!profile.username) {
+              setShowSetupForm(true);
+            }
+          }
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch data');
-      } finally {
-        setLoading(false);
+        setError(err instanceof Error ? err.message : 'An error occurred');
       }
     };
 
-    fetchData();
+    fetchInitialData();
   }, []);
 
-  const handleProfilePictureChange = (newPictureUrl: string) => {
-    setProfilePicture(newPictureUrl);
-  };
+  // Real-time updates for profile
+  useEffect(() => {
+    if (!userData?.id) return;
+
+    const profileSubscription = supabase
+      .channel('profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${userData.id}`
+        },
+        async (payload) => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            if (error) return;
+
+            if (profile) {
+              setUserData(profile);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      profileSubscription.unsubscribe();
+    };
+  }, [userData?.id]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -273,28 +192,47 @@ const DashboardPage = () => {
     setActiveTab(tab);
   };
 
-  const getTabTitle = (tab: string) => {
-    const tabItem = navItems.find(item => item.id === tab);
-    return tabItem ? tabItem.label : 'Dashboard';
+  const handleModalStateChange = (isOpen: boolean) => {
+    setIsModalOpen(isOpen);
   };
+
+  const handleSetupComplete = () => {
+    setShowSetupForm(false);
+  };
+
+  const navItems: NavItem[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: <FaGripVertical /> },
+    { id: 'role-builder', label: 'Role Builder', icon: <FaUsersGear /> },
+    { id: 'quote-calculator', label: 'Quote Calculator', icon: <FaCalculator /> },
+    { id: 'cost-savings', label: 'Cost Savings', icon: <FaCoins /> },
+    { id: 'roles-blueprint', label: 'Roles Blueprint', icon: <FaChartSimple /> },
+    { id: 'saved-quotes', label: 'Saved Quotes', icon: <FaBookmark /> },
+    { id: 'resource-library', label: 'Resource Library', icon: <FaFileLines /> },
+    { id: 'courses', label: 'Courses', icon: <FaGraduationCap /> },
+    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FaRobot /> },
+    { id: 'saved-tool-stack', label: 'Saved Tool Stack', icon: <FaLayerGroup /> },
+    { id: 'gamified-tracker', label: 'Gamified Tracker', icon: <FaTrophy /> },
+  ];
 
   const renderContent = () => {
     switch (activeTab) {
       case 'profile':
-        return <UserProfile onProfilePictureChange={handleProfilePictureChange} />;
+        return <UserProfile />;
+      case 'dashboard':
+        return <DashboardTab user={userData} activeTab={activeTab} />;
       case 'role-builder':
         return <RoleBuilderTab />;
       case 'quote-calculator':
         return <QuoteCalculatorTab />;
-      case 'team-savings':
+      case 'cost-savings':
         return <CostSavingsTab />;
-      case 'saved-blueprints':
+      case 'roles-blueprint':
         return <RolesBlueprintTab />;
       case 'saved-quotes':
         return <SavedQuotesTab />;
       case 'resource-library':
         return <ResourceLibraryTab />;
-      case 'course-dashboard':
+      case 'courses':
         return <CourseDashboardTab />;
       case 'ai-tool-library':
         return <AIToolLibraryTab />;
@@ -303,102 +241,57 @@ const DashboardPage = () => {
       case 'gamified-tracker':
         return <GamifiedTrackerTab />;
       default:
-        return <DashboardTab user={userData ? {
-          name: `${userData.first_name} ${userData.last_name}`,
-          email: userData.email,
-          avatar: userData.profile_picture || undefined
-        } : undefined} />;
+        return <DashboardTab user={userData} activeTab={activeTab} />;
     }
   };
 
-  const navItems: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: <FaGripVertical /> },
-    { id: 'role-builder', label: 'Role Builder', icon: <FaUsersGear /> },
-    { id: 'quote-calculator', label: 'Quote Calculator', icon: <FaCalculator /> },
-    { id: 'team-savings', label: 'Team Savings', icon: <FaCoins /> },
-    { id: 'readiness-score', label: 'Readiness Score', icon: <FaChartSimple /> },
-    { id: 'saved-blueprints', label: 'Role Blueprints', icon: <FaBookmark /> },
-    { id: 'saved-quotes', label: 'Saved Quotes', icon: <FaFileLines /> },
-    { id: 'resource-library', label: 'Resource Library', icon: <FaBook />, isUnlocked: true },
-    { id: 'course-dashboard', label: 'Course Manager', icon: <FaGraduationCap /> },
-    { id: 'ai-tool-library', label: 'AI Tool Library', icon: <FaRobot /> },
-    { id: 'saved-tool-stack', label: 'Tool Stack', icon: <FaLayerGroup /> },
-    { id: 'gamified-tracker', label: 'Gamified Tracker', icon: <FaTrophy /> },
-    { id: 'account-settings', label: 'System Settings', icon: <FaGear /> }
-  ];
-
-  const handleSetupComplete = () => {
-    setShowSuccessModal(true);
-  };
-
-  // Show loading spinner while checking auth
-  if (loading) {
-    return (
-      <LoadingContainer>
-        <LoadingSpinner />
-      </LoadingContainer>
-    );
-  }
-
-  // Show error if there is one
-  if (error) {
-    return (
-      <LoadingContainer>
-        <ErrorMessage>{error}</ErrorMessage>
-      </LoadingContainer>
-    );
-  }
-
   return (
-    <WithRoleProtection allowedRoles={['user', 'admin']}>
-      <DashboardContainer>
-        <DashboardSidebar
-          logoText="ScaleMate"
-          navItems={navItems}
-          activeTab={activeTab}
-          onTabClick={handleTabClick}
-          isModalOpen={showSetupForm || showSuccessModal}
+    <DashboardContainer>
+      <DashboardSidebar
+        logoText="ScaleMate"
+        navItems={navItems}
+        activeTab={activeTab}
+        onTabClick={handleTabClick}
+        isModalOpen={showSetupForm || isModalOpen}
+      />
+      <MainContent>
+        <DashboardHeader
+          title={activeTab === 'dashboard' ? 'Dashboard' : 
+                 activeTab === 'role-builder' ? 'Role Builder' :
+                 activeTab === 'quote-calculator' ? 'Quote Calculator' :
+                 activeTab === 'cost-savings' ? 'Cost Savings' :
+                 activeTab === 'roles-blueprint' ? 'Roles Blueprint' :
+                 activeTab === 'saved-quotes' ? 'Saved Quotes' :
+                 activeTab === 'resource-library' ? 'Resource Library' :
+                 activeTab === 'courses' ? 'Courses' :
+                 activeTab === 'ai-tool-library' ? 'AI Tool Library' :
+                 activeTab === 'saved-tool-stack' ? 'Saved Tool Stack' :
+                 activeTab === 'gamified-tracker' ? 'Gamified Tracker' : 'Dashboard'}
+          onLogout={handleLogout}
+          onProfileClick={() => setActiveTab('profile')}
+          showProfile={activeTab === 'profile'}
         />
-        <MainContent>
-          <DashboardHeader
-            title={getTabTitle(activeTab)}
-            profilePicture={profilePicture}
-            onLogout={handleLogout}
-            onProfileClick={() => setActiveTab('profile')}
-            showProfile={activeTab === 'profile'}
-          />
-          {renderContent()}
-        </MainContent>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        {renderContent()}
+      </MainContent>
 
-        {showSetupForm && user && (
-          <FirstTimeSetupForm
-            isOpen={showSetupForm}
-            onClose={() => setShowSetupForm(false)}
-            userId={user.id}
-            currentUsername={userData?.username || ''}
-            onSetupComplete={handleSetupComplete}
-          />
-        )}
-
-        {showSuccessModal && (
-          <SuccessModal $isOpen={showSuccessModal}>
-            <SuccessModalContent>
-              <SuccessIcon>
-                <FiCheck size={24} />
-              </SuccessIcon>
-              <SuccessTitle>Setup Complete!</SuccessTitle>
-              <SuccessMessage>
-                Your account has been successfully set up. You can now use your new credentials to log in.
-              </SuccessMessage>
-              <SuccessButton onClick={() => setShowSuccessModal(false)}>
-                Continue
-              </SuccessButton>
-            </SuccessModalContent>
-          </SuccessModal>
-        )}
-      </DashboardContainer>
-    </WithRoleProtection>
+      {showSetupForm && userData && (
+        <FirstTimeSetupForm
+          isOpen={showSetupForm}
+          onClose={() => setShowSetupForm(false)}
+          userId={userData.id}
+          currentUsername={userData.username || ''}
+          onSetupComplete={handleSetupComplete}
+        />
+      )}
+    </DashboardContainer>
   );
 };
 
-export default DashboardPage; 
+const ProtectedDashboard = () => (
+  <WithRoleProtection allowedRoles={['user']}>
+    <DashboardPage />
+  </WithRoleProtection>
+);
+
+export default ProtectedDashboard; 

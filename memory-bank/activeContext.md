@@ -333,3 +333,19 @@ Before adding a new feature, confirm:
 - **Next Steps:** Continue with planned updates to the Export as PDF button 
 
 - [REMOVED] Rate limiting and Upstash Redis integration from middleware. See progress.md ([REMOVED] Rate Limiting Middleware and Upstash Dependencies - [DATE]) for details.
+
+## Active Tasks & Features
+
+### Admin Audit Logging (Updated)
+- Status: ✅ Completed
+- Priority: High
+- Description: Consolidated all admin action and error logging into admin_audit_log
+- Components:
+  - Using existing `admin_audit_log` table for all admin actions and errors
+  - Updated `update_user_profile_v2` to use admin_audit_log for error tracking
+  - Removed redundant error_logs system
+- Next Steps:
+  - Monitor error logging in admin_audit_log
+  - Review error patterns in admin dashboard
+  - Consider adding error log viewing interface
+- Related: See progress.md entry for 2024-04-10

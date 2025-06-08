@@ -138,7 +138,8 @@ const ComparisonBox = styled.div<ComparisonBoxProps>`
   margin-bottom: ${props => !props.$isGreen && '1rem'};
 `;
 
-const ComparisonLabel2 = styled.div`
+const ComparisonLabel2 = styled.label`
+  display: block;
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
   margin-bottom: 0.5rem;
@@ -281,8 +282,8 @@ const QuoteCalculatorTab: React.FC = () => {
         <Grid>
           <Column>
             <FormGroup>
-              <Label>Role Title</Label>
-              <Select>
+              <Label htmlFor="role-title">Role Title</Label>
+              <Select id="role-title" name="role-title">
                 <option>Select Role</option>
                 <option>Sales Development Representative</option>
                 <option>Account Manager</option>
@@ -290,28 +291,28 @@ const QuoteCalculatorTab: React.FC = () => {
               </Select>
             </FormGroup>
             <FormGroup>
-              <Label>Experience Level</Label>
-              <ExperienceButtons>
-                <ExperienceButton $active>Junior</ExperienceButton>
-                <ExperienceButton>Mid-Level</ExperienceButton>
-                <ExperienceButton>Senior</ExperienceButton>
+              <Label htmlFor="experience-level">Experience Level</Label>
+              <ExperienceButtons role="group" aria-labelledby="experience-level">
+                <ExperienceButton type="button" $active id="experience-junior" name="experience-level" value="junior">Junior</ExperienceButton>
+                <ExperienceButton type="button" id="experience-mid" name="experience-level" value="mid">Mid-Level</ExperienceButton>
+                <ExperienceButton type="button" id="experience-senior" name="experience-level" value="senior">Senior</ExperienceButton>
               </ExperienceButtons>
             </FormGroup>
           </Column>
           <Column>
             <FormGroup>
-              <Label>Key Tasks</Label>
-              <TasksContainer>
+              <Label htmlFor="key-tasks">Key Tasks</Label>
+              <TasksContainer role="group" aria-labelledby="key-tasks">
                 <TaskItem>
-                  <Checkbox type="checkbox" defaultChecked />
+                  <Checkbox type="checkbox" id="task-lead-gen" name="task-lead-gen" defaultChecked />
                   <TaskText>Lead Generation</TaskText>
                 </TaskItem>
                 <TaskItem>
-                  <Checkbox type="checkbox" defaultChecked />
+                  <Checkbox type="checkbox" id="task-cold-outreach" name="task-cold-outreach" defaultChecked />
                   <TaskText>Cold Outreach</TaskText>
                 </TaskItem>
                 <TaskItem>
-                  <Checkbox type="checkbox" />
+                  <Checkbox type="checkbox" id="task-client-mgmt" name="task-client-mgmt" />
                   <TaskText>Client Management</TaskText>
                 </TaskItem>
               </TasksContainer>
@@ -346,20 +347,20 @@ const QuoteCalculatorTab: React.FC = () => {
         <CostSection id="local-comparison">
           <SectionTitle>Local Comparison</SectionTitle>
           <ComparisonGroup>
-            <ComparisonLabel>Your Location</ComparisonLabel>
-            <ComparisonSelect>
+            <ComparisonLabel htmlFor="location">Your Location</ComparisonLabel>
+            <ComparisonSelect id="location" name="location">
               <option>United States</option>
               <option>United Kingdom</option>
               <option>Australia</option>
             </ComparisonSelect>
           </ComparisonGroup>
           <ComparisonBox>
-            <ComparisonLabel2>Average Local Salary</ComparisonLabel2>
-            <ComparisonValue>$65,000/year</ComparisonValue>
+            <ComparisonLabel2 htmlFor="local-salary">Average Local Salary</ComparisonLabel2>
+            <ComparisonValue id="local-salary" role="text" aria-labelledby="local-salary-label">$65,000/year</ComparisonValue>
           </ComparisonBox>
           <ComparisonBox $isGreen>
-            <ComparisonLabel2>Potential Savings</ComparisonLabel2>
-            <ComparisonValue $isGreen>$33,800/year</ComparisonValue>
+            <ComparisonLabel2 htmlFor="potential-savings">Potential Savings</ComparisonLabel2>
+            <ComparisonValue id="potential-savings" role="text" aria-labelledby="potential-savings-label" $isGreen>$33,800/year</ComparisonValue>
           </ComparisonBox>
         </CostSection>
       </CostGrid>

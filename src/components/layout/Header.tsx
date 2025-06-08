@@ -9,6 +9,8 @@ import { FaHome } from 'react-icons/fa';
 import { supabase } from '@/lib/supabase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { useProfile } from '@/contexts/ProfileContext';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
 const HeaderContainer = styled.header`
   position: fixed;
@@ -36,6 +38,13 @@ const HeaderContent = styled.div`
 `;
 
 const Logo = styled.span`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0F172A;
+  text-decoration: none;
+`;
+
+const LogoText = styled.span`
   font-size: 1.5rem;
   font-weight: 700;
   color: #0F172A;
@@ -175,19 +184,6 @@ const IconButton = styled.button`
 
   &:hover {
     background-color: #EAECF0;
-  }
-`;
-
-const Spinner = styled.div`
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(59, 130, 246, 0.1);
-  border-radius: 50%;
-  border-top-color: #3B82F6;
-  animation: spin 1s ease-in-out infinite;
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
   }
 `;
 
@@ -336,13 +332,14 @@ const MobileMenuItem = styled.div`
 `;
 
 const ProfileIcon = styled.div`
-  width: 20px;
-  height: 20px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
+  border-radius: 50%;
 
   img {
     width: 100%;
@@ -351,34 +348,26 @@ const ProfileIcon = styled.div`
   }
 `;
 
-const AvatarSpinner = styled.div`
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(59, 130, 246, 0.1);
-  border-radius: 50%;
-  border-top-color: #3B82F6;
-  animation: spin 1s ease-in-out infinite;
+interface HeaderProps {
+  isLoading?: boolean;
+}
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-`;
-
-const Header = () => {
+const Header: React.FC<HeaderProps> = ({ isLoading = false }) => {
   const router = useRouter();
+  const { profilePicture } = useProfile();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSolutionsOpen, setIsSolutionsOpen] = useState(false);
   const [isLearnOpen, setIsLearnOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setIsProfileOpen(false);
-          }
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -391,19 +380,20 @@ const Header = () => {
 
   const checkAuth = async (preventRedirect = false) => {
     try {
+      setIsAuthChecking(true);
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) throw error;
       
       setIsAuthenticated(!!session);
-      setIsLoading(false);
 
       if (!session && !preventRedirect && router.pathname.startsWith('/user/dashboard')) {
         router.push('/login');
       }
     } catch (error) {
       console.error('Auth check error:', error);
-      setIsLoading(false);
+    } finally {
+      setIsAuthChecking(false);
     }
   };
 
@@ -416,8 +406,8 @@ const Header = () => {
   const handleDashboardClick = async () => {
     if (!isAuthenticated) {
       router.push('/login');
-          return;
-        }
+      return;
+    }
 
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -425,7 +415,7 @@ const Header = () => {
       if (error) throw error;
       
       if (session) {
-            router.push('/user/dashboard');
+        router.push('/user/dashboard');
       } else {
         router.push('/login');
       }
@@ -465,7 +455,9 @@ const Header = () => {
       <Container>
         <HeaderContent>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <Logo>ScaleMate</Logo>
+            <Logo>
+              <LogoText>ScaleMate</LogoText>
+            </Logo>
           </Link>
           
           <Nav>
@@ -575,13 +567,23 @@ const Header = () => {
           </Nav>
 
           <AuthSection>
-            {isLoading ? (
-              <Spinner />
+            {isLoading || isAuthChecking ? (
+              <div style={{ width: '20px', height: '20px', position: 'relative' }}>
+                <LoadingSpinner />
+              </div>
             ) : isAuthenticated ? (
               <ProfileContainer ref={profileRef}>
                 <IconButton onClick={() => setIsProfileOpen(!isProfileOpen)}>
                   <ProfileIcon>
-                    <FaUser size={20} color="#9CA3AF" />
+                    {isLoading ? (
+                      <div style={{ width: '20px', height: '20px', position: 'relative' }}>
+                        <LoadingSpinner />
+                      </div>
+                    ) : profilePicture ? (
+                      <img src={profilePicture} alt="Profile" />
+                    ) : (
+                      <FaUser size={20} color="#9CA3AF" />
+                    )}
                   </ProfileIcon>
                 </IconButton>
                 <ProfileDropdown $isOpen={isProfileOpen}>
@@ -626,16 +628,22 @@ const Header = () => {
         <MobileMenuItem onClick={() => handleMobileNavClick('/about')}>
           About
         </MobileMenuItem>
-        {isAuthenticated ? (
+        {isLoading || isAuthChecking ? (
+          <div style={{ width: '20px', height: '20px', position: 'relative', margin: '1rem' }}>
+            <LoadingSpinner />
+          </div>
+        ) : isAuthenticated ? (
           <>
             <MobileMenuItem onClick={handleDashboardClick}>
-                Dashboard
+              <FaHome size={16} color="#6B7280" />
+              Dashboard
             </MobileMenuItem>
             <MobileMenuItem onClick={handleLogout}>
+              <FiLogOut size={16} />
               Logout
             </MobileMenuItem>
           </>
-          ) : (
+        ) : (
           <>
             <MobileMenuItem onClick={() => handleMobileNavClick('/login')}>
               Log in
@@ -644,7 +652,7 @@ const Header = () => {
               Sign up
             </MobileMenuItem>
           </>
-          )}
+        )}
       </MobileMenu>
     </HeaderContainer>
   );

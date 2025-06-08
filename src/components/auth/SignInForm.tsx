@@ -454,6 +454,12 @@ const SignInForm: React.FC<SignInFormProps> = ({
   const [uiMode, setUiMode] = useState<'signin' | 'verify'>('signin');
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Add isFormValid check
+  const isFormValid = email.trim() !== '' && password.trim() !== '';
+  
+  // Add isVerificationCodeComplete check
+  const isVerificationCodeComplete = verificationCode.every(digit => digit !== '');
+
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
     if (resendCooldown > 0) {
@@ -531,14 +537,44 @@ const SignInForm: React.FC<SignInFormProps> = ({
       }
 
       if (signInData.user) {
+        // Wait for profile refresh to complete
         await refreshProfile();
+        
+        // Get the latest profile data with a retry mechanism
+        let profileData = null;
+        let retries = 3;
+        
+        while (retries > 0 && !profileData) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', signInData.user.id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching profile:', error);
+            retries--;
+            if (retries > 0) {
+              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+              continue;
+            }
+            throw error;
+          }
+          
+          profileData = data;
+        }
+
+        if (!profileData) {
+          throw new Error('Failed to fetch user profile');
+        }
+
         if (onSuccess) {
           await onSuccess();
         }
+
         if (!preventRedirect) {
-          const redirectPath = redirectUrl || 
-            (signInData.user.user_metadata?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
-          // Keep loading state active during redirect
+          // Use the fresh profile data for redirection
+          const redirectPath = profileData.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
           router.replace(redirectPath);
           return; // Don't reset loading state here
         }
@@ -641,10 +677,20 @@ const SignInForm: React.FC<SignInFormProps> = ({
         setOtpError(verifyError.message);
         setIsVerifyingOtp(false);
       } else if (data?.user && data?.session) {
+        // Wait for profile refresh to complete
         await refreshProfile();
+        
+        // Get the latest profile data
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+
         if (!preventRedirect) {
+          // Use the fresh profile data for redirection
           const redirectPath = redirectUrl || 
-            (data.user.user_metadata?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+            (profileData?.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
           router.replace(redirectPath);
           return; // Don't reset verifying state
         }
@@ -701,26 +747,36 @@ const SignInForm: React.FC<SignInFormProps> = ({
           Enter the code below to verify your email and sign in.
         </Subtitle>
         <Form onSubmit={handleVerifyOtpSubmit} noValidate>
-          <VerificationContainer onPaste={handleOtpPaste}>
+          <InputGroup>
+            <Label htmlFor="verification-code-0">Verification Code</Label>
+            <VerificationContainer role="group" aria-labelledby="verification-code-label">
+              <span id="verification-code-label" className="sr-only">Enter the 6-digit verification code</span>
             {verificationCode.map((digit, index) => (
               <VerificationInput
                 key={index}
                 ref={el => { otpInputRefs.current[index] = el; }}
+                  id={`verification-code-${index}`}
                 type="text"
                 maxLength={1}
                 value={digit}
-                onChange={e => handleOtpChange(index, e.target.value)}
-                onKeyDown={e => handleOtpKeyDown(index, e)}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(index, e)}
                 required
                 aria-label={`Digit ${index + 1} of verification code`}
               />
             ))}
           </VerificationContainer>
           {otpError && (
-            <MessageContainer><FiX size={12} />{otpError}</MessageContainer>
+              <MessageContainer>
+                <FiX size={12} />
+                {otpError}
+              </MessageContainer>
           )}
           {confirmationMessage && (
-            <MessageContainer $isSuccess><FiCheck size={12} />{confirmationMessage}</MessageContainer>
+              <MessageContainer $isSuccess>
+                <FiCheck size={12} />
+                {confirmationMessage}
+              </MessageContainer>
           )}
           {resendOtpMessage && (
             <MessageContainer $isSuccess={!resendOtpMessage.toLowerCase().includes('fail') && !resendOtpMessage.toLowerCase().includes('error')}>
@@ -730,11 +786,12 @@ const SignInForm: React.FC<SignInFormProps> = ({
               {resendOtpMessage}
             </MessageContainer>
           )}
+          </InputGroup>
           <ButtonContainer style={{marginTop: '2rem'}}>
             <SecondaryButton type="button" onClick={() => setIsFormSubmitted(false)}>
               Back
             </SecondaryButton>
-            <Button type="submit" disabled={isVerifyingOtp}>
+            <Button type="submit" disabled={isVerifyingOtp || !isVerificationCodeComplete}>
               {isVerifyingOtp ? 'Verifying...' : 'Verify Code'}
             </Button>
           </ButtonContainer>
@@ -813,14 +870,13 @@ const SignInForm: React.FC<SignInFormProps> = ({
               {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
             </PasswordToggle>
           </InputWrapper>
-        </InputGroup>
-
         {error && (
           <MessageContainer>
             <FiX size={12} />
             {error}
           </MessageContainer>
         )}
+        </InputGroup>
 
         {confirmationMessage && (
           <MessageContainer $isSuccess>
@@ -833,7 +889,7 @@ const SignInForm: React.FC<SignInFormProps> = ({
           <Button 
             type="submit" 
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !isFormValid}
           >
             {loading ? 'Signing In' : 'Sign In'}
             {loading && <AnimatedDots />}

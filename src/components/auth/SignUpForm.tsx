@@ -432,6 +432,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
 
   const [nameError, setNameError] = useState('');
 
+  // Add isVerificationCodeComplete check
+  const isVerificationCodeComplete = verificationCode.every(digit => digit !== '');
+
   useEffect(() => {
     if (formData.password) {
       setPasswordValidations({
@@ -568,7 +571,11 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
       }
 
       if (checkData.exists) {
+        if (checkData.status === 'unconfirmed') {
+          setEmailError(checkData.message);
+        } else {
         setEmailError('Email already exists');
+        }
         setLoading(false);
         return;
       }
@@ -597,7 +604,8 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         if (errorMsg) {
           if (errorMsg.toLowerCase().includes('weak') || 
               errorMsg.toLowerCase().includes('password')) {
-            setPasswordError('Password is too weak');
+            // Display the exact error message from Supabase
+            setPasswordError(errorMsg);
             setUiMode('signup');
             setIsFormSubmitted(false);
             setLoading(false);
@@ -677,6 +685,11 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
   };
   
   const allPasswordCriteriaMet = passwordValidations.minLength;
+  const isFormValid = allPasswordCriteriaMet && 
+    passwordsMatch === true && 
+    formData.firstName.trim() !== '' && 
+    formData.lastName.trim() !== '' &&
+    formData.email.trim() !== '';
 
   // OTP Input Change Handler
   const handleOtpChange = (index: number, value: string) => {
@@ -838,11 +851,15 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
           Enter the code below to complete your sign up.
         </Subtitle>
         <Form onSubmit={handleVerifyOtpSubmit}>
-          <VerificationContainer onPaste={handleOtpPaste}>
+          <InputGroup>
+            <Label htmlFor="verification-code-0">Verification Code</Label>
+            <VerificationContainer role="group" aria-labelledby="verification-code-label" onPaste={handleOtpPaste}>
+              <span id="verification-code-label" className="sr-only">Enter the 6-digit verification code</span>
             {verificationCode.map((digit, index) => (
                   <VerificationInput
                     key={index}
-                ref={el => { otpInputRefs.current[index] = el; } }
+                  ref={el => { otpInputRefs.current[index] = el; }}
+                  id={`verification-code-${index}`}
                     type="text"
                     maxLength={1}
                 value={digit}
@@ -873,11 +890,12 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
               {resendOtpMessage}
             </MessageContainer>
           )}
+          </InputGroup>
           <ButtonContainer style={{marginTop: '2rem'}}>
             <SecondaryButton type="button" onClick={switchToSignupMode}>
               Back
             </SecondaryButton>
-            <Button type="submit" disabled={isVerifyingOtp}>
+            <Button type="submit" disabled={isVerifyingOtp || !isVerificationCodeComplete}>
               {isVerifyingOtp ? 'Verifying...' : 'Verify Code'}
             </Button>
           </ButtonContainer>
@@ -985,10 +1003,15 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
                     {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </PasswordToggle>
               </InputWrapper>
-            {/* Only show error, not success, for password minLength */}
-            {formData.password && !passwordValidations.minLength && (
+            {/* Show both length validation and any password errors */}
+            {(formData.password && !passwordValidations.minLength) && (
               <HelperText style={{ color: 'red' }}>
                 <FiX size={12} /> Must be at least 8 characters
+              </HelperText>
+            )}
+            {passwordError && (
+              <HelperText style={{ color: 'red' }}>
+                <FiX size={12} /> {passwordError}
               </HelperText>
             )}
             </FormGroup>
@@ -1021,15 +1044,12 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
             )}
             </FormGroup>
           </FormRow>
-        {/* Display field-specific errors first */}
-        {passwordError && !passwordError.toLowerCase().includes('weak') && <MessageContainer><FiX size={12} />{passwordError}</MessageContainer>}
-        
-        {/* Display general errors or success/confirmation messages */}
+        {/* Remove the separate password error display since it's now in the helper text */}
         {error && !emailError && !passwordError && <MessageContainer><FiX size={12} />{error}</MessageContainer>}
         {successMessage && <MessageContainer $isSuccess><FiCheck size={12} />{successMessage}</MessageContainer>}
 
         <ButtonContainer>
-          <Button type="submit" disabled={loading || !allPasswordCriteriaMet || passwordsMatch === false}>
+          <Button type="submit" disabled={loading || !isFormValid}>
             {loading ? 'Creating Account' : 'Create Account'}
             {loading && <AnimatedDots />}
           </Button>

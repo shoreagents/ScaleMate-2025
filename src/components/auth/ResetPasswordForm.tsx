@@ -210,42 +210,25 @@ const PasswordLabelContainer = styled.div`
 const VerificationContainer = styled.div`
   display: flex;
   gap: 0.5rem;
-  justify-content: space-between;
-  margin-top: 1rem;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  justify-content: center;
+  margin: 1rem 0;
 `;
 
 const VerificationInput = styled.input`
-  flex: 1;
-  height: 3.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
   text-align: center;
   font-size: 1.25rem;
-  font-weight: 600;
   border: 1.5px solid ${props => props.theme.colors.border};
   border-radius: 8px;
   background: white;
   color: ${props => props.theme.colors.text.primary};
   transition: all 0.2s ease;
-  padding: 0;
-  min-width: 0;
 
   &:focus {
     outline: none;
     border-color: ${props => props.theme.colors.primary};
     box-shadow: 0 0 0 3px ${props => props.theme.colors.primary}15;
-  }
-
-  &::-webkit-inner-spin-button,
-  &::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  @media (max-width: 640px) {
-    height: 3rem;
-    font-size: 1.125rem;
   }
 `;
 
@@ -376,14 +359,14 @@ export default function ResetPasswordForm({ email, onSuccess, onError }: ResetPa
 
     // Auto-focus next input if value is entered
     if (value && index < 5) {
-      const nextInput = document.getElementById(`verification-${index + 1}`);
+      const nextInput = document.getElementById(`verification-code-${index + 1}`);
       nextInput?.focus();
     }
   };
 
   const handleVerificationKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
-      const prevInput = document.getElementById(`verification-${index - 1}`);
+      const prevInput = document.getElementById(`verification-code-${index - 1}`);
       prevInput?.focus();
     }
   };
@@ -530,12 +513,13 @@ export default function ResetPasswordForm({ email, onSuccess, onError }: ResetPa
           <FormContent>
             <FormFields>
               <InputGroup>
-                <Label htmlFor="verificationCode">Verification Code</Label>
-                <VerificationContainer>
+                <Label htmlFor="verification-code-0">Verification Code</Label>
+                <VerificationContainer role="group" aria-labelledby="verification-code-label">
+                  <span id="verification-code-label" className="sr-only">Enter the 6-digit verification code</span>
                   {[...Array(6)].map((_, index) => (
                     <VerificationInput
                       key={index}
-                      id={`verification-${index}`}
+                      id={`verification-code-${index}`}
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]*"
@@ -544,6 +528,7 @@ export default function ResetPasswordForm({ email, onSuccess, onError }: ResetPa
                       onChange={(e) => handleVerificationCodeChange(index, e.target.value)}
                       onKeyDown={(e) => handleVerificationKeyDown(index, e)}
                       autoFocus={index === 0}
+                      aria-label={`Digit ${index + 1} of verification code`}
                     />
                   ))}
                 </VerificationContainer>

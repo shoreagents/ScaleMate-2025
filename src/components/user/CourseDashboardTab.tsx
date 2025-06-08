@@ -11,12 +11,20 @@ import {
 
 const Container = styled.div`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const MainContent = styled.main`
   flex: 1;
   padding: 1.5rem;
   background-color: #F9FAFB;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const ProgressOverview = styled.div`
@@ -25,38 +33,76 @@ const ProgressOverview = styled.div`
   border: 1px solid #E5E7EB;
   padding: 1.5rem;
   margin-bottom: 2rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const OverviewHeader = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+  
+  @media only screen and (max-width: 767px) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
 `;
 
-const HeaderText = styled.div``;
+const HeaderText = styled.div`
+  min-width: 0;
+  flex: 1;
+`;
 
 const Title = styled.h2`
   font-size: 1.125rem;
   font-weight: 600;
   color: #0F172A;
+  margin: 0;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const Subtitle = styled.p`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
+  margin: 0.25rem 0 0;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const StatsContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+
+  @media only screen and (max-width: 767px) {
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #E5E7EB;
+  }
 `;
 
 const XPContainer = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  white-space: nowrap;
+
+  @media only screen and (max-width: 767px) {
+    margin-right: auto;
+  }
 `;
 
 const XPText = styled.span`
@@ -67,6 +113,14 @@ const XPText = styled.span`
 const BadgesContainer = styled.div`
   display: flex;
   margin-left: -0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  @media only screen and (max-width: 767px) {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
 `;
 
 const BadgeCircle = styled.div<{ $bgColor: string, $iconColor: string }>`
@@ -78,12 +132,18 @@ const BadgeCircle = styled.div<{ $bgColor: string, $iconColor: string }>`
   align-items: center;
   justify-content: center;
   color: ${props => props.$iconColor};
+  flex-shrink: 0;
 `;
 
 const CourseGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 `;
 
 const CourseCard = styled.div<{ $locked?: boolean }>`
@@ -92,10 +152,20 @@ const CourseCard = styled.div<{ $locked?: boolean }>`
   border: 1px solid #E5E7EB;
   overflow: hidden;
   opacity: ${props => props.$locked ? 0.7 : 1};
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
 `;
 
 const CardContent = styled.div`
   padding: 1.5rem;
+  
+  @media only screen and (max-width: 767px) {
+    padding: 1rem;
+  }
 `;
 
 const CardHeader = styled.div`
@@ -103,6 +173,8 @@ const CardHeader = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 `;
 
 const StatusBadge = styled.span<{ $type: 'progress' | 'new' | 'completed' | 'locked' }>`
@@ -110,6 +182,7 @@ const StatusBadge = styled.span<{ $type: 'progress' | 'new' | 'completed' | 'loc
   font-weight: 500;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
+  white-space: nowrap;
   
   ${props => {
     switch (props.$type) {
@@ -132,19 +205,29 @@ const XPBadge = styled.span`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  white-space: nowrap;
 `;
 
 const CourseTitle = styled.h3`
   font-size: 1.125rem;
   font-weight: 600;
   color: #0F172A;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.5rem;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const CourseDescription = styled.p`
   font-size: 0.875rem;
   color: rgba(15, 23, 42, 0.7);
-  margin-bottom: 1rem;
+  margin: 0 0 1rem;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 `;
 
 const ProgressContainer = styled.div`
@@ -156,12 +239,14 @@ const ProgressHeader = styled.div`
   justify-content: space-between;
   font-size: 0.875rem;
   margin-bottom: 0.5rem;
+  white-space: nowrap;
 `;
 
 const ProgressBar = styled.div`
   height: 0.5rem;
   background-color: #F9FAFB;
   border-radius: 9999px;
+  overflow: hidden;
 `;
 
 const ProgressFill = styled.div<{ $width: number; $completed?: boolean }>`
@@ -169,13 +254,17 @@ const ProgressFill = styled.div<{ $width: number; $completed?: boolean }>`
   border-radius: 9999px;
   width: ${props => props.$width}%;
   background-color: ${props => props.$completed ? '#00E915' : '#3B82F6'};
+  transition: width 0.3s ease;
 `;
 
 const Button = styled.button<{ $primary?: boolean }>`
   width: 100%;
-  padding: 0.5rem 0;
+  padding: 0.75rem 0;
   border-radius: 0.5rem;
   font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
   
   ${props => props.$primary ? `
     background-color: #3B82F6;
@@ -203,6 +292,8 @@ const LockedMessage = styled.div`
   gap: 0.5rem;
   color: rgba(15, 23, 42, 0.7);
   font-size: 0.875rem;
+  padding: 0.75rem;
+  white-space: nowrap;
 `;
 
 const CourseDashboardTab: React.FC = () => {

@@ -225,23 +225,33 @@ const CostSavingsTab: React.FC = () => {
           <RoleCard id="role-entry-1">
             <RoleGrid>
               <FormGroup>
-                <Label>Role Title</Label>
-                <Select>
+                <Label htmlFor="role-title-1">Role Title</Label>
+                <Select id="role-title-1" name="role-title-1">
                   <option>Sales Development Rep</option>
                   <option>Account Manager</option>
                   <option>Operations Manager</option>
                 </Select>
               </FormGroup>
               <FormGroup>
-                <Label>Local Salary</Label>
-                <Input type="text" placeholder="$65,000" />
+                <Label htmlFor="local-salary-1">Local Salary</Label>
+                <Input 
+                  id="local-salary-1" 
+                  name="local-salary-1" 
+                  type="text" 
+                  placeholder="$65,000" 
+                />
               </FormGroup>
               <FormGroup>
-                <Label>Team Size</Label>
-                <Input type="number" defaultValue="2" />
+                <Label htmlFor="team-size-1">Team Size</Label>
+                <Input 
+                  id="team-size-1" 
+                  name="team-size-1" 
+                  type="number" 
+                  defaultValue="2" 
+                />
               </FormGroup>
               <DeleteButtonContainer>
-                <DeleteButton>
+                <DeleteButton type="button" aria-label="Delete role entry">
                   <FontAwesomeIcon icon={faTrash} />
                 </DeleteButton>
               </DeleteButtonContainer>
@@ -251,23 +261,33 @@ const CostSavingsTab: React.FC = () => {
           <RoleCard id="role-entry-2">
             <RoleGrid>
               <FormGroup>
-                <Label>Role Title</Label>
-                <Select>
+                <Label htmlFor="role-title-2">Role Title</Label>
+                <Select id="role-title-2" name="role-title-2">
                   <option>Account Manager</option>
                   <option>Sales Development Rep</option>
                   <option>Operations Manager</option>
                 </Select>
               </FormGroup>
               <FormGroup>
-                <Label>Local Salary</Label>
-                <Input type="text" placeholder="$85,000" />
+                <Label htmlFor="local-salary-2">Local Salary</Label>
+                <Input 
+                  id="local-salary-2" 
+                  name="local-salary-2" 
+                  type="text" 
+                  placeholder="$85,000" 
+                />
               </FormGroup>
               <FormGroup>
-                <Label>Team Size</Label>
-                <Input type="number" defaultValue="1" />
+                <Label htmlFor="team-size-2">Team Size</Label>
+                <Input 
+                  id="team-size-2" 
+                  name="team-size-2" 
+                  type="number" 
+                  defaultValue="1" 
+                />
               </FormGroup>
               <DeleteButtonContainer>
-                <DeleteButton>
+                <DeleteButton type="button" aria-label="Delete role entry">
                   <FontAwesomeIcon icon={faTrash} />
                 </DeleteButton>
               </DeleteButtonContainer>
