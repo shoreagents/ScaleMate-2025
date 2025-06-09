@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import styled from 'styled-components';
 import { supabase } from '@/lib/supabase';
 import { FiEdit2, FiSave, FiX, FiLock, FiMail, FiPhone, FiUser, FiCamera, FiEye, FiEyeOff, FiCheck, FiLoader, FiActivity, FiClock, FiUsers, FiShield } from 'react-icons/fi';
 import { FaMale, FaFemale, FaTransgender, FaQuestion, FaHistory, FaUserPlus, FaUserEdit, FaUserMinus, FaUserCog, FaShieldAlt, FaKey } from 'react-icons/fa';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { countries } from '@/lib/constants/countries';
+import { Modal } from '@/components/ui/Modal';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -65,21 +69,17 @@ const Section = styled.div`
   border-radius: 12px;
   padding: 10px 24px 24px 24px;
   border: 1px solid #E5E7EB;
-  margin-bottom: 24px;
   
   @media (max-width: 884px) {
     padding: 10px 20px 20px 20px;
-    margin-bottom: 16px;
   }
   
   @media (max-width: 768px) {
     padding: 10px 20px 20px 20px;
-    margin-bottom: 16px;
   }
   
   @media (max-width: 480px) {
     padding: 8px 16px 16px 16px;
-    margin-bottom: 12px;
   }
 `;
 
@@ -328,25 +328,52 @@ const GenderSelect = styled.select`
 `;
 
 const Button = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  padding: 0.875rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
   cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.2s;
+  flex: 1;
 
-  &:hover {
-    background-color: #2563eb;
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+const CancelButton = styled(Button)`
+  background: transparent;
+  border: 1.5px solid ${props => props.theme.colors.border};
+  color: ${props => props.theme.colors.text.primary};
+
+  &:hover:not(:disabled) {
+    background: ${props => props.theme.colors.background.secondary};
+    border-color: ${props => props.theme.colors.text.primary};
   }
 
   &:disabled {
-    background-color: #93c5fd;
-    cursor: not-allowed;
+    background: transparent;
+    border-color: ${props => props.theme.colors.border};
+    color: ${props => props.theme.colors.text.secondary};
+  }
+`;
+
+const SubmitButton = styled(Button)`
+  background-color: ${props => props.theme.colors.primary};
+  border: none;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background-color: ${props => props.theme.colors.primaryDark};
+  }
+
+  &:disabled {
+    background: ${props => props.theme.colors.disabled};
   }
 `;
 
@@ -451,17 +478,9 @@ const PasswordChangeForm = styled.form`
 `;
 
 const ButtonGroup = styled.div`
-font-size: 0.875rem;
   display: flex;
-  gap: 12px;
   justify-content: flex-start;
-  margin-top: 32px;
-  
-  @media (max-width: 480px) {
-    flex-direction: column-reverse;
-    gap: 8px;
-    margin-top: 24px;
-  }
+  gap: 1rem;
 `;
 
 const ModalButton = styled.button`
@@ -477,15 +496,21 @@ font-size: 0.875rem;
   gap: 8px;
 `;
 
-const ChooseImageButton = styled(ModalButton)`
-font-size: 0.875rem;
+const CancelButtonV2 = styled(ModalButton)`
+  font-size: 0.875rem;
   background: transparent;
-  border: 1.5px solid #9aa2b3;
+  border: 1.5px solid ${props => props.theme.colors.border};
   color: ${props => props.theme.colors.text.primary};
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: ${props => props.theme.colors.background.secondary};
     border-color: ${props => props.theme.colors.text.primary};
+  }
+
+  &:disabled {
+    background: transparent;
+    border-color: ${props => props.theme.colors.border};
+    color: ${props => props.theme.colors.text.secondary};
   }
   
   @media (max-width: 480px) {
@@ -493,8 +518,8 @@ font-size: 0.875rem;
   }
 `;
 
-const SaveButton = styled(ModalButton)`
-font-size: 0.875rem;
+const SubmitButtonV2 = styled(ModalButton)`
+  font-size: 0.875rem;
   background-color: #3B82F6;
   color: white;
   min-width: 100px;
@@ -515,112 +540,19 @@ font-size: 0.875rem;
   }
 `;
 
-const ProfileModal = styled.div<{ $isOpen: boolean }>`
-  display: ${props => props.$isOpen ? 'block' : 'none'};
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  padding: 20px;
-  
-  @media (max-width: 480px) {
-    padding: 10px;
-  }
-`;
-
-const ProfileModalContent = styled.div`
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  max-width: 350px;
-  margin: 0;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-
-  ${ButtonGroup} {
-    justify-content: center;
-  }
-  
-  @media (max-width: 480px) {
-    max-width: 90%;
-    padding: 20px;
-  }
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 24px;
-  position: relative;
-  
-  @media (max-width: 480px) {
-    margin-bottom: 16px;
-  }
-`;
-
-const ModalTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: ${props => props.theme.colors.text.primary};
-  margin: 0;
-  text-align: left;
-  
-  @media (max-width: 480px) {
-    font-size: 1.125rem;
-  }
-`;
-
-const ModalDescription = styled.p`
-  font-size: 0.875rem;
-  color: #6B7280;
-  text-align: left;
-  margin: 8px 0 0;
-  line-height: 1.5;
-  
-  @media (max-width: 480px) {
-    font-size: 0.75rem;
-    margin: 4px 0 0;
-  }
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  color: #6B7280;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  right: 0;
-  top: 0;
-  
-  &:hover {
-    color: ${props => props.theme.colors.text.primary};
-  }
-`;
-
 const ImagePreview = styled.div`
-  width: 250px;
-  height: 250px;
-  border-radius: 50%;
-  background-color: #f3f4f6;
+  width: 100%;
+  aspect-ratio: 1;
   margin: 0 auto 24px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background-color: #f3f4f6;
   
   @media (max-width: 480px) {
-    width: 200px;
-    height: 200px;
     margin-bottom: 16px;
   }
 `;
@@ -630,6 +562,7 @@ const PreviewImage = styled.img`
   height: 100%;
   object-fit: cover;
   object-position: center;
+  border-radius: 50%;
 `;
 
 const FileInput = styled.input`
@@ -806,7 +739,6 @@ const AccountInfoGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  margin-top: 12px;
   
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
@@ -834,26 +766,149 @@ const AccountInfoValue = styled.div`
   font-weight: 500;
 `;
 
+const PhoneInputWrapper = styled.div`
+  position: relative;
+  z-index: 1000;
+
+  .react-tel-input {
+    .form-control {
+      width: 100%;
+      padding: 8px 12px 8px 48px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      background: white;
+      color: ${props => props.theme.colors.text.primary};
+      transition: all 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+
+    .flag-dropdown {
+      border: 1px solid #e5e7eb;
+      border-radius: 6px 0 0 6px;
+      background-color: white;
+    }
+
+    .selected-flag {
+      border-radius: 6px 0 0 6px;
+      &:hover, &:focus {
+        background-color: #f3f4f6;
+      }
+    }
+
+    .country-list {
+      position: absolute;
+      z-index: 1001;
+      max-height: 200px;
+      overflow-y: auto;
+      width: 300px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      background-color: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .country {
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #f3f4f6;
+      }
+
+      &.highlight {
+        background-color: #f3f4f6;
+      }
+    }
+
+    .search-box {
+      padding: 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background-color: white;
+  color: ${props => props.theme.colors.text.primary};
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+`;
+
+// Add a new styled component for the credentials card
+const CredentialsCard = styled(StatCard)`
+  grid-column: 1 / -1;
+  padding: 20px;
+  
+  @media (max-width: 884px) {
+    padding: 16px;
+  }
+`;
+
+// Add these styled components after the other styled components and before the interfaces
+const UsernameValidationContainer = styled.div`
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  
+  &:empty {
+    display: none;
+  }
+`;
+
+const ValidationMessage = styled.div<{ $type: 'error' | 'success' | 'loading' | 'info' }>`
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: ${props => 
+    props.$type === 'error' ? '#dc2626' :  // red-600
+    props.$type === 'success' ? '#059669' : // green-600
+    props.$type === 'info' ? '#6B7280' :    // gray-500 for info/current username
+    '#6B7280'  // gray-500 for loading
+  };
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+  background: white;
+`;
+
 interface Profile {
   id: string;
   first_name: string;
   last_name: string;
-  username: string;
-  phone_number: string;
   gender: string;
   profile_picture_url: string;
   last_password_change: string;
-  email: string;
   role: string;
   created_at: string;
   updated_at: string;
-}
-
-interface PerformanceStats {
-  total_users: number;
-  active_users: number;
-  total_admins: number;
-  last_activity: string;
+  location: string;
+  phone_number: string;
+  email: string;
+  username: string;
 }
 
 interface AdminProfileProps {
@@ -870,29 +925,31 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
     id: '',
     first_name: '',
     last_name: '',
-    username: '',
-    phone_number: '',
     gender: '',
     profile_picture_url: '',
     last_password_change: '',
-    email: '',
     role: '',
     created_at: '',
-    updated_at: ''
+    updated_at: '',
+    location: '',
+    phone_number: '',
+    email: '',
+    username: ''
   });
   const [profileData, setProfileData] = useState<Profile>({
     id: '',
     first_name: '',
     last_name: '',
-    username: '',
-    phone_number: '',
     gender: '',
     profile_picture_url: '',
     last_password_change: '',
-    email: '',
     role: '',
     created_at: '',
-    updated_at: ''
+    updated_at: '',
+    location: '',
+    phone_number: '',
+    email: '',
+    username: ''
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingContact, setIsEditingContact] = useState(false);
@@ -916,23 +973,21 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
   const [passwordsMatch, setPasswordsMatch] = useState<boolean | null>(null);
   const [currentPasswordValid, setCurrentPasswordValid] = useState<boolean | null>(null);
   const [validatingCurrentPassword, setValidatingCurrentPassword] = useState(false);
-  const [usernameError, setUsernameError] = useState<string | null>(null);
-  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
-  const [checkingUsername, setCheckingUsername] = useState(false);
-  const [currentUsername, setCurrentUsername] = useState<string>('');
   const [passwordLength, setPasswordLength] = useState<boolean | null>(null);
   const [isUpdatingProfilePicture, setIsUpdatingProfilePicture] = useState(false);
-  const [performanceStats, setPerformanceStats] = useState<PerformanceStats>({
-    total_users: 0,
-    active_users: 0,
-    total_admins: 0,
-    last_activity: ''
-  });
-  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isEditingAccount, setIsEditingAccount] = useState(false);
+  const [accountError, setAccountError] = useState<string | null>(null);
+  const [accountSuccess, setAccountSuccess] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [usernameExists, setUsernameExists] = useState<boolean | null>(null);
+  const [isUsernameFocused, setIsUsernameFocused] = useState(false);
+  const usernameCheckTimeout = useRef<NodeJS.Timeout>();
+  const [isValidatingPassword, setIsValidatingPassword] = useState(false);
+  const validationTimeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     fetchProfileData();
-    fetchPerformanceStats();
   }, []);
 
   const fetchProfileData = async () => {
@@ -952,15 +1007,16 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
         id: user.id,
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
-        email: user.email || '',
-        phone_number: profile.phone_number || '',
         gender: profile.gender || '',
         profile_picture_url: profile.profile_picture_url || '',
         last_password_change: profile.last_password_change || '',
-        username: profile.username || '',
         role: profile.role || '',
         created_at: profile.created_at || '',
-        updated_at: profile.updated_at || ''
+        updated_at: profile.updated_at || '',
+        location: profile.location || '',
+        phone_number: profile.phone_number || '',
+        email: user.email || '',
+        username: profile.username || ''
       };
 
       setProfileData(profileData);
@@ -977,15 +1033,31 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
     setIsEditing(false);
     setIsEditingContact(false);
     setIsEditingPassword(false);
+    setIsEditingAccount(false);
+    // Reset password form states
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
     setPasswordsMatch(null);
     setCurrentPasswordValid(null);
+    setPasswordLength(null);
+    setPasswordError(null);
+    setIsValidatingPassword(false);
+    // Clear any pending validation
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
+    // Reset username validation states
     setUsernameError(null);
-    setUsernameExists(null);
     setCheckingUsername(false);
-    setCurrentUsername('');
+    setUsernameExists(null);
+    setIsUsernameFocused(false);
+    if (usernameCheckTimeout.current) {
+      clearTimeout(usernameCheckTimeout.current);
+    }
   };
 
   const handleProfileUpdate = async () => {
@@ -999,9 +1071,9 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
         .update({
           first_name: profileData.first_name,
           last_name: profileData.last_name,
-          phone_number: profileData.phone_number,
           gender: profileData.gender,
-          username: profileData.username,
+          location: profileData.location,
+          phone_number: profileData.phone_number,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -1011,11 +1083,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       if (isEditing) {
         setBasicInfoSuccess('Profile updated successfully');
         setIsEditing(false);
-        // Clear username validation states
-        setUsernameError(null);
-        setUsernameExists(null);
-        setCheckingUsername(false);
-        setCurrentUsername('');
         setTimeout(() => setBasicInfoSuccess(null), 500);
       }
       if (isEditingContact) {
@@ -1037,20 +1104,67 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate all required fields first
+    if (!currentPassword.trim()) {
+      setPasswordError('Current password is required');
+      return;
+    }
+
+    if (!newPassword.trim()) {
+      setPasswordError('New password is required');
+      return;
+    }
+
+    if (!confirmPassword.trim()) {
+      setPasswordError('Please confirm your new password');
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setPasswordError('New passwords do not match');
       return;
     }
 
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters long');
+      return;
+    }
+
+    // Don't allow the same password
+    if (currentPassword === newPassword) {
+      setPasswordError('New password must be different from current password');
+      return;
+    }
+
     try {
+      // Get user from auth
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError) {
+        console.error('Error getting user:', userError);
+        setPasswordError('Failed to get user information');
+        return;
+      }
+
+      if (!user || !user.email) {
+        setPasswordError('User not found or email is missing');
+        return;
+      }
+
       // First verify the current password
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: profileData.email,
+        email: user.email,
         password: currentPassword
       });
 
       if (signInError) {
-        setPasswordError('Current password is incorrect');
+        console.error('Sign in error:', signInError);
+        if (signInError.message.includes('Invalid login credentials')) {
+          setPasswordError('Current password is incorrect');
+        } else {
+          setPasswordError('Failed to verify current password');
+        }
         return;
       }
 
@@ -1061,13 +1175,11 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
 
       if (updateError) {
         console.error('Password update error:', updateError);
-        setPasswordError(updateError.message);
-        return;
-      }
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setPasswordError('User not found');
+        if (updateError.message.includes('password')) {
+          setPasswordError('Password does not meet requirements');
+        } else {
+          setPasswordError(updateError.message || 'Failed to update password');
+        }
         return;
       }
 
@@ -1088,21 +1200,47 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
       }
 
       // Log the password change with the previous date
-      await supabase.rpc('log_profile_change', {
+      const { error: logError } = await supabase.rpc('log_profile_change', {
         p_user_id: user.id,
         p_type: 'password_change',
         p_description: 'Changed Password (Last changed: ' + (previousPasswordChange === 'Never' ? 'Never' : new Date(previousPasswordChange).toLocaleString()) + ')'
       });
 
+      if (logError) {
+        console.error('Log error:', logError);
+        // Don't return here, as the password was changed successfully
+      }
+
+      // Update the profile data with new last_password_change
+      const newLastPasswordChange = new Date().toISOString();
+      setProfileData(prev => ({
+        ...prev,
+        last_password_change: newLastPasswordChange
+      }));
+      setOriginalProfileData(prev => ({
+        ...prev,
+        last_password_change: newLastPasswordChange
+      }));
+
+      // Reset form and show success
       setPasswordSuccess('Password updated successfully');
       setIsEditingPassword(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setTimeout(() => setPasswordSuccess(null), 500);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setPasswordSuccess(null), 3000);
     } catch (error) {
       console.error('Error changing password:', error);
-      setPasswordError(error instanceof Error ? error.message : 'Failed to change password');
+      if (error instanceof Error) {
+        if (error.message.includes('network')) {
+          setPasswordError('Network error. Please check your connection.');
+        } else if (error.message.includes('timeout')) {
+          setPasswordError('Request timed out. Please try again.');
+        } else {
+          setPasswordError(error.message || 'Failed to change password');
+        }
+      } else {
+        setPasswordError('An unexpected error occurred');
+      }
     }
   };
 
@@ -1159,14 +1297,14 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
         const existingPath = profileData.profile_picture_url.split('/').pop();
         if (existingPath) {
           await supabase.storage
-            .from('profile-pictures')
+            .from('profile-images')
             .remove([`${user.id}/${existingPath}`]);
         }
       }
 
       // Upload the new profile picture
       const { error: uploadError, data } = await supabase.storage
-        .from('profile-pictures')
+        .from('profile-images')
         .upload(filePath, selectedFile, {
           cacheControl: '3600',
           upsert: true
@@ -1179,7 +1317,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
 
       // Get the public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('profile-pictures')
+        .from('profile-images')
         .getPublicUrl(filePath);
 
       // Update the user profile with the new picture URL
@@ -1249,79 +1387,64 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
   };
 
   const validateCurrentPassword = async (password: string) => {
+    // Clear any existing timeout
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
+
+    // Don't validate empty password
     if (!password) {
       setCurrentPasswordValid(null);
       return;
     }
 
-    setValidatingCurrentPassword(true);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: profileData.email,
-        password: password
-      });
-      setCurrentPasswordValid(!error);
-    } catch (error) {
+    // Don't validate if password is too short
+    if (password.length < 6) {
       setCurrentPasswordValid(false);
-    } finally {
-      setValidatingCurrentPassword(false);
+      return;
     }
+
+    // Set validating state
+    setIsValidatingPassword(true);
+
+    // Debounce the validation
+    validationTimeoutRef.current = setTimeout(async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !user.email) {
+          setCurrentPasswordValid(false);
+          return;
+        }
+
+        // Only validate if we have a user and email
+        const { error } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: password
+        });
+
+        setCurrentPasswordValid(!error);
+      } catch (error) {
+        console.error('Password validation error:', error);
+        setCurrentPasswordValid(false);
+      } finally {
+        setIsValidatingPassword(false);
+      }
+    }, 500);
   };
 
   const handleCurrentPasswordChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setCurrentPassword(value);
-    await validateCurrentPassword(value);
-  };
-
-  const checkUsernameExists = async (username: string) => {
-    try {
-      setCheckingUsername(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', username)
-        .neq('id', user.id);
-
-      if (error) throw error;
-
-      const exists = profiles && profiles.length > 0;
-      setUsernameExists(exists);
-      setCurrentUsername(username);
-    } catch (error) {
-      console.error('Error checking username:', error);
-      setUsernameError('Failed to check username availability');
-    } finally {
-      setCheckingUsername(false);
+    
+    // Only validate if we're not already validating
+    if (!isValidatingPassword) {
+      await validateCurrentPassword(value);
     }
-  };
-
-  const validateUsername = (value: string) => {
-    // Allow empty value for backspace
-    if (!value) {
-      setUsernameError(null);
-      setUsernameExists(null);
-      return false;
-    }
-    if (!/^[a-zA-Z0-9._-]*$/.test(value)) {
-      setUsernameError('Special characters are not allowed');
-      setUsernameExists(null);
-      return false;
-    }
-    setUsernameError(null);
-    checkUsernameExists(value);
-    return true;
   };
 
   const isBasicInfoValid = () => {
-    const isCurrentUsername = profileData.username === currentUsername;
     return profileData.first_name.trim() !== '' && 
-           profileData.last_name.trim() !== '' &&
-           !usernameError &&
-           (!usernameExists || isCurrentUsername);
+           profileData.last_name.trim() !== '';
   };
 
   const handleModalClose = () => {
@@ -1336,49 +1459,137 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
     onModalStateChange?.(isProfileModalOpen);
   }, [isProfileModalOpen, onModalStateChange]);
 
-  const fetchPerformanceStats = async () => {
-    try {
-      setIsLoadingStats(true);
-      
-      // Fetch total users
-      const { count: totalUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch active users (users who logged in within last 30 days)
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const { count: activeUsers } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .gte('last_sign_in', thirtyDaysAgo.toISOString());
-
-      // Fetch total admins
-      const { count: totalAdmins } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'admin');
-
-      // Get last activity
-      const { data: lastActivity } = await supabase
-        .from('admin_activities')
-        .select('timestamp')
-        .order('timestamp', { ascending: false })
-        .limit(1)
-        .single();
-
-      setPerformanceStats({
-        total_users: totalUsers || 0,
-        active_users: activeUsers || 0,
-        total_admins: totalAdmins || 0,
-        last_activity: lastActivity?.timestamp || ''
-      });
-    } catch (error) {
-      console.error('Error fetching performance stats:', error);
-    } finally {
-      setIsLoadingStats(false);
+  const handleAccountUpdate = async () => {
+    if (usernameError || checkingUsername || usernameExists) {
+      return;
     }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          username: profileData.username,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Update original profile data to match new username
+      setOriginalProfileData(prev => ({ ...prev, username: profileData.username }));
+      
+      // Reset all validation states
+      setUsernameError(null);
+      setCheckingUsername(false);
+      setUsernameExists(null);
+      setIsUsernameFocused(false);
+      if (usernameCheckTimeout.current) {
+        clearTimeout(usernameCheckTimeout.current);
+      }
+
+      setAccountSuccess('Username updated successfully');
+      setIsEditingAccount(false);
+      setTimeout(() => setAccountSuccess(null), 500);
+    } catch (error) {
+      console.error('Error updating account info:', error);
+      setAccountError('Failed to update username');
+    }
+  };
+
+  const validateUsername = (value: string) => {
+    // Clear any existing timeout
+    if (usernameCheckTimeout.current) {
+      clearTimeout(usernameCheckTimeout.current);
+    }
+
+    // Allow empty value for backspace
+    if (!value) {
+      setUsernameError(null);
+      setUsernameExists(null);
+      return;
+    }
+
+    // Validate format immediately
+    if (value.length < 3) {
+      setUsernameError('Username must be at least 3 characters long');
+      setUsernameExists(null);
+      return;
+    }
+
+    if (value.length > 20) {
+      setUsernameError('Username must be less than 20 characters');
+      setUsernameExists(null);
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9._]+$/.test(value)) {
+      setUsernameError('Username can only contain letters, numbers, dots, and underscores');
+      setUsernameExists(null);
+      return;
+    }
+
+    // If username is the same as current user's username, it's valid
+    if (value === profileData.username) {
+      setUsernameExists(false);
+      setUsernameError(null);
+      return;
+    }
+
+    setUsernameError(null);
+    setCheckingUsername(true);
+
+    // Check username availability after a delay
+    usernameCheckTimeout.current = setTimeout(async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Use the check_username_exists RPC function
+        const { data, error } = await supabase
+          .rpc('check_username_exists', { 
+            username_to_check: value,
+            current_user_id: user.id 
+          });
+
+        if (error) {
+          // Handle rate limit error specifically
+          if (error.message.includes('Rate limit exceeded')) {
+            const waitTime = error.message.match(/\d+/)?.[0] || '60';
+            setUsernameError(`Too many checks! Please wait ${waitTime} seconds.`);
+            setUsernameExists(null);
+            return;
+          }
+          
+          // Handle other errors with more concise messages
+          console.error('Error checking username:', error);
+          if (error.message.includes('network')) {
+            setUsernameError('Network error. Please check your connection.');
+          } else if (error.message.includes('timeout')) {
+            setUsernameError('Request timed out. Please try again.');
+          } else {
+            setUsernameError('Too many attempts. Please try again in a few seconds.');
+          }
+          setUsernameExists(null);
+          return;
+        }
+
+        // The RPC function returns a boolean indicating if username exists
+        setUsernameExists(data);
+        if (data) {
+          setUsernameError('This username is already taken');
+        }
+      } catch (err) {
+        console.error('Error checking username:', err);
+        setUsernameExists(null);
+        setUsernameError('Unable to check username. Please try again.');
+      } finally {
+        setCheckingUsername(false);
+      }
+    }, 500);
   };
 
   if (loading) {
@@ -1395,57 +1606,6 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
             </SectionTitle>
             {isEditing ? (
               <>
-                <FormGroup>
-                  <Label>
-                    Username
-                    <RequiredAsterisk>*</RequiredAsterisk>
-                  </Label>
-                  <InputWrapper>
-                    <Input
-                      type="text"
-                      pattern="[a-zA-Z0-9._-]*"
-                      value={profileData.username}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        validateUsername(value);
-                        if (value === '' || e.target.validity.valid) {
-                          setProfileData({ ...profileData, username: value });
-                        }
-                      }}
-                      placeholder="Enter username"
-                    />
-                    {usernameError && (
-                      <HelperText style={{ color: '#dc2626' }}>
-                        <FiX size={14} />
-                        {usernameError}
-                      </HelperText>
-                    )}
-                    {checkingUsername && (
-                      <HelperText style={{ color: '#6b7280' }}>
-                        <FiLoader size={14} />
-                        Checking username...
-                      </HelperText>
-                    )}
-                    {!checkingUsername && !usernameError && usernameExists === false && (
-                      <HelperText style={{ color: '#059669' }}>
-                        <FiCheck size={14} />
-                        Username is available
-                      </HelperText>
-                    )}
-                    {!checkingUsername && !usernameError && usernameExists === true && profileData.username === currentUsername && (
-                      <HelperText style={{ color: '#6b7280' }}>
-                        <FiCheck size={14} />
-                        This is your current username
-                      </HelperText>
-                    )}
-                    {!checkingUsername && !usernameError && usernameExists === true && profileData.username !== currentUsername && (
-                      <HelperText style={{ color: '#dc2626' }}>
-                        <FiX size={14} />
-                        Username is already taken
-                      </HelperText>
-                    )}
-                  </InputWrapper>
-                </FormGroup>
                 <FormGroup>
                   <Label>
                     First Name
@@ -1503,28 +1663,18 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
                   </GenderSelectContainer>
                 </FormGroup>
                 <ButtonGroup>
-                  <ChooseImageButton
-                    type="button"
-                    onClick={handleCancel}
-                  >
+                  <CancelButtonV2 onClick={handleCancel}>
                     Cancel
-                  </ChooseImageButton>
-                  <SaveButton 
-                    onClick={handleProfileUpdate}
-                    disabled={!isBasicInfoValid()}
-                  >
+                  </CancelButtonV2>
+                  <SubmitButtonV2 onClick={handleProfileUpdate} disabled={!isBasicInfoValid()}>
                     Save Changes
-                  </SaveButton>
+                  </SubmitButtonV2>
                 </ButtonGroup>
                 {basicInfoError && <ErrorMessage>{basicInfoError}</ErrorMessage>}
                 {basicInfoSuccess && <SuccessMessage>{basicInfoSuccess}</SuccessMessage>}
               </>
             ) : (
               <>
-                <InfoRow $isEditing={isEditing}>
-                  <InfoLabel $isEditing={isEditing}>Username</InfoLabel>
-                  <InfoValue $isEditing={isEditing}>{profileData.username || '-'}</InfoValue>
-                </InfoRow>
                 <InfoRow $isEditing={isEditing}>
                   <InfoLabel $isEditing={isEditing}>First Name</InfoLabel>
                   <InfoValue $isEditing={isEditing}>{profileData.first_name || '-'}</InfoValue>
@@ -1572,50 +1722,71 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
           {isEditingContact ? (
             <>
               <FormGroup>
-                <Label>Email</Label>
+                <Label>Location</Label>
                 <InputWrapper>
-                  <Input 
-                    value={profileData.email}
-                    disabled
-                    style={{ 
-                      backgroundColor: '#f9fafb',
-                      color: '#6b7280'
-                    }}
-                  />
-                  <HelperText>
-                    Email cannot be changed
-                  </HelperText>
+                  <Select
+                    value={profileData.location}
+                    onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                  >
+                    <option value="">Select your country</option>
+                    {countries.map(country => (
+                      <option key={country.code} value={country.name}>
+                        {country.name}
+                      </option>
+                    ))}
+                  </Select>
                 </InputWrapper>
               </FormGroup>
               <FormGroup>
-                <Label>Phone</Label>
-                <InputWrapper>
-                  <Input
-                    type="tel"
-                    pattern="[0-9]*"
+                <Label>Phone Number</Label>
+                <PhoneInputWrapper>
+                  <PhoneInput
+                    country={countries.find(c => c.name === profileData.location)?.code?.toLowerCase() || 'us'}
                     value={profileData.phone_number}
-                    onChange={(e) => {
-                      if (e.target.validity.valid) {
-                        setProfileData({ ...profileData, phone_number: e.target.value });
-                      }
+                    onChange={(phone: string) => {
+                      const cleanedPhone = phone.replace(/[^\d+]/g, '');
+                      setProfileData(prev => ({ ...prev, phone_number: cleanedPhone }));
                     }}
-                    placeholder="Enter your phone number"
+                    inputProps={{
+                      placeholder: 'Enter your phone number',
+                      autoComplete: 'tel',
+                      'aria-label': 'Phone number'
+                    }}
+                    containerClass="phone-input-container"
+                    buttonClass="phone-input-button"
+                    dropdownClass="phone-input-dropdown"
+                    searchClass="phone-input-search"
+                    inputClass="phone-input-field"
+                    enableSearch={true}
+                    searchPlaceholder="Search country..."
+                    searchNotFound="No country found"
+                    preferredCountries={['us', 'gb', 'ca', 'au', 'nz', 'ph']}
+                    countryCodeEditable={false}
+                    enableAreaCodes={true}
+                    preserveOrder={['onlyCountries', 'preferredCountries']}
+                    specialLabel=""
+                    disableSearchIcon={false}
+                    disableCountryCode={false}
+                    enableTerritories={true}
+                    enableAreaCodeStretch={true}
+                    autoFormat={true}
+                    isValid={(value, country) => {
+                      if (value.length === 0) return true;
+                      return value.length >= 8;
+                    }}
                   />
-                </InputWrapper>
+                </PhoneInputWrapper>
               </FormGroup>
               <ButtonGroup>
-                <ChooseImageButton
-                  type="button"
-                  onClick={handleCancel}
-                >
+                <CancelButtonV2 onClick={handleCancel}>
                   Cancel
-                </ChooseImageButton>
-                <SaveButton onClick={() => {
+                </CancelButtonV2>
+                <SubmitButtonV2 onClick={() => {
                   handleProfileUpdate();
                   setIsEditingContact(false);
                 }}>
                   Save Changes
-                </SaveButton>
+                </SubmitButtonV2>
               </ButtonGroup>
               {contactError && <ErrorMessage>{contactError}</ErrorMessage>}
               {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
@@ -1623,8 +1794,8 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
           ) : (
             <>
               <InfoRow $isEditing={isEditingContact}>
-                <InfoLabel $isEditing={isEditingContact}>Email</InfoLabel>
-                <InfoValue $isEditing={isEditingContact}>{profileData.email}</InfoValue>
+                <InfoLabel $isEditing={isEditingContact}>Location</InfoLabel>
+                <InfoValue $isEditing={isEditingContact}>{profileData.location || '-'}</InfoValue>
               </InfoRow>
               <InfoRow $isEditing={isEditingContact} style={{ borderBottom: 'none' }}>
                 <InfoLabel $isEditing={isEditingContact}>Phone</InfoLabel>
@@ -1641,6 +1812,119 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
                 </EditButton>
               </div>
               {contactSuccess && <SuccessMessage>{contactSuccess}</SuccessMessage>}
+            </>
+          )}
+        </Section>
+      </LeftColumn>
+
+      <RightColumn>
+        <Section>
+          <SectionTitle>
+            Account Info
+          </SectionTitle>
+          {isEditingAccount ? (
+            <>
+              <FormGroup>
+                <Label>Username</Label>
+                <InputWrapper>
+                  <Input
+                    type="text"
+                    value={profileData.username}
+                    onChange={(e) => {
+                      setProfileData({ ...profileData, username: e.target.value });
+                      validateUsername(e.target.value);
+                    }}
+                    onFocus={() => setIsUsernameFocused(true)}
+                    onBlur={() => setIsUsernameFocused(false)}
+                    placeholder="Enter your username"
+                  />
+                  <UsernameValidationContainer>
+                    {usernameError && (
+                      <ValidationMessage $type="error">
+                        <FiX size={14} />
+                        {usernameError}
+                      </ValidationMessage>
+                    )}
+                    {checkingUsername && profileData.username.length >= 3 && !usernameError && (
+                      <ValidationMessage $type="loading">
+                        <FiLoader size={14} className="animate-spin" />
+                        Checking availability...
+                      </ValidationMessage>
+                    )}
+                    {!checkingUsername && !usernameError && profileData.username.length >= 3 && (
+                      <ValidationMessage $type={profileData.username === originalProfileData.username ? 'info' : 'success'}>
+                        {profileData.username === originalProfileData.username ? (
+                          isUsernameFocused ? 'This is your current username' : null
+                        ) : (
+                          <>
+                            <FiCheck size={14} />
+                            This username is available
+                          </>
+                        )}
+                      </ValidationMessage>
+                    )}
+                  </UsernameValidationContainer>
+                </InputWrapper>
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Email</Label>
+                <InputWrapper>
+                  <Input
+                    type="email"
+                    value={profileData.email}
+                    disabled
+                    placeholder="Your email address"
+                  />
+                </InputWrapper>
+              </FormGroup>
+
+              <ButtonGroup>
+                <CancelButtonV2 onClick={() => {
+                  setIsEditingAccount(false);
+                  setProfileData(originalProfileData);
+                  // Reset all username validation states
+                  setUsernameError(null);
+                  setCheckingUsername(false);
+                  setUsernameExists(null);
+                  setIsUsernameFocused(false);
+                  if (usernameCheckTimeout.current) {
+                    clearTimeout(usernameCheckTimeout.current);
+                  }
+                }}>
+                  Cancel
+                </CancelButtonV2>
+                <SubmitButtonV2
+                  onClick={handleAccountUpdate}
+                  disabled={!!usernameError || checkingUsername || !!usernameExists}
+                >
+                  Save Changes
+                </SubmitButtonV2>
+              </ButtonGroup>
+              {accountError && <ErrorMessage>{accountError}</ErrorMessage>}
+              {accountSuccess && <SuccessMessage>{accountSuccess}</SuccessMessage>}
+            </>
+          ) : (
+            <>
+              <InfoRow>
+                <InfoLabel>Username</InfoLabel>
+                <InfoValue>{profileData.username || '-'}</InfoValue>
+              </InfoRow>
+              <InfoRow style={{ borderBottom: 'none' }}>
+                <InfoLabel>Email</InfoLabel>
+                <InfoValue>{profileData.email || '-'}</InfoValue>
+              </InfoRow>
+              <div style={{ marginTop: '16px' }}>
+                <EditButton onClick={() => {
+                  setIsEditingAccount(true);
+                  setIsEditing(false);
+                  setIsEditingContact(false);
+                  setIsEditingPassword(false);
+                }}>
+                  <FiEdit2 />
+                  Edit Account Info
+                </EditButton>
+              </div>
             </>
           )}
         </Section>
@@ -1670,7 +1954,7 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
                     {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </ViewPasswordButton>
                 </PasswordInputContainer>
-                {validatingCurrentPassword ? (
+                {validatingCurrentPassword || isValidatingPassword ? (
                   <PasswordMatchIndicator $matches={true}>
                     <FiLoader size={14} />
                     Verifying...
@@ -1769,19 +2053,15 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
               </PasswordRow>
 
               <ButtonGroup>
-                <ChooseImageButton
-                  type="button"
-                  onClick={handleCancel}
-                >
+                <CancelButtonV2 onClick={handleCancel}>
                   Cancel
-                </ChooseImageButton>
-                <SaveButton 
-                  type="submit"
-                  disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}
-                >
+                </CancelButtonV2>
+                <SubmitButtonV2 type="submit" disabled={!passwordsMatch || !currentPasswordValid || !passwordLength}>
                   Save Changes
-                </SaveButton>
+                </SubmitButtonV2>
               </ButtonGroup>
+              {passwordError && <ErrorMessage>{passwordError}</ErrorMessage>}
+              {passwordSuccess && <SuccessMessage>{passwordSuccess}</SuccessMessage>}
             </PasswordChangeForm>
           ) : (
             <>
@@ -1807,109 +2087,15 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
             </>
           )}
         </Section>
-      </LeftColumn>
-
-      <RightColumn>
-        <Section>
-          <SectionTitle>
-            <FiActivity />
-            Performance Stats
-          </SectionTitle>
-          {isLoadingStats ? (
-            <LoadingSpinner />
-          ) : (
-            <StatsGrid>
-              <StatCard>
-                <StatValue>{performanceStats.total_users}</StatValue>
-                <StatLabel>
-                  <FiUsers />
-                  Total Users
-                </StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>{performanceStats.active_users}</StatValue>
-                <StatLabel>
-                  <FiUser />
-                  Active Users
-                </StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>{performanceStats.total_admins}</StatValue>
-                <StatLabel>
-                  <FiShield />
-                  Total Admins
-                </StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>
-                  {performanceStats.last_activity ? new Date(performanceStats.last_activity).toLocaleDateString() : 'N/A'}
-                </StatValue>
-                <StatLabel>
-                  <FiClock />
-                  Last Activity
-                </StatLabel>
-              </StatCard>
-              <AccountInfoCard>
-                <StatLabel>
-                  <FaUserCog />
-                  Account Info
-                </StatLabel>
-                <AccountInfoGrid>
-                  <AccountInfoItem>
-                    <AccountInfoLabel>
-                      <FaShieldAlt />
-                      Role
-                    </AccountInfoLabel>
-                    <AccountInfoValue>
-                      {profileData.role ? capitalizeFirstLetter(profileData.role) : 'Admin'}
-                    </AccountInfoValue>
-                  </AccountInfoItem>
-                  <AccountInfoItem>
-                    <AccountInfoLabel>
-                      <FaUserPlus />
-                      Account Created
-                    </AccountInfoLabel>
-                    <AccountInfoValue>
-                      {profileData.created_at ? new Date(profileData.created_at).toLocaleDateString() : 'N/A'}
-                    </AccountInfoValue>
-                  </AccountInfoItem>
-                  <AccountInfoItem>
-                    <AccountInfoLabel>
-                      <FaUserEdit />
-                      Last Updated
-                    </AccountInfoLabel>
-                    <AccountInfoValue>
-                      {profileData.updated_at ? new Date(profileData.updated_at).toLocaleDateString() : 'N/A'}
-                    </AccountInfoValue>
-                  </AccountInfoItem>
-                  <AccountInfoItem>
-                    <AccountInfoLabel>
-                      <FaKey />
-                      Last Password Change
-                    </AccountInfoLabel>
-                    <AccountInfoValue>
-                      {profileData.last_password_change ? new Date(profileData.last_password_change).toLocaleDateString() : 'Never'}
-                    </AccountInfoValue>
-                  </AccountInfoItem>
-                </AccountInfoGrid>
-              </AccountInfoCard>
-            </StatsGrid>
-          )}
-        </Section>
       </RightColumn>
 
-      <ProfileModal $isOpen={isProfileModalOpen}>
-        <ProfileModalContent>
-          <ModalHeader>
-            <ModalTitle>Profile Picture</ModalTitle>
-            <ModalDescription>
-              A picture helps people recognize you and lets you know when you're signed in to your account.
-            </ModalDescription>
-            <CloseButton onClick={handleModalClose}>
-              <FiX size={20} />
-            </CloseButton>
-          </ModalHeader>
-
+      <Modal
+        isOpen={isProfileModalOpen}
+        onClose={handleModalClose}
+        title="Profile Picture"
+        size="sm"
+      >
+        <div style={{ textAlign: 'center' }}>
           <ImagePreview>
             {previewImage ? (
               <PreviewImage src={previewImage} alt="Preview" />
@@ -1926,25 +2112,27 @@ const AdminProfile: React.FC<AdminProfileProps> = ({ onProfilePictureChange, onM
           />
 
           <ButtonGroup>
-            <ChooseImageButton
+            <CancelButton
               onClick={() => document.getElementById('profile-picture')?.click()}
               disabled={isUpdatingProfilePicture}
+              style={{ flex: 1 }}
             >
               Choose Image
-            </ChooseImageButton>
-            <SaveButton
+            </CancelButton>
+            <SubmitButtonV2
               onClick={handleProfilePictureUpload}
               disabled={!selectedFile || isUpdatingProfilePicture}
+              style={{ flex: 1 }}
             >
               {isUpdatingProfilePicture ? (
                 <SpinningIcon size={16} />
               ) : (
                 'Update'
               )}
-            </SaveButton>
+            </SubmitButtonV2>
           </ButtonGroup>
-        </ProfileModalContent>
-      </ProfileModal>
+        </div>
+      </Modal>
     </Container>
   );
 };

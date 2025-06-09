@@ -735,6 +735,14 @@ const DashboardPage = () => {
   const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Update activeTab when URL query changes
+  useEffect(() => {
+    const { tab } = router.query;
+    if (tab && typeof tab === 'string') {
+      setActiveTab(tab);
+    }
+  }, [router.query]);
+
   // Initial data fetch
   useEffect(() => {
     const fetchData = async () => {
@@ -912,6 +920,20 @@ const DashboardPage = () => {
 
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
+    // Update URL with the new tab
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, tab }
+    }, undefined, { shallow: true });
+  };
+
+  const handleProfileClick = () => {
+    const newTab = 'profile';
+    setActiveTab(newTab);
+    router.push({
+      pathname: router.pathname,
+      query: { ...router.query, tab: newTab }
+    }, undefined, { shallow: true });
   };
 
   const getTabTitle = (tab: string) => {
@@ -1001,7 +1023,7 @@ const DashboardPage = () => {
           <DashboardHeader
             title={getTabTitle(activeTab)}
             onLogout={handleLogout}
-            onProfileClick={() => setActiveTab('profile')}
+            onProfileClick={handleProfileClick}
             showProfile={activeTab === 'profile'}
           />
           {error && <ErrorMessage>{error}</ErrorMessage>}

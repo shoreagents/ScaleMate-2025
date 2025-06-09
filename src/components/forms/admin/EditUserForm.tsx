@@ -398,8 +398,14 @@ const EditUserModal: FC<EditUserModalProps> = ({
       return;
     }
 
-    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-      setUsernameError('Username can only contain letters, numbers, and underscores');
+    if (value.length > 20) {
+      setUsernameError('Username must be less than 20 characters');
+      setUsernameExists(null);
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9._]+$/.test(value)) {
+      setUsernameError('Username can only contain letters, numbers, dots, and underscores');
       setUsernameExists(null);
       return;
     }
@@ -418,27 +424,42 @@ const EditUserModal: FC<EditUserModalProps> = ({
     usernameCheckTimeout.current = setTimeout(async () => {
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('username')
-          .eq('username', value)
-          .neq('id', selectedUser?.id)
-          .maybeSingle();
+          .rpc('check_username_exists', { 
+            username_to_check: value,
+            current_user_id: selectedUser?.id 
+          });
 
         if (error) {
-          console.error('Error checking username:', error);
-          setUsernameExists(null);
-          setUsernameError('Error checking username availability');
-        } else {
-          const exists = !!data;
-          setUsernameExists(exists);
-          if (exists) {
-            setUsernameError('This username is already taken');
+          // Handle rate limit error specifically
+          if (error.message.includes('Rate limit exceeded')) {
+            const waitTime = error.message.match(/\d+/)?.[0] || '60';
+            setUsernameError(`Too many checks! Please wait ${waitTime} seconds.`);
+            setUsernameExists(null);
+            return;
           }
+          
+          // Handle other errors with more concise messages
+          console.error('Error checking username:', error);
+          if (error.message.includes('network')) {
+            setUsernameError('Network error. Please check your connection.');
+          } else if (error.message.includes('timeout')) {
+            setUsernameError('Request timed out. Please try again.');
+          } else {
+            setUsernameError('Too many attempts. Please try again in a few seconds.');
+          }
+          setUsernameExists(null);
+          return;
+        }
+
+        // The RPC function returns a boolean indicating if username exists
+        setUsernameExists(data);
+        if (data) {
+          setUsernameError('This username is already taken');
         }
       } catch (err) {
         console.error('Error checking username:', err);
         setUsernameExists(null);
-        setUsernameError('Error checking username availability');
+        setUsernameError('Unable to check username. Please try again.');
       } finally {
         setCheckingUsername(false);
       }

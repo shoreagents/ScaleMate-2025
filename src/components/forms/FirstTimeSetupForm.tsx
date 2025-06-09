@@ -644,18 +644,23 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
       setUsernameError(null);
       return false;
     }
-    if (!/^[a-zA-Z0-9._]+$/.test(value)) {
-      setUsernameError('Username can only contain letters, numbers, dots, and underscores');
-      return false;
-    }
+
+    // Validate format immediately
     if (value.length < 3) {
       setUsernameError('Username must be at least 3 characters long');
       return false;
     }
-    if (value.length > 30) {
-      setUsernameError('Username must be less than 30 characters');
+
+    if (value.length > 20) {
+      setUsernameError('Username must be less than 20 characters');
       return false;
     }
+
+    if (!/^[a-zA-Z0-9._]+$/.test(value)) {
+      setUsernameError('Username can only contain letters, numbers, dots, and underscores');
+      return false;
+    }
+
     setUsernameError(null);
     return true;
   };
@@ -681,7 +686,7 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
         // Handle rate limit error specifically
         if (error.message.includes('Rate limit exceeded')) {
           const waitTime = error.message.match(/\d+/)?.[0] || '60';
-          setUsernameError(`Too many checks! Wait ${waitTime} seconds.`);
+          setUsernameError(`Too many checks! Please wait ${waitTime} seconds.`);
           setUsernameExists(null);
           return;
         }
@@ -689,11 +694,11 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
         // Handle other errors with more concise messages
         console.error('Error checking username:', error);
         if (error.message.includes('network')) {
-          setUsernameError('Network error. Check your connection.');
+          setUsernameError('Network error. Please check your connection.');
         } else if (error.message.includes('timeout')) {
-          setUsernameError('Request timed out! Try again.');
+          setUsernameError('Request timed out. Please try again.');
         } else {
-          setUsernameError('Too many attempts! Try again in a few seconds.');
+          setUsernameError('Too many attempts. Please try again in a few seconds.');
         }
         setUsernameExists(null);
         return;
@@ -701,6 +706,9 @@ const FirstTimeSetupForm: React.FC<FirstTimeSetupFormProps> = ({
 
       // The RPC function returns a boolean indicating if username exists
       setUsernameExists(data);
+      if (data) {
+        setUsernameError('This username is already taken');
+      }
       setUsernameError(null); // Clear any previous errors
     } catch (error) {
       console.error('Error checking username:', error);
