@@ -11,7 +11,10 @@ import {
   faChevronUp,
   faTimes,
   faArrowRight,
-  faFileArrowDown
+  faFileArrowDown,
+  faTrash,
+  faEye,
+  faEdit
 } from '@fortawesome/free-solid-svg-icons';
 
 const Container = styled.div`
@@ -354,55 +357,40 @@ const TableRow = styled.tr`
 `;
 
 const TableHeaderCell = styled.th`
-  padding: 1rem 1.5rem; /* px-6 py-4 */
+  padding: 1rem 1.5rem;
   text-align: left;
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 600; /* font-semibold */
+  font-size: 0.875rem;
+  font-weight: 600;
   color: #0F172A;
 `;
 
 const TableCell = styled.td`
-  padding: 1rem 1.5rem; /* px-6 py-4 */
-  color: rgba(15, 23, 42, 0.7); /* text-[#0F172A]/70 for some cells */
+  padding: 1rem 1.5rem;
+  color: rgba(15, 23, 42, 0.7);
 
   .lead-name-container {
     display: flex;
     align-items: center;
-    color: #0F172A; /* Reset color for name container */
+    color: #0F172A;
+    gap: 0.75rem;
   }
 
   .lead-name {
-    font-weight: 500; /* font-medium */
+    font-weight: 500;
   }
 
-  .agent-container {
-    display: flex;
-    align-items: center;
-    color: #0F172A; /* Reset color for agent container */
+  .lead-email {
+    font-size: 0.875rem;
+    color: rgba(15, 23, 42, 0.7);
+    display: block;
   }
 `;
 
 const Avatar = styled.img`
-  width: 2rem; /* w-8 */
-  height: 2rem; /* h-8 */
-  border-radius: 9999px; /* rounded-full */
-  margin-right: 0.75rem; /* Default margin-right */
-
-  &.agent-avatar {
-    width: 1.5rem; /* w-6 */
-    height: 1.5rem; /* h-6 */
-    margin-right: 0.5rem; /* Default for agent avatar variant */
-  }
-
-  @media (max-width: 365px) {
-    margin-right: 0; /* Remove margin-right on very small screens for the main avatar in CardSummary */
-    
-    &.agent-avatar { /* Specific styles for agent avatar in CardDetails at this breakpoint */
-      width: 1.25rem; /* Smaller width for agent avatar: 20px */
-      height: 1.25rem; /* Smaller height for agent avatar: 20px */
-      margin-right: 0.25rem; /* Add a small gap next to the agent name */
-    }
-  }
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  object-fit: cover;
 `;
 
 const Tag = styled.span<{
@@ -660,15 +648,6 @@ const NotesContainer = styled.div`
   gap: 1rem; /* space-y-4 */
 `;
 
-const NoteItem = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem; /* space-x-3 */
-`;
-
-// Re-use Avatar for NoteAvatar, can use .agent-avatar class if sizes match or create specific one
-// const NoteAvatar = styled(Avatar)``;
-
 const NoteBubble = styled.div`
   flex: 1;
   background-color: #F9FAFB;
@@ -682,11 +661,47 @@ const NoteBubble = styled.div`
   }
 `;
 
+const NoteFooter = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.25rem;
+`;
+
 const NoteTimestamp = styled.span`
   font-size: 0.75rem; /* text-xs */
   color: rgba(15, 23, 42, 0.6); /* text-[#0F172A]/60 */
-  margin-top: 0.25rem; /* mt-1 */
-  display: block; /* To ensure it's under the bubble if flex-direction is column for NoteBubble parent */
+`;
+
+const NoteActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const NoteActionButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  color: rgba(15, 23, 42, 0.8);
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #0F172A;
+    background-color: rgba(15, 23, 42, 0.05);
+  }
+
+  &:active {
+    background-color: rgba(15, 23, 42, 0.1);
+  }
+`;
+
+const NoteItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem; /* space-x-3 */
 `;
 
 const NoteTextarea = styled.textarea`
@@ -700,6 +715,39 @@ const NoteTextarea = styled.textarea`
 
   &::placeholder {
     color: rgba(15, 23, 42, 0.4);
+  }
+`;
+
+// Add new styled component after NoteTextarea
+const NoteInputContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+`;
+
+const SendButton = styled.button`
+  align-self: flex-end;
+  background-color: #3B82F6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    background-color: #2563EB;
+  }
+
+  &:disabled {
+    background-color: #93C5FD;
+    cursor: not-allowed;
   }
 `;
 
@@ -738,6 +786,9 @@ const ModalTitle = styled.h3`
   font-size: 1.25rem;
   font-weight: 700;
   color: #0F172A;
+  margin: 0;
+  text-align: center;
+  width: 100%;
 `;
 
 const CloseModalButton = styled.button`
@@ -986,7 +1037,7 @@ const CancelButton = styled.button`
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #F1F5F9;
+    background-color: #F9FAFB;
   }
 `;
 
@@ -1006,11 +1057,248 @@ const DownloadButton = styled.button`
   }
 `;
 
+// Add these styled components after the existing styled components
+const DeleteLeadButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #FEE2E2;
+  color: #DC2626;
+  border: 1px solid #FCA5A5;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 1rem;
+
+  &:hover {
+    background-color: #FECACA;
+    border-color: #F87171;
+  }
+
+  svg {
+    font-size: 1rem;
+  }
+`;
+
+const DeleteConfirmModal = styled(ModalOverlay)`
+  // Inherits from ModalOverlay
+`;
+
+const DeleteConfirmContent = styled(ModalContent)`
+  // Inherits from ModalContent
+`;
+
+const DeleteConfirmTitle = styled(ModalTitle)`
+  color: #DC2626;
+`;
+
+const DeleteConfirmDescription = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  margin-bottom: 1.5rem;
+  text-align: center;
+`;
+
+const DeleteConfirmButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const CancelDeleteButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  background-color: white;
+  color: #0F172A;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 0;
+
+  &:hover {
+    background-color: #F9FAFB;
+    border-color: #D1D5DB;
+  }
+`;
+
+const ConfirmDeleteButton = styled.button`
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background-color: #DC2626;
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #B91C1C;
+  }
+`;
+
+// Add new styled components for comment delete confirmation
+const CommentDeleteModal = styled(ModalOverlay)`
+  // Inherits from ModalOverlay
+`;
+
+const CommentDeleteContent = styled(ModalContent)`
+  // Inherits from ModalContent
+`;
+
+const CommentDeleteTitle = styled(ModalTitle)`
+  color: #DC2626;
+`;
+
+const CommentDeleteDescription = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  margin-bottom: 1.5rem;
+  text-align: center;
+`;
+
+const CommentDeleteButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const ViewDetailsButton = styled.button`
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: #3B82F6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+
+  &:hover {
+    color: #2563EB;
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+`;
+
+// Add new styled component for action icons
+const ActionIconButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
+  border: none;
+  background: none;
+  color: #3B82F6;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+  margin-right: 0.375rem;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  &:hover {
+    color: #2563EB;
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  svg {
+    font-size: 0.875rem;
+  }
+`;
+
+const ActionButtonsContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+// Update badge styles to match UserManagementTab
+const StatusBadge = styled.span`
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  background-color: rgba(0, 233, 21, 0.1);
+  color: #00E915;
+`;
+
+const PlanBadge = styled.span`
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+`;
+
+// Add styled components at the top with other styled components
+const ActionConfirmContent = styled(ModalContent)`
+  width: 440px;
+  padding: 1.5rem;
+`;
+
+const ActionConfirmTitle = styled.h3`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  margin: 0;
+  text-align: center;
+  width: 100%;
+`;
+
+const ActionConfirmDescription = styled.p`
+  color: rgba(15, 23, 42, 0.7);
+  margin: 1rem 0 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+`;
+
+const ActionConfirmButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  width: 100%;
+`;
+
+const ConfirmActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #EF4444;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 0;
+
+  &:hover {
+    background-color: #DC2626;
+  }
+`;
+
 const LeadManagementTab = () => {
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [isDetailSidebarOpen, setIsDetailSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isCommentDeleteModalOpen, setIsCommentDeleteModalOpen] = useState(false);
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [actionType, setActionType] = useState<'delete' | null>(null);
+  const [leadToDelete, setLeadToDelete] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSource, setSelectedSource] = useState('All Sources');
   const [selectedTag, setSelectedTag] = useState('All Tags');
@@ -1023,6 +1311,8 @@ const LeadManagementTab = () => {
     assignedTo: 'Sarah M.',
     notes: ''
   });
+  const [newNote, setNewNote] = useState('');
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
 
   // Example lead data with 5 diverse leads
   const exampleLeads = [
@@ -1220,6 +1510,39 @@ const LeadManagementTab = () => {
     handleCloseExportModal();
   };
 
+  const handleOpenDeleteModal = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+  };
+
+  const handleDeleteLead = () => {
+    // TODO: Implement lead deletion logic
+    console.log('Deleting lead:', selectedLead.id);
+    handleCloseDeleteModal();
+    closeLeadDetailSidebar();
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    setNoteToDelete(noteId);
+    setIsCommentDeleteModalOpen(true);
+  };
+
+  const handleCloseCommentDeleteModal = () => {
+    setIsCommentDeleteModalOpen(false);
+    setNoteToDelete(null);
+  };
+
+  const handleConfirmDeleteNote = () => {
+    if (noteToDelete) {
+      // TODO: Implement note deletion logic
+      console.log('Deleting note:', noteToDelete);
+      handleCloseCommentDeleteModal();
+    }
+  };
+
   // Add useEffect for keyboard events
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -1243,6 +1566,28 @@ const LeadManagementTab = () => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isExportModalOpen]);
 
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isDeleteModalOpen) {
+        handleCloseDeleteModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isDeleteModalOpen]);
+
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isCommentDeleteModalOpen) {
+        handleCloseCommentDeleteModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isCommentDeleteModalOpen]);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
@@ -1257,6 +1602,76 @@ const LeadManagementTab = () => {
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDate(e.target.value);
+  };
+
+  const handleEditNote = (noteId: string) => {
+    // TODO: Implement edit note logic
+    console.log('Edit note:', noteId);
+  };
+
+  const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNewNote(e.target.value);
+  };
+
+  const handleSendNote = () => {
+    if (!newNote.trim()) return;
+    
+    // TODO: Implement note sending logic
+    console.log('Sending note:', newNote);
+    
+    // Clear the input after sending
+    setNewNote('');
+  };
+
+  const handleCloseActionModal = () => {
+    setIsActionModalOpen(false);
+    setActionType(null);
+    setLeadToDelete(null);
+  };
+
+  const handleConfirmAction = () => {
+    if (!actionType || !leadToDelete) return;
+
+    switch (actionType) {
+      case 'delete':
+        console.log('Delete lead:', leadToDelete.id);
+        // TODO: Implement delete lead logic
+        break;
+    }
+
+    handleCloseActionModal();
+  };
+
+  // Add useEffect for action modal keyboard events
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isActionModalOpen) {
+        handleCloseActionModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isActionModalOpen]);
+
+  const getActionModalContent = () => {
+    if (!actionType || !leadToDelete) return null;
+
+    const actionConfig = {
+      delete: {
+        title: 'Delete Lead',
+        description: `Are you sure you want to delete this lead? This action cannot be undone.`,
+        confirmText: 'Delete Lead'
+      }
+    };
+
+    return actionConfig[actionType];
+  };
+
+  // Add handleEditLead function with other handlers
+  const handleEditLead = (lead: any) => {
+    // TODO: Implement edit functionality
+    console.log('Edit lead:', lead.id);
   };
 
   return (
@@ -1320,11 +1735,12 @@ const LeadManagementTab = () => {
               <TableHeaderCell>Tags</TableHeaderCell>
               <TableHeaderCell>Last Action</TableHeaderCell>
               <TableHeaderCell>Assigned To</TableHeaderCell>
+              <TableHeaderCell>Actions</TableHeaderCell>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredLeads.map(lead => (
-              <TableRow key={lead.id} onClick={() => openLeadDetailSidebar(lead)}>
+              <TableRow key={lead.id}>
                 <TableCell>
                   <div className="lead-name-container">
                     <Avatar src={lead.avatarUrl} alt={lead.name} />
@@ -1369,10 +1785,44 @@ const LeadManagementTab = () => {
                 </TableCell>
                 <TableCell style={{ color: 'rgba(15, 23, 42, 0.7)' }}>{lead.lastAction}</TableCell>
                 <TableCell>
-                  <div className="agent-container">
-                    <Avatar src={lead.assignedTo.avatarUrl} alt={lead.assignedTo.name} className="agent-avatar" />
-                    <span>{lead.assignedTo.name}</span>
+                  <div className="lead-name-container">
+                    <Avatar src={lead.assignedTo?.avatarUrl || '/default-avatar.png'} alt={lead.assignedTo?.name || 'Unassigned'} />
+                    <span className="lead-name">{lead.assignedTo?.name || 'Unassigned'}</span>
                   </div>
+                </TableCell>
+                <TableCell>
+                  <ActionButtonsContainer>
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openLeadDetailSidebar(lead);
+                      }}
+                      title="View Details"
+                    >
+                      <FontAwesomeIcon icon={faEye} />
+                    </ActionIconButton>
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditLead(lead);
+                      }}
+                      title="Edit Lead"
+                    >
+                      <FontAwesomeIcon icon={faEdit} />
+                    </ActionIconButton>
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLeadToDelete(lead);
+                        setActionType('delete');
+                        setIsActionModalOpen(true);
+                      }}
+                      title="Delete Lead"
+                      style={{ color: '#EF4444' }}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </ActionIconButton>
+                  </ActionButtonsContainer>
                 </TableCell>
               </TableRow>
             ))}
@@ -1442,9 +1892,9 @@ const LeadManagementTab = () => {
               <DetailRow>
                 <DetailLabel>Assigned To:</DetailLabel>
                 <DetailValue>
-                  <div className="agent-container">
-                    <Avatar src={lead.assignedTo.avatarUrl} alt={lead.assignedTo.name} className="agent-avatar" />
-                    <span>{lead.assignedTo.name}</span>
+                  <div className="lead-name-container">
+                    <Avatar src={lead.assignedTo?.avatarUrl || '/default-avatar.png'} alt={lead.assignedTo?.name || 'Unassigned'} />
+                    <span className="lead-name">{lead.assignedTo?.name || 'Unassigned'}</span>
                   </div>
                 </DetailValue>
               </DetailRow>
@@ -1503,15 +1953,47 @@ const LeadManagementTab = () => {
                       <NoteBubble>
                         <p>{note.text}</p>
                       </NoteBubble>
-                      <NoteTimestamp>{note.timestamp}</NoteTimestamp>
+                      <NoteFooter>
+                        <NoteTimestamp>{note.timestamp}</NoteTimestamp>
+                        <NoteActions>
+                          <NoteActionButton 
+                            onClick={() => handleEditNote(note.id)}
+                            title="Edit note"
+                          >
+                            Edit
+                          </NoteActionButton>
+                          <NoteActionButton 
+                            onClick={() => handleDeleteNote(note.id)}
+                            title="Delete note"
+                          >
+                            Delete
+                          </NoteActionButton>
+                        </NoteActions>
+                      </NoteFooter>
                     </div>
                   </NoteItem>
                 ))}
               </NotesContainer>
-              <div style={{marginTop: '1rem'}}>
-                <NoteTextarea placeholder="Add a note..." />
-              </div>
+              <NoteInputContainer>
+                <NoteTextarea 
+                  placeholder="Add a note..." 
+                  value={newNote}
+                  onChange={handleNoteChange}
+                />
+                <SendButton 
+                  onClick={handleSendNote}
+                  disabled={!newNote.trim()}
+                >
+                  <FontAwesomeIcon icon={faArrowRight} />
+                  Send
+                </SendButton>
+              </NoteInputContainer>
             </InfoCard>
+
+            <DeleteLeadButton onClick={handleOpenDeleteModal}>
+              <FontAwesomeIcon icon={faTrash} />
+              Delete Lead
+            </DeleteLeadButton>
           </SidebarContentWrapper>
         </DetailSidebarAside>
       )}
@@ -1636,6 +2118,78 @@ const LeadManagementTab = () => {
           </ExportModalButtons>
         </ExportModalContent>
       </ExportModalOverlay>
+
+      <DeleteConfirmModal $isOpen={isDeleteModalOpen} onClick={handleCloseDeleteModal}>
+        <DeleteConfirmContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <DeleteConfirmTitle>Delete Lead</DeleteConfirmTitle>
+            <CloseModalButton onClick={handleCloseDeleteModal}>
+              <FontAwesomeIcon icon={faTimes} />
+            </CloseModalButton>
+          </ModalHeader>
+          <DeleteConfirmDescription>
+            Are you sure you want to delete this lead? This action cannot be undone.
+          </DeleteConfirmDescription>
+          <DeleteConfirmButtons>
+            <CancelDeleteButton onClick={handleCloseDeleteModal}>
+              Cancel
+            </CancelDeleteButton>
+            <ConfirmDeleteButton onClick={handleDeleteLead}>
+              Delete Lead
+            </ConfirmDeleteButton>
+          </DeleteConfirmButtons>
+        </DeleteConfirmContent>
+      </DeleteConfirmModal>
+
+      {/* Add Comment Delete Confirmation Modal */}
+      <CommentDeleteModal $isOpen={isCommentDeleteModalOpen} onClick={handleCloseCommentDeleteModal}>
+        <CommentDeleteContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <CommentDeleteTitle>Delete Comment</CommentDeleteTitle>
+            <CloseModalButton onClick={handleCloseCommentDeleteModal}>
+              <FontAwesomeIcon icon={faTimes} />
+            </CloseModalButton>
+          </ModalHeader>
+          <CommentDeleteDescription>
+            Are you sure you want to delete this comment? This action cannot be undone.
+          </CommentDeleteDescription>
+          <CommentDeleteButtons>
+            <CancelDeleteButton onClick={handleCloseCommentDeleteModal}>
+              Cancel
+            </CancelDeleteButton>
+            <ConfirmDeleteButton onClick={handleConfirmDeleteNote}>
+              Delete Comment
+            </ConfirmDeleteButton>
+          </CommentDeleteButtons>
+        </CommentDeleteContent>
+      </CommentDeleteModal>
+
+      {/* Add the action modal before the closing Container tag */}
+      {isActionModalOpen && (
+        <ModalOverlay $isOpen={isActionModalOpen} onClick={handleCloseActionModal}>
+          <ActionConfirmContent onClick={e => e.stopPropagation()}>
+            <ModalHeader>
+              <ActionConfirmTitle style={{ color: '#EF4444' }}>
+                {getActionModalContent()?.title}
+              </ActionConfirmTitle>
+            </ModalHeader>
+            <ActionConfirmDescription>
+              {getActionModalContent()?.description}
+            </ActionConfirmDescription>
+            <ActionConfirmButtons>
+              <CancelDeleteButton onClick={handleCloseActionModal}>
+                Cancel
+              </CancelDeleteButton>
+              <ConfirmActionButton 
+                onClick={handleConfirmAction}
+                style={{ backgroundColor: '#EF4444' }}
+              >
+                {getActionModalContent()?.confirmText}
+              </ConfirmActionButton>
+            </ActionConfirmButtons>
+          </ActionConfirmContent>
+        </ModalOverlay>
+      )}
     </Container>
   );
 };

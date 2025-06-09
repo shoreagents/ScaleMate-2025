@@ -652,14 +652,16 @@ const ResourceManagerTab: React.FC = () => {
     setSelectedType(e.target.value);
   };
 
-  // Handle access filter change
+  // Handle access filter change (for select)
   const handleAccessChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedAccess(e.target.value);
   };
 
-  // Add new handler for radio button changes
-  const handleAccessRadioChange = (value: string) => {
-    setFormData(prev => ({ ...prev, access: value }));
+
+  // Handle access radio change (for form)
+  const handleAccessRadioChange = (access: 'Free' | 'Gated') => {
+    setFormData(prev => ({ ...prev, access }));
+
   };
 
   // Handle tag filter change
