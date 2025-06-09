@@ -1,6 +1,26 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
-import { FaSearch, FaPlus, FaTrophy, FaEye, FaUser, FaKey, FaBan, FaTimes, FaBookOpen, FaFilePdf, FaFileAlt, FaMedal, FaUserPlus } from 'react-icons/fa';
+import { 
+  FaSearch, 
+  FaPlus, 
+  FaTrophy, 
+  FaEye, 
+  FaUser, 
+  FaKey, 
+  FaBan, 
+  FaTimes, 
+  FaBookOpen, 
+  FaFilePdf, 
+  FaFileAlt, 
+  FaMedal, 
+  FaUserPlus, 
+  FaTrash,
+  FaPencilAlt
+} from 'react-icons/fa';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faEdit
+} from '@fortawesome/free-solid-svg-icons';
 
 const Container = styled.div`
   padding: 1.5rem;
@@ -248,91 +268,96 @@ const FloatingActionButton = styled.button`
   }
 `;
 
-const TableContainer = styled.div`
+const TableWrapper = styled.div`
   background-color: white;
-  border-radius: 0.75rem;
+  border-radius: 0.75rem; 
   border: 1px solid #E5E7EB;
-  overflow: hidden;
-  width: 100%;
+  margin-top: 1.5rem; 
 
-  @media (max-width: 1301px) {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    scrollbar-color: #E5E7EB transparent;
-
-    &::-webkit-scrollbar {
-      height: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background-color: #E5E7EB;
-      border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb:hover {
-      background-color: #D1D5DB;
-    }
+  @media (min-width: 889px) {
+    overflow-x: auto; /* Enable horizontal scrolling on tablet/desktop */
   }
 
-  @media (max-width: 887px) {
-    overflow: visible;
-    background: transparent;
-    border: none;
+  @media (max-width: 888px) {
+    display: none; /* Hide table on mobile */
   }
 `;
 
-const Table = styled.table`
+const StyledTable = styled.table`
   width: 100%;
-  border-collapse: collapse;
-  min-width: 800px;
-
-  @media (max-width: 887px) {
-    display: none;
+  @media (min-width: 889px) {
+     /* min-width: 60rem; */ /* Example: Set a min-width for the table itself if needed */
   }
 `;
 
-const TableHead = styled.thead`
+const TableHeader = styled.thead`
   background-color: #F9FAFB;
   border-bottom: 1px solid #E5E7EB;
-`;
-
-const TableHeader = styled.th`
-  padding: 1rem 1.5rem;
-  text-align: left;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #0F172A;
-  background-color: #F9FAFB;
-  border-bottom: 1px solid #E5E7EB;
-
-  &:last-child {
-    text-align: right;
-  }
 `;
 
 const TableBody = styled.tbody`
-  & > tr:not(:last-child) {
-    border-bottom: 1px solid #E5E7EB;
+  & tr {
+    transition: background-color 0.15s ease-in-out;
+  }
+  & tr:hover {
+    background-color: #F9FAFB;
+  }
+  & tr td {
+    /* For divide-y effect, apply border-top to all but first row's cells if not using direct divide class */
+  }
+  /* More robust divide-y would be: */
+  & > tr:not(:first-child) {
+    border-top: 1px solid #E5E7EB;
   }
 `;
 
 const TableRow = styled.tr`
+  border-bottom: 1px solid rgba(15, 23, 42, 0.1);
+  transition: all 0.2s ease;
+  cursor: pointer; /* Add cursor pointer to indicate clickable */
+
   &:hover {
-    background-color: #F9FAFB;
+    background-color: rgba(15, 23, 42, 0.02);
+  }
+
+  &:last-child {
+    border-bottom: none;
   }
 `;
 
-const TableCell = styled.td`
-  padding: 1rem 1.5rem;
+const TableHeaderCell = styled.th`
+  padding: 1rem 1.5rem; /* px-6 py-4 */
+  text-align: left;
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 600; /* font-semibold */
   color: #0F172A;
+`;
 
-  &:last-child {
-    text-align: right;
+const TableCell = styled.td`
+  padding: 1rem 1.5rem; /* px-6 py-4 */
+  color: rgba(15, 23, 42, 0.7); /* text-[#0F172A]/70 for some cells */
+
+  .user-name-container {
+    display: flex;
+    align-items: center;
+    color: #0F172A; /* Reset color for name container */
+    gap: 0.75rem; /* Add consistent gap between avatar and name */
+  }
+
+  .user-name {
+    font-weight: 500; /* font-medium */
+  }
+
+  .user-email {
+    font-size: 0.875rem;
+    color: rgba(15, 23, 42, 0.7);
+    display: block;
+  }
+
+  .agent-container {
+    display: flex;
+    align-items: center;
+    color: #0F172A; /* Reset color for agent container */
   }
 `;
 
@@ -395,16 +420,42 @@ const ActionGroup = styled.div`
   gap: 0.75rem;
 `;
 
+const ActionButtons = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  margin-top: 1rem;
+`;
+
 const ActionButton = styled.button`
-  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: center;
+  background: white;
+  border: 1px solid rgba(15, 23, 42, 0.1);
   color: rgba(15, 23, 42, 0.7);
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s;
 
   &:hover {
-    color: #0F172A;
+    background: rgba(15, 23, 42, 0.02);
+  }
+
+  &.danger {
+    border-color: #EF4444;
+    color: #EF4444;
+
+    &:hover {
+      background: rgba(239, 68, 68, 0.05);
+    }
   }
 `;
 
@@ -691,6 +742,279 @@ const CardActions = styled.div`
   margin-top: 0.5rem;
 `;
 
+const DetailSidebarAside = styled.aside<{ $isOpen: boolean }>`
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 24rem;
+  height: 100%;
+  background-color: #F1F5F9;
+  border-left: 1px solid #E5E7EB;
+  padding: 1.5rem;
+  transform: ${props => props.$isOpen ? 'translateX(0)' : 'translateX(24rem)'};
+  transition: transform 0.3s ease-in-out;
+  z-index: 2000;
+  overflow-y: auto;
+
+  @media (max-width: 382px) {
+    width: 100%;
+    border-left: none;
+    transform: ${props => props.$isOpen ? 'translateX(0)' : 'translateX(100%)'};
+  }
+`;
+
+const SidebarHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+`;
+
+const SidebarTitle = styled.h2`
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0F172A;
+`;
+
+const CloseButton = styled.button`
+  color: rgba(15, 23, 42, 0.4);
+  background: none;
+  border: none;
+  padding: 0.25rem;
+  cursor: pointer;
+  font-size: 1.25rem;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #0F172A;
+  }
+`;
+
+const SidebarContentWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const InfoCard = styled.div`
+  background-color: white;
+  border-radius: 0.75rem;
+  padding: 1rem;
+`;
+
+const UserInfoMain = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+`;
+
+const UserAvatarLarge = styled(Avatar)`
+  width: 3rem;
+  height: 3rem;
+  margin-right: 1rem;
+`;
+
+const UserNameLarge = styled.h3`
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0;
+`;
+
+const UserEmailSmall = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  margin: 0;
+`;
+
+const InfoGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const InfoItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const InfoLabel = styled.span`
+  font-size: 0.75rem;
+  color: rgba(15, 23, 42, 0.6);
+`;
+
+const InfoValue = styled.span`
+  font-size: 0.875rem;
+  color: #0F172A;
+  font-weight: 500;
+`;
+
+const ActionButtonGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+`;
+
+const SidebarActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  background-color: white;
+  color: #0F172A;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+
+  &:hover {
+    background-color: #F9FAFB;
+    border-color: #D1D5DB;
+  }
+
+  svg {
+    font-size: 1rem;
+    color: rgba(15, 23, 42, 0.7);
+  }
+`;
+
+// Add new styled components for action confirmation modals
+const ActionConfirmModal = styled(ModalOverlay)`
+  // Inherits from ModalOverlay
+`;
+
+const ActionConfirmContent = styled(ModalContent)`
+  // Inherits from ModalContent
+`;
+
+const ActionConfirmTitle = styled.h3<{ $action?: 'reset' | 'ban' | 'delete' }>`
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+  width: 100%;
+  color: ${props => 
+    props.$action === 'delete' ? '#EF4444' :
+    props.$action === 'ban' ? '#F59E0B' :
+    '#3B82F6'
+  };
+`;
+
+const ActionConfirmDescription = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  margin-bottom: 1.5rem;
+  text-align: center;
+`;
+
+const ActionConfirmButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+`;
+
+const CancelDeleteButton = styled.button`
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background-color: white;
+  color: rgba(15, 23, 42, 0.7);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: rgba(15, 23, 42, 0.05);
+    border-color: rgba(15, 23, 42, 0.2);
+  }
+`;
+
+const ConfirmActionButton = styled.button<{ $action?: 'reset' | 'ban' | 'delete' }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 0;
+  background-color: ${props => 
+    props.$action === 'delete' ? '#EF4444' :
+    props.$action === 'ban' ? '#F59E0B' :
+    '#3B82F6'
+  };
+
+  &:hover {
+    background-color: ${props => 
+      props.$action === 'delete' ? '#DC2626' :
+      props.$action === 'ban' ? '#D97706' :
+      '#2563EB'
+    };
+  }
+`;
+
+// Add the ViewDetailsButton styled component
+const ViewDetailsButton = styled.button`
+  display: flex;
+  align-items: center;
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: #3B82F6;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+
+  &:hover {
+    color: #2563EB;
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+`;
+
+// Add new styled components for action icons
+const ActionIconButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: #3B82F6;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+  margin-right: 0.5rem;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  &:hover {
+    color: #2563EB;
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  svg {
+    font-size: 1rem;
+  }
+`;
+
+const ActionButtonsContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
 interface CreateUserFormData {
   name: string;
   email: string;
@@ -863,6 +1187,122 @@ const UserManagementTab: React.FC = () => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isCreateUserModalOpen]);
 
+  // Add these to the UserManagementTab component's state
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isDetailSidebarOpen, setIsDetailSidebarOpen] = useState(false);
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [actionType, setActionType] = useState<'reset' | 'ban' | 'delete' | null>(null);
+
+  // Add these handler functions
+  const openUserDetailSidebar = (userData: any) => {
+    setSelectedUser(userData);
+    setIsDetailSidebarOpen(true);
+  };
+
+  const closeUserDetailSidebar = () => {
+    setIsDetailSidebarOpen(false);
+  };
+
+  // Update the handleViewDetails function
+  const handleViewDetails = (user: any) => {
+    openUserDetailSidebar(user);
+  };
+
+  // Add useEffect for keyboard events
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isDetailSidebarOpen) {
+        closeUserDetailSidebar();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isDetailSidebarOpen]);
+
+  const handleResetPassword = () => {
+    setActionType('reset');
+    setIsActionModalOpen(true);
+  };
+
+  const handleBanUser = () => {
+    setActionType('ban');
+    setIsActionModalOpen(true);
+  };
+
+  const handleDeleteUser = () => {
+    setActionType('delete');
+    setIsActionModalOpen(true);
+  };
+
+  const handleCloseActionModal = () => {
+    setIsActionModalOpen(false);
+    setActionType(null);
+  };
+
+  const handleConfirmAction = () => {
+    if (!actionType || !selectedUser) return;
+
+    switch (actionType) {
+      case 'reset':
+        console.log('Reset password for:', selectedUser.id);
+        // TODO: Implement password reset logic
+        break;
+      case 'ban':
+        console.log('Ban user:', selectedUser.id);
+        // TODO: Implement ban user logic
+        break;
+      case 'delete':
+        console.log('Delete user:', selectedUser.id);
+        // TODO: Implement delete user logic
+        break;
+    }
+
+    handleCloseActionModal();
+  };
+
+  // Add useEffect for action modal keyboard events
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isActionModalOpen) {
+        handleCloseActionModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isActionModalOpen]);
+
+  const getActionModalContent = () => {
+    if (!actionType || !selectedUser) return null;
+
+    const actionConfig = {
+      reset: {
+        title: 'Reset Password',
+        description: `Are you sure you want to reset the password for ${selectedUser.name}? A password reset email will be sent to ${selectedUser.email}.`,
+        confirmText: 'Reset Password'
+      },
+      ban: {
+        title: 'Ban User',
+        description: `Are you sure you want to ban ${selectedUser.name}? This will prevent them from accessing their account.`,
+        confirmText: 'Ban User'
+      },
+      delete: {
+        title: 'Delete User',
+        description: `Are you sure you want to delete ${selectedUser.name}'s account? This action cannot be undone.`,
+        confirmText: 'Delete User'
+      }
+    };
+
+    return actionConfig[actionType];
+  };
+
+  // Add handleEditUser function with other handlers
+  const handleEditUser = (user: any) => {
+    // TODO: Implement edit functionality
+    console.log('Edit user:', user.id);
+  };
+
   return (
     <Container>
       <FilterBar>
@@ -901,113 +1341,137 @@ const UserManagementTab: React.FC = () => {
         </StyledButton>
       </FilterBar>
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <tr>
-              <TableHeader>User</TableHeader>
-              <TableHeader>Signup Date</TableHeader>
-              <TableHeader>XP Level</TableHeader>
-              <TableHeader>Plan Type</TableHeader>
-              <TableHeader>Status</TableHeader>
-              <TableHeader>Actions</TableHeader>
-            </tr>
-          </TableHead>
+      <TableWrapper>
+        <StyledTable>
+          <TableHeader>
+            <TableRow>
+              <TableHeaderCell>User</TableHeaderCell>
+              <TableHeaderCell>Signup Date</TableHeaderCell>
+              <TableHeaderCell>Plan Type</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell>Activity Level</TableHeaderCell>
+              <TableHeaderCell>Actions</TableHeaderCell>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {filteredUsers.map(user => (
               <TableRow key={user.id}>
                 <TableCell>
-                  <UserInfo>
+                  <div className="user-name-container">
                     <Avatar src={user.avatarUrl} alt={user.name} />
-                    <UserDetails>
-                      <UserName>{user.name}</UserName>
-                      <UserEmail>{user.email}</UserEmail>
-                    </UserDetails>
-                  </UserInfo>
+                    <div>
+                      <span className="user-name">{user.name}</span>
+                      <span className="user-email">{user.email}</span>
+                    </div>
+                  </div>
                 </TableCell>
-                <TableCell style={{ color: '#0F172A70' }}>{user.signupDate}</TableCell>
+                <TableCell>{user.signupDate}</TableCell>
                 <TableCell>
-                  <XPBadge>
-                    <span>{user.xpLevel.toLocaleString()} XP</span>
-                    <FaTrophy />
-                  </XPBadge>
-                </TableCell>
-                <TableCell>
-                  <PlanBadge>{user.planType}</PlanBadge>
+                  <span className={`plan-badge ${user.planType.toLowerCase()}`}>
+                    {user.planType}
+                  </span>
                 </TableCell>
                 <TableCell>
-                  <StatusBadge>{user.status}</StatusBadge>
+                  <span className={`status-badge ${user.status.toLowerCase()}`}>
+                    {user.status}
+                  </span>
                 </TableCell>
                 <TableCell>
-                  <ActionGroup>
-                    <ActionButton title="View Details">
+                  <span className={`activity-badge ${user.activityLevel.toLowerCase()}`}>
+                    {user.activityLevel}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <ActionButtonsContainer>
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewDetails(user);
+                      }}
+                      title="View Details"
+                    >
                       <FaEye />
-                    </ActionButton>
-                    <ActionButton title="Impersonate">
-                      <FaUser />
-                    </ActionButton>
-                    <ActionButton title="Reset Password">
-                      <FaKey />
-                    </ActionButton>
-                    <ActionButton title="Ban User">
-                      <FaBan />
-                    </ActionButton>
-                  </ActionGroup>
+                    </ActionIconButton>
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditUser(user);
+                      }}
+                      title="Edit User"
+                    >
+                      <FontAwesomeIcon icon={faEdit} />
+                    </ActionIconButton>
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedUser(user);
+                        setActionType('delete');
+                        setIsActionModalOpen(true);
+                      }}
+                      title="Delete User"
+                      style={{ color: '#EF4444' }}
+                    >
+                      <FaTrash />
+                    </ActionIconButton>
+                  </ActionButtonsContainer>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </StyledTable>
+      </TableWrapper>
 
-        <CardContainer>
-          {filteredUsers.map(user => (
-            <UserCard key={user.id}>
-              <CardHeader>
-                <CardUserInfo>
-                  <Avatar src={user.avatarUrl} alt={user.name} />
-                  <UserDetails>
-                    <UserName>{user.name}</UserName>
-                    <UserEmail>{user.email}</UserEmail>
-                  </UserDetails>
-                </CardUserInfo>
-                <CardStatus>
-                  <StatusBadge>{user.status}</StatusBadge>
-                  <PlanBadge>{user.planType}</PlanBadge>
-                </CardStatus>
-              </CardHeader>
-              <CardDetails>
-                <DetailItem>
-                  <DetailLabel>Signup Date</DetailLabel>
-                  <DetailValue>{user.signupDate}</DetailValue>
-                </DetailItem>
-                <DetailItem>
-                  <DetailLabel>XP Level</DetailLabel>
-                  <DetailValue>
-                    <XPBadge>
-                      <span>{user.xpLevel.toLocaleString()} XP</span>
-                      <FaTrophy />
-                    </XPBadge>
-                  </DetailValue>
-                </DetailItem>
-              </CardDetails>
-              <CardActions>
-                <ActionButton title="View Details">
-                  <FaEye />
-                </ActionButton>
-                <ActionButton title="Impersonate">
-                  <FaUser />
-                </ActionButton>
-                <ActionButton title="Reset Password">
-                  <FaKey />
-                </ActionButton>
-                <ActionButton title="Ban User">
-                  <FaBan />
-                </ActionButton>
-              </CardActions>
-            </UserCard>
-          ))}
-        </CardContainer>
-      </TableContainer>
+      <CardContainer>
+        {filteredUsers.map(user => (
+          <UserCard key={user.id}>
+            <CardHeader>
+              <CardUserInfo>
+                <Avatar src={user.avatarUrl} alt={user.name} />
+                <UserDetails>
+                  <UserName>{user.name}</UserName>
+                  <UserEmail>{user.email}</UserEmail>
+                </UserDetails>
+              </CardUserInfo>
+              <CardStatus>
+                <StatusBadge>{user.status}</StatusBadge>
+                <PlanBadge>{user.planType}</PlanBadge>
+              </CardStatus>
+            </CardHeader>
+            <CardDetails>
+              <DetailItem>
+                <DetailLabel>Signup Date</DetailLabel>
+                <DetailValue>{user.signupDate}</DetailValue>
+              </DetailItem>
+              <DetailItem>
+                <DetailLabel>XP Level</DetailLabel>
+                <DetailValue>
+                  <XPBadge>
+                    <span>{user.xpLevel.toLocaleString()} XP</span>
+                    <FaTrophy />
+                  </XPBadge>
+                </DetailValue>
+              </DetailItem>
+            </CardDetails>
+            <CardActions>
+              <ActionButton 
+                title="View Details" 
+                onClick={() => handleViewDetails(user)}
+              >
+                <FaEye />
+              </ActionButton>
+              <ActionButton title="Impersonate">
+                <FaUser />
+              </ActionButton>
+              <ActionButton title="Reset Password">
+                <FaKey />
+              </ActionButton>
+              <ActionButton title="Ban User">
+                <FaBan />
+              </ActionButton>
+            </CardActions>
+          </UserCard>
+        ))}
+      </CardContainer>
 
       <FloatingActionButton onClick={handleOpenCreateUserModal} title="Create User">
         <FaPlus />
@@ -1102,6 +1566,117 @@ const UserManagementTab: React.FC = () => {
           </ModalForm>
         </ModalContent>
       </ModalOverlay>
+
+      {selectedUser && (
+        <DetailSidebarAside $isOpen={isDetailSidebarOpen}>
+          <SidebarHeader>
+            <SidebarTitle>User Details</SidebarTitle>
+            <CloseButton onClick={closeUserDetailSidebar}>
+              <FaTimes />
+            </CloseButton>
+          </SidebarHeader>
+          <SidebarContentWrapper>
+            <InfoCard>
+              <UserInfo>
+                <Avatar src={selectedUser?.avatarUrl} alt={selectedUser?.name} />
+                <div>
+                  <UserName>{selectedUser?.name}</UserName>
+                  <UserEmail>{selectedUser?.email}</UserEmail>
+                </div>
+              </UserInfo>
+              <InfoGrid>
+                <InfoItem>
+                  <InfoLabel>Signup Date</InfoLabel>
+                  <InfoValue>{selectedUser?.signupDate}</InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Plan Type</InfoLabel>
+                  <InfoValue>
+                    <span className={`plan-badge ${selectedUser?.planType.toLowerCase()}`}>
+                      {selectedUser?.planType}
+                    </span>
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Status</InfoLabel>
+                  <InfoValue>
+                    <span className={`status-badge ${selectedUser?.status.toLowerCase()}`}>
+                      {selectedUser?.status}
+                    </span>
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Activity Level</InfoLabel>
+                  <InfoValue>
+                    <span className={`activity-badge ${selectedUser?.activityLevel.toLowerCase()}`}>
+                      {selectedUser?.activityLevel}
+                    </span>
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Progress Status</InfoLabel>
+                  <InfoValue>
+                    <span className={`progress-badge ${selectedUser?.progressStatus.toLowerCase()}`}>
+                      {selectedUser?.progressStatus}
+                    </span>
+                  </InfoValue>
+                </InfoItem>
+                <InfoItem>
+                  <InfoLabel>XP Level</InfoLabel>
+                  <InfoValue>
+                    <XPBadge>
+                      <span>{selectedUser?.xpLevel.toLocaleString()} XP</span>
+                      <FaTrophy />
+                    </XPBadge>
+                  </InfoValue>
+                </InfoItem>
+              </InfoGrid>
+            </InfoCard>
+
+            <ActionButtons>
+              <ActionButton onClick={handleResetPassword}>
+                <FaKey />
+                Reset Password
+              </ActionButton>
+              <ActionButton onClick={handleBanUser}>
+                <FaBan />
+                Ban User
+              </ActionButton>
+              <ActionButton className="danger" onClick={handleDeleteUser}>
+                <FaTrash />
+                Delete User
+              </ActionButton>
+            </ActionButtons>
+          </SidebarContentWrapper>
+        </DetailSidebarAside>
+      )}
+
+      {/* Action Confirmation Modal */}
+      {isActionModalOpen && actionType && (
+        <ModalOverlay $isOpen={isActionModalOpen} onClick={handleCloseActionModal}>
+          <ActionConfirmContent onClick={e => e.stopPropagation()}>
+            <ModalHeader>
+              <ActionConfirmTitle $action={actionType as 'reset' | 'ban' | 'delete'}>
+                {getActionModalContent()?.title}
+              </ActionConfirmTitle>
+            </ModalHeader>
+            <ActionConfirmDescription>
+              {getActionModalContent()?.description}
+            </ActionConfirmDescription>
+            <ActionConfirmButtons>
+              <CancelDeleteButton onClick={handleCloseActionModal}>
+                Cancel
+              </CancelDeleteButton>
+              <ConfirmActionButton 
+                onClick={handleConfirmAction}
+                $action={actionType as 'reset' | 'ban' | 'delete'}
+              >
+                {getActionModalContent()?.confirmText}
+              </ConfirmActionButton>
+            </ActionConfirmButtons>
+          </ActionConfirmContent>
+        </ModalOverlay>
+      )}
     </Container>
   );
 };
