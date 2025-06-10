@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faDownload, faCalendarDays, faEye, faFileLines, faFileArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faDownload, faCalendarDays, faEye, faFileLines, faFileArrowDown, faTrash, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faFileLines as farFileLines } from '@fortawesome/free-regular-svg-icons';
 
 // General container for the tab content
@@ -317,27 +317,36 @@ const AvatarStyled = styled.img`
   margin-right: 0.5rem; /* mr-2 */
 `;
 
+const ActionIconButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border: none;
+  background: none;
+  color: #3B82F6;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+  margin-right: 0.5rem;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  &:hover {
+    color: #2563EB;
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  svg {
+    font-size: 1rem;
+  }
+`;
+
 const ActionButtonsContainer = styled.div`
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem; /* space-x-3 */
-`;
-
-const ActionButtonStyled = styled.button`
-  color: rgba(15, 23, 42, 0.7); /* text-[#0F172A]/70 */
-  background: none;
-  border: none;
-  padding: 0.25rem;
-  cursor: pointer;
-  font-size: 1rem; /* Adjust icon size if needed */
-
-  &:hover {
-  color: #0F172A;
-  }
-  &.hover-primary:hover {
-    color: #3B82F6;
-  }
 `;
 
 // --- Mobile Card Styled Components --- 
@@ -521,6 +530,77 @@ const DownloadButton = styled.button`
   }
 `;
 
+const ModalOverlay = styled.div<{ $isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.4);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  opacity: ${props => props.$isOpen ? 1 : 0};
+  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
+`;
+
+const ModalContent = styled.div`
+  width: 440px;
+  background-color: #F9FAFB;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  position: relative;
+  z-index: 2001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 0.5rem;
+`;
+
+const ModalTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0F172A;
+  text-align: center;
+  margin: 0;
+`;
+
+const ModalDescription = styled.p`
+  font-size: 0.875rem;
+  color: rgba(15, 23, 42, 0.7);
+  text-align: center;
+  margin: 0.5rem 0 1.5rem;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+`;
+
+const ConfirmDeleteButton = styled.button`
+  flex: 1;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
+  background-color: #EF4444;
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #DC2626;
+  }
+`;
+
 const QuoteAnalyticsTab: React.FC = () => {
   // Add filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -690,6 +770,29 @@ const QuoteAnalyticsTab: React.FC = () => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isExportModalOpen]);
 
+  // Add state for delete modal
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [quoteToDelete, setQuoteToDelete] = useState<any>(null);
+
+  // Add delete handlers
+  const handleOpenDeleteModal = (quote: any) => {
+    setQuoteToDelete(quote);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setQuoteToDelete(null);
+  };
+
+  const handleDeleteQuote = () => {
+    if (quoteToDelete) {
+      // TODO: Implement delete quote logic
+      console.log('Deleting quote:', quoteToDelete.id);
+      handleCloseDeleteModal();
+    }
+  };
+
   return (
     <TabContainer>
       <FiltersContainer id="quote-filters">
@@ -775,12 +878,36 @@ const QuoteAnalyticsTab: React.FC = () => {
                 </TableCellStyled>
                 <TableCellStyled>
                   <ActionButtonsContainer>
-                    <ActionButtonStyled title="View Details">
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Implement view details
+                        console.log('View details for quote:', quote.id);
+                      }}
+                      title="View Details"
+                    >
                       <FontAwesomeIcon icon={faEye} />
-                    </ActionButtonStyled>
-                    <ActionButtonStyled title="View Document" className="hover-primary">
+                    </ActionIconButton>
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Implement view document
+                        console.log('View document for quote:', quote.id);
+                      }}
+                      title="View Document"
+                    >
                       <FontAwesomeIcon icon={faFileLines} />
-                    </ActionButtonStyled>
+                    </ActionIconButton>
+                    <ActionIconButton 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenDeleteModal(quote);
+                      }}
+                      title="Delete Quote"
+                      style={{ color: '#EF4444' }}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </ActionIconButton>
                   </ActionButtonsContainer>
                 </TableCellStyled>
               </TableRowStyled>
@@ -820,12 +947,36 @@ const QuoteAnalyticsTab: React.FC = () => {
                 <CardValueStyled className="font-medium">{quote.localCost}</CardValueStyled>
               </CardDetailRow>
               <CardActionsStyled>
-                <ActionButtonStyled title="View Details">
+                <ActionIconButton 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // TODO: Implement view details
+                    console.log('View details for quote:', quote.id);
+                  }}
+                  title="View Details"
+                >
                   <FontAwesomeIcon icon={faEye} />
-                </ActionButtonStyled>
-                <ActionButtonStyled title="View Document" className="hover-primary">
+                </ActionIconButton>
+                <ActionIconButton 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // TODO: Implement view document
+                    console.log('View document for quote:', quote.id);
+                  }}
+                  title="View Document"
+                >
                   <FontAwesomeIcon icon={faFileLines} />
-                </ActionButtonStyled>
+                </ActionIconButton>
+                <ActionIconButton 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenDeleteModal(quote);
+                  }}
+                  title="Delete Quote"
+                  style={{ color: '#EF4444' }}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </ActionIconButton>
               </CardActionsStyled>
             </CardContentStyled>
           </QuoteCardStyled>
@@ -851,6 +1002,25 @@ const QuoteAnalyticsTab: React.FC = () => {
           </ExportModalButtons>
         </ExportModalContent>
       </ExportModalOverlay>
+
+      <ModalOverlay $isOpen={isDeleteModalOpen} onClick={handleCloseDeleteModal}>
+        <ModalContent onClick={e => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle style={{ color: '#EF4444' }}>Delete Quote</ModalTitle>
+          </ModalHeader>
+          <ModalDescription>
+            Are you sure you want to delete this quote? This action cannot be undone.
+          </ModalDescription>
+          <ModalButtons>
+            <CancelButton onClick={handleCloseDeleteModal}>
+              Cancel
+            </CancelButton>
+            <ConfirmDeleteButton onClick={handleDeleteQuote}>
+              Delete Quote
+            </ConfirmDeleteButton>
+          </ModalButtons>
+        </ModalContent>
+      </ModalOverlay>
     </TabContainer>
   );
 };
