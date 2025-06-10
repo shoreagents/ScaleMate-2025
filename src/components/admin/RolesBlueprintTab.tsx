@@ -254,16 +254,39 @@ const ActionButtonsContainer = styled.div`
   gap: 0.75rem;
 `;
 
-const ActionButtonStyled = styled.button`
-  color: rgba(15, 23, 42, 0.7);
-  background: none;
+const ActionButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.375rem;
   border: none;
-  padding: 0.25rem;
+  background: none;
+  color: #3B82F6;
   cursor: pointer;
-  font-size: 1rem;
-  &:hover { color: #0F172A; }
-  &.hover-primary:hover { color: #3B82F6; }
-  &.hover-danger:hover { color: #EC297B; }
+  transition: all 0.2s;
+  border-radius: 0.375rem;
+  margin-right: 0.375rem;
+
+  &:last-child {
+    margin-right: 0;
+  }
+
+  &:hover {
+    color: #2563EB;
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+
+  svg {
+    font-size: 0.875rem;
+  }
+
+  &[data-action="delete"] {
+    color: #EF4444;
+  }
+  &[data-action="delete"]:hover {
+    color: #DC2626;
+    background-color: rgba(239, 68, 68, 0.1);
+  }
 `;
 
 const CardListContainer = styled.div`
@@ -400,27 +423,6 @@ const ActionGroup = styled.div`
   align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-`;
-
-const ActionButton = styled.button`
-  color: rgba(15, 23, 42, 0.7);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1rem;
-  padding: 0.25rem;
-  transition: color 0.2s;
-
-  &:hover {
-    color: #0F172A;
-  }
-
-  &[data-action='edit']:hover {
-    color: #3B82F6;
-  }
-  &[data-action='delete']:hover {
-    color: #EC297B;
-  }
 `;
 
 const ExportModalOverlay = styled.div<{ $isOpen: boolean }>`
@@ -948,17 +950,17 @@ const RolesBlueprintTab: React.FC = () => {
                   <StatusBadge>{role.status}</StatusBadge>
                 </TableCellStyled>
                 <TableCellStyled className="text-right">
-                  <ActionGroup>
+                  <ActionButtonsContainer>
                     <ActionButton title="Favorite">
                       <FontAwesomeIcon icon={faStarRegular} />
                     </ActionButton>
                     <ActionButton title="Edit" data-action="edit">
                       <FontAwesomeIcon icon={faPen} />
                     </ActionButton>
-                    <ActionButton title="Delete" data-action="delete">
+                    <ActionButton title="Delete" data-action="delete" style={{ color: '#EF4444' }}>
                       <FontAwesomeIcon icon={faTrashCanRegular} />
                     </ActionButton>
-                  </ActionGroup>
+                  </ActionButtonsContainer>
                 </TableCellStyled>
               </TableRowStyled>
             ))}
