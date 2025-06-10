@@ -178,13 +178,14 @@ const TagButton = styled.button`
 
 const TableContainer = styled.div`
   background-color: white;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   border: 1px solid #E5E7EB;
-  overflow: hidden;
+  margin-top: 1.5rem;
 
   @media (min-width: 889px) {
     overflow-x: auto;
   }
+
   @media (max-width: 888px) {
     display: none;
   }
@@ -203,20 +204,29 @@ const TableHeaderCell = styled.th`
   padding: 1rem 1.5rem;
   text-align: left;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #0F172A;
 `;
 
 const TableBody = styled.tbody`
-  tr {
-    &:hover {
-      background-color: #F9FAFB;
-    }
+  & tr {
+    transition: background-color 0.15s ease-in-out;
+  }
+  & tr:hover {
+    background-color: #F9FAFB;
+  }
+  & > tr:not(:first-child) {
+    border-top: 1px solid #E5E7EB;
   }
 `;
 
 const TableRow = styled.tr`
-  border-bottom: 1px solid #E5E7EB;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #F9FAFB;
+  }
 
   &:last-child {
     border-bottom: none;
@@ -225,6 +235,18 @@ const TableRow = styled.tr`
 
 const TableCell = styled.td`
   padding: 1rem 1.5rem;
+  color: rgba(15, 23, 42, 0.7);
+
+  .resource-title-container {
+    display: flex;
+    align-items: center;
+    color: #0F172A;
+    gap: 0.75rem;
+  }
+
+  .resource-title {
+    font-weight: 500;
+  }
 `;
 
 const ResourceTitle = styled.div`
@@ -809,10 +831,10 @@ const ResourceManagerTab: React.FC = () => {
             {filteredResources.map(resource => (
               <TableRow key={resource.id}>
                 <TableCell>
-                  <ResourceTitle>
+                  <div className="resource-title-container">
                     {resource.icon}
-                    {resource.title}
-                  </ResourceTitle>
+                    <span className="resource-title">{resource.title}</span>
+                  </div>
                 </TableCell>
                 <TableCell>{resource.type}</TableCell>
                 <TableCell>
