@@ -14,7 +14,12 @@ import {
   faFileArrowDown,
   faTrash,
   faEye,
-  faEdit
+  faEdit,
+  faGlobe,
+  faChartLine,
+  faTag,
+  faComment,
+  faCircleCheck
 } from '@fortawesome/free-solid-svg-icons';
 
 const Container = styled.div`
@@ -351,9 +356,12 @@ const TableBody = styled.tbody`
 `;
 
 const TableRow = styled.tr`
-  /* hover:bg-[#F9FAFB] is handled by TableBody hover */
-  /* cursor-pointer can be added if rows are interactive */
-  cursor: pointer; 
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+
+  &:hover {
+    background-color: #F9FAFB;
+  }
 `;
 
 const TableHeaderCell = styled.th`
@@ -576,8 +584,10 @@ const SidebarContentWrapper = styled.div`
 
 const InfoCard = styled.div`
   background-color: white;
-  border-radius: 0.75rem; /* rounded-xl */
-  padding: 1rem; /* p-4 */
+  border-radius: 0.75rem;
+  border: 1px solid #E5E7EB;
+  padding: 1.5rem;
+  margin-bottom: 0;  // Remove all margins between cards
 `;
 
 const LeadInfoMain = styled.div`
@@ -605,10 +615,15 @@ const LeadEmailSmall = styled.p`
 `;
 
 const SectionTitle = styled.h4`
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 600; /* font-semibold */
+  font-size: 1rem;
+  font-weight: 700;
   color: #0F172A;
-  margin-bottom: 0.5rem; /* mb-2 */
+  margin: 1rem 0 1rem 0;
+  padding: 0;
+  background: none;
+  border: none;
+  z-index: 1;
+  position: relative;
 `;
 
 const SourceFunnelContainer = styled.div`
@@ -1058,33 +1073,6 @@ const DownloadButton = styled.button`
 `;
 
 // Add these styled components after the existing styled components
-const DeleteLeadButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.75rem;
-  background-color: #FEE2E2;
-  color: #DC2626;
-  border: 1px solid #FCA5A5;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-top: 1rem;
-
-  &:hover {
-    background-color: #FECACA;
-    border-color: #F87171;
-  }
-
-  svg {
-    font-size: 1rem;
-  }
-`;
-
 const DeleteConfirmModal = styled(ModalOverlay)`
   // Inherits from ModalOverlay
 `;
@@ -1287,6 +1275,140 @@ const ConfirmActionButton = styled.button`
   &:hover {
     background-color: #DC2626;
   }
+`;
+
+// Add these styled components after the existing styled components
+const ActivityLogCard = styled(InfoCard)`
+  margin-top: 0;  // Ensure no top margin
+`;
+
+const ActivityList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const ActivityItem = styled.div`
+  display: flex;
+  gap: 0.75rem;
+  position: relative;
+  padding-left: 1.5rem;
+
+  &:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 0.25rem;
+    top: 0.5rem;
+    bottom: -1rem;
+    width: 1px;
+    background-color: #E5E7EB;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.5rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background-color: #E5E7EB;
+  }
+`;
+
+const ActivityContent = styled.div`
+  flex: 1;
+`;
+
+const ActivityText = styled.p`
+  margin: 0;
+  font-size: 0.875rem;
+  color: #1F2937;
+  line-height: 1.4;
+`;
+
+const ActivityTimestamp = styled.span`
+  font-size: 0.75rem;
+  color: #6B7280;
+  margin-top: 0.25rem;
+  display: block;
+`;
+
+// Add this type definition with the other types
+type ActivityType = 'note' | 'status' | 'score' | 'tag' | 'source';
+
+interface Activity {
+  id: string;
+  type: ActivityType;
+  text: string;
+  timestamp: string;
+  bgColor: string;
+}
+
+// Add this mock data with the other mock data
+const mockActivities: Activity[] = [
+  {
+    id: '1',
+    type: 'source',
+    text: 'Lead captured from Website Contact Form',
+    timestamp: '2024-03-15 09:30 AM',
+    bgColor: '#3B82F6'
+  },
+  {
+    id: '2',
+    type: 'score',
+    text: 'Interest score updated to 85%',
+    timestamp: '2024-03-15 10:15 AM',
+    bgColor: '#10B981'
+  },
+  {
+    id: '3',
+    type: 'tag',
+    text: 'Tagged as "Qualified"',
+    timestamp: '2024-03-15 11:00 AM',
+    bgColor: '#8B5CF6'
+  },
+  {
+    id: '4',
+    type: 'note',
+    text: 'Initial contact made by James',
+    timestamp: '2024-03-15 02:30 PM',
+    bgColor: '#F59E0B'
+  },
+  {
+    id: '5',
+    type: 'status',
+    text: 'Status updated to "In Progress"',
+    timestamp: '2024-03-15 03:45 PM',
+    bgColor: '#EC4899'
+  }
+];
+
+// Add this component before the LeadManagementTab component
+const ActivityLog: React.FC<{ activities: Activity[] }> = ({ activities }) => {
+  return (
+    <ActivityLogCard>
+      <SectionTitle>Activity Log</SectionTitle>
+      <ActivityList>
+        {activities.map((activity) => (
+          <ActivityItem key={activity.id}>
+            <ActivityContent>
+              <ActivityText>{activity.text}</ActivityText>
+              <ActivityTimestamp>{activity.timestamp}</ActivityTimestamp>
+            </ActivityContent>
+          </ActivityItem>
+        ))}
+      </ActivityList>
+    </ActivityLogCard>
+  );
+};
+
+// Add a styled component for the checkbox
+const Checkbox = styled.input.attrs({ type: 'checkbox' })`
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: #3B82F6;
+  margin: 0;
 `;
 
 const LeadManagementTab = () => {
@@ -1729,18 +1851,26 @@ const LeadManagementTab = () => {
         <StyledTable>
           <TableHeader>
             <TableRow>
+              <TableHeaderCell style={{ width: '2.5rem' }}>
+                <Checkbox />
+              </TableHeaderCell>
               <TableHeaderCell>Name</TableHeaderCell>
               <TableHeaderCell>Email</TableHeaderCell>
               <TableHeaderCell>Source</TableHeaderCell>
               <TableHeaderCell>Tags</TableHeaderCell>
               <TableHeaderCell>Last Action</TableHeaderCell>
               <TableHeaderCell>Assigned To</TableHeaderCell>
-              <TableHeaderCell>Actions</TableHeaderCell>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredLeads.map(lead => (
-              <TableRow key={lead.id}>
+              <TableRow 
+                key={lead.id}
+                onClick={() => openLeadDetailSidebar(lead)}
+              >
+                <TableCell style={{ width: '2.5rem' }} onClick={e => e.stopPropagation()}>
+                  <Checkbox />
+                </TableCell>
                 <TableCell>
                   <div className="lead-name-container">
                     <Avatar src={lead.avatarUrl} alt={lead.name} />
@@ -1790,40 +1920,6 @@ const LeadManagementTab = () => {
                     <span className="lead-name">{lead.assignedTo?.name || 'Unassigned'}</span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <ActionButtonsContainer>
-                    <ActionIconButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openLeadDetailSidebar(lead);
-                      }}
-                      title="View Details"
-                    >
-                      <FontAwesomeIcon icon={faEye} />
-                    </ActionIconButton>
-                    <ActionIconButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditLead(lead);
-                      }}
-                      title="Edit Lead"
-                    >
-                      <FontAwesomeIcon icon={faEdit} />
-                    </ActionIconButton>
-                    <ActionIconButton 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setLeadToDelete(lead);
-                        setActionType('delete');
-                        setIsActionModalOpen(true);
-                      }}
-                      title="Delete Lead"
-                      style={{ color: '#EF4444' }}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </ActionIconButton>
-                  </ActionButtonsContainer>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -1836,6 +1932,7 @@ const LeadManagementTab = () => {
           <LeadCard key={lead.id}>
             <CardHeader onClick={() => openLeadDetailSidebar(lead)}>
               <CardSummary>
+                <Checkbox onClick={e => e.stopPropagation()} />
                 <Avatar src={lead.avatarUrl} alt={lead.name} />
                 <CardNameEmailContainer>
                   <CardName>{lead.name}</CardName>
@@ -1990,10 +2087,8 @@ const LeadManagementTab = () => {
               </NoteInputContainer>
             </InfoCard>
 
-            <DeleteLeadButton onClick={handleOpenDeleteModal}>
-              <FontAwesomeIcon icon={faTrash} />
-              Delete Lead
-            </DeleteLeadButton>
+            {/* Activity Log Card */}
+            <ActivityLog activities={mockActivities} />
           </SidebarContentWrapper>
         </DetailSidebarAside>
       )}
