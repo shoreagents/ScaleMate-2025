@@ -53,6 +53,8 @@ import QuizManagerTab from '@/components/admin/QuizManagerTab';
 import ContentBlocksTab from '@/components/admin/ContentBlocksTab';
 import SystemSettingsTab from '@/components/admin/SystemSettingsTab';
 import { withRoleProtection } from '@/components/auth/withRoleProtection';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 
 const DashboardContainer = styled.div`
   display: flex;
@@ -681,6 +683,8 @@ const DashboardPage = () => {
   const [userData, setUserData] = useState<any>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tabTitle, setTabTitle] = useState('Blog Management');
+  const [isNewPostMode, setIsNewPostMode] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -749,6 +753,9 @@ const DashboardPage = () => {
     setIsModalOpen(isOpen);
   };
 
+  // Handler to exit new post mode
+  const handleBackFromNewPost = () => setIsNewPostMode(false);
+
   const renderContent = () => {
     switch (activeTab) {
       case 'profile':
@@ -768,7 +775,7 @@ const DashboardPage = () => {
       case 'system-settings':
         return <SystemSettingsTab />;
       case 'content-management':
-        return <BlogTab />;
+        return <BlogTab onTitleChange={setTabTitle} isNewPostMode={isNewPostMode} setIsNewPostMode={setIsNewPostMode} />;
       case 'resource-library':
         return <ResourceManagerTab />;
       case 'course-management':
@@ -822,14 +829,14 @@ const DashboardPage = () => {
       />
       <MainContent>
         <DashboardHeader
-            title={getTabTitle(activeTab)}
+          title={tabTitle}
           profilePicture={profilePicture}
           onLogout={handleLogout}
-            onProfileClick={() => setActiveTab('profile')}
-            showProfile={activeTab === 'profile'}
-            isLoading={isLoadingProfile}
+          onProfileClick={() => setActiveTab('profile')}
+          showProfile={activeTab === 'profile'}
+          isLoading={isLoadingProfile}
         />
-          {renderContent()}
+        {renderContent()}
       </MainContent>
     </DashboardContainer>
     </NoNavbarLayout>
