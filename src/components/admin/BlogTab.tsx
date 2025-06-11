@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -13,8 +13,10 @@ import {
   faItalic,
   faLink,
   faList,
-  faFeatherPointed
+  faFeatherPointed,
+  faArrowLeft
 } from '@fortawesome/free-solid-svg-icons';
+import NewBlogPost from '../ui/NewBlogPost';
 
 const Container = styled.div`
   padding: 1.5rem;
@@ -336,230 +338,21 @@ const CardActions = styled.div`
   padding-top: 0.75rem;
 `;
 
-// Modal styled components
-const ModalOverlay = styled.div<{ $isOpen: boolean }>`
-  position: fixed;
-  inset: 0;
-  background-color: rgba(15, 23, 42, 0.4);
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.2s;
-  opacity: ${props => props.$isOpen ? 1 : 0};
-  pointer-events: ${props => props.$isOpen ? 'auto' : 'none'};
-`;
-
-const ModalContent = styled.div`
-  width: 100%;
-  max-width: 26rem;
-  background-color: white;
-  border-radius: 1rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  padding: 2rem;
-  position: relative;
-  z-index: 2001;
-`;
-
-const CloseModalButton = styled.button`
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  color: rgba(15, 23, 42, 0.4);
-  font-size: 1.5rem;
-  background: none;
-  border: none;
-  padding: 0.25rem;
-  cursor: pointer;
-  transition: color 0.2s;
-  &:hover { color: #0F172A; }
-`;
-
-const ModalHeader = styled.div`
-  margin-bottom: 1.5rem;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0F172A;
-`;
-
-const ModalSubtitle = styled.p`
-  color: rgba(15, 23, 42, 0.6);
-  font-size: 0.95rem;
-`;
-
-const ModalForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-`;
-
-const FormLabel = styled.label`
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #0F172A;
-`;
-
-const FormInput = styled.input`
-  width: 100%;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  color: #0F172A;
-  font-size: 0.875rem;
-  transition: border-color 0.2s;
-  background: white;
-  &:focus {
-    outline: none;
-    border-color: #3B82F6;
-  }
-`;
-
-const TagInputRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-`;
-
-const TagChip = styled.span<{ $color: string }>`
-  display: flex;
-  align-items: center;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-  background-color: ${props => `${props.$color}10`};
-  color: ${props => props.$color};
-  font-size: 0.75rem;
-  font-weight: 600;
-  gap: 0.25rem;
-`;
-
-const TagRemoveButton = styled.button`
-  background: none;
-  border: none;
-  color: inherit;
-  font-size: 0.9em;
-  margin-left: 0.25rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-`;
-
-const AuthorRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const AuthorSelect = styled.select`
-  flex: 1;
-  padding: 0.5rem 1rem;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.5rem;
-  color: #0F172A;
-  font-size: 0.875rem;
-  background: white;
-  &:focus {
-    outline: none;
-    border-color: #3B82F6;
-  }
-`;
-
-const ToggleRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const ToggleLabel = styled.span`
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #0F172A;
-`;
-
-const ToggleButton = styled.button<{ $isActive: boolean }>`
-  width: 2.5rem;
-  height: 1.25rem;
-  background-color: ${props => props.$isActive ? '#3B82F6' : '#E5E7EB'};
-  border-radius: 9999px;
-  position: relative;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-`;
-
-const ToggleKnob = styled.span<{ $isActive: boolean }>`
-  position: absolute;
-  left: ${props => props.$isActive ? '1.25rem' : '0.25rem'};
-  top: 0.125rem;
-  width: 1rem;
-  height: 1rem;
-  background-color: white;
-  border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  transition: left 0.2s;
-`;
-
-const DateInput = styled.input`
-  width: 100%;
-  border: 1px solid #E5E7EB;
-  border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
-  color: #0F172A;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-  background: white;
-  &:focus {
-    outline: none;
-    border-color: #3B82F6;
-  }
-`;
-
-const SubmitButton = styled.button`
-  width: 100%;
-  background-color: #3B82F6;
-  color: white;
-  font-weight: 700;
-  font-size: 1rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  border: none;
-  cursor: pointer;
-  margin-top: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s;
-  &:hover { background-color: #2563EB; }
-`;
-
-const BlogTab: React.FC = () => {
+/**
+ * BlogTab component for admin dashboard.
+ * @param {function} onTitleChange - Optional callback to set the parent header title dynamically.
+ * @param {boolean} isNewPostMode - Whether the new post screen is active (controlled by parent).
+ * @param {function} setIsNewPostMode - Function to set new post mode (controlled by parent).
+ */
+const BlogTab: React.FC<{
+  onTitleChange?: (title: string) => void;
+  isNewPostMode?: boolean;
+  setIsNewPostMode?: (val: boolean) => void;
+}> = ({ onTitleChange, isNewPostMode = false, setIsNewPostMode }) => {
   // Add filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Categories');
   const [selectedStatus, setSelectedStatus] = useState('All Status');
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [formData, setFormData] = React.useState({
-    title: '',
-    category: 'Leadership',
-    tags: ['Leadership', 'Remote'],
-    tagInput: '',
-    author: 'Sarah Chen',
-    authorAvatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg',
-    schedule: false,
-    scheduleDate: ''
-  });
 
   // Example blog posts data
   const examplePosts = [
@@ -665,68 +458,29 @@ const BlogTab: React.FC = () => {
     setSelectedStatus(e.target.value);
   };
 
-  // Modal open/close handlers
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
-
-  // Keyboard close
-  React.useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isModalOpen) handleCloseModal();
-    };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isModalOpen]);
-
-  // Tag management
-  const handleTagInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, tagInput: e.target.value }));
-  };
-  const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if ((e.key === 'Enter' || e.key === ',' || e.key === ' ') && formData.tagInput.trim()) {
-      e.preventDefault();
-      if (!formData.tags.includes(formData.tagInput.trim())) {
-        setFormData(prev => ({ ...prev, tags: [...prev.tags, prev.tagInput.trim()], tagInput: '' }));
-      } else {
-        setFormData(prev => ({ ...prev, tagInput: '' }));
-      }
+  // Update the parent title when isNewPostMode changes
+  useEffect(() => {
+    if (onTitleChange) {
+      onTitleChange(isNewPostMode ? 'New Blog Post' : 'Blog Management');
     }
-  };
-  const handleRemoveTag = (tag: string) => {
-    setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }));
-  };
+  }, [isNewPostMode, onTitleChange]);
 
-  // Author select
-  const authors = [
-    { name: 'Sarah Chen', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg' },
-    { name: 'Mike Wilson', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg' },
-    { name: 'Alex Patel', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg' },
-    { name: 'Lisa Tran', avatar: 'https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg' }
-  ];
-  const handleAuthorChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = authors.find(a => a.name === e.target.value);
-    setFormData(prev => ({ ...prev, author: e.target.value, authorAvatar: selected ? selected.avatar : '' }));
-  };
+  // Replace handleOpenNewPost to use setIsNewPostMode
+  const handleOpenNewPost = () => setIsNewPostMode && setIsNewPostMode(true);
 
-  // Schedule toggle
-  const handleToggleSchedule = () => {
-    setFormData(prev => ({ ...prev, schedule: !prev.schedule, scheduleDate: '' }));
-  };
-  const handleScheduleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, scheduleDate: e.target.value }));
-  };
-
-  // Form handlers
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement create blog draft logic
-    handleCloseModal();
-  };
+  if (isNewPostMode) {
+    return (
+      <Container>
+        <div style={{ marginBottom: 24 }}>
+          <button onClick={() => setIsNewPostMode && setIsNewPostMode(false)} style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: '#3B82F6', fontWeight: 600, fontSize: 18, padding: 0, cursor: 'pointer', width: 'fit-content' }}>
+            <FontAwesomeIcon icon={faArrowLeft} />
+            Back
+          </button>
+        </div>
+        <NewBlogPost />
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -754,7 +508,7 @@ const BlogTab: React.FC = () => {
             <option>Draft</option>
           </CategorySelect>
         </SearchContainer>
-        <NewPostButton onClick={handleOpenModal}>
+        <NewPostButton onClick={handleOpenNewPost}>
           <FontAwesomeIcon icon={faPlus} />
           New Post
         </NewPostButton>
@@ -861,106 +615,9 @@ const BlogTab: React.FC = () => {
         ))}
       </CardListContainer>
 
-      <FloatingAddButton onClick={handleOpenModal}>
+      <FloatingAddButton onClick={handleOpenNewPost}>
         <FontAwesomeIcon icon={faPlus} />
       </FloatingAddButton>
-
-      {/* New Blog Draft Modal */}
-      <ModalOverlay $isOpen={isModalOpen} onClick={handleCloseModal}>
-        <ModalContent onClick={e => e.stopPropagation()}>
-          <CloseModalButton onClick={handleCloseModal}>
-            <FontAwesomeIcon icon={faTimes} />
-          </CloseModalButton>
-          <ModalHeader>
-            <ModalTitle>Start New Blog Draft</ModalTitle>
-            <ModalSubtitle>Quickly set up your new post. All fields editable later.</ModalSubtitle>
-          </ModalHeader>
-          <ModalForm onSubmit={handleSubmit}>
-            <FormGroup>
-              <FormLabel>Title</FormLabel>
-              <FormInput
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="Enter post title"
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <FormLabel>Category</FormLabel>
-              <CategorySelect
-                name="category"
-                value={formData.category}
-                onChange={handleInputChange}
-              >
-                <option>Leadership</option>
-                <option>Technology</option>
-                <option>Management</option>
-                <option>Team Building</option>
-              </CategorySelect>
-            </FormGroup>
-            <FormGroup>
-              <FormLabel>Tags</FormLabel>
-              <TagInputRow>
-                {formData.tags.map(tag => (
-                  <TagChip key={tag} $color={tag === 'Leadership' ? '#00E915' : tag === 'Remote' ? '#0098FF' : '#3B82F6'}>
-                    {tag}
-                    <TagRemoveButton type="button" onClick={() => handleRemoveTag(tag)}>
-                      <FontAwesomeIcon icon={faTimes} />
-                    </TagRemoveButton>
-                  </TagChip>
-                ))}
-                <FormInput
-                  type="text"
-                  name="tagInput"
-                  value={formData.tagInput}
-                  onChange={handleTagInputChange}
-                  onKeyDown={handleTagInputKeyDown}
-                  placeholder="Add tag..."
-                  style={{ minWidth: 80, flex: 1, fontSize: 12, borderRadius: 9999, padding: '0.25rem 0.75rem' }}
-                />
-              </TagInputRow>
-            </FormGroup>
-            <FormGroup>
-              <FormLabel>Author</FormLabel>
-              <AuthorRow>
-                <AuthorAvatar src={formData.authorAvatar} />
-                <AuthorSelect value={formData.author} onChange={handleAuthorChange}>
-                  {authors.map(a => (
-                    <option key={a.name} value={a.name}>{a.name}</option>
-                  ))}
-                </AuthorSelect>
-              </AuthorRow>
-            </FormGroup>
-            <ToggleRow>
-              <ToggleLabel>Schedule Publish</ToggleLabel>
-              <ToggleButton
-                type="button"
-                $isActive={formData.schedule}
-                onClick={handleToggleSchedule}
-                aria-pressed={formData.schedule}
-              >
-                <ToggleKnob $isActive={formData.schedule} />
-              </ToggleButton>
-            </ToggleRow>
-            {formData.schedule && (
-              <FormGroup>
-                <DateInput
-                  type="datetime-local"
-                  name="scheduleDate"
-                  value={formData.scheduleDate}
-                  onChange={handleScheduleDateChange}
-                />
-              </FormGroup>
-            )}
-            <SubmitButton type="submit">
-              <FontAwesomeIcon icon={faFeatherPointed} />
-              <span>Start Draft</span>
-            </SubmitButton>
-          </ModalForm>
-        </ModalContent>
-      </ModalOverlay>
     </Container>
   );
 };
