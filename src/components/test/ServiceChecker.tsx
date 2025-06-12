@@ -88,19 +88,46 @@ const Title = styled.h2`
   color: ${props => props.theme.colors.text.primary};
 `;
 
-// Mock connection check function
+// Connection check function
 const checkServiceConnection = async (serviceName: string): Promise<Partial<ServiceStatus>> => {
-  await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000)); // Simulate network delay
-  const success = Math.random() > 0.2; // Simulate 80% success rate
-
-  if (success) {
-    return { status: 'up', message: 'Connected successfully' };
-  } else {
-    // Simulate different error types
-    if (serviceName === 'Supabase' && Math.random() > 0.5) {
-      return { status: 'error', message: 'Connection failed: Invalid API key' };
+  try {
+    switch (serviceName) {
+      case 'Anthropic': {
+        const response = await fetch('/api/anthropic/test-connection');
+        const data = await response.json();
+        return {
+          status: data.success ? 'up' : 'error',
+          message: data.message
+        };
+      }
+      case 'OpenAI': {
+        const response = await fetch('/api/openai/test-connection');
+        const data = await response.json();
+        return {
+          status: data.success ? 'up' : 'error',
+          message: data.message
+        };
+      }
+      default: {
+        // Mock for other services
+        await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+        const success = Math.random() > 0.2;
+        
+        if (success) {
+          return { status: 'up', message: 'Connected successfully' };
+        } else {
+          if (serviceName === 'Supabase' && Math.random() > 0.5) {
+            return { status: 'error', message: 'Connection failed: Invalid API key' };
+          }
+          return { status: 'down', message: 'Service unreachable' };
+        }
+      }
     }
-    return { status: 'down', message: 'Service unreachable' };
+  } catch (error) {
+    return {
+      status: 'error',
+      message: `Connection failed: ${(error as Error).message}`
+    };
   }
 };
 

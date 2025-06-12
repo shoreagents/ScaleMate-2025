@@ -17,6 +17,7 @@
   - Real-time subscriptions
   - Storage
 - OpenAI API
+- Anthropic Claude API
 - Postmark (Email)
 
 ### Development Tools

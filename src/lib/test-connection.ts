@@ -44,4 +44,22 @@ export async function testOpenAIConnection(): Promise<{ success: boolean; messag
       lastChecked: new Date(),
     };
   }
+}
+
+export async function testClaudeConnection(): Promise<{ success: boolean; message: string; lastChecked: Date }> {
+  try {
+    const response = await fetch('/api/anthropic/test-connection');
+    const data = await response.json();
+    return {
+      success: data.success,
+      message: data.message,
+      lastChecked: new Date(data.lastChecked),
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Connection failed',
+      lastChecked: new Date(),
+    };
+  }
 } 

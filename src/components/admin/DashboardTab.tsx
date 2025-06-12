@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { FaUserPlus, FaUsers, FaSitemap, FaStar, FaFileInvoice, FaDownload, FaPlus, FaCheckDouble, FaExclamationTriangle, FaInfoCircle, FaDatabase, FaArrowUp, FaArrowDown, FaRobot } from 'react-icons/fa';
 import { FiCheck } from 'react-icons/fi';
 import { useRouter } from 'next/router';
-import { testSupabaseConnection, testOpenAIConnection } from '@/lib/test-connection';
+import { testSupabaseConnection, testOpenAIConnection, testClaudeConnection } from '@/lib/test-connection';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 
@@ -400,6 +400,12 @@ interface OpenAIStatus {
   lastChecked: Date;
 }
 
+interface ClaudeStatus {
+  success: boolean;
+  message: string;
+  lastChecked: Date;
+}
+
 const DashboardTab: React.FC = () => {
   const router = useRouter();
   const [dbStatus, setDbStatus] = useState<DatabaseStatus | null>(null);
@@ -417,6 +423,7 @@ const DashboardTab: React.FC = () => {
   const [timePeriod, setTimePeriod] = useState<'today' | 'week' | 'month'>('today');
   const [recentActivities, setRecentActivities] = useState<UserActivity[]>([]);
   const [openAIStatus, setOpenAIStatus] = useState<OpenAIStatus | null>(null);
+  const [claudeStatus, setClaudeStatus] = useState<ClaudeStatus | null>(null);
 
   // Function to format time ago
   const getTimeAgo = (date: string | Date) => {
@@ -722,6 +729,18 @@ const DashboardTab: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const checkClaudeStatus = async () => {
+      const status = await testClaudeConnection();
+      setClaudeStatus(status);
+    };
+
+    checkClaudeStatus();
+    const interval = setInterval(checkClaudeStatus, 5 * 60 * 1000); // Check every 5 minutes
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handleTimePeriodToggle = () => {
     setTimePeriod(prev => {
       switch (prev) {
@@ -896,18 +915,7 @@ const DashboardTab: React.FC = () => {
           <SystemWarnings>
             <SectionTitle>System Health</SectionTitle>
             <WarningList>
-              <WarningItem $type="info">
-                <WarningContent>
-                  <WarningIcon $type="info">
-                    <FaInfoCircle />
-                  </WarningIcon>
-                  <WarningText>
-                    <WarningTitle $type="info">System Update</WarningTitle>
-                    <WarningDescription>New version deployment completed</WarningDescription>
-                  </WarningText>
-                </WarningContent>
-                <WarningTime>1 hour ago</WarningTime>
-              </WarningItem>
+
               <WarningItem $type={dbStatus?.success ? 'info' : 'error'}>
                 <WarningContent>
                   <WarningIcon $type={dbStatus?.success ? 'info' : 'error'}>
@@ -949,6 +957,28 @@ const DashboardTab: React.FC = () => {
                 <WarningTime>
                   {openAIStatus?.lastChecked 
                     ? getTimeAgo(openAIStatus.lastChecked)
+                    : 'Checking...'}
+                </WarningTime>
+              </WarningItem>
+              <WarningItem $type={claudeStatus?.success ? 'info' : 'error'}>
+                <WarningContent>
+                  <WarningIcon $type={claudeStatus?.success ? 'info' : 'error'}>
+                    <FaRobot />
+                  </WarningIcon>
+                  <WarningText>
+                    <WarningTitle $type={claudeStatus?.success ? 'info' : 'error'}>
+                      Claude Connection
+                    </WarningTitle>
+                    <WarningDescription>
+                      {claudeStatus?.success 
+                        ? 'Connection healthy' 
+                        : `Connection issue: ${claudeStatus?.message}`}
+                    </WarningDescription>
+                  </WarningText>
+                </WarningContent>
+                <WarningTime>
+                  {claudeStatus?.lastChecked 
+                    ? getTimeAgo(claudeStatus.lastChecked)
                     : 'Checking...'}
                 </WarningTime>
               </WarningItem>

@@ -13,10 +13,11 @@
     "test:clean": "rm -rf .next",
     "test:reset": "npm run test:clean && npm run test:env",
     "setup:storage": "ts-node scripts/setup-storage.ts",
-    "test:openai": "ts-node scripts/test-openai.ts"
+    "test:openai": "ts-node scripts/test-openai.ts",
+    "test:claude": "ts-node scripts/test-claude.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "latest",
+    "@anthropic-ai/sdk": "^0.54.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-regular-svg-icons": "^6.7.2",
