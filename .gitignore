@@ -25,14 +25,19 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+next-env.d.ts
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
 
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts
 
 # Supabase
 .supabase/
@@ -41,10 +46,6 @@ node_modules
 .next/
 .vercel
 *.log
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
 .next/cache
 .next/cache/webpack
 .next/cache/webpack/client-development
